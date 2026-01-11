@@ -381,7 +381,12 @@ docker compose -f docker-compose/development.yml up -d
 - Watchtower checks for updates at 4 AM
 
 ### Weekly
-- Review logs: `docker compose -f docker-compose/*.yml logs --tail=100`
+- Review logs for each stack:
+  ```bash
+  docker compose -f docker-compose/infrastructure.yml logs --tail=100
+  docker compose -f docker-compose/media.yml logs --tail=100
+  docker compose -f docker-compose/monitoring.yml logs --tail=100
+  ```
 - Check disk space: `docker system df`
 
 ### Monthly

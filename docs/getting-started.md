@@ -476,11 +476,15 @@ sudo netstat -tlnp | grep PORT_NUMBER
 # Check disk usage
 df -h
 
-# Clean up Docker resources
+# Clean up Docker resources (removes unused images, containers, networks)
 docker system prune -a
 
-# Remove old logs
-docker compose logs --tail=0 service-name
+# To manage log size, configure log rotation in compose files:
+# logging:
+#   driver: "json-file"
+#   options:
+#     max-size: "10m"
+#     max-file: "3"
 ```
 
 ## Getting Help
