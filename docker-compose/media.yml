@@ -23,16 +23,17 @@ services:
       - TZ=${TZ:-America/New_York}
       - PLEX_CLAIM=${PLEX_CLAIM}
       - ADVERTISE_IP=http://${SERVER_IP}:32400/
-    devices:
-      # Uncomment for hardware transcoding (Intel QuickSync)
-      # - /dev/dri:/dev/dri
-      # Uncomment for NVIDIA GPU transcoding
-      # - /dev/nvidia0:/dev/nvidia0
-      # - /dev/nvidiactl:/dev/nvidiactl
-      # - /dev/nvidia-modeset:/dev/nvidia-modeset
-      # - /dev/nvidia-uvm:/dev/nvidia-uvm
-      # - /dev/nvidia-uvm-tools:/dev/nvidia-uvm-tools
-    # Uncomment for NVIDIA GPU support
+    # Uncomment for hardware transcoding (Intel QuickSync)
+    # devices:
+    #   - /dev/dri:/dev/dri
+    # Uncomment for NVIDIA GPU transcoding
+    # devices:
+    #   - /dev/nvidia0:/dev/nvidia0
+    #   - /dev/nvidiactl:/dev/nvidiactl
+    #   - /dev/nvidia-modeset:/dev/nvidia-modeset
+    #   - /dev/nvidia-uvm:/dev/nvidia-uvm
+    #   - /dev/nvidia-uvm-tools:/dev/nvidia-uvm-tools
+    # Uncomment for NVIDIA GPU support (requires nvidia-container-toolkit)
     # runtime: nvidia
     # environment:
     #   - NVIDIA_VISIBLE_DEVICES=all
@@ -60,9 +61,9 @@ services:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
       - TZ=${TZ:-America/New_York}
-    devices:
-      # Uncomment for hardware transcoding
-      # - /dev/dri:/dev/dri
+    # Uncomment for hardware transcoding
+    # devices:
+    #   - /dev/dri:/dev/dri
     labels:
       - "homelab.category=media"
       - "homelab.description=Open-source media streaming server"
