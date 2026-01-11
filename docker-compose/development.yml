@@ -1,0 +1,187 @@
+# Development Services
+# Tools and services for development work
+
+services:
+  # Code Server - VS Code in the browser
+  # Access at: http://server-ip:8443
+  code-server:
+    image: lscr.io/linuxserver/code-server:4.20.0
+    container_name: code-server
+    restart: unless-stopped
+    networks:
+      - homelab-network
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./config/code-server:/config
+      - ${PROJECTDIR:-/home/user/projects}:/projects
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-America/New_York}
+      - PASSWORD=${CODE_SERVER_PASSWORD:-changeme}
+      - SUDO_PASSWORD=${CODE_SERVER_SUDO_PASSWORD:-changeme}
+    labels:
+      - "homelab.category=development"
+      - "homelab.description=VS Code in browser for remote development"
+
+  # GitLab CE - Self-hosted Git repository manager
+  # Access at: http://server-ip:8929
+  # Note: Requires significant resources (4GB+ RAM recommended)
+  gitlab:
+    image: gitlab/gitlab-ce:16.7.0-ce.0
+    container_name: gitlab
+    restart: unless-stopped
+    networks:
+      - homelab-network
+    ports:
+      - "8929:80"     # Web UI
+      - "2222:22"     # SSH
+    volumes:
+      - ./config/gitlab/config:/etc/gitlab
+      - gitlab-logs:/var/log/gitlab
+      - gitlab-data:/var/opt/gitlab
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://${SERVER_IP}:8929'
+        gitlab_rails['gitlab_shell_ssh_port'] = 2222
+        gitlab_rails['time_zone'] = '${TZ:-America/New_York}'
+    shm_size: '256m'
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+    labels:
+      - "homelab.category=development"
+      - "homelab.description=Self-hosted Git repository manager"
+
+  # PostgreSQL - Database for development
+  # Access at: localhost:5432 from other containers
+  postgres:
+    image: postgres:16.1-alpine
+    container_name: postgres-dev
+    restart: unless-stopped
+    networks:
+      - database-network
+      - homelab-network
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./config/postgres/init:/docker-entrypoint-initdb.d
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - POSTGRES_DB=${POSTGRES_DB:-homelab}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    labels:
+      - "homelab.category=development"
+      - "homelab.description=PostgreSQL database for development"
+
+  # Redis - In-memory data store
+  # Access at: localhost:6379 from other containers
+  redis:
+    image: redis:7.2.3-alpine
+    container_name: redis-dev
+    restart: unless-stopped
+    networks:
+      - database-network
+      - homelab-network
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+      - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf --appendonly yes
+    labels:
+      - "homelab.category=development"
+      - "homelab.description=Redis in-memory data store"
+
+  # pgAdmin - PostgreSQL management UI
+  # Access at: http://server-ip:5050
+  pgadmin:
+    image: dpage/pgadmin4:8.2
+    container_name: pgadmin
+    restart: unless-stopped
+    networks:
+      - database-network
+      - homelab-network
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:-admin@example.com}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD:-changeme}
+      - PGADMIN_CONFIG_SERVER_MODE=False
+    depends_on:
+      - postgres
+    labels:
+      - "homelab.category=development"
+      - "homelab.description=PostgreSQL administration UI"
+
+  # Jupyter Lab - Interactive computing notebooks
+  # Access at: http://server-ip:8888
+  # Token displayed in logs on first start
+  jupyter:
+    image: jupyter/scipy-notebook:2023-12-25
+    container_name: jupyter
+    restart: unless-stopped
+    networks:
+      - homelab-network
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./config/jupyter:/home/jovyan/work
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - GRANT_SUDO=yes
+    user: root
+    command: start-notebook.sh --NotebookApp.token='${JUPYTER_TOKEN:-changeme}'
+    # Uncomment for GPU support (NVIDIA)
+    # runtime: nvidia
+    # environment:
+    #   - NVIDIA_VISIBLE_DEVICES=all
+    labels:
+      - "homelab.category=development"
+      - "homelab.description=Jupyter Lab for data science and ML"
+
+  # Node-RED - Visual programming for automation
+  # Access at: http://server-ip:1880
+  nodered:
+    image: nodered/node-red:3.1.3
+    container_name: nodered
+    restart: unless-stopped
+    networks:
+      - homelab-network
+    ports:
+      - "1880:1880"
+    volumes:
+      - nodered-data:/data
+    environment:
+      - TZ=${TZ:-America/New_York}
+    labels:
+      - "homelab.category=development"
+      - "homelab.description=Visual automation and workflow tool"
+
+volumes:
+  gitlab-logs:
+    driver: local
+  gitlab-data:
+    driver: local
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  pgadmin-data:
+    driver: local
+  nodered-data:
+    driver: local
+
+networks:
+  database-network:
+    driver: bridge
+  homelab-network:
+    external: true

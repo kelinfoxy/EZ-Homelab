@@ -1,0 +1,171 @@
+# Media Services
+# Services for media management and streaming
+
+services:
+  # Plex Media Server - Media streaming platform
+  # Access at: http://server-ip:32400/web
+  plex:
+    image: plexinc/pms-docker:1.40.0.7998-f68041501
+    container_name: plex
+    restart: unless-stopped
+    networks:
+      - media-network
+      - homelab-network
+    ports:
+      - "32400:32400"  # Plex web UI
+    volumes:
+      - ./config/plex:/config
+      - ${MEDIADIR:-/media}:/media:ro
+      - plex-transcode:/transcode
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-America/New_York}
+      - PLEX_CLAIM=${PLEX_CLAIM}
+      - ADVERTISE_IP=http://${SERVER_IP}:32400/
+    devices:
+      # Uncomment for hardware transcoding (Intel QuickSync)
+      # - /dev/dri:/dev/dri
+      # Uncomment for NVIDIA GPU transcoding
+      # - /dev/nvidia0:/dev/nvidia0
+      # - /dev/nvidiactl:/dev/nvidiactl
+      # - /dev/nvidia-modeset:/dev/nvidia-modeset
+      # - /dev/nvidia-uvm:/dev/nvidia-uvm
+      # - /dev/nvidia-uvm-tools:/dev/nvidia-uvm-tools
+    # Uncomment for NVIDIA GPU support
+    # runtime: nvidia
+    # environment:
+    #   - NVIDIA_VISIBLE_DEVICES=all
+    #   - NVIDIA_DRIVER_CAPABILITIES=compute,video,utility
+    labels:
+      - "homelab.category=media"
+      - "homelab.description=Plex media streaming server"
+
+  # Jellyfin - Free alternative to Plex
+  # Access at: http://server-ip:8096
+  jellyfin:
+    image: jellyfin/jellyfin:10.8.13
+    container_name: jellyfin
+    restart: unless-stopped
+    networks:
+      - media-network
+      - homelab-network
+    ports:
+      - "8096:8096"
+    volumes:
+      - ./config/jellyfin:/config
+      - ./config/jellyfin/cache:/cache
+      - ${MEDIADIR:-/media}:/media:ro
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-America/New_York}
+    devices:
+      # Uncomment for hardware transcoding
+      # - /dev/dri:/dev/dri
+    labels:
+      - "homelab.category=media"
+      - "homelab.description=Open-source media streaming server"
+
+  # Sonarr - TV show automation
+  # Access at: http://server-ip:8989
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:4.0.0
+    container_name: sonarr
+    restart: unless-stopped
+    networks:
+      - media-network
+      - homelab-network
+    ports:
+      - "8989:8989"
+    volumes:
+      - ./config/sonarr:/config
+      - ${MEDIADIR:-/media}:/media
+      - ${DOWNLOADDIR:-/downloads}:/downloads
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-America/New_York}
+    labels:
+      - "homelab.category=media"
+      - "homelab.description=TV show management and automation"
+
+  # Radarr - Movie automation
+  # Access at: http://server-ip:7878
+  radarr:
+    image: lscr.io/linuxserver/radarr:5.2.6
+    container_name: radarr
+    restart: unless-stopped
+    networks:
+      - media-network
+      - homelab-network
+    ports:
+      - "7878:7878"
+    volumes:
+      - ./config/radarr:/config
+      - ${MEDIADIR:-/media}:/media
+      - ${DOWNLOADDIR:-/downloads}:/downloads
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-America/New_York}
+    labels:
+      - "homelab.category=media"
+      - "homelab.description=Movie management and automation"
+
+  # Prowlarr - Indexer manager
+  # Access at: http://server-ip:9696
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:1.11.4
+    container_name: prowlarr
+    restart: unless-stopped
+    networks:
+      - media-network
+      - homelab-network
+    ports:
+      - "9696:9696"
+    volumes:
+      - ./config/prowlarr:/config
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-America/New_York}
+    labels:
+      - "homelab.category=media"
+      - "homelab.description=Indexer manager for Sonarr/Radarr"
+
+  # qBittorrent - Torrent client
+  # Access at: http://server-ip:8081
+  # Default credentials: admin / adminadmin
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:4.6.2
+    container_name: qbittorrent
+    restart: unless-stopped
+    networks:
+      - media-network
+      - homelab-network
+    ports:
+      - "8081:8081"      # Web UI
+      - "6881:6881"      # Torrent port TCP
+      - "6881:6881/udp"  # Torrent port UDP
+    volumes:
+      - ./config/qbittorrent:/config
+      - ${DOWNLOADDIR:-/downloads}:/downloads
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-America/New_York}
+      - WEBUI_PORT=8081
+    labels:
+      - "homelab.category=media"
+      - "homelab.description=Torrent download client"
+
+volumes:
+  plex-transcode:
+    driver: local
+
+networks:
+  media-network:
+    driver: bridge
+  homelab-network:
+    external: true

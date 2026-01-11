@@ -1,0 +1,173 @@
+# Monitoring and Observability Services
+# Services for monitoring your homelab infrastructure
+
+services:
+  # Prometheus - Metrics collection and storage
+  # Access at: http://server-ip:9090
+  prometheus:
+    image: prom/prometheus:v2.48.1
+    container_name: prometheus
+    restart: unless-stopped
+    networks:
+      - monitoring-network
+      - homelab-network
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus:/etc/prometheus
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    user: "${PUID:-1000}:${PGID:-1000}"
+    labels:
+      - "homelab.category=monitoring"
+      - "homelab.description=Metrics collection and time-series database"
+
+  # Grafana - Metrics visualization
+  # Access at: http://server-ip:3000
+  # Default credentials: admin / admin (change on first login)
+  grafana:
+    image: grafana/grafana:10.2.3
+    container_name: grafana
+    restart: unless-stopped
+    networks:
+      - monitoring-network
+      - homelab-network
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://${SERVER_IP}:3000
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource,grafana-piechart-panel
+    user: "${PUID:-1000}:${PGID:-1000}"
+    depends_on:
+      - prometheus
+    labels:
+      - "homelab.category=monitoring"
+      - "homelab.description=Metrics visualization and dashboards"
+
+  # Node Exporter - Host metrics exporter
+  # Metrics at: http://server-ip:9100/metrics
+  node-exporter:
+    image: prom/node-exporter:v1.7.0
+    container_name: node-exporter
+    restart: unless-stopped
+    networks:
+      - monitoring-network
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    labels:
+      - "homelab.category=monitoring"
+      - "homelab.description=Hardware and OS metrics exporter"
+
+  # cAdvisor - Container metrics exporter
+  # Access at: http://server-ip:8082
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.2
+    container_name: cadvisor
+    restart: unless-stopped
+    networks:
+      - monitoring-network
+    ports:
+      - "8082:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /dev/disk:/dev/disk:ro
+    privileged: true
+    devices:
+      - /dev/kmsg
+    labels:
+      - "homelab.category=monitoring"
+      - "homelab.description=Container metrics and performance monitoring"
+
+  # Uptime Kuma - Uptime monitoring
+  # Access at: http://server-ip:3001
+  uptime-kuma:
+    image: louislam/uptime-kuma:1.23.11
+    container_name: uptime-kuma
+    restart: unless-stopped
+    networks:
+      - monitoring-network
+      - homelab-network
+    ports:
+      - "3001:3001"
+    volumes:
+      - uptime-kuma-data:/app/data
+    labels:
+      - "homelab.category=monitoring"
+      - "homelab.description=Service uptime monitoring and alerts"
+
+  # Loki - Log aggregation
+  # Access at: http://server-ip:3100
+  loki:
+    image: grafana/loki:2.9.3
+    container_name: loki
+    restart: unless-stopped
+    networks:
+      - monitoring-network
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./config/loki:/etc/loki
+      - loki-data:/loki
+    command: -config.file=/etc/loki/loki-config.yml
+    user: "${PUID:-1000}:${PGID:-1000}"
+    labels:
+      - "homelab.category=monitoring"
+      - "homelab.description=Log aggregation system"
+
+  # Promtail - Log shipper for Loki
+  # Ships Docker container logs to Loki
+  promtail:
+    image: grafana/promtail:2.9.3
+    container_name: promtail
+    restart: unless-stopped
+    networks:
+      - monitoring-network
+    volumes:
+      - ./config/promtail:/etc/promtail
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    command: -config.file=/etc/promtail/promtail-config.yml
+    depends_on:
+      - loki
+    labels:
+      - "homelab.category=monitoring"
+      - "homelab.description=Log collector for Loki"
+
+volumes:
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+  uptime-kuma-data:
+    driver: local
+  loki-data:
+    driver: local
+
+networks:
+  monitoring-network:
+    driver: bridge
+  homelab-network:
+    external: true
