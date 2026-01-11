@@ -28,6 +28,7 @@ This repository provides a structured approach to managing a homelab infrastruct
 
 1. **Clone the repository:**
    ```bash
+   # Note: Replace 'kelinfoxy' with your username if you forked this repository
    git clone https://github.com/kelinfoxy/AI-Homelab.git
    cd AI-Homelab
    ```

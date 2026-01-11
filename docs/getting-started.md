@@ -38,6 +38,7 @@ docker run --rm hello-world
 cd ~
 
 # Clone the repository
+# Note: Replace 'kelinfoxy' with your username if you forked this repository
 git clone https://github.com/kelinfoxy/AI-Homelab.git
 
 # Enter the directory
@@ -297,6 +298,7 @@ docker compose -f docker-compose/development.yml ps
 3. **Clone your repository in VS Code:**
    ```bash
    # On your local machine
+   # Note: Replace 'kelinfoxy' with your username if you forked this repository
    git clone https://github.com/kelinfoxy/AI-Homelab.git
    cd AI-Homelab
    code .

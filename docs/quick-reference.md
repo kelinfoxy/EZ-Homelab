@@ -350,7 +350,8 @@ deploy:
 
 ### Minimal setup
 ```bash
-# 1. Clone and configure (replace with your repo URL if forked)
+# 1. Clone and configure
+# Note: Replace 'kelinfoxy' with your username if you forked this repository
 git clone https://github.com/kelinfoxy/AI-Homelab.git
 cd AI-Homelab
 cp .env.example .env
