@@ -140,10 +140,14 @@ services:
       - GRANT_SUDO=yes
     user: root
     command: start-notebook.sh --NotebookApp.token='${JUPYTER_TOKEN:-changeme}'
-    # Uncomment for GPU support (NVIDIA)
+    # Uncomment for GPU support (NVIDIA, requires nvidia-container-toolkit)
     # runtime: nvidia
-    # environment:
+    # devices:
+    #   - /dev/nvidia0:/dev/nvidia0
+    #   - /dev/nvidiactl:/dev/nvidiactl
+    # Add these to environment above:
     #   - NVIDIA_VISIBLE_DEVICES=all
+    #   - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     labels:
       - "homelab.category=development"
       - "homelab.description=Jupyter Lab for data science and ML"

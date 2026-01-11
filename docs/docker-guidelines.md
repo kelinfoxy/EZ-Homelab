@@ -53,7 +53,7 @@ Use Docker Compose for:
 # docker-compose/plex.yml
 services:
   plex:
-    image: plexinc/pms-docker:1.40.0.7775-456fbaf97
+    image: plexinc/pms-docker:1.40.0.7998-f68041501
     container_name: plex
     restart: unless-stopped
     networks:

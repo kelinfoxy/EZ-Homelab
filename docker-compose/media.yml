@@ -23,18 +23,21 @@ services:
       - TZ=${TZ:-America/New_York}
       - PLEX_CLAIM=${PLEX_CLAIM}
       - ADVERTISE_IP=http://${SERVER_IP}:32400/
-    # Uncomment for hardware transcoding (Intel QuickSync)
+    # Hardware transcoding support
+    # Uncomment ONE of the following options:
+    
+    # Option 1: Intel QuickSync (most common)
     # devices:
     #   - /dev/dri:/dev/dri
-    # Uncomment for NVIDIA GPU transcoding
+    
+    # Option 2: NVIDIA GPU (requires nvidia-container-toolkit installed)
+    # runtime: nvidia
     # devices:
     #   - /dev/nvidia0:/dev/nvidia0
     #   - /dev/nvidiactl:/dev/nvidiactl
     #   - /dev/nvidia-modeset:/dev/nvidia-modeset
     #   - /dev/nvidia-uvm:/dev/nvidia-uvm
     #   - /dev/nvidia-uvm-tools:/dev/nvidia-uvm-tools
-    # Uncomment for NVIDIA GPU support (requires nvidia-container-toolkit)
-    # runtime: nvidia
     # environment:
     #   - NVIDIA_VISIBLE_DEVICES=all
     #   - NVIDIA_DRIVER_CAPABILITIES=compute,video,utility
