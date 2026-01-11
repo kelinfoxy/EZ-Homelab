@@ -2,20 +2,26 @@
 
 ## Common Commands
 
+**Note**: Replace `infrastructure.yml` with your compose file name:
+- `infrastructure.yml` - Core services
+- `media.yml` - Media stack
+- `monitoring.yml` - Monitoring services
+- `development.yml` - Development tools
+
 ### Service Management
 
 ```bash
-# Start all services in a file
-docker compose -f docker-compose/file.yml up -d
+# Start all services in a compose file
+docker compose -f docker-compose/infrastructure.yml up -d
 
 # Start specific service
-docker compose -f docker-compose/file.yml up -d service-name
+docker compose -f docker-compose/infrastructure.yml up -d service-name
 
 # Stop all services
-docker compose -f docker-compose/file.yml down
+docker compose -f docker-compose/infrastructure.yml down
 
 # Stop specific service
-docker compose -f docker-compose/file.yml stop service-name
+docker compose -f docker-compose/infrastructure.yml stop service-name
 
 # Restart service
 docker compose -f docker-compose/file.yml restart service-name
