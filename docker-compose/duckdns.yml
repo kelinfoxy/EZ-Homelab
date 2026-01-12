@@ -1,0 +1,21 @@
+# DuckDNS Dynamic DNS Stack
+# Updates your DuckDNS domain with current public IP
+# Place in /opt/stacks/duckdns/docker-compose.yml
+
+services:
+  duckdns:
+    image: lscr.io/linuxserver/duckdns:latest
+    container_name: duckdns
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ}
+      - SUBDOMAINS=${DUCKDNS_SUBDOMAINS}  # Your subdomain(s), comma separated
+      - TOKEN=${DUCKDNS_TOKEN}            # Your DuckDNS token
+      - UPDATE_IP=ipv4                    # or ipv6, or both
+    volumes:
+      - /opt/stacks/duckdns/config:/config
+    labels:
+      - "homelab.category=infrastructure"
+      - "homelab.description=Dynamic DNS updater"

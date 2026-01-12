@@ -1,0 +1,81 @@
+# Gluetun VPN Stack
+# VPN client for routing services through Surfshark (or other VPN providers)
+# Place in /opt/stacks/gluetun/docker-compose.yml
+# Services that need VPN use: network_mode: "service:gluetun"
+
+services:
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    networks:
+      - gluetun-network
+      - traefik-network
+    ports:
+      # qBittorrent ports (service runs through Gluetun)
+      - "8080:8080"   # qBittorrent WebUI
+      - "6881:6881"   # qBittorrent TCP
+      - "6881:6881/udp"  # qBittorrent UDP
+    environment:
+      - VPN_SERVICE_PROVIDER=surfshark
+      - VPN_TYPE=wireguard  # or openvpn
+      - WIREGUARD_PRIVATE_KEY=${SURFSHARK_PRIVATE_KEY}
+      - WIREGUARD_ADDRESSES=${SURFSHARK_ADDRESSES}
+      - SERVER_COUNTRIES=${VPN_COUNTRY:-Netherlands}  # Preferred VPN server country
+      - TZ=${TZ}
+      # For OpenVPN instead of WireGuard:
+      # - OPENVPN_USER=${SURFSHARK_USERNAME}
+      # - OPENVPN_PASSWORD=${SURFSHARK_PASSWORD}
+    volumes:
+      - /opt/stacks/gluetun/config:/gluetun
+    labels:
+      - "homelab.category=infrastructure"
+      - "homelab.description=VPN client for secure routing (Surfshark)"
+
+  # qBittorrent - Torrent client routing through VPN
+  # Access at: https://qbit.yourdomain.duckdns.org
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:4.6.2
+    container_name: qbittorrent
+    network_mode: "service:gluetun"  # Routes all traffic through VPN
+    depends_on:
+      - gluetun
+    volumes:
+      - /opt/stacks/qbittorrent/config:/config
+      - /mnt/downloads:/downloads  # Large downloads on separate drive
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ}
+      - WEBUI_PORT=8080
+    labels:
+      - "homelab.category=media"
+      - "homelab.description=Torrent download client (via VPN)"
+      # Traefik labels (applied to Gluetun since qBittorrent uses its network)
+      # Configure these on the Gluetun container instead:
+  
+  # Traefik routing for qBittorrent (via Gluetun)
+  # Since qBittorrent uses Gluetun's network, we add a sidecar label container
+  qbit-labels:
+    image: alpine:latest
+    container_name: qbit-labels
+    command: tail -f /dev/null
+    networks:
+      - traefik-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.qbittorrent.rule=Host(`qbit.${DOMAIN}`)"
+      - "traefik.http.routers.qbittorrent.entrypoints=websecure"
+      - "traefik.http.routers.qbittorrent.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.qbittorrent.middlewares=authelia@docker"
+      - "traefik.http.services.qbittorrent.loadbalancer.server.url=http://gluetun:8080"
+
+networks:
+  gluetun-network:
+    driver: bridge
+  traefik-network:
+    external: true

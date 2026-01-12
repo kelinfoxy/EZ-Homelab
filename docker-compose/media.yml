@@ -1,9 +1,12 @@
 # Media Services
 # Services for media management and streaming
+# Place in /opt/stacks/media/docker-compose.yml
+# NOTE: qBittorrent is configured to use Gluetun VPN (see gluetun.yml)
 
 services:
   # Plex Media Server - Media streaming platform
-  # Access at: http://server-ip:32400/web
+  # Access at: https://plex.yourdomain.duckdns.org
+  # NOTE: No Authelia - allows app access from Roku, Fire TV, mobile, etc.
   plex:
     image: plexinc/pms-docker:1.40.0.7998-f68041501
     container_name: plex
@@ -11,18 +14,16 @@ services:
     networks:
       - media-network
       - homelab-network
-    ports:
-      - "32400:32400"  # Plex web UI
+      - traefik-network
     volumes:
-      - ./config/plex:/config
-      - ${MEDIADIR:-/media}:/media:ro
+      - /opt/stacks/plex/config:/config
+      - /mnt/media:/media:ro  # Large media files on separate drive
       - plex-transcode:/transcode
     environment:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
       - TZ=${TZ:-America/New_York}
       - PLEX_CLAIM=${PLEX_CLAIM}
-      - ADVERTISE_IP=http://${SERVER_IP}:32400/
     # Hardware transcoding support
     # Uncomment ONE of the following options:
     
@@ -44,9 +45,16 @@ services:
     labels:
       - "homelab.category=media"
       - "homelab.description=Plex media streaming server"
+      # Traefik labels - NO Authelia for app access
+      - "traefik.enable=true"
+      - "traefik.http.routers.plex.rule=Host(`plex.${DOMAIN}`)"
+      - "traefik.http.routers.plex.entrypoints=websecure"
+      - "traefik.http.routers.plex.tls.certresolver=letsencrypt"
+      - "traefik.http.services.plex.loadbalancer.server.port=32400"
 
   # Jellyfin - Free alternative to Plex
-  # Access at: http://server-ip:8096
+  # Access at: https://jellyfin.yourdomain.duckdns.org
+  # NOTE: No Authelia - allows app access from Roku, Fire TV, mobile, etc.
   jellyfin:
     image: jellyfin/jellyfin:10.8.13
     container_name: jellyfin
@@ -54,12 +62,11 @@ services:
     networks:
       - media-network
       - homelab-network
-    ports:
-      - "8096:8096"
+      - traefik-network
     volumes:
-      - ./config/jellyfin:/config
-      - ./config/jellyfin/cache:/cache
-      - ${MEDIADIR:-/media}:/media:ro
+      - /opt/stacks/jellyfin/config:/config
+      - /opt/stacks/jellyfin/cache:/cache
+      - /mnt/media:/media:ro  # Large media files on separate drive
     environment:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
@@ -70,9 +77,15 @@ services:
     labels:
       - "homelab.category=media"
       - "homelab.description=Open-source media streaming server"
+      # Traefik labels - NO Authelia for app access
+      - "traefik.enable=true"
+      - "traefik.http.routers.jellyfin.rule=Host(`jellyfin.${DOMAIN}`)"
+      - "traefik.http.routers.jellyfin.entrypoints=websecure"
+      - "traefik.http.routers.jellyfin.tls.certresolver=letsencrypt"
+      - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
 
   # Sonarr - TV show automation
-  # Access at: http://server-ip:8989
+  # Access at: https://sonarr.yourdomain.duckdns.org
   sonarr:
     image: lscr.io/linuxserver/sonarr:4.0.0
     container_name: sonarr
@@ -80,12 +93,11 @@ services:
     networks:
       - media-network
       - homelab-network
-    ports:
-      - "8989:8989"
+      - traefik-network
     volumes:
-      - ./config/sonarr:/config
-      - ${MEDIADIR:-/media}:/media
-      - ${DOWNLOADDIR:-/downloads}:/downloads
+      - /opt/stacks/sonarr/config:/config
+      - /mnt/media:/media
+      - /mnt/downloads:/downloads  # Large downloads on separate drive
     environment:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
@@ -93,9 +105,16 @@ services:
     labels:
       - "homelab.category=media"
       - "homelab.description=TV show management and automation"
+      # Traefik labels with Authelia
+      - "traefik.enable=true"
+      - "traefik.http.routers.sonarr.rule=Host(`sonarr.${DOMAIN}`)"
+      - "traefik.http.routers.sonarr.entrypoints=websecure"
+      - "traefik.http.routers.sonarr.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.sonarr.middlewares=authelia@docker"
+      - "traefik.http.services.sonarr.loadbalancer.server.port=8989"
 
   # Radarr - Movie automation
-  # Access at: http://server-ip:7878
+  # Access at: https://radarr.yourdomain.duckdns.org
   radarr:
     image: lscr.io/linuxserver/radarr:5.2.6
     container_name: radarr
@@ -103,12 +122,11 @@ services:
     networks:
       - media-network
       - homelab-network
-    ports:
-      - "7878:7878"
+      - traefik-network
     volumes:
-      - ./config/radarr:/config
-      - ${MEDIADIR:-/media}:/media
-      - ${DOWNLOADDIR:-/downloads}:/downloads
+      - /opt/stacks/radarr/config:/config
+      - /mnt/media:/media
+      - /mnt/downloads:/downloads  # Large downloads on separate drive
     environment:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
@@ -116,9 +134,16 @@ services:
     labels:
       - "homelab.category=media"
       - "homelab.description=Movie management and automation"
+      # Traefik labels with Authelia
+      - "traefik.enable=true"
+      - "traefik.http.routers.radarr.rule=Host(`radarr.${DOMAIN}`)"
+      - "traefik.http.routers.radarr.entrypoints=websecure"
+      - "traefik.http.routers.radarr.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.radarr.middlewares=authelia@docker"
+      - "traefik.http.services.radarr.loadbalancer.server.port=7878"
 
   # Prowlarr - Indexer manager
-  # Access at: http://server-ip:9696
+  # Access at: https://prowlarr.yourdomain.duckdns.org
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:1.11.4
     container_name: prowlarr
@@ -126,10 +151,9 @@ services:
     networks:
       - media-network
       - homelab-network
-    ports:
-      - "9696:9696"
+      - traefik-network
     volumes:
-      - ./config/prowlarr:/config
+      - /opt/stacks/prowlarr/config:/config
     environment:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
@@ -137,32 +161,19 @@ services:
     labels:
       - "homelab.category=media"
       - "homelab.description=Indexer manager for Sonarr/Radarr"
+      # Traefik labels with Authelia
+      - "traefik.enable=true"
+      - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.${DOMAIN}`)"
+      - "traefik.http.routers.prowlarr.entrypoints=websecure"
+      - "traefik.http.routers.prowlarr.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.prowlarr.middlewares=authelia@docker"
+      - "traefik.http.services.prowlarr.loadbalancer.server.port=9696"
 
   # qBittorrent - Torrent client
-  # Access at: http://server-ip:8081
-  # Default credentials: admin / adminadmin
-  qbittorrent:
-    image: lscr.io/linuxserver/qbittorrent:4.6.2
-    container_name: qbittorrent
-    restart: unless-stopped
-    networks:
-      - media-network
-      - homelab-network
-    ports:
-      - "8081:8081"      # Web UI
-      - "6881:6881"      # Torrent port TCP
-      - "6881:6881/udp"  # Torrent port UDP
-    volumes:
-      - ./config/qbittorrent:/config
-      - ${DOWNLOADDIR:-/downloads}:/downloads
-    environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
-      - TZ=${TZ:-America/New_York}
-      - WEBUI_PORT=8081
-    labels:
-      - "homelab.category=media"
-      - "homelab.description=Torrent download client"
+  # Access at: https://qbit.yourdomain.duckdns.org
+  # Routes through Gluetun VPN - configure in gluetun.yml
+  # NOTE: This is a placeholder. Configure qBittorrent in gluetun.yml with network_mode: "service:gluetun"
+  # See gluetun.yml for the actual qBittorrent configuration
 
 volumes:
   plex-transcode:
@@ -172,4 +183,6 @@ networks:
   media-network:
     driver: bridge
   homelab-network:
+    external: true
+  traefik-network:
     external: true

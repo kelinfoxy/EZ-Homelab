@@ -1,43 +1,44 @@
 # Infrastructure Services
 # Core services that other services depend on
+# NOTE: Traefik, Authelia, DuckDNS, and Gluetun have their own compose files
+# See traefik.yml, authelia.yml, duckdns.yml, and gluetun.yml
 
 services:
-  # Nginx Proxy Manager - Web-based reverse proxy management
-  # Access at: http://server-ip:81
-  # Default credentials: admin@example.com / changeme
-  nginx-proxy-manager:
-    image: jc21/nginx-proxy-manager:2.10.4
-    container_name: nginx-proxy-manager
-    restart: unless-stopped
-    networks:
-      - homelab-network
-    ports:
-      - "80:80"      # HTTP
-      - "443:443"    # HTTPS
-      - "81:81"      # Admin UI
-    volumes:
-      - ./config/nginx-proxy-manager/data:/data
-      - ./config/nginx-proxy-manager/letsencrypt:/etc/letsencrypt
-    environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:81"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    labels:
-      - "homelab.category=infrastructure"
-      - "homelab.description=Reverse proxy with Let's Encrypt support"
-
   # Pi-hole - Network-wide ad blocker and DNS server
-  # Access at: http://server-ip:8080/admin
+  # Access at: http://server-ip:8080/admin or https://pihole.yourdomain.duckdns.org
   pihole:
     image: pihole/pihole:2024.01.0
     container_name: pihole
     restart: unless-stopped
     networks:
       - homelab-network
+      - traefik-network
+    ports:
+      - "53:53/tcp"    # DNS TCP
+      - "53:53/udp"    # DNS UDP
+      - "8082:80/tcp"  # Web interface (changed from 8080 to avoid conflicts)
+    volumes:
+      - /opt/stacks/pihole/etc-pihole:/etc/pihole
+      - /opt/stacks/pihole/etc-dnsmasq.d:/etc/dnsmasq.d
+    environment:
+      - TZ=${TZ:-America/New_York}
+      - WEBPASSWORD=${PIHOLE_PASSWORD:-changeme}
+      - FTLCONF_LOCAL_IPV4=${SERVER_IP}
+    dns:
+      - 127.0.0.1
+      - 1.1.1.1
+    cap_add:
+      - NET_ADMIN
+    labels:
+      - "homelab.category=infrastructure"
+      - "homelab.description=Network-wide ad blocking and DNS"
+      # Traefik labels
+      - "traefik.enable=true"
+      - "traefik.http.routers.pihole.rule=Host(`pihole.${DOMAIN}`)"
+      - "traefik.http.routers.pihole.entrypoints=websecure"
+      - "traefik.http.routers.pihole.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.pihole.middlewares=authelia@docker"
+      - "traefik.http.services.pihole.loadbalancer.server.port=80"
     ports:
       - "53:53/tcp"    # DNS TCP
       - "53:53/udp"    # DNS UDP
@@ -59,16 +60,14 @@ services:
       - "homelab.description=Network-wide ad blocking and DNS"
 
   # Portainer - Docker management UI
-  # Access at: http://server-ip:9000
+  # Access at: https://portainer.yourdomain.duckdns.org
   portainer:
     image: portainer/portainer-ce:2.19.4
     container_name: portainer
     restart: unless-stopped
     networks:
       - homelab-network
-    ports:
-      - "9000:9000"
-      - "9443:9443"
+      - traefik-network
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer-data:/data
@@ -77,6 +76,13 @@ services:
     labels:
       - "homelab.category=infrastructure"
       - "homelab.description=Docker container management UI"
+      # Traefik labels
+      - "traefik.enable=true"
+      - "traefik.http.routers.portainer.rule=Host(`portainer.${DOMAIN}`)"
+      - "traefik.http.routers.portainer.entrypoints=websecure"
+      - "traefik.http.routers.portainer.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.portainer.middlewares=authelia@docker"
+      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
 
   # Watchtower - Automatic container updates
   # Runs silently in background, no UI
@@ -104,4 +110,6 @@ volumes:
 
 networks:
   homelab-network:
+    external: true
+  traefik-network:
     external: true
