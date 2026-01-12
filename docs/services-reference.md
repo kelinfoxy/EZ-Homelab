@@ -68,7 +68,7 @@ This document provides a comprehensive overview of all 60+ pre-configured servic
 | └─ Form.io | Form builder | ✓ | /opt/stacks/productivity | forms.${DOMAIN} |
 |    └─ formio-mongo | MongoDB | - | /opt/stacks/productivity | No UI |
 | **🛠️ utilities** (7) | | | | |
-| ├─ Vaultwarden | Password manager | ✓ | /opt/stacks/utilities | bitwarden.${DOMAIN} |
+| ├─ Vaultwarden | Password manager | ✗ | /opt/stacks/utilities | bitwarden.${DOMAIN} |
 | ├─ Backrest | Backup (restic) | ✓ | /opt/stacks/utilities, /mnt/backups | backrest.${DOMAIN} |
 | ├─ Duplicati | Encrypted backups | ✓ | /opt/stacks/utilities, /mnt/backups | duplicati.${DOMAIN} |
 | ├─ Code Server | VS Code in browser | ✓ | /opt/stacks/utilities | code.${DOMAIN} |

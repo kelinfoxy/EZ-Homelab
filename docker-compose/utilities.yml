@@ -128,6 +128,7 @@ services:
 
   # Bitwarden (Vaultwarden) - Password manager
   # Access at: https://bitwarden.${DOMAIN}
+  # Note: SSO disabled for browser extension and mobile app compatibility
   vaultwarden:
     image: vaultwarden/server:latest
     container_name: vaultwarden
@@ -155,7 +156,8 @@ services:
       - "traefik.http.routers.vaultwarden.rule=Host(`bitwarden.${DOMAIN}`)"
       - "traefik.http.routers.vaultwarden.entrypoints=websecure"
       - "traefik.http.routers.vaultwarden.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.vaultwarden.middlewares=authelia@docker"
+      # SSO disabled for browser extension and mobile app compatibility
+      # - "traefik.http.routers.vaultwarden.middlewares=authelia@docker"
       - "traefik.http.services.vaultwarden.loadbalancer.server.port=80"
 
   # Authelia Redis - Session storage for Authelia
