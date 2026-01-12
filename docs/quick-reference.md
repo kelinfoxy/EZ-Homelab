@@ -1,17 +1,29 @@
 # Quick Reference Guide
 
-## Common Commands
+## Stack Overview
 
-**Note**: Replace `infrastructure.yml` with your compose file name:
-- `infrastructure.yml` - Core services
-- `media.yml` - Media stack
-- `monitoring.yml` - Monitoring services
-- `development.yml` - Development tools
+Your homelab uses separate stacks for organization:
+
+- **`core.yml`** - Essential infrastructure (Traefik, Authelia, DuckDNS, Gluetun)
+- **`infrastructure.yml`** - Management tools (Dockge, Portainer, Pi-hole, etc.)
+- **`dashboards.yml`** - Dashboard services (Homepage, Homarr)
+- **`media.yml`** - Media services (Plex, Jellyfin, Sonarr, Radarr, etc.)
+- **`media-extended.yml`** - Additional media tools
+- **`homeassistant.yml`** - Home automation
+- **`productivity.yml`** - Productivity apps (Nextcloud, Gitea, etc.)
+- **`monitoring.yml`** - Monitoring stack (Grafana, Prometheus)
+- **`utilities.yml`** - Utility services (backups, code server)
+- **`development.yml`** - Development tools
+
+> The default stacks offer a wide selection of services  
+And can be modified by the AI suit your preferences.
+
+## Common Commands
 
 ### Service Management
 
 ```bash
-# Start all services in a compose file (from stack directory)
+# Start all services in a stack (from stack directory)
 cd /opt/stacks/stack-name/
 docker compose up -d
 
@@ -54,18 +66,25 @@ docker compose down -v
 docker compose -f /opt/stacks/stack-name/docker-compose.yml down -v
 ```
 
-**Note:** There's more than one way to manage containers - use whichever is most convenient:
-- Navigate to `/opt/stacks/stack-name/` and use short commands
-- Use full paths with `-f` flag from anywhere in the system
-
 ### Monitoring
 
+> Tip: install the Dozzle service for viewing live logs
+
 ```bash
-# View logs
-docker compose -f docker-compose/file.yml logs -f service-name
+# View logs for entire stack
+cd /opt/stacks/stack-name/
+docker compose logs -f
+
+# View logs for specific service
+cd /opt/stacks/stack-name/
+docker compose logs -f service-name
+
+# View last 100 lines
+cd /opt/stacks/stack-name/
+docker compose logs --tail=100 service-name
 
 # Check service status
-docker compose -f docker-compose/file.yml ps
+docker compose -f /opt/stacks/stack-name/docker-compose.yml ps
 
 # View resource usage
 docker stats
@@ -76,29 +95,33 @@ docker inspect container-name
 
 ### Updates
 
+> Tip: Install the Watchtower service for automatic updates
+
 ```bash
-# Pull latest images
-docker compose -f docker-compose/file.yml pull
+# Pull latest images for stack
+cd /opt/stacks/stack-name/
+docker compose pull
 
 # Pull and update specific service
-docker compose -f docker-compose/file.yml pull service-name
-docker compose -f docker-compose/file.yml up -d service-name
+cd /opt/stacks/stack-name/
+docker compose pull service-name
+docker compose up -d service-name
 ```
 
 ### Network Management
 
 ```bash
-# List networks
+# List all networks
 docker network ls
 
 # Inspect network
-docker network inspect homelab-network
+docker network inspect traefik-network
 
-# Create network
+# Create network (if needed)
 docker network create network-name
 
-# Remove network
-docker network rm network-name
+# Remove unused networks
+docker network prune
 ```
 
 ### Volume Management
@@ -110,16 +133,20 @@ docker volume ls
 # Inspect volume
 docker volume inspect volume-name
 
-# Remove volume
-docker volume rm volume-name
+# Remove unused volumes
+docker volume prune
 
 # Backup volume
-docker run --rm -v volume-name:/data -v $(pwd)/backups:/backup \
-  busybox tar czf /backup/backup.tar.gz /data
+docker run --rm \
+  -v volume-name:/data \
+  -v $(pwd)/backups:/backup \
+  busybox tar czf /backup/volume-backup.tar.gz /data
 
 # Restore volume
-docker run --rm -v volume-name:/data -v $(pwd)/backups:/backup \
-  busybox tar xzf /backup/backup.tar.gz -C /
+docker run --rm \
+  -v volume-name:/data \
+  -v $(pwd)/backups:/backup \
+  busybox tar xzf /backup/volume-backup.tar.gz -C /
 ```
 
 ### System Maintenance
@@ -131,31 +158,33 @@ docker system df
 # Clean up unused resources
 docker system prune
 
-# Clean up everything (careful!)
+# Clean up everything (use carefully!)
 docker system prune -a --volumes
 
 # Remove unused images
-docker image prune
-
-# Remove unused volumes
-docker volume prune
-
-# Remove unused networks
-docker network prune
+docker image prune -a
 ```
 
 ## Port Reference
 
-### Infrastructure Services
-- **80**: Nginx Proxy Manager (HTTP)
-- **443**: Nginx Proxy Manager (HTTPS)
-- **81**: Nginx Proxy Manager (Admin)
-- **53**: Pi-hole (DNS)
-- **8080**: Pi-hole (Web UI)
-- **9000**: Portainer
-- **9443**: Portainer (HTTPS)
+### Core Infrastructure (core.yml)
+- **80/443**: Traefik (reverse proxy)
+- **8080**: Traefik dashboard
 
-### Media Services
+### Infrastructure Services (infrastructure.yml)
+- **5001**: Dockge (stack manager)
+- **9000/9443**: Portainer (Docker UI)
+- **53**: Pi-hole (DNS)
+- **8082**: Pi-hole (web UI)
+- **9999**: Watchtower (auto-updates)
+- **8000**: Dozzle (log viewer)
+- **61208**: Glances (system monitor)
+
+### Dashboard Services (dashboards.yml)
+- **3000**: Homepage dashboard
+- **7575**: Homarr dashboard
+
+### Media Services (media.yml)
 - **32400**: Plex
 - **8096**: Jellyfin
 - **8989**: Sonarr
@@ -163,128 +192,196 @@ docker network prune
 - **9696**: Prowlarr
 - **8081**: qBittorrent
 
-### Monitoring Services
+### Extended Media (media-extended.yml)
+- **8787**: Readarr
+- **8686**: Lidarr
+- **5299**: Lazy Librarian
+- **8090**: Mylar3
+- **8083**: Calibre-Web
+- **5055**: Jellyseerr
+- **9697**: FlareSolverr
+- **7889**: Tdarr Server
+- **8265**: Unmanic
+
+### Home Automation (homeassistant.yml)
+- **8123**: Home Assistant
+- **6052**: ESPHome
+- **8843**: TasmoAdmin
+- **1880**: Node-RED
+- **1883/9001**: Mosquitto (MQTT)
+- **8124**: Zigbee2MQTT
+- **8081**: MotionEye
+
+### Productivity (productivity.yml)
+- **8080**: Nextcloud
+- **9929**: Mealie
+- **8084**: WordPress
+- **3000**: Gitea
+- **8085**: DokuWiki
+- **8086**: BookStack
+- **8087**: MediaWiki
+- **3030**: Form.io
+
+### Monitoring (monitoring.yml)
 - **9090**: Prometheus
 - **3000**: Grafana
-- **9100**: Node Exporter
-- **8082**: cAdvisor
-- **3001**: Uptime Kuma
 - **3100**: Loki
+- **9080**: Promtail
+- **9100**: Node Exporter
+- **8080**: cAdvisor
+- **3001**: Uptime Kuma
 
-### Development Services
+### Utilities (utilities.yml)
+- **7979**: Backrest (backups)
+- **8200**: Duplicati (backups)
 - **8443**: Code Server
+- **5000**: Form.io
+- **3001**: Uptime Kuma
+
+### Development (development.yml)
 - **8929**: GitLab
-- **2222**: GitLab SSH
 - **5432**: PostgreSQL
 - **6379**: Redis
 - **5050**: pgAdmin
 - **8888**: Jupyter Lab
-- **1880**: Node-RED
 
 ## Environment Variables Quick Reference
 
 ```bash
-# User/Group
-PUID=1000              # Your user ID (get with: id -u)
-PGID=1000              # Your group ID (get with: id -g)
+# User IDs (get with: id -u and id -g)
+PUID=1000              # Your user ID
+PGID=1000              # Your group ID
 
 # General
 TZ=America/New_York    # Your timezone
-SERVER_IP=192.168.1.100  # Server IP address
+DOMAIN=yourdomain.duckdns.org  # Your domain
 
-# Paths
-USERDIR=/home/username/homelab
-MEDIADIR=/mnt/media
-DOWNLOADDIR=/mnt/downloads
-PROJECTDIR=/home/username/projects
+# DuckDNS
+DUCKDNS_TOKEN=your-token
+DUCKDNS_SUBDOMAINS=yourdomain
+
+# Authelia
+AUTHELIA_JWT_SECRET=64-char-secret
+AUTHELIA_SESSION_SECRET=64-char-secret
+AUTHELIA_STORAGE_ENCRYPTION_KEY=64-char-secret
+
+# Database passwords
+MYSQL_ROOT_PASSWORD=secure-password
+POSTGRES_PASSWORD=secure-password
+
+# API Keys (service-specific)
+SONARR_API_KEY=your-api-key
+RADARR_API_KEY=your-api-key
 ```
 
 ## Network Setup
 
 ```bash
-# Create all networks at once
+# Create all required networks (setup script does this)
+docker network create traefik-network
 docker network create homelab-network
 docker network create media-network
-docker network create monitoring-network
-docker network create database-network
+docker network create dockerproxy-network
 ```
 
 ## Service URLs
 
-After starting services, access them at:
+After deployment, access services at:
 
 ```
+Core Infrastructure:
+https://traefik.${DOMAIN}     - Traefik dashboard
+https://auth.${DOMAIN}        - Authelia login
+
 Infrastructure:
-http://SERVER_IP:81        - Nginx Proxy Manager
-http://SERVER_IP:8080      - Pi-hole
-http://SERVER_IP:9000      - Portainer
+https://dockge.${DOMAIN}       - Stack manager (PRIMARY)
+https://portainer.${DOMAIN}    - Docker UI (secondary)
+http://${SERVER_IP}:8082       - Pi-hole admin
+https://dozzle.${DOMAIN}       - Log viewer
+https://glances.${DOMAIN}      - System monitor
+
+Dashboards:
+https://home.${DOMAIN}         - Homepage dashboard
+https://homarr.${DOMAIN}       - Homarr dashboard
 
 Media:
-http://SERVER_IP:32400/web - Plex
-http://SERVER_IP:8096      - Jellyfin
-http://SERVER_IP:8989      - Sonarr
-http://SERVER_IP:7878      - Radarr
-http://SERVER_IP:9696      - Prowlarr
-http://SERVER_IP:8081      - qBittorrent
+https://plex.${DOMAIN}         - Plex (no auth)
+https://jellyfin.${DOMAIN}     - Jellyfin (no auth)
+https://sonarr.${DOMAIN}       - TV automation
+https://radarr.${DOMAIN}       - Movie automation
+https://prowlarr.${DOMAIN}     - Indexer manager
+https://qbit.${DOMAIN}         - Torrent client
+
+Productivity:
+https://nextcloud.${DOMAIN}    - File sync
+https://git.${DOMAIN}          - Git service
+https://docs.${DOMAIN}         - Documentation
 
 Monitoring:
-http://SERVER_IP:9090      - Prometheus
-http://SERVER_IP:3000      - Grafana
-http://SERVER_IP:3001      - Uptime Kuma
-
-Development:
-http://SERVER_IP:8443      - Code Server
-http://SERVER_IP:8929      - GitLab
-http://SERVER_IP:5050      - pgAdmin
-http://SERVER_IP:8888      - Jupyter Lab
-http://SERVER_IP:1880      - Node-RED
+https://grafana.${DOMAIN}      - Metrics dashboard
+https://prometheus.${DOMAIN}   - Metrics collection
+https://status.${DOMAIN}       - Uptime monitoring
 ```
 
 ## Troubleshooting Quick Fixes
 
 ### Service won't start
 ```bash
-# 1. Check logs
-docker compose -f docker-compose/file.yml logs service-name
+# Check logs
+docker compose -f /opt/stacks/stack-name/docker-compose.yml logs service-name
 
-# 2. Validate configuration
-docker compose -f docker-compose/file.yml config
+# Validate configuration
+docker compose -f /opt/stacks/stack-name/docker-compose.yml config
 
-# 3. Check what's using the port
-sudo netstat -tlnp | grep PORT_NUMBER
+# Check port conflicts
+sudo netstat -tlnp | grep :PORT
+
+# Restart Docker
+sudo systemctl restart docker
 ```
 
 ### Permission errors
 ```bash
-# Check your IDs
-id -u  # Should match PUID in .env
-id -g  # Should match PGID in .env
+# Check your IDs match .env
+id -u  # Should match PUID
+id -g  # Should match PGID
 
 # Fix ownership
-sudo chown -R 1000:1000 ./config/service-name
+sudo chown -R $USER:$USER /opt/stacks/stack-name/
 ```
 
 ### Network issues
 ```bash
 # Check network exists
-docker network inspect homelab-network
+docker network inspect traefik-network
 
 # Recreate network
-docker network rm homelab-network
-docker network create homelab-network
-docker compose -f docker-compose/file.yml up -d
+docker network rm traefik-network
+docker network create traefik-network
 ```
 
 ### Container keeps restarting
 ```bash
 # Watch logs in real-time
-docker compose -f docker-compose/file.yml logs -f service-name
+docker compose -f /opt/stacks/stack-name/docker-compose.yml logs -f service-name
 
 # Check resource usage
 docker stats container-name
 
 # Inspect container
-docker inspect container-name | less
+docker inspect container-name | jq .State
+```
+
+### SSL certificate issues
+```bash
+# Check Traefik logs
+docker logs traefik
+
+# Check acme.json permissions
+ls -la /opt/stacks/core/traefik/acme.json
+
+# Force certificate renewal
+# Remove acme.json and restart Traefik
 ```
 
 ## Testing GPU Support (NVIDIA)
@@ -293,33 +390,36 @@ docker inspect container-name | less
 # Test if nvidia-container-toolkit works
 docker run --rm --gpus all nvidia/cuda:12.0.0-base-ubuntu22.04 nvidia-smi
 
-# If successful, you should see your GPU info
+# Should show your GPU info if working
 ```
 
 ## Backup Commands
 
 ```bash
 # Backup all config directories
-tar czf backup-config-$(date +%Y%m%d).tar.gz config/
+tar czf backup-config-$(date +%Y%m%d).tar.gz /opt/stacks/
 
-# Backup a specific volume
+# Backup specific volume
 docker run --rm \
   -v volume-name:/data \
-  -v $(pwd)/backups:/backup \
+  -v /mnt/backups:/backup \
   busybox tar czf /backup/volume-name-$(date +%Y%m%d).tar.gz /data
 
-# Backup .env file (store securely!)
+# Backup .env file securely
 cp .env .env.backup
 ```
 
 ## Health Checks
 
 ```bash
-# Check all container health status
+# Check all container health
 docker ps --format "table {{.Names}}\t{{.Status}}"
 
 # Check specific service health
 docker inspect --format='{{json .State.Health}}' container-name | jq
+
+# Test service connectivity
+curl -k https://service.${DOMAIN}
 ```
 
 ## Resource Limits
@@ -330,7 +430,7 @@ Add to service definition if needed:
 deploy:
   resources:
     limits:
-      cpus: '2'
+      cpus: '2.0'
       memory: 4G
     reservations:
       cpus: '0.5'
@@ -339,28 +439,33 @@ deploy:
 
 ## Common Patterns
 
-### Add a new service
-1. Choose the appropriate compose file
+### Add a new service to existing stack
+1. Edit `/opt/stacks/stack-name/docker-compose.yml`
 2. Add service definition following existing patterns
-3. Use environment variables from .env
-4. Connect to homelab-network
-5. Pin specific image version
-6. Add labels for organization
-7. Test: `docker compose -f file.yml config`
-8. Deploy: `docker compose -f file.yml up -d service-name`
+3. Use environment variables from `.env`
+4. Connect to appropriate networks
+5. Add Traefik labels for routing
+6. Test: `docker compose config`
+7. Deploy: `docker compose up -d`
 
-### Update a service version
-1. Edit compose file with new version
-2. Pull new image: `docker compose -f file.yml pull service-name`
-3. Recreate: `docker compose -f file.yml up -d service-name`
-4. Check logs: `docker compose -f file.yml logs -f service-name`
+### Create a new stack
+1. Create directory: `mkdir /opt/stacks/new-stack`
+2. Copy compose file: `cp docker-compose/template.yml /opt/stacks/new-stack/docker-compose.yml`
+3. Copy env: `cp .env /opt/stacks/new-stack/`
+4. Edit configuration
+5. Deploy: `cd /opt/stacks/new-stack && docker compose up -d`
+
+### Update service version
+1. Edit compose file with new image tag
+2. Pull new image: `docker compose pull service-name`
+3. Recreate: `docker compose up -d service-name`
+4. Check logs: `docker compose logs -f service-name`
 
 ### Remove a service
-1. Stop service: `docker compose -f file.yml stop service-name`
-2. Remove service: `docker compose -f file.yml rm service-name`
-3. Remove from compose file
+1. Stop service: `docker compose stop service-name`
+2. Remove from compose file
+3. Remove service: `docker compose rm service-name`
 4. Optional: Remove volumes: `docker volume rm volume-name`
-5. Optional: Remove config: `rm -rf config/service-name`
 
 ## AI Assistant Usage in VS Code
 
@@ -372,41 +477,42 @@ deploy:
 - "Generate a compose file for Home Assistant"
 
 ### The AI will:
-- Check existing services
-- Follow naming conventions
-- Avoid port conflicts
-- Use proper network configuration
-- Include health checks
-- Add documentation comments
-- Suggest related services
+- Check existing services and avoid conflicts
+- Follow naming conventions and patterns
+- Configure Traefik labels automatically
+- Apply Authelia middleware appropriately
+- Suggest proper volume mounts
+- Add services to Homepage dashboard
 
 ## Quick Deployment
 
 ### Minimal setup
 ```bash
-# 1. Clone and configure
-# Note: Replace 'kelinfoxy' with your username if you forked this repository
+# Clone and configure
 git clone https://github.com/kelinfoxy/AI-Homelab.git
 cd AI-Homelab
+sudo ./scripts/setup-homelab.sh
 cp .env.example .env
-nano .env  # Edit values
+nano .env
 
-# 2. Create network
-docker network create homelab-network
-
-# 3. Start Portainer (for container management)
-docker compose -f docker-compose/infrastructure.yml up -d portainer
-
-# 4. Access at http://SERVER_IP:9000
+# Deploy core only
+mkdir -p /opt/stacks/core
+cp docker-compose/core.yml /opt/stacks/core/docker-compose.yml
+cp -r config-templates/traefik /opt/stacks/core/
+cp -r config-templates/authelia /opt/stacks/core/
+cp .env /opt/stacks/core/
+cd /opt/stacks/core && docker compose up -d
 ```
 
 ### Full stack deployment
 ```bash
-# After minimal setup, deploy everything:
+# After core is running, deploy all stacks
+# Use Dockge UI at https://dockge.yourdomain.duckdns.org
+# Or deploy manually:
 docker compose -f docker-compose/infrastructure.yml up -d
+docker compose -f docker-compose/dashboards.yml up -d
 docker compose -f docker-compose/media.yml up -d
-docker compose -f docker-compose/monitoring.yml up -d
-docker compose -f docker-compose/development.yml up -d
+# etc.
 ```
 
 ## Maintenance Schedule
@@ -415,12 +521,7 @@ docker compose -f docker-compose/development.yml up -d
 - Watchtower checks for updates at 4 AM
 
 ### Weekly
-- Review logs for each stack:
-  ```bash
-  docker compose -f docker-compose/infrastructure.yml logs --tail=100
-  docker compose -f docker-compose/media.yml logs --tail=100
-  docker compose -f docker-compose/monitoring.yml logs --tail=100
-  ```
+- Review logs for each stack
 - Check disk space: `docker system df`
 
 ### Monthly
@@ -432,3 +533,21 @@ docker compose -f docker-compose/development.yml up -d
 - Full system audit
 - Documentation review
 - Performance optimization
+
+## Emergency Commands
+
+```bash
+# Stop all containers
+docker stop $(docker ps -q)
+
+# Remove all containers
+docker rm $(docker ps -aq)
+
+# Remove all images
+docker rmi $(docker images -q)
+
+# Reset Docker (nuclear option)
+sudo systemctl stop docker
+sudo rm -rf /var/lib/docker
+sudo systemctl start docker
+```

@@ -46,13 +46,13 @@ log_info "Setting up AI-Homelab for user: $ACTUAL_USER"
 echo ""
 
 # Step 1: System Update
-log_info "Step 1/8: Updating system packages..."
+log_info "Step 1/9: Updating system packages..."
 apt-get update && apt-get upgrade -y
 log_success "System updated successfully"
 echo ""
 
 # Step 2: Install Required Packages
-log_info "Step 2/8: Installing required packages..."
+log_info "Step 2/9: Installing required packages..."
 apt-get install -y \
     apt-transport-https \
     ca-certificates \
@@ -64,14 +64,15 @@ apt-get install -y \
     openssh-server \
     sudo \
     pciutils \
-    net-tools
+    net-tools \
+    ufw
 
 log_success "Required packages installed"
 echo ""
 
 # Step 3: Install Docker
-log_info "Step 3/8: Installing Docker..."
-if command -v docker &> /dev/null; then
+log_info "Step 3/9: Installing Docker..."
+if command -v docker &> /dev/null && docker --version &> /dev/null; then
     log_warning "Docker is already installed ($(docker --version))"
 else
     # Add Docker's official GPG key
@@ -94,7 +95,7 @@ fi
 echo ""
 
 # Step 4: Configure User Groups
-log_info "Step 4/8: Configuring user groups..."
+log_info "Step 4/9: Configuring user groups..."
 
 # Add user to sudo group if not already
 if groups "$ACTUAL_USER" | grep -q '\bsudo\b'; then
@@ -113,8 +114,32 @@ else
 fi
 echo ""
 
-# Step 5: Configure SSH
-log_info "Step 5/8: Configuring SSH server..."
+# Step 5: Configure Firewall
+log_info "Step 5/9: Configuring firewall..."
+# Enable UFW if not already enabled
+if ufw status | grep -q "Status: active"; then
+    log_warning "Firewall is already active"
+else
+    ufw --force enable
+    log_success "Firewall enabled"
+fi
+
+# Allow SSH if not already allowed
+if ufw status | grep -q "22/tcp"; then
+    log_warning "SSH port 22 is already allowed"
+else
+    ufw allow ssh
+    log_success "SSH port allowed in firewall"
+fi
+
+# Allow HTTP/HTTPS for web services
+ufw allow 80/tcp
+ufw allow 443/tcp
+log_success "HTTP/HTTPS ports allowed in firewall"
+echo ""
+
+# Step 6: Configure SSH
+log_info "Step 6/9: Configuring SSH server..."
 systemctl enable ssh
 systemctl start ssh
 
@@ -128,8 +153,8 @@ else
 fi
 echo ""
 
-# Step 6: Detect and Install NVIDIA Drivers (if applicable)
-log_info "Step 6/8: Checking for NVIDIA GPU..."
+# Step 7: Detect and Install NVIDIA Drivers (if applicable)
+log_info "Step 7/9: Checking for NVIDIA GPU..."
 
 # Detect NVIDIA GPU
 if lspci | grep -i nvidia > /dev/null; then
@@ -137,47 +162,76 @@ if lspci | grep -i nvidia > /dev/null; then
     lspci | grep -i nvidia
     echo ""
     
-    log_warning "NVIDIA GPU found, but driver installation requires manual intervention."
-    log_info "For best results, please follow these steps manually:"
-    echo ""
-    echo "  1. Identify your GPU model from the output above"
-    echo "  2. Visit: https://www.nvidia.com/Download/index.aspx"
-    echo "  3. Download the official driver for your GPU"
-    echo "  4. Run the downloaded installer (example): sudo bash NVIDIA-Linux-x86_64-XXX.XX.run"
-    echo ""
-    log_info "After installing NVIDIA drivers, run:"
-    echo "  sudo apt-get install -y nvidia-container-toolkit"
-    echo "  sudo nvidia-ctk runtime configure --runtime=docker"
-    echo "  sudo systemctl restart docker"
-    echo ""
-    log_warning "Skipping automatic NVIDIA driver installation to avoid conflicts"
+    # Check if NVIDIA drivers are already installed
+    if nvidia-smi &> /dev/null; then
+        log_warning "NVIDIA drivers are already installed"
+        NVIDIA_INSTALLED=true
+    else
+        log_info "Installing NVIDIA drivers..."
+        # Install NVIDIA driver (non-interactive)
+        apt-get install -y nvidia-driver
+        log_success "NVIDIA drivers installed"
+        NVIDIA_INSTALLED=false
+    fi
+    
+    # Check if NVIDIA Container Toolkit is installed
+    if command -v nvidia-container-runtime &> /dev/null; then
+        log_warning "NVIDIA Container Toolkit is already installed"
+    else
+        log_info "Installing NVIDIA Container Toolkit..."
+        # Install NVIDIA Container Toolkit
+        curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+        curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+          sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+          tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+        
+        apt-get update
+        apt-get install -y nvidia-container-toolkit
+        
+        # Configure Docker to use NVIDIA runtime
+        nvidia-ctk runtime configure --runtime=docker
+        systemctl restart docker
+        
+        log_success "NVIDIA Container Toolkit installed and configured"
+    fi
+    
+    if [ "$NVIDIA_INSTALLED" = false ]; then
+        log_warning "NVIDIA drivers were installed. A reboot may be required for changes to take effect."
+    fi
     echo ""
 else
     log_info "No NVIDIA GPU detected, skipping driver installation"
     echo ""
 fi
 
-# Step 7: Create Directory Structure
-log_info "Step 7/8: Creating directory structure..."
+# Step 8: Create Directory Structure
+log_info "Step 8/9: Creating directory structure..."
 mkdir -p /opt/stacks
 mkdir -p /opt/dockge/data
-mkdir -p /mnt/media
-mkdir -p /mnt/downloads
+mkdir -p /mnt/media/{movies,tv,music,books,photos}
+mkdir -p /mnt/downloads/{complete,incomplete}
+mkdir -p /mnt/backups
+mkdir -p /mnt/surveillance
+mkdir -p /mnt/git
 
 # Set ownership
 chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks
 chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/dockge
 chown -R "$ACTUAL_USER:$ACTUAL_USER" /mnt/media
 chown -R "$ACTUAL_USER:$ACTUAL_USER" /mnt/downloads
+chown -R "$ACTUAL_USER:$ACTUAL_USER" /mnt/backups
+chown -R "$ACTUAL_USER:$ACTUAL_USER" /mnt/surveillance
+chown -R "$ACTUAL_USER:$ACTUAL_USER" /mnt/git
 
 log_success "Directory structure created"
 echo ""
 
-# Step 8: Create Docker Networks
-log_info "Step 8/8: Creating Docker networks..."
+# Step 9: Create Docker Networks
+log_info "Step 9/9: Creating Docker networks..."
 su - "$ACTUAL_USER" -c "docker network create homelab-network 2>/dev/null || true"
 su - "$ACTUAL_USER" -c "docker network create traefik-network 2>/dev/null || true"
 su - "$ACTUAL_USER" -c "docker network create media-network 2>/dev/null || true"
+su - "$ACTUAL_USER" -c "docker network create dockerproxy-network 2>/dev/null || true"
 log_success "Docker networks created"
 echo ""
 
@@ -199,27 +253,18 @@ echo "  3. Edit the .env file with your configuration:"
 echo "     cp .env.example .env"
 echo "     nano .env"
 echo ""
-echo "  4. Deploy the core infrastructure stack:"
-echo "     mkdir -p /opt/stacks/core"
-echo "     cp docker-compose/core.yml /opt/stacks/core/docker-compose.yml"
-echo "     cp -r config-templates/traefik /opt/stacks/core/"
-echo "     cp -r config-templates/authelia /opt/stacks/core/"
-echo "     cd /opt/stacks/core && docker compose up -d"
+echo "  4. Run the deployment script:"
+echo "     ./scripts/deploy-homelab.sh"
 echo ""
-echo "  5. Deploy the infrastructure stack (includes Dockge):"
-echo "     mkdir -p /opt/stacks/infrastructure"
-echo "     cp docker-compose/infrastructure.yml /opt/stacks/infrastructure/docker-compose.yml"
-echo "     cd /opt/stacks/infrastructure && docker compose up -d"
-echo ""
-echo "  6. Access Dockge at: https://dockge.yourdomain.duckdns.org"
+echo "  5. Access Dockge at: https://dockge.yourdomain.duckdns.org"
 echo "     (Use your configured domain and Authelia credentials)"
 echo ""
 echo "=========================================="
 
-if lspci | grep -i nvidia > /dev/null; then
+if lspci | grep -i nvidia > /dev/null && [ "$NVIDIA_INSTALLED" = false ]; then
     echo ""
-    log_warning "REMINDER: Manual NVIDIA driver installation required"
-    echo "  See instructions above in Step 6"
+    log_warning "REMINDER: Reboot required for NVIDIA driver changes"
+    echo "  Run: sudo reboot"
     echo "=========================================="
 fi
 

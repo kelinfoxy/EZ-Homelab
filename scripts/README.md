@@ -2,12 +2,14 @@
 
 This directory contains two scripts for automated AI-Homelab deployment:
 
-1. **setup-homelab.sh** - System preparation (optional, for fresh installations)
+1. **setup-homelab.sh** - System preparation
 2. **deploy-homelab.sh** - Core infrastructure deployment
 
 ## setup-homelab.sh
 
-Automated first-run setup script for preparing a fresh Debian installation for AI-Homelab deployment. **This is optional** - skip if Docker is already installed and configured.
+Automated first-run setup script for preparing a fresh Debian installation for AI-Homelab deployment. 
+> You can skip this if you have the following completed already.  
+Or run it to verify.
 
 ### What It Does
 
@@ -23,14 +25,12 @@ Automated first-run setup script for preparing a fresh Debian installation for A
 ### Usage
 
 ```bash
-# Download the repository
-git clone https://github.com/kelinfoxy/AI-Homelab.git
-cd AI-Homelab
+cd ~/AI-Homelab
 
 # Make the script executable (if needed)
 chmod +x scripts/setup-homelab.sh
 
-# Run with sudo
+# Run with sudo 
 sudo ./scripts/setup-homelab.sh
 ```
 
