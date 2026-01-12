@@ -12,22 +12,34 @@ For most users, the automated setup script handles everything:
 - **Internet connection**
 - **VS Code with GitHub Copilot** (for AI assistance)
 
-### One-Command Setup
+### Simple Setup
 
 1. **Connect to your server** via SSH
-2. **Run the setup script**:
+2. **Install git if needed**
+   ```bash
+      sudo apt update && sudo apt upgrade -y && sudo apt install git
+
+4. **Run the setup script**:
    ```bash
    git clone https://github.com/kelinfoxy/AI-Homelab.git
    cd AI-Homelab
    sudo ./scripts/setup-homelab.sh
    ```
-3. **Log out and back in** (or run `newgrp docker`)
-4. **Configure environment**:
+5. **Log out and back in** (or run `newgrp docker`)
+6. **Generate Authelia/Authentik Secrets
+   ```bash
+   # TODO: provide instructions for generating required secrets
+   AUTHELIA_JWT_SECRET=your-jwt-secret-here-64-chars
+   AUTHELIA_SESSION_SECRET=your-session-secret-here-64-chars
+   AUTHELIA_STORAGE_ENCRYPTION_KEY=your-encryption-key-here-64-chars
+   AUTHENTIK_SECRET_KEY=your-authentik-secret-key-here-100-chars
+
+8. **Configure environment**:
    ```bash
    cp .env.example .env
    nano .env  # Edit with your settings
    ```
-5. **Deploy core services**:
+9. **Deploy core services**:
    ```bash
    ./scripts/deploy-homelab.sh
    ```
