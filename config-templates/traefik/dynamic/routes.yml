@@ -1,0 +1,31 @@
+# Traefik Dynamic Configuration
+# Copy to /opt/stacks/traefik/dynamic/routes.yml
+# Add custom routes here that aren't defined via Docker labels
+
+http:
+  routers:
+    # Example custom route
+    # custom-service:
+    #   rule: "Host(`custom.example.com`)"
+    #   entryPoints:
+    #     - websecure
+    #   middlewares:
+    #     - authelia@docker
+    #   tls:
+    #     certResolver: letsencrypt
+    #   service: custom-service
+  
+  services:
+    # Example custom service
+    # custom-service:
+    #   loadBalancer:
+    #     servers:
+    #       - url: "http://192.168.1.100:8080"
+  
+  middlewares:
+    # Additional middlewares can be defined here
+    # Example: Rate limiting
+    # rate-limit:
+    #   rateLimit:
+    #     average: 100
+    #     burst: 50

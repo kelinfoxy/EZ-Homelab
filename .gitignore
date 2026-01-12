@@ -1,0 +1,76 @@
+# Environment variables and secrets
+.env
+*.env
+!.env.example
+
+# Config directories with sensitive data
+config/*/secrets/
+config/*/*.key
+config/*/*.pem
+config/*/*.crt
+config/*/db/
+
+# Backup files
+*.backup
+*.bak
+backups/
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Editor files
+.vscode/
+.idea/
+*.sublime-*
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Docker volumes (if locally mounted)
+volumes/
+
+# Documentation builds
+docs/_build/
+docs/.doctrees/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Database files
+*.sqlite
+*.db
+
+# Certificates and keys
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+
+# Monitoring data (if stored locally)
+prometheus-data/
+grafana-data/
+loki-data/

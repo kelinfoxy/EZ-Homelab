@@ -1,0 +1,49 @@
+# Homepage Configuration - Widgets
+# Copy to /opt/stacks/homepage/config/widgets.yaml
+# Displays system resources and other information
+
+---
+- logo:
+    icon: https://avatars.githubusercontent.com/u/...  # Your logo here
+
+- search:
+    provider: google
+    target: _blank
+
+- datetime:
+    text_size: xl
+    format:
+      dateStyle: long
+      timeStyle: short
+      hourCycle: h23
+
+- resources:
+    label: System
+    cpu: true
+    memory: true
+    disk: /
+    cputemp: true
+    uptime: true
+    units: metric
+
+- resources:
+    label: Storage
+    disk: /mnt/media
+    expanded: true
+
+- resources:
+    label: Downloads
+    disk: /mnt/downloads
+    expanded: true
+
+- openmeteo:
+    label: Weather
+    latitude: 40.7128
+    longitude: -74.0060
+    units: metric
+    cache: 5
+
+- unifi_console:
+    url: http://unifi:8443
+    username: {{HOMEPAGE_VAR_UNIFI_USER}}
+    password: {{HOMEPAGE_VAR_UNIFI_PASS}}
