@@ -242,29 +242,83 @@ environment:
 
 ```
 /opt/stacks/
-├── stack-name/
-│   ├── docker-compose.yml    # Stack definition
-│   ├── config/               # Service configurations
-│   ├── .env                  # Stack-specific secrets
-│   └── README.md            # Stack documentation
-├── traefik/
-│   ├── docker-compose.yml
-│   ├── traefik.yml          # Traefik static config
-│   ├── dynamic/             # Dynamic configuration
-│   │   └── routes.yml       # Route definitions
-│   ├── acme.json           # Let's Encrypt certificates
+├── core/                        # Core infrastructure (deploy FIRST)
+│   ├── docker-compose.yml       # DuckDNS, Traefik, Authelia, Gluetun
+│   ├── duckdns/                 # DuckDNS config
+│   ├── traefik/
+│   │   ├── traefik.yml          # Traefik static config
+│   │   ├── dynamic/             # Dynamic configuration
+│   │   │   └── routes.yml       # Route definitions
+│   │   └── acme.json           # Let's Encrypt certificates
+│   ├── authelia/
+│   │   ├── configuration.yml    # Authelia config
+│   │   └── users_database.yml   # User definitions
+│   ├── gluetun/                 # VPN config
+│   └── .env                     # Core secrets
+├── infrastructure/
+│   ├── docker-compose.yml       # Dockge, Portainer, Pi-hole, etc.
+│   ├── config/
 │   └── .env
-├── authelia/
-│   ├── docker-compose.yml
-│   ├── configuration.yml    # Authelia config
-│   ├── users_database.yml   # User definitions
+├── dashboards/
+│   ├── docker-compose.yml       # Homepage, Homarr
+│   ├── config/
 │   └── .env
-├── gluetun/
-│   ├── docker-compose.yml
-│   └── .env                # VPN credentials
-└── duckdns/
-    ├── docker-compose.yml
-    └── .env                # DuckDNS token
+├── media/
+│   ├── docker-compose.yml       # Plex, Jellyfin, Sonarr, Radarr, etc.
+│   ├── config/
+│   └── .env
+└── [other stacks...]
+```
+
+## Core Infrastructure Stack
+
+The `core` stack contains the four essential services that must be deployed **FIRST**:
+
+1. **DuckDNS** - Dynamic DNS updater for Let's Encrypt
+2. **Traefik** - Reverse proxy with automatic SSL certificates
+3. **Authelia** - SSO authentication for all services
+4. **Gluetun** - VPN client (Surfshark WireGuard) for secure downloads
+
+**Why combined in one stack?**
+- These services depend on each other
+- Simplifies initial deployment (one command)
+- Easier to manage core infrastructure together
+- Reduces network configuration complexity
+
+**Deployment:**
+```bash
+cd /opt/stacks/core/
+docker compose up -d
+```
+
+All other stacks depend on the core stack being deployed first.
+
+## Toggling SSO (Authelia) On/Off
+
+You can easily enable or disable SSO protection for any service by modifying its Traefik labels.
+
+### To Enable SSO
+Add the Authelia middleware label:
+```yaml
+labels:
+  - "traefik.http.routers.servicename.middlewares=authelia@docker"
+```
+
+### To Disable SSO
+Remove or comment out the middleware label:
+```yaml
+labels:
+  # - "traefik.http.routers.servicename.middlewares=authelia@docker"
+```
+
+**Common Use Cases:**
+- **Development**: Enable SSO to protect services during testing
+- **Production**: Disable SSO for services needing direct app/API access (Plex, Jellyfin)
+- **Quick Toggle**: AI can modify these labels when you ask to enable/disable SSO
+
+After changes, redeploy:
+```bash
+docker compose up -d
 ```
 
 ## VPN Integration with Gluetun

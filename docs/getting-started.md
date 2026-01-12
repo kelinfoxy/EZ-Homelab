@@ -134,91 +134,69 @@ docker network create dockerproxy-network
 docker network ls | grep -E "traefik|homelab|media|dockerproxy"
 ```
 
-## Step 7: Deploy Core Infrastructure (IN ORDER)
+## Step 7: Deploy Core Infrastructure Stack
 
-### 7.1 DuckDNS (Dynamic DNS)
-
-```bash
-# Create stack directory
-mkdir -p /opt/stacks/duckdns
-
-# Copy compose file
-cp ~/AI-Homelab/docker-compose/duckdns.yml /opt/stacks/duckdns/docker-compose.yml
-
-# Copy .env
-cp ~/AI-Homelab/.env /opt/stacks/duckdns/.env
-
-# Deploy
-cd /opt/stacks/duckdns
-docker compose up -d
-
-# Verify it's working
-docker compose logs -f
-# Should see: "Your IP was updated to X.X.X.X"
-```
-
-### 7.2 Traefik (Reverse Proxy with SSL)
+The **core** stack contains all essential services that must be deployed first: DuckDNS, Traefik, Authelia, and Gluetun.
 
 ```bash
-# Create stack directory with dynamic configs
-mkdir -p /opt/stacks/traefik/dynamic
+# Create core stack directory
+mkdir -p /opt/stacks/core/{duckdns,traefik/dynamic,authelia,gluetun}
 
-# Copy compose file
-cp ~/AI-Homelab/docker-compose/traefik.yml /opt/stacks/traefik/docker-compose.yml
+# Copy the core compose file
+cp ~/AI-Homelab/docker-compose/core.yml /opt/stacks/core/docker-compose.yml
 
 # Copy configuration templates
-cp ~/AI-Homelab/config-templates/traefik/traefik.yml /opt/stacks/traefik/
-cp ~/AI-Homelab/config-templates/traefik/dynamic/*.yml /opt/stacks/traefik/dynamic/
+cp ~/AI-Homelab/config-templates/traefik/traefik.yml /opt/stacks/core/traefik/
+cp ~/AI-Homelab/config-templates/traefik/dynamic/*.yml /opt/stacks/core/traefik/dynamic/
+cp ~/AI-Homelab/config-templates/authelia/*.yml /opt/stacks/core/authelia/
 
 # Create acme.json for SSL certificates
-touch /opt/stacks/traefik/acme.json
-chmod 600 /opt/stacks/traefik/acme.json
+touch /opt/stacks/core/traefik/acme.json
+chmod 600 /opt/stacks/core/traefik/acme.json
 
-# Copy .env
-cp ~/AI-Homelab/.env /opt/stacks/traefik/.env
+# Generate password hash for Authelia user
+docker run --rm authelia/authelia:4.37 authelia crypto hash generate argon2 --password 'yourpassword'
+# Copy the output hash
 
-# Deploy
-cd /opt/stacks/traefik
-docker compose up -d
-
-# Check logs
-docker compose logs -f
-# Should see Traefik starting and certificate resolver configured
-```
-
-### 7.3 Authelia (SSO Authentication)
-
-```bash
-# Create stack directory
-mkdir -p /opt/stacks/authelia
-
-# Copy compose file
-cp ~/AI-Homelab/docker-compose/authelia.yml /opt/stacks/authelia/docker-compose.yml
-
-# Copy configuration templates
-cp ~/AI-Homelab/config-templates/authelia/*.yml /opt/stacks/authelia/
-
-# Generate password hash for users_database.yml
-docker run --rm authelia/authelia:latest authelia crypto hash generate argon2 --password 'yourpassword'
-# Copy the hash and edit users_database.yml
-
-# Edit users_database.yml
-cd /opt/stacks/authelia
+# Edit users_database.yml with your username and password hash
+cd /opt/stacks/core/authelia
 nano users_database.yml
 # Replace the password hash with your generated one
+# Example:
+# users:
+#   admin:
+#     displayname: "Admin User"
+#     password: "$argon2id$v=19$m=65536..." # Your generated hash
+#     email: admin@example.com
+#     groups:
+#       - admins
 
-# Copy .env
-cp ~/AI-Homelab/.env /opt/stacks/authelia/.env
+# Copy .env file to core stack
+cp ~/AI-Homelab/.env /opt/stacks/core/.env
 
-# Deploy
+# Deploy the entire core stack
+cd /opt/stacks/core
 docker compose up -d
 
-# Check logs
+# Check logs to ensure everything is running
 docker compose logs -f
-# Test login at https://auth.yourdomain.duckdns.org
+
+# You should see:
+# - DuckDNS updating your IP
+# - Traefik starting and acquiring SSL certificates
+# - Authelia initializing
+# - Gluetun connecting to VPN
 ```
 
-### 7.4 Infrastructure Services (Dockge)
+**Verify Core Services:**
+- Traefik dashboard: `https://traefik.yourdomain.duckdns.org` (login with Authelia)
+- Authelia login: `https://auth.yourdomain.duckdns.org`
+- All services should have valid SSL certificates
+
+**Troubleshooting:**
+- If Traefik can't get certificates, check DuckDNS is updating your IP
+- If Authelia won't start, check your password hash and configuration.yml
+- If Gluetun fails, verify your Surfshark credentials in .env
 
 ```bash
 # Create stack directory
@@ -245,7 +223,57 @@ docker compose up -d dockge
 docker compose up -d
 ```
 
-## Step 8: Deploy Additional Stacks
+## Step 8: Deploy Infrastructure Services (Dockge)
+
+```bash
+# Create stack directory
+mkdir -p /opt/stacks/infrastructure
+
+# Copy compose file
+cp ~/AI-Homelab/docker-compose/infrastructure.yml /opt/stacks/infrastructure/docker-compose.yml
+
+# Create necessary subdirectories
+mkdir -p /opt/dockge/data
+mkdir -p /opt/stacks/pihole/{etc-pihole,etc-dnsmasq.d}
+mkdir -p /opt/stacks/glances/config
+
+# Copy .env
+cp ~/AI-Homelab/.env /opt/stacks/infrastructure/.env
+
+# Deploy Dockge first
+cd /opt/stacks/infrastructure
+docker compose up -d dockge
+
+# Access Dockge at https://dockge.yourdomain.duckdns.org (login with Authelia)
+
+# Deploy remaining infrastructure services
+docker compose up -d
+```
+
+## Step 9: Deploy Dashboards (Homepage & Homarr)
+
+```bash
+# Create stack directory
+mkdir -p /opt/stacks/dashboards/{homepage,homarr}
+
+# Copy compose file
+cp ~/AI-Homelab/docker-compose/dashboards.yml /opt/stacks/dashboards/docker-compose.yml
+
+# Copy Homepage configuration templates
+cp ~/AI-Homelab/config-templates/homepage/* /opt/stacks/dashboards/homepage/
+
+# Copy .env
+cp ~/AI-Homelab/.env /opt/stacks/dashboards/.env
+
+# Deploy
+cd /opt/stacks/dashboards
+docker compose up -d
+
+# Access Homepage at https://home.yourdomain.duckdns.org (login with Authelia)
+# Access Homarr at https://homarr.yourdomain.duckdns.org (login with Authelia)
+```
+
+## Step 10: Deploy Additional Stacks
 
 Now use Dockge UI at `https://dockge.yourdomain.duckdns.org` to deploy additional stacks, or continue with command line:
 

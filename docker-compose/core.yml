@@ -1,0 +1,137 @@
+# Core Infrastructure Stack
+# Essential services required for the homelab to function
+# Deploy this stack FIRST before any other services
+# Place in /opt/stacks/core/docker-compose.yml
+
+services:
+  # DuckDNS - Dynamic DNS updater
+  # Updates your public IP automatically for Let's Encrypt SSL
+  duckdns:
+    image: lscr.io/linuxserver/duckdns:latest
+    container_name: duckdns
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ}
+      - SUBDOMAINS=${DUCKDNS_SUBDOMAINS}  # Your subdomain(s), comma separated
+      - TOKEN=${DUCKDNS_TOKEN}            # Your DuckDNS token
+      - UPDATE_IP=ipv4                    # or ipv6, or both
+    volumes:
+      - /opt/stacks/core/duckdns:/config
+    labels:
+      - "homelab.category=infrastructure"
+      - "homelab.description=Dynamic DNS updater"
+
+  # Traefik - Reverse proxy with automatic SSL
+  # Routes all traffic and manages Let's Encrypt certificates
+  traefik:
+    image: traefik:v2.11
+    container_name: traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - traefik-network
+    ports:
+      - "80:80"      # HTTP
+      - "443:443"    # HTTPS
+      - "8080:8080"  # Dashboard (protected with Authelia)
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /opt/stacks/core/traefik/traefik.yml:/traefik.yml:ro
+      - /opt/stacks/core/traefik/dynamic:/dynamic:ro
+      - /opt/stacks/core/traefik/acme.json:/acme.json
+    environment:
+      - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}  # If using Cloudflare DNS challenge
+      - DUCKDNS_TOKEN=${DUCKDNS_TOKEN}        # If using DuckDNS
+    labels:
+      - "traefik.enable=true"
+      # Dashboard
+      - "traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN}`)"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.traefik.middlewares=authelia@docker"
+      - "traefik.http.routers.traefik.service=api@internal"
+      # Global HTTP to HTTPS redirect
+      - "traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)"
+      - "traefik.http.routers.http-catchall.entrypoints=web"
+      - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+    depends_on:
+      - duckdns
+
+  # Authelia - SSO authentication
+  # Protects all admin services with single sign-on
+  authelia:
+    image: authelia/authelia:4.37
+    container_name: authelia
+    restart: unless-stopped
+    networks:
+      - traefik-network
+    volumes:
+      - /opt/stacks/core/authelia/configuration.yml:/config/configuration.yml:ro
+      - /opt/stacks/core/authelia/users_database.yml:/config/users_database.yml
+      - authelia-data:/config
+    environment:
+      - TZ=${TZ}
+      - AUTHELIA_JWT_SECRET=${AUTHELIA_JWT_SECRET}
+      - AUTHELIA_SESSION_SECRET=${AUTHELIA_SESSION_SECRET}
+      - AUTHELIA_STORAGE_ENCRYPTION_KEY=${AUTHELIA_STORAGE_ENCRYPTION_KEY}
+      - AUTHELIA_NOTIFIER_SMTP_PASSWORD=${SMTP_PASSWORD}  # If using email notifications
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.authelia.rule=Host(`auth.${DOMAIN}`)"
+      - "traefik.http.routers.authelia.entrypoints=websecure"
+      - "traefik.http.routers.authelia.tls.certresolver=letsencrypt"
+      - "traefik.http.services.authelia.loadbalancer.server.port=9091"
+      # Authelia middleware for other services
+      - "traefik.http.middlewares.authelia.forwardauth.address=http://authelia:9091/api/verify?rd=https://auth.${DOMAIN}"
+      - "traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true"
+      - "traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email"
+    depends_on:
+      - traefik
+
+  # Gluetun - VPN client (Surfshark WireGuard)
+  # Routes download clients through VPN for security
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    networks:
+      - homelab-network
+      - traefik-network
+    ports:
+      - "8888:8888/tcp"  # HTTP proxy
+      - "8388:8388/tcp"  # Shadowsocks
+      - "8388:8388/udp"  # Shadowsocks
+      - "8080:8080"      # qBittorrent web UI
+      - "6881:6881"      # qBittorrent
+      - "6881:6881/udp"  # qBittorrent
+    volumes:
+      - /opt/stacks/core/gluetun:/gluetun
+    environment:
+      - VPN_SERVICE_PROVIDER=surfshark
+      - VPN_TYPE=wireguard
+      - WIREGUARD_PRIVATE_KEY=${SURFSHARK_PRIVATE_KEY}
+      - WIREGUARD_ADDRESSES=${SURFSHARK_ADDRESSES}
+      - SERVER_COUNTRIES=${VPN_SERVER_COUNTRIES:-Netherlands}
+      - TZ=${TZ}
+    labels:
+      - "homelab.category=infrastructure"
+      - "homelab.description=VPN client for secure downloads"
+
+volumes:
+  authelia-data:
+    driver: local
+
+networks:
+  traefik-network:
+    external: true
+  homelab-network:
+    external: true

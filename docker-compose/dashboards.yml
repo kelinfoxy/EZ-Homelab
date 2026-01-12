@@ -28,8 +28,8 @@ services:
       - "traefik.http.routers.homepage.rule=Host(`home.${DOMAIN}`)"
       - "traefik.http.routers.homepage.entrypoints=websecure"
       - "traefik.http.routers.homepage.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.homepage.middlewares=authelia@docker"
       - "traefik.http.services.homepage.loadbalancer.server.port=3000"
-      # No Authelia - make it the default landing page
 
   # Homarr - Modern dashboard
   # Access at: https://homarr.${DOMAIN}
@@ -54,8 +54,8 @@ services:
       - "traefik.http.routers.homarr.rule=Host(`homarr.${DOMAIN}`)"
       - "traefik.http.routers.homarr.entrypoints=websecure"
       - "traefik.http.routers.homarr.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.homarr.middlewares=authelia@docker"
       - "traefik.http.services.homarr.loadbalancer.server.port=7575"
-      # No Authelia - dashboard should be accessible
 
 networks:
   homelab-network:
