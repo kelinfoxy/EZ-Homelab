@@ -43,52 +43,80 @@ The infrastructure uses Traefik for reverse proxy with automatic SSL, Authelia f
    cd AI-Homelab
    ```
 
-2. **Create environment file:**
+2. **(Optional) Run first-run setup script:**
+   
+   **For fresh Debian installations only**, this automated script will:
+   - Update system and install Docker Engine + Compose V2
+   - Configure user groups (sudo, docker) and SSH access
+   - Detect NVIDIA GPU and provide driver installation guidance
+   - Create directory structure and Docker networks
+   
+   ```bash
+   sudo ./scripts/setup-homelab.sh
+   ```
+   
+   After completion, log out and log back in for group changes to take effect.
+   
+   **Skip this step if Docker is already installed and configured.**
+
+3. **Create and configure environment file:**
    ```bash
    cp .env.example .env
-   # Edit .env with your values (domain, API keys, passwords)
-   nano .env
+   nano .env  # Edit with your domain, API keys, and passwords
    ```
+   
+   **Required variables:**
+   - `DOMAIN` - Your DuckDNS domain (e.g., yourhomelab.duckdns.org)
+   - `DUCKDNS_TOKEN` - Token from DuckDNS.org
+   - `TZ` - Your timezone (e.g., America/New_York)
+   - Authelia user credentials
+   - API keys for services you plan to use
 
-3. **Create required directories:**
+4. **Run deployment script:**
+   
+   This automated script will:
+   - Create required directories
+   - Verify Docker networks exist
+   - Deploy core infrastructure (DuckDNS, Traefik, Authelia, Gluetun)
+   - Deploy infrastructure stack with Dockge
+   - Wait for Dockge to be ready
+   - Automatically open Dockge in your browser
+   
    ```bash
-   sudo mkdir -p /opt/stacks
-   sudo chown -R $USER:$USER /opt/stacks
+   ./scripts/deploy-homelab.sh
    ```
-
-4. **Create Docker networks:**
+   
+   The script will automatically open `https://dockge.yourdomain.duckdns.org` when ready.
+   
+   **Manual deployment alternative:**
    ```bash
-   docker network create homelab-network
-   docker network create traefik-network
-   docker network create media-network
-   ```
-
-5. **Deploy core infrastructure stack:**
-   ```bash
-   # Deploy the unified core stack (DuckDNS, Traefik, Authelia, Gluetun)
+   # Deploy core stack
    mkdir -p /opt/stacks/core
    cp docker-compose/core.yml /opt/stacks/core/docker-compose.yml
    cp -r config-templates/traefik /opt/stacks/core/
    cp -r config-templates/authelia /opt/stacks/core/
-   
-   # From within the directory
+   cp .env /opt/stacks/core/
    cd /opt/stacks/core && docker compose up -d
    
-   # OR from anywhere with full path
-   docker compose -f /opt/stacks/core/docker-compose.yml up -d
-   ```
-
-6. **Deploy infrastructure stack (includes Dockge):**
-   ```bash
+   # Deploy infrastructure stack
    mkdir -p /opt/stacks/infrastructure
    cp docker-compose/infrastructure.yml /opt/stacks/infrastructure/docker-compose.yml
+   cp .env /opt/stacks/infrastructure/
    cd /opt/stacks/infrastructure && docker compose up -d
+   
+   # Manually open: https://dockge.yourdomain.duckdns.org
    ```
 
-7. **Access Dockge:**
-   Open `https://dockge.yourdomain.duckdns.org` (use Authelia login)
+5. **Deploy additional stacks through Dockge:**
    
-   Now deploy remaining stacks through Dockge's UI!
+   Log in to Dockge with your Authelia credentials and deploy additional stacks:
+   - `dashboards.yml` - Homepage and Homarr dashboards
+   - `media.yml` - Plex, Jellyfin, Sonarr, Radarr, Prowlarr, qBittorrent
+   - `media-extended.yml` - Readarr, Lidarr, Lazy Librarian, Mylar3, Calibre-Web
+   - `homeassistant.yml` - Home Assistant, ESPHome, Node-RED, and accessories
+   - `productivity.yml` - Nextcloud, Gitea, WordPress, wikis
+   - `monitoring.yml` - Grafana, Prometheus, Loki
+   - `utilities.yml` - Backups, code editors, password manager
 
 ## Repository Structure
 
