@@ -59,28 +59,6 @@ services:
       - "traefik.http.routers.duplicati.middlewares=authelia@docker"
       - "traefik.http.services.duplicati.loadbalancer.server.port=8200"
 
-  # Uptime Kuma - Status monitoring
-  # Access at: https://status.${DOMAIN}
-  uptime-kuma:
-    image: louislam/uptime-kuma:1
-    container_name: uptime-kuma
-    restart: unless-stopped
-    networks:
-      - homelab-network
-      - traefik-network
-    volumes:
-      - /opt/stacks/uptime-kuma/data:/app/data
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    labels:
-      - "homelab.category=utilities"
-      - "homelab.description=Uptime monitoring and status page"
-      - "traefik.enable=true"
-      - "traefik.http.routers.uptime-kuma.rule=Host(`status.${DOMAIN}`)"
-      - "traefik.http.routers.uptime-kuma.entrypoints=websecure"
-      - "traefik.http.routers.uptime-kuma.tls.certresolver=letsencrypt"
-      - "traefik.http.services.uptime-kuma.loadbalancer.server.port=3001"
-      # No Authelia - public status page
-
   # Code Server - VS Code in browser
   # Access at: https://code.${DOMAIN}
   code-server:

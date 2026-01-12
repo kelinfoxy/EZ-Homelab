@@ -11,24 +11,52 @@
 ### Service Management
 
 ```bash
-# Start all services in a compose file
-docker compose -f docker-compose/infrastructure.yml up -d
+# Start all services in a compose file (from stack directory)
+cd /opt/stacks/stack-name/
+docker compose up -d
 
-# Start specific service
-docker compose -f docker-compose/infrastructure.yml up -d service-name
+# Start all services (from anywhere, using full path)
+docker compose -f /opt/stacks/stack-name/docker-compose.yml up -d
 
-# Stop all services
-docker compose -f docker-compose/infrastructure.yml down
+# Start specific service (from stack directory)
+cd /opt/stacks/stack-name/
+docker compose up -d service-name
 
-# Stop specific service
-docker compose -f docker-compose/infrastructure.yml stop service-name
+# Start specific service (from anywhere)
+docker compose -f /opt/stacks/stack-name/docker-compose.yml up -d service-name
 
-# Restart service
-docker compose -f docker-compose/file.yml restart service-name
+# Stop all services (from stack directory)
+cd /opt/stacks/stack-name/
+docker compose down
 
-# Remove service and volumes
-docker compose -f docker-compose/file.yml down -v
+# Stop all services (from anywhere)
+docker compose -f /opt/stacks/stack-name/docker-compose.yml down
+
+# Stop specific service (from stack directory)
+cd /opt/stacks/stack-name/
+docker compose stop service-name
+
+# Stop specific service (from anywhere)
+docker compose -f /opt/stacks/stack-name/docker-compose.yml stop service-name
+
+# Restart service (from stack directory)
+cd /opt/stacks/stack-name/
+docker compose restart service-name
+
+# Restart service (from anywhere)
+docker compose -f /opt/stacks/stack-name/docker-compose.yml restart service-name
+
+# Remove service and volumes (from stack directory)
+cd /opt/stacks/stack-name/
+docker compose down -v
+
+# Remove service and volumes (from anywhere)
+docker compose -f /opt/stacks/stack-name/docker-compose.yml down -v
 ```
+
+**Note:** There's more than one way to manage containers - use whichever is most convenient:
+- Navigate to `/opt/stacks/stack-name/` and use short commands
+- Use full paths with `-f` flag from anywhere in the system
 
 ### Monitoring
 

@@ -11,9 +11,13 @@ This document provides a comprehensive overview of all 60+ pre-configured servic
 | ├─ Traefik | Reverse proxy + SSL | ✓ | /opt/stacks/core/traefik | traefik.${DOMAIN} |
 | ├─ Authelia | SSO authentication | - | /opt/stacks/core/authelia | auth.${DOMAIN} |
 | └─ Gluetun | VPN (Surfshark) | - | /opt/stacks/core/gluetun | No UI |
-| **🔧 infrastructure** (7) | | | | |
+| **🔧 infrastructure** (12) | | | | |
 | ├─ Dockge | Stack manager (PRIMARY) | ✓ | /opt/stacks/infrastructure | dockge.${DOMAIN} |
 | ├─ Portainer | Container management | ✓ | /opt/stacks/infrastructure | portainer.${DOMAIN} |
+| ├─ Authentik Server | SSO with web UI | ✓ | /opt/stacks/authentik | authentik.${DOMAIN} |
+| │  ├─ authentik-worker | Background tasks | - | /opt/stacks/authentik | No UI |
+| │  ├─ authentik-db | PostgreSQL | - | /opt/stacks/authentik | No UI |
+| │  └─ authentik-redis | Cache/messaging | - | /opt/stacks/authentik | No UI |
 | ├─ Pi-hole | DNS + Ad blocking | ✓ | /opt/stacks/infrastructure | pihole.${DOMAIN} |
 | ├─ Watchtower | Auto container updates | - | /opt/stacks/infrastructure | No UI |
 | ├─ Dozzle | Docker log viewer | ✓ | /opt/stacks/infrastructure | dozzle.${DOMAIN} |
@@ -35,7 +39,7 @@ This document provides a comprehensive overview of all 60+ pre-configured servic
 | ├─ Lazy Librarian | Book automation | ✓ | /opt/stacks/media-ext, /mnt/media | lazylibrarian.${DOMAIN} |
 | ├─ Mylar3 | Comic manager | ✓ | /opt/stacks/media-ext, /mnt/media | mylar.${DOMAIN} |
 | ├─ Calibre-Web | Ebook reader | ✓ | /opt/stacks/media-ext, /mnt/media | calibre.${DOMAIN} |
-| ├─ Jellyseerr | Media requests | ✗ | /opt/stacks/media-ext | jellyseerr.${DOMAIN} |
+| ├─ Jellyseerr | Media requests | ✓ | /opt/stacks/media-ext | jellyseerr.${DOMAIN} |
 | ├─ FlareSolverr | Cloudflare bypass | - | /opt/stacks/media-ext | No UI |
 | ├─ Tdarr Server | Transcoding server | ✓ | /opt/stacks/media-ext, /mnt/transcode | tdarr.${DOMAIN} |
 | ├─ Tdarr Node | Transcoding worker | - | /mnt/transcode-cache | No UI |
@@ -63,22 +67,21 @@ This document provides a comprehensive overview of all 60+ pre-configured servic
 | │  └─ mediawiki-db | MariaDB | - | /opt/stacks/productivity | No UI |
 | └─ Form.io | Form builder | ✓ | /opt/stacks/productivity | forms.${DOMAIN} |
 |    └─ formio-mongo | MongoDB | - | /opt/stacks/productivity | No UI |
-| **🛠️ utilities** (7) | | | | |
+| **🛠️ utilities** (6) | | | | |
 | ├─ Backrest | Backup (restic) | ✓ | /opt/stacks/utilities, /mnt/backups | backrest.${DOMAIN} |
 | ├─ Duplicati | Encrypted backups | ✓ | /opt/stacks/utilities, /mnt/backups | duplicati.${DOMAIN} |
-| ├─ Uptime Kuma | Status monitoring | ✗ | /opt/stacks/utilities | status.${DOMAIN} |
 | ├─ Code Server | VS Code in browser | ✓ | /opt/stacks/utilities | code.${DOMAIN} |
 | ├─ Form.io | Form platform | ✓ | /opt/stacks/utilities | forms.${DOMAIN} |
 | │  └─ formio-mongo | MongoDB | - | /opt/stacks/utilities | No UI |
 | └─ Authelia-Redis | Session storage | - | /opt/stacks/utilities | No UI |
-| **📈 monitoring** (7) | | | | |
+| **📈 monitoring** (8) | | | | |
 | ├─ Prometheus | Metrics collection | ✓ | /opt/stacks/monitoring | prometheus.${DOMAIN} |
 | ├─ Grafana | Visualization | ✓ | /opt/stacks/monitoring | grafana.${DOMAIN} |
 | ├─ Loki | Log aggregation | - | /opt/stacks/monitoring | Via Grafana |
 | ├─ Promtail | Log shipper | - | /opt/stacks/monitoring | No UI |
 | ├─ Node Exporter | Host metrics | - | /opt/stacks/monitoring | No UI |
 | ├─ cAdvisor | Container metrics | - | /opt/stacks/monitoring | Internal :8080 |
-| └─ Uptime Kuma | Uptime monitoring | ✗ | /opt/stacks/monitoring | status.${DOMAIN} |
+| └─ Uptime Kuma | Uptime monitoring | ✓ | /opt/stacks/monitoring | status.${DOMAIN} |
 | **👨‍💻 development** (6) | | | | |
 | ├─ GitLab CE | Git + CI/CD | ✓ | /opt/stacks/development, /mnt/git | gitlab.${DOMAIN} |
 | ├─ PostgreSQL | SQL database | - | /opt/stacks/development | Port 5432 |
@@ -145,7 +148,7 @@ labels:
 
 ### To Disable SSO on a Service
 
-Remove or comment out the middleware line:
+Comment out (don't remove) the middleware line:
 
 ```yaml
 labels:
@@ -153,19 +156,37 @@ labels:
   - "traefik.http.routers.servicename.rule=Host(`servicename.${DOMAIN}`)"
   - "traefik.http.routers.servicename.entrypoints=websecure"
   - "traefik.http.routers.servicename.tls.certresolver=letsencrypt"
-  # - "traefik.http.routers.servicename.middlewares=authelia@docker"  # ← Commented out
+  # - "traefik.http.routers.servicename.middlewares=authelia@docker"  # ← Commented out (not removed)
   - "traefik.http.services.servicename.loadbalancer.server.port=8080"
 ```
 
 After making changes, redeploy the service:
+
 ```bash
+# From inside the stack directory
 cd /opt/stacks/stack-name/
 docker compose up -d
+
+# Or from anywhere, using the full path
+docker compose -f /opt/stacks/stack-name/docker-compose.yml up -d
+```
+
+**Stopping a Service:**
+
+```bash
+# From inside the stack directory
+cd /opt/stacks/stack-name/
+docker compose down
+
+# Or from anywhere, using the full path
+docker compose -f /opt/stacks/stack-name/docker-compose.yml down
 ```
 
 **Use Cases for Development/Production:**
-- **Development**: Enable SSO to protect services during testing
-- **Production**: Disable SSO for services that need direct app/API access (Plex, Jellyfin, etc.)
+- **Security First**: All services start with SSO enabled by default for maximum security
+- **Development**: Keep SSO enabled to protect services during testing
+- **Production**: Disable SSO only for services needing direct app/API access (Plex, Jellyfin)
+- **Gradual Exposure**: Comment out SSO only when ready to expose a service
 - **Quick Toggle**: AI assistant can modify these labels automatically when you ask
 
 ## Authelia Customization
@@ -264,20 +285,27 @@ notifier:
 - `/opt/stacks/core/authelia/configuration.yml` - Main settings
 - `/opt/stacks/core/authelia/users_database.yml` - User accounts
 
-This is **by design** and makes Authelia perfect for AI management:
+This is **by design** and makes Authelia perfect for AI management and security-first approach:
 - AI can read and modify YAML files
 - Version control friendly
 - No UI clicks required
 - Infrastructure as code
+- Secure by default
 
 **Web UI Available For:**
 - Login page: `https://auth.${DOMAIN}`
 - User profile: Change password, enroll 2FA
 - Device enrollment: Manage trusted devices
 
-**Alternatives with Web UI:**
-If you need a web UI for user management:
-- **Authentik**: More complex but has full web UI
+**Alternative with Web UI: Authentik**
+If you need a web UI for user management, Authentik is included in the infrastructure stack:
+- **Authentik**: Full-featured SSO with web UI for user/group management
+- Access at: `https://authentik.${DOMAIN}`
+- Includes PostgreSQL database and Redis cache
+- More complex but offers GUI-based configuration
+- Deploy only if you need web-based user management
+
+**Other Alternatives:**
 - **Keycloak**: Enterprise-grade SSO with web UI
 - **Authelia + LDAP**: Use LDAP with web management (phpLDAPadmin, etc.)
 

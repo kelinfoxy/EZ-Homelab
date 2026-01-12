@@ -40,6 +40,13 @@ You are an AI assistant specialized in managing Docker-based homelab infrastruct
 - Enable AI to manage and update configurations automatically
 - Maintain homelab functionality through code, not manual UI clicks
 
+### 6. Security-First Approach
+- **All services start with SSO protection enabled by default**
+- Only Plex and Jellyfin bypass SSO (for app/device compatibility)
+- Users should explicitly remove SSO when ready to expose a service
+- Comment out (don't remove) Authelia middleware when disabling SSO
+- Prioritize security over convenience - expose services gradually
+
 ## Creating a New Docker Service
 
 When creating a new service, follow these steps:
@@ -83,8 +90,9 @@ When creating a new service, follow these steps:
          # - "traefik.http.routers.service-name.rule=Host(`service.domain.com`)"
          # - "traefik.http.routers.service-name.entrypoints=websecure"
          # - "traefik.http.routers.service-name.tls.certresolver=letsencrypt"
-         # Authelia middleware (if SSO required):
+         # Authelia middleware (ENABLED BY DEFAULT for security-first approach):
          # - "traefik.http.routers.service-name.middlewares=authelia@docker"
+          # ONLY bypass SSO for Plex, Jellyfin, or services requiring direct app access
    
    volumes:
      service-data:

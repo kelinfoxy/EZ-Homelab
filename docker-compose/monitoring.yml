@@ -102,21 +102,27 @@ services:
       - "homelab.description=Container metrics and performance monitoring"
 
   # Uptime Kuma - Uptime monitoring
-  # Access at: http://server-ip:3001
+  # Access at: https://status.${DOMAIN}
   uptime-kuma:
-    image: louislam/uptime-kuma:1.23.11
+    image: louislam/uptime-kuma:1
     container_name: uptime-kuma
     restart: unless-stopped
     networks:
       - monitoring-network
       - homelab-network
-    ports:
-      - "3001:3001"
+      - traefik-network
     volumes:
       - uptime-kuma-data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     labels:
       - "homelab.category=monitoring"
       - "homelab.description=Service uptime monitoring and alerts"
+      - "traefik.enable=true"
+      - "traefik.http.routers.uptime-kuma.rule=Host(`status.${DOMAIN}`)"
+      - "traefik.http.routers.uptime-kuma.entrypoints=websecure"
+      - "traefik.http.routers.uptime-kuma.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.uptime-kuma.middlewares=authelia@docker"
+      - "traefik.http.services.uptime-kuma.loadbalancer.server.port=3001"
 
   # Loki - Log aggregation
   # Access at: http://server-ip:3100
@@ -170,4 +176,6 @@ networks:
   monitoring-network:
     driver: bridge
   homelab-network:
+    external: true
+  traefik-network:
     external: true
