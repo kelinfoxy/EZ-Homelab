@@ -32,6 +32,7 @@ The infrastructure uses Traefik for reverse proxy with automatic SSL, Authelia f
 - VS Code with GitHub Copilot extension (for AI assistance)
 - A domain from DuckDNS (free)
 - Surfshark VPN account (optional, for VPN features)
+- Sufficient disk space: 120GB+ system drive (NVMe or SSD highly recommended), 2TB+ for media & additional disks for services like Nextcloud that require lots of space
 
 ### Quick Setup (Dockge Structure)
 
@@ -62,31 +63,29 @@ The infrastructure uses Traefik for reverse proxy with automatic SSL, Authelia f
    docker network create media-network
    ```
 
-5. **Deploy core infrastructure (in order):**
+5. **Deploy core infrastructure stack:**
    ```bash
-   # 1. DuckDNS (Dynamic DNS)
-   mkdir -p /opt/stacks/duckdns && cp docker-compose/duckdns.yml /opt/stacks/duckdns/docker-compose.yml
-   cd /opt/stacks/duckdns && docker compose up -d
+   # Deploy the unified core stack (DuckDNS, Traefik, Authelia, Gluetun)
+   mkdir -p /opt/stacks/core
+   cp docker-compose/core.yml /opt/stacks/core/docker-compose.yml
+   cp -r config-templates/traefik /opt/stacks/core/
+   cp -r config-templates/authelia /opt/stacks/core/
    
-   # 2. Traefik (Reverse Proxy with SSL)
-   mkdir -p /opt/stacks/traefik/dynamic
-   cp docker-compose/traefik.yml /opt/stacks/traefik/docker-compose.yml
-   cp config-templates/traefik/* /opt/stacks/traefik/
-   cd /opt/stacks/traefik && docker compose up -d
+   # From within the directory
+   cd /opt/stacks/core && docker compose up -d
    
-   # 3. Authelia (SSO)
-   mkdir -p /opt/stacks/authelia
-   cp docker-compose/authelia.yml /opt/stacks/authelia/docker-compose.yml
-   cp config-templates/authelia/* /opt/stacks/authelia/
-   cd /opt/stacks/authelia && docker compose up -d
-   
-   # 4. Dockge (Stack Manager)
-   mkdir -p /opt/stacks/infrastructure
-   cp docker-compose/infrastructure.yml /opt/stacks/infrastructure/docker-compose.yml
-   cd /opt/stacks/infrastructure && docker compose up -d dockge
+   # OR from anywhere with full path
+   docker compose -f /opt/stacks/core/docker-compose.yml up -d
    ```
 
-6. **Access Dockge:**
+6. **Deploy infrastructure stack (includes Dockge):**
+   ```bash
+   mkdir -p /opt/stacks/infrastructure
+   cp docker-compose/infrastructure.yml /opt/stacks/infrastructure/docker-compose.yml
+   cd /opt/stacks/infrastructure && docker compose up -d
+   ```
+
+7. **Access Dockge:**
    Open `https://dockge.yourdomain.duckdns.org` (use Authelia login)
    
    Now deploy remaining stacks through Dockge's UI!

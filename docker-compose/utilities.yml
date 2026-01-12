@@ -126,6 +126,38 @@ services:
       - "homelab.category=utilities"
       - "homelab.description=Form.io database"
 
+  # Bitwarden (Vaultwarden) - Password manager
+  # Access at: https://bitwarden.${DOMAIN}
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    restart: unless-stopped
+    networks:
+      - homelab-network
+      - traefik-network
+    volumes:
+      - /opt/stacks/vaultwarden/data:/data
+    environment:
+      - DOMAIN=https://bitwarden.${DOMAIN}
+      - SIGNUPS_ALLOWED=${BITWARDEN_SIGNUPS_ALLOWED:-true}
+      - INVITATIONS_ALLOWED=${BITWARDEN_INVITATIONS_ALLOWED:-true}
+      - ADMIN_TOKEN=${BITWARDEN_ADMIN_TOKEN}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_FROM=${SMTP_FROM}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_SECURITY=${SMTP_SECURITY:-starttls}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+    labels:
+      - "homelab.category=utilities"
+      - "homelab.description=Self-hosted password manager (Bitwarden)"
+      - "traefik.enable=true"
+      - "traefik.http.routers.vaultwarden.rule=Host(`bitwarden.${DOMAIN}`)"
+      - "traefik.http.routers.vaultwarden.entrypoints=websecure"
+      - "traefik.http.routers.vaultwarden.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.vaultwarden.middlewares=authelia@docker"
+      - "traefik.http.services.vaultwarden.loadbalancer.server.port=80"
+
   # Authelia Redis - Session storage for Authelia
   # No web UI - backend service
   authelia-redis:

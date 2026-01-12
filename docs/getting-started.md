@@ -11,7 +11,7 @@ Before you begin, ensure you have:
 - [ ] Docker Compose V2 installed
 - [ ] Git installed
 - [ ] At least 8GB RAM (16GB+ recommended)
-- [ ] Sufficient disk space (100GB+ system, 1TB+ for media recommended)
+- [ ] Sufficient disk space: 120GB+ system drive (NVMe or SSD highly recommended), 2TB+ for media & additional disks for services like Nextcloud that require lots of space
 - [ ] Static IP address for your server (or DHCP reservation)
 - [ ] DuckDNS account (free) with a domain
 - [ ] Surfshark VPN account (optional, for VPN features)
@@ -174,9 +174,13 @@ nano users_database.yml
 # Copy .env file to core stack
 cp ~/AI-Homelab/.env /opt/stacks/core/.env
 
-# Deploy the entire core stack
+# Deploy the entire core stack - use either method:
+# Method 1: From within directory
 cd /opt/stacks/core
 docker compose up -d
+
+# Method 2: From anywhere with full path
+docker compose -f /opt/stacks/core/docker-compose.yml up -d
 
 # Check logs to ensure everything is running
 docker compose logs -f
@@ -197,31 +201,6 @@ docker compose logs -f
 - If Traefik can't get certificates, check DuckDNS is updating your IP
 - If Authelia won't start, check your password hash and configuration.yml
 - If Gluetun fails, verify your Surfshark credentials in .env
-
-```bash
-# Create stack directory
-mkdir -p /opt/stacks/infrastructure
-
-# Copy compose file
-cp ~/AI-Homelab/docker-compose/infrastructure.yml /opt/stacks/infrastructure/docker-compose.yml
-
-# Create necessary subdirectories
-mkdir -p /opt/dockge/data
-mkdir -p /opt/stacks/pihole/{etc-pihole,etc-dnsmasq.d}
-mkdir -p /opt/stacks/glances/config
-
-# Copy .env
-cp ~/AI-Homelab/.env /opt/stacks/infrastructure/.env
-
-# Deploy Dockge first
-cd /opt/stacks/infrastructure
-docker compose up -d dockge
-
-# Access Dockge at https://dockge.yourdomain.duckdns.org
-
-# Deploy remaining infrastructure services
-docker compose up -d
-```
 
 ## Step 8: Deploy Infrastructure Services (Dockge)
 

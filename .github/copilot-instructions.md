@@ -26,6 +26,7 @@ You are an AI assistant specialized in managing Docker-based homelab infrastruct
 - Use the same network naming patterns
 - Maintain uniform volume mount structures
 - Apply consistent environment variable patterns
+- **Prefer LinuxServer.io images** when available (they support PUID/PGID for proper file permissions)
 
 ### 4. Stack-Aware Changes
 - Before making changes, consider the impact on the entire server stack
@@ -280,7 +281,7 @@ environment:
 
 ## Core Infrastructure Stack
 
-The `core` stack contains the four essential services that must be deployed **FIRST**:
+The `core` stack (located at `/opt/stacks/core/docker-compose.yml`) contains the four essential services that must be deployed **FIRST**:
 
 1. **DuckDNS** - Dynamic DNS updater for Let's Encrypt
 2. **Traefik** - Reverse proxy with automatic SSL certificates
@@ -292,14 +293,21 @@ The `core` stack contains the four essential services that must be deployed **FI
 - Simplifies initial deployment (one command)
 - Easier to manage core infrastructure together
 - Reduces network configuration complexity
+- All core services in `/opt/stacks/core/` directory
 
 **Deployment:**
 ```bash
+# From within the directory
 cd /opt/stacks/core/
 docker compose up -d
+
+# Or from anywhere with full path
+docker compose -f /opt/stacks/core/docker-compose.yml up -d
 ```
 
 All other stacks depend on the core stack being deployed first.
+
+**Note:** The separate `authelia.yml`, `duckdns.yml`, `gluetun.yml`, and `traefik.yml` files have been removed to eliminate redundancy. All these services are now in the unified `core.yml` stack.
 
 ## Toggling SSO (Authelia) On/Off
 
