@@ -2,40 +2,184 @@
 
 ## Overview
 
-This document provides comprehensive guidelines for managing Docker services in your AI-powered homelab. These guidelines ensure consistency, maintainability, and reliability across your entire infrastructure.
+This document provides comprehensive guidelines for managing Docker services in your AI-powered homelab using Dockge, Traefik, and Authelia. These guidelines ensure consistency, maintainability, and reliability across your entire infrastructure.
 
 ## Table of Contents
 
 1. [Philosophy](#philosophy)
-2. [Docker Compose vs Docker Run](#docker-compose-vs-docker-run)
-3. [Service Creation Guidelines](#service-creation-guidelines)
-4. [Service Modification Guidelines](#service-modification-guidelines)
-5. [Naming Conventions](#naming-conventions)
-6. [Network Architecture](#network-architecture)
-7. [Volume Management](#volume-management)
-8. [Security Best Practices](#security-best-practices)
-9. [Monitoring and Logging](#monitoring-and-logging)
-10. [Troubleshooting](#troubleshooting)
+2. [Dockge Structure](#dockge-structure)
+3. [Traefik and Authelia Integration](#traefik-and-authelia-integration)
+4. [Docker Compose vs Docker Run](#docker-compose-vs-docker-run)
+5. [Service Creation Guidelines](#service-creation-guidelines)
+6. [Service Modification Guidelines](#service-modification-guidelines)
+7. [Naming Conventions](#naming-conventions)
+8. [Network Architecture](#network-architecture)
+9. [Volume Management](#volume-management)
+10. [Security Best Practices](#security-best-practices)
+11. [Monitoring and Logging](#monitoring-and-logging)
+12. [Troubleshooting](#troubleshooting)
 
 ## Philosophy
 
 ### Core Principles
 
-1. **Infrastructure as Code**: All services must be defined in Docker Compose files
-2. **Reproducibility**: Any service should be rebuildable from compose files
-3. **Documentation**: Every non-obvious configuration must be commented
-4. **Consistency**: Use the same patterns across all services
-5. **Safety First**: Always test changes in isolation before deploying
+1. **Dockge First**: Manage all stacks through Dockge in `/opt/stacks/`
+2. **Infrastructure as Code**: All services defined in Docker Compose files
+3. **File-Based Configuration**: Traefik labels and Authelia YAML (AI-manageable)
+4. **Reproducibility**: Any service should be rebuildable from compose files
+5. **Automatic HTTPS**: All services routed through Traefik with Let's Encrypt
+6. **Smart SSO**: Authelia protects admin interfaces, bypasses media apps
+7. **Documentation**: Every non-obvious configuration must be commented
+8. **Consistency**: Use the same patterns across all services
+9. **Safety First**: Always test changes in isolation before deploying
 
 ### The Stack Mindset
 
 Think of your homelab as an interconnected stack where:
-- Services depend on networks
-- Networks connect services
-- Volumes persist data
+- Services depend on networks (especially traefik-network)
+- Traefik routes all traffic with automatic SSL
+- Authelia protects sensitive services
+- VPN (Gluetun) secures downloads
 - Changes ripple through the system
 
-Always ask: "How does this change affect other services?"
+Always ask: "How does this change affect other services and routing?"
+
+## Dockge Structure
+
+### Directory Organization
+
+All stacks live in `/opt/stacks/stack-name/`:
+
+```
+/opt/stacks/
+├── traefik/
+│   ├── docker-compose.yml
+│   ├── traefik.yml           # Static config
+│   ├── dynamic/              # Dynamic routes
+│   │   ├── routes.yml
+│   │   └── external.yml      # External host proxying
+│   ├── acme.json            # SSL certificates (chmod 600)
+│   └── .env
+├── authelia/
+│   ├── docker-compose.yml
+│   ├── configuration.yml     # Authelia settings
+│   ├── users_database.yml    # User accounts
+│   └── .env
+├── media/
+│   ├── docker-compose.yml
+│   └── .env
+└── ...
+```
+
+### Why Dockge?
+
+- **Visual Management**: Web UI at `https://dockge.${DOMAIN}`
+- **Direct File Editing**: Edit compose files in-place
+- **Stack Organization**: Each service stack is independent
+- **AI Compatible**: Files can be managed by AI
+- **Git Integration**: Easy to version control
+
+### Storage Strategy
+
+**Small Data** (configs, DBs < 10GB): `/opt/stacks/stack-name/`
+```yaml
+volumes:
+  - /opt/stacks/sonarr/config:/config
+```
+
+**Large Data** (media, downloads, backups): `/mnt/`
+```yaml
+volumes:
+  - /mnt/media/movies:/movies
+  - /mnt/media/tv:/tv
+  - /mnt/downloads:/downloads
+  - /mnt/backups:/backups
+```
+
+AI will suggest `/mnt/` when data may exceed 50GB or grow continuously.
+
+## Traefik and Authelia Integration
+
+### Every Service Needs Traefik Labels
+
+Standard pattern for all services:
+
+```yaml
+services:
+  myservice:
+    image: myimage:latest
+    container_name: myservice
+    networks:
+      - homelab-network
+      - traefik-network    # Required for Traefik
+    labels:
+      # Enable Traefik
+      - "traefik.enable=true"
+      
+      # Define routing rule
+      - "traefik.http.routers.myservice.rule=Host(`myservice.${DOMAIN}`)"
+      
+      # Use websecure entrypoint (HTTPS)
+      - "traefik.http.routers.myservice.entrypoints=websecure"
+      
+      # Enable Let's Encrypt
+      - "traefik.http.routers.myservice.tls.certresolver=letsencrypt"
+      
+      # Add Authelia SSO (if needed)
+      - "traefik.http.routers.myservice.middlewares=authelia@docker"
+      
+      # Specify port (if not default 80)
+      - "traefik.http.services.myservice.loadbalancer.server.port=8080"
+```
+
+### When to Use Authelia SSO
+
+**Protect with Authelia**:
+- Admin interfaces (Sonarr, Radarr, Prowlarr, etc.)
+- Infrastructure tools (Portainer, Dockge, Grafana)
+- Personal data (Nextcloud, Mealie, wikis)
+- Development tools (code-server, GitLab)
+- Monitoring dashboards
+
+**Bypass Authelia**:
+- Media servers (Plex, Jellyfin) - need app access
+- Request services (Jellyseerr) - family-friendly access
+- Public services (WordPress, status pages)
+- Services with their own auth (Home Assistant)
+
+Configure bypasses in `/opt/stacks/authelia/configuration.yml`:
+
+```yaml
+access_control:
+  rules:
+    - domain: jellyfin.yourdomain.duckdns.org
+      policy: bypass
+    
+    - domain: plex.yourdomain.duckdns.org
+      policy: bypass
+```
+
+### Routing Through VPN (Gluetun)
+
+For services that need VPN (downloads):
+
+```yaml
+services:
+  mydownloader:
+    image: downloader:latest
+    container_name: mydownloader
+    network_mode: "service:gluetun"  # Route through VPN
+    depends_on:
+      - gluetun
+```
+
+Expose ports through Gluetun's compose file:
+```yaml
+# In gluetun.yml
+gluetun:
+  ports:
+    - "8080:8080"  # mydownloader web UI
+```
 
 ## Docker Compose vs Docker Run
 
