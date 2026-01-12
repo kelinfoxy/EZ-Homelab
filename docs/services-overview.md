@@ -11,7 +11,6 @@ This document provides a comprehensive overview of all 60+ pre-configured servic
 | ├─ Traefik | Reverse proxy + SSL | ✓ | /opt/stacks/core/traefik | traefik.${DOMAIN} |
 | ├─ Authelia | SSO authentication | - | /opt/stacks/core/authelia | auth.${DOMAIN} |
 | └─ Gluetun | VPN (Surfshark) | - | /opt/stacks/core/gluetun | No UI |
-| 
 | **🔧 infrastructure.yaml** (12) | | | | |
 | ├─ Dockge | Stack manager (PRIMARY) | ✓ | /opt/stacks/infrastructure | dockge.${DOMAIN} |
 | ├─ Portainer | Container management | ✓ | /opt/stacks/infrastructure | portainer.${DOMAIN} |
@@ -24,7 +23,6 @@ This document provides a comprehensive overview of all 60+ pre-configured servic
 | ├─ Dozzle | Docker log viewer | ✓ | /opt/stacks/infrastructure | dozzle.${DOMAIN} |
 | ├─ Glances | System monitoring | ✓ | /opt/stacks/infrastructure | glances.${DOMAIN} |
 | └─ Docker Proxy | Secure socket access | - | /opt/stacks/infrastructure | No UI |
-|
 | **📊 dashboards.yaml** (2) | | | | |
 | ├─ Homepage | App dashboard (AI cfg) | ✓ | /opt/stacks/dashboards | home.${DOMAIN} |
 | └─ Homarr | Modern dashboard | ✓ | /opt/stacks/dashboards | homarr.${DOMAIN} |
@@ -35,7 +33,6 @@ This document provides a comprehensive overview of all 60+ pre-configured servic
 | ├─ Radarr | Movie automation | ✓ | /opt/stacks/media, /mnt/media | radarr.${DOMAIN} |
 | ├─ Prowlarr | Indexer manager | ✓ | /opt/stacks/media | prowlarr.${DOMAIN} |
 | └─ qBittorrent | Torrent (via VPN) | ✓ | /mnt/downloads | qbit.${DOMAIN} |
-|
 | **📚 media-extended.yaml** (10) | | | | |
 | ├─ Readarr | Ebooks/Audiobooks | ✓ | /opt/stacks/media-ext, /mnt/media | readarr.${DOMAIN} |
 | ├─ Lidarr | Music manager | ✓ | /opt/stacks/media-ext, /mnt/media | lidarr.${DOMAIN} |
@@ -47,7 +44,6 @@ This document provides a comprehensive overview of all 60+ pre-configured servic
 | ├─ Tdarr Server | Transcoding server | ✓ | /opt/stacks/media-ext, /mnt/transcode | tdarr.${DOMAIN} |
 | ├─ Tdarr Node | Transcoding worker | - | /mnt/transcode-cache | No UI |
 | └─ Unmanic | Library optimizer | ✓ | /opt/stacks/media-ext, /mnt/transcode | unmanic.${DOMAIN} |
-|
 | **🏠 homeassistant.yaml** (7) | | | | |
 | ├─ Home Assistant | HA platform | ✗ | /opt/stacks/homeassistant | ha.${DOMAIN} |
 | ├─ ESPHome | ESP firmware mgr | ✓ | /opt/stacks/homeassistant | esphome.${DOMAIN} |
@@ -56,7 +52,6 @@ This document provides a comprehensive overview of all 60+ pre-configured servic
 | ├─ Mosquitto | MQTT broker | - | /opt/stacks/homeassistant | Ports 1883, 9001 |
 | ├─ Zigbee2MQTT | Zigbee bridge | ✓ | /opt/stacks/homeassistant | zigbee2mqtt.${DOMAIN} |
 | └─ MotionEye | Video surveillance | ✓ | /opt/stacks/homeassistant, /mnt/surveillance | motioneye.${DOMAIN} |
-|
 | **💼 productivity.yaml** (8 + 6 DBs) | | | | |
 | ├─ Nextcloud | File sync platform | ✓ | /opt/stacks/productivity, /mnt/nextcloud | nextcloud.${DOMAIN} |
 | │  └─ nextcloud-db | MariaDB | - | /opt/stacks/productivity | No UI |
@@ -72,7 +67,6 @@ This document provides a comprehensive overview of all 60+ pre-configured servic
 | │  └─ mediawiki-db | MariaDB | - | /opt/stacks/productivity | No UI |
 | └─ Form.io | Form builder | ✓ | /opt/stacks/productivity | forms.${DOMAIN} |
 |    └─ formio-mongo | MongoDB | - | /opt/stacks/productivity | No UI |
-|
 | **🛠️ utilities.yaml** (7) | | | | |
 | ├─ Vaultwarden | Password manager | ✗ | /opt/stacks/utilities | bitwarden.${DOMAIN} |
 | ├─ Backrest | Backup (restic) | ✓ | /opt/stacks/utilities, /mnt/backups | backrest.${DOMAIN} |
@@ -81,7 +75,6 @@ This document provides a comprehensive overview of all 60+ pre-configured servic
 | ├─ Form.io | Form platform | ✓ | /opt/stacks/utilities | forms.${DOMAIN} |
 | │  └─ formio-mongo | MongoDB | - | /opt/stacks/utilities | No UI |
 | └─ Authelia-Redis | Session storage | - | /opt/stacks/utilities | No UI |
-|
 | **📈 monitoring.yaml** (8) | | | | |
 | ├─ Prometheus | Metrics collection | ✓ | /opt/stacks/monitoring | prometheus.${DOMAIN} |
 | ├─ Grafana | Visualization | ✓ | /opt/stacks/monitoring | grafana.${DOMAIN} |
@@ -90,7 +83,6 @@ This document provides a comprehensive overview of all 60+ pre-configured servic
 | ├─ Node Exporter | Host metrics | - | /opt/stacks/monitoring | No UI |
 | ├─ cAdvisor | Container metrics | - | /opt/stacks/monitoring | Internal :8080 |
 | └─ Uptime Kuma | Uptime monitoring | ✓ | /opt/stacks/monitoring | status.${DOMAIN} |
-|
 | **👨‍💻 development.yaml** (6) | | | | |
 | ├─ GitLab CE | Git + CI/CD | ✓ | /opt/stacks/development, /mnt/git | gitlab.${DOMAIN} |
 | ├─ PostgreSQL | SQL database | - | /opt/stacks/development | Port 5432 |
