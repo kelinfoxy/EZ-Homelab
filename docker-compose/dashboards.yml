@@ -1,0 +1,66 @@
+# Dashboard Services
+# Homepage and Homarr for homelab dashboards
+# Place in /opt/stacks/dashboards/docker-compose.yml
+
+services:
+  # Homepage - Application dashboard (AI-configurable via YAML)
+  # Access at: https://home.${DOMAIN}
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    restart: unless-stopped
+    networks:
+      - homelab-network
+      - traefik-network
+      - dockerproxy-network
+    volumes:
+      - /opt/stacks/homepage/config:/app/config
+      - /var/run/docker.sock:/var/run/docker.sock:ro  # For Docker integration
+      - /opt/stacks:/opt/stacks:ro  # To discover other stacks
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ}
+    labels:
+      - "homelab.category=dashboard"
+      - "homelab.description=Application dashboard (AI-configurable)"
+      - "traefik.enable=true"
+      - "traefik.http.routers.homepage.rule=Host(`home.${DOMAIN}`)"
+      - "traefik.http.routers.homepage.entrypoints=websecure"
+      - "traefik.http.routers.homepage.tls.certresolver=letsencrypt"
+      - "traefik.http.services.homepage.loadbalancer.server.port=3000"
+      # No Authelia - make it the default landing page
+
+  # Homarr - Modern dashboard
+  # Access at: https://homarr.${DOMAIN}
+  homarr:
+    image: ghcr.io/ajnart/homarr:latest
+    container_name: homarr
+    restart: unless-stopped
+    networks:
+      - homelab-network
+      - traefik-network
+    volumes:
+      - /opt/stacks/homarr/configs:/app/data/configs
+      - /opt/stacks/homarr/data:/data
+      - /opt/stacks/homarr/icons:/app/public/icons
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - TZ=${TZ}
+    labels:
+      - "homelab.category=dashboard"
+      - "homelab.description=Modern homelab dashboard"
+      - "traefik.enable=true"
+      - "traefik.http.routers.homarr.rule=Host(`homarr.${DOMAIN}`)"
+      - "traefik.http.routers.homarr.entrypoints=websecure"
+      - "traefik.http.routers.homarr.tls.certresolver=letsencrypt"
+      - "traefik.http.services.homarr.loadbalancer.server.port=7575"
+      # No Authelia - dashboard should be accessible
+
+networks:
+  homelab-network:
+    external: true
+  traefik-network:
+    external: true
+  dockerproxy-network:
+    external: true

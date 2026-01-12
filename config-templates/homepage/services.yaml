@@ -1,0 +1,373 @@
+# Homepage Configuration - Services
+# Copy to /opt/stacks/homepage/config/services.yaml
+# This file is AI-configurable - Homepage will auto-discover services via Docker labels
+
+---
+# Infrastructure Services
+- Infrastructure:
+    - Dockge:
+        icon: dockge.png
+        href: https://dockge.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Docker Compose Stack Manager (PRIMARY)
+        container: dockge
+        widget:
+          type: dockge
+          url: http://dockge:5001
+
+    - Traefik:
+        icon: traefik.png
+        href: https://traefik.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Reverse Proxy & SSL
+        container: traefik
+        widget:
+          type: traefik
+          url: http://traefik:8080
+
+    - Authelia:
+        icon: authelia.png
+        href: https://auth.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Single Sign-On
+        container: authelia
+        widget:
+          type: authelia
+          url: http://authelia:9091
+
+    - Portainer:
+        icon: portainer.png
+        href: https://portainer.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Docker Management (Secondary)
+        container: portainer
+        widget:
+          type: portainer
+          url: http://portainer:9000
+          env: 1
+          key: {{HOMEPAGE_VAR_PORTAINER_KEY}}
+
+    - Pi-hole:
+        icon: pi-hole.png
+        href: https://pihole.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Network-wide Ad Blocking
+        container: pihole
+        widget:
+          type: pihole
+          url: http://pihole
+          key: {{HOMEPAGE_VAR_PIHOLE_KEY}}
+
+    - Dozzle:
+        icon: dozzle.png
+        href: https://dozzle.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Real-time Docker Logs
+        container: dozzle
+
+    - Glances:
+        icon: glances.png
+        href: https://glances.{{HOMEPAGE_VAR_DOMAIN}}
+        description: System Monitoring
+        container: glances
+        widget:
+          type: glances
+          url: http://glances:61208
+          metric: cpu
+
+# Dashboards
+- Dashboards:
+    - Homarr:
+        icon: homarr.png
+        href: https://homarr.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Alternative Dashboard
+        container: homarr
+
+    - Uptime Kuma:
+        icon: uptime-kuma.png
+        href: https://status.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Uptime Monitoring
+        container: uptime-kuma
+        widget:
+          type: uptimekuma
+          url: http://uptime-kuma:3001
+          slug: {{HOMEPAGE_VAR_UPTIMEKUMA_SLUG}}
+
+# Media - Streaming
+- Media Streaming:
+    - Plex:
+        icon: plex.png
+        href: https://plex.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Media Server
+        container: plex
+        widget:
+          type: plex
+          url: http://plex:32400
+          key: {{HOMEPAGE_VAR_PLEX_KEY}}
+
+    - Jellyfin:
+        icon: jellyfin.png
+        href: https://jellyfin.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Open Source Media Server
+        container: jellyfin
+        widget:
+          type: jellyfin
+          url: http://jellyfin:8096
+          key: {{HOMEPAGE_VAR_JELLYFIN_KEY}}
+
+    - Jellyseerr:
+        icon: jellyseerr.png
+        href: https://jellyseerr.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Media Requests
+        container: jellyseerr
+        widget:
+          type: jellyseerr
+          url: http://jellyseerr:5055
+          key: {{HOMEPAGE_VAR_JELLYSEERR_KEY}}
+
+# Media - Management
+- Media Management:
+    - Sonarr:
+        icon: sonarr.png
+        href: https://sonarr.{{HOMEPAGE_VAR_DOMAIN}}
+        description: TV Show Management
+        container: sonarr
+        widget:
+          type: sonarr
+          url: http://sonarr:8989
+          key: {{HOMEPAGE_VAR_SONARR_KEY}}
+
+    - Radarr:
+        icon: radarr.png
+        href: https://radarr.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Movie Management
+        container: radarr
+        widget:
+          type: radarr
+          url: http://radarr:7878
+          key: {{HOMEPAGE_VAR_RADARR_KEY}}
+
+    - Lidarr:
+        icon: lidarr.png
+        href: https://lidarr.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Music Management
+        container: lidarr
+        widget:
+          type: lidarr
+          url: http://lidarr:8686
+          key: {{HOMEPAGE_VAR_LIDARR_KEY}}
+
+    - Readarr:
+        icon: readarr.png
+        href: https://readarr.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Book Management
+        container: readarr
+        widget:
+          type: readarr
+          url: http://readarr:8787
+          key: {{HOMEPAGE_VAR_READARR_KEY}}
+
+    - Prowlarr:
+        icon: prowlarr.png
+        href: https://prowlarr.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Indexer Manager
+        container: prowlarr
+        widget:
+          type: prowlarr
+          url: http://prowlarr:9696
+          key: {{HOMEPAGE_VAR_PROWLARR_KEY}}
+
+# Downloads
+- Downloads:
+    - qBittorrent:
+        icon: qbittorrent.png
+        href: https://qbit.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Torrent Client (via VPN)
+        container: qbittorrent
+        widget:
+          type: qbittorrent
+          url: http://gluetun:8080
+          username: {{HOMEPAGE_VAR_QBITTORRENT_USER}}
+          password: {{HOMEPAGE_VAR_QBITTORRENT_PASS}}
+
+    - Gluetun:
+        icon: gluetun.png
+        href: http://gluetun:8000
+        description: VPN Client (Surfshark)
+        container: gluetun
+
+# Books & Comics
+- Books & Comics:
+    - Calibre-Web:
+        icon: calibre-web.png
+        href: https://calibre.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Ebook Library
+        container: calibre-web
+
+    - Lazy Librarian:
+        icon: lazylibrarian.png
+        href: https://lazylibrarian.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Book Manager
+        container: lazylibrarian
+
+    - Mylar3:
+        icon: mylar3.png
+        href: https://mylar.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Comic Book Manager
+        container: mylar3
+
+# Transcoding
+- Transcoding:
+    - Tdarr:
+        icon: tdarr.png
+        href: https://tdarr.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Distributed Transcoding
+        container: tdarr-server
+        widget:
+          type: tdarr
+          url: http://tdarr-server:8265
+
+    - Unmanic:
+        icon: unmanic.png
+        href: https://unmanic.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Library Optimizer
+        container: unmanic
+
+# Home Automation
+- Home Automation:
+    - Home Assistant:
+        icon: home-assistant.png
+        href: https://ha.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Home Automation Hub
+        # Note: Uses host network, configure manually
+        widget:
+          type: homeassistant
+          url: http://{{HOMEPAGE_VAR_SERVER_IP}}:8123
+          key: {{HOMEPAGE_VAR_HA_KEY}}
+
+    - ESPHome:
+        icon: esphome.png
+        href: https://esphome.{{HOMEPAGE_VAR_DOMAIN}}
+        description: ESP Device Manager
+        container: esphome
+
+    - Node-RED:
+        icon: node-red.png
+        href: https://nodered.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Flow Automation
+        container: nodered
+
+    - TasmoAdmin:
+        icon: tasmota.png
+        href: https://tasmoadmin.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Tasmota Device Manager
+        container: tasmoadmin
+
+    - Zigbee2MQTT:
+        icon: zigbee2mqtt.png
+        href: https://zigbee2mqtt.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Zigbee Bridge
+        container: zigbee2mqtt
+
+    - MotionEye:
+        icon: motioneye.png
+        href: https://motioneye.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Video Surveillance
+        container: motioneye
+
+# Productivity
+- Productivity:
+    - Nextcloud:
+        icon: nextcloud.png
+        href: https://nextcloud.{{HOMEPAGE_VAR_DOMAIN}}
+        description: File Sync & Share
+        container: nextcloud
+        widget:
+          type: nextcloud
+          url: http://nextcloud
+          username: {{HOMEPAGE_VAR_NEXTCLOUD_USER}}
+          password: {{HOMEPAGE_VAR_NEXTCLOUD_PASS}}
+
+    - Mealie:
+        icon: mealie.png
+        href: https://mealie.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Recipe Manager
+        container: mealie
+
+    - Gitea:
+        icon: gitea.png
+        href: https://git.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Git Service
+        container: gitea
+
+    - Code Server:
+        icon: vscode.png
+        href: https://code.{{HOMEPAGE_VAR_DOMAIN}}
+        description: VS Code in Browser
+        container: code-server
+
+# Documentation
+- Documentation:
+    - BookStack:
+        icon: bookstack.png
+        href: https://docs.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Documentation Platform
+        container: bookstack
+        widget:
+          type: bookstack
+          url: http://bookstack
+          key: {{HOMEPAGE_VAR_BOOKSTACK_KEY}}
+
+    - DokuWiki:
+        icon: dokuwiki.png
+        href: https://wiki.{{HOMEPAGE_VAR_DOMAIN}}
+        description: File-based Wiki
+        container: dokuwiki
+
+    - MediaWiki:
+        icon: mediawiki.png
+        href: https://mediawiki.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Wiki Platform
+        container: mediawiki
+
+    - WordPress:
+        icon: wordpress.png
+        href: https://blog.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Blog Platform
+        container: wordpress
+
+# Backups & Monitoring
+- Backups & Tools:
+    - Backrest:
+        icon: backrest.png
+        href: https://backrest.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Backup Manager (Restic)
+        container: backrest
+
+    - Duplicati:
+        icon: duplicati.png
+        href: https://duplicati.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Backup Software
+        container: duplicati
+
+# Monitoring Stack
+- Monitoring:
+    - Grafana:
+        icon: grafana.png
+        href: https://grafana.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Metrics Visualization
+        container: grafana
+        widget:
+          type: grafana
+          url: http://grafana:3000
+          username: {{HOMEPAGE_VAR_GRAFANA_USER}}
+          password: {{HOMEPAGE_VAR_GRAFANA_PASS}}
+
+    - Prometheus:
+        icon: prometheus.png
+        href: https://prometheus.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Metrics Collection
+        container: prometheus
+        widget:
+          type: prometheus
+          url: http://prometheus:9090
+
+    - Uptime Kuma:
+        icon: uptime-kuma.png
+        href: https://status.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Status Page
+        container: uptime-kuma
