@@ -45,8 +45,8 @@ services:
       - "53:53/tcp"    # DNS TCP
       - "53:53/udp"    # DNS UDP
     volumes:
-      - /opt/stacks/pihole/etc-pihole:/etc/pihole
-      - /opt/stacks/pihole/etc-dnsmasq.d:/etc/dnsmasq.d
+      - ./pihole/etc-pihole:/etc/pihole
+      - ./pihole/etc-dnsmasq.d:/etc/dnsmasq.d
     environment:
       - TZ=${TZ:-America/New_York}
       - WEBPASSWORD=${PIHOLE_PASSWORD:-changeme}
@@ -145,7 +145,7 @@ services:
     pid: host
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /opt/stacks/glances/config:/glances/conf
+      - ./glances/config:/glances/conf
     environment:
       - GLANCES_OPT=-w
     labels:

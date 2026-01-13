@@ -13,7 +13,7 @@ services:
       - traefik-network
     volumes:
       - /opt/stacks/backrest/data:/data
-      - /opt/stacks/backrest/config:/config
+      - ./$(basename $file .yml)/config:/config
       - /opt/stacks:/opt/stacks:ro  # Backup source
       - /mnt:/mnt:ro  # Backup additional drives
       - backrest-cache:/cache
@@ -41,7 +41,7 @@ services:
       - homelab-network
       - traefik-network
     volumes:
-      - /opt/stacks/duplicati/config:/config
+      - ./$(basename $file .yml)/config:/config
       - /opt/stacks:/source/stacks:ro
       - /mnt:/source/mnt:ro
       - /mnt/backups:/backups
@@ -69,7 +69,7 @@ services:
       - homelab-network
       - traefik-network
     volumes:
-      - /opt/stacks/code-server/config:/config
+      - ./$(basename $file .yml)/config:/config
       - /opt/stacks:/opt/stacks  # Access to all stacks
       - /mnt:/mnt:ro  # Read-only access to data
     environment:

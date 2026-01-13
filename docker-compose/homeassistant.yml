@@ -12,7 +12,7 @@ services:
     restart: unless-stopped
     network_mode: host  # Required for device discovery
     volumes:
-      - /opt/stacks/homeassistant/config:/config
+      - ./$(basename $file .yml)/config:/config
       - /etc/localtime:/etc/localtime:ro
     environment:
       - TZ=${TZ}
@@ -33,7 +33,7 @@ services:
       - homelab-network
       - traefik-network
     volumes:
-      - /opt/stacks/esphome/config:/config
+      - ./$(basename $file .yml)/config:/config
       - /etc/localtime:/etc/localtime:ro
     environment:
       - TZ=${TZ}
@@ -84,7 +84,7 @@ services:
     ports:
       - "8765:8765"  # Optional: direct access
     volumes:
-      - /opt/stacks/motioneye/config:/etc/motioneye
+      - ./$(basename $file .yml)/config:/etc/motioneye
       - /mnt/surveillance:/var/lib/motioneye  # Large video files on separate drive
     environment:
       - TZ=${TZ}
@@ -133,7 +133,7 @@ services:
       - "1883:1883"  # MQTT
       - "9001:9001"  # Websockets
     volumes:
-      - /opt/stacks/mosquitto/config:/mosquitto/config
+      - ./$(basename $file .yml)/config:/mosquitto/config
       - /opt/stacks/mosquitto/data:/mosquitto/data
       - /opt/stacks/mosquitto/log:/mosquitto/log
     labels:

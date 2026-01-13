@@ -125,35 +125,55 @@ touch /opt/stacks/core/traefik/acme.json
 chmod 600 /opt/stacks/core/traefik/acme.json
 log_success "acme.json created with correct permissions"
 
+# Replace email placeholder in traefik.yml
+log_info "Configuring Traefik with email: $ACME_EMAIL..."
+sed -i "s/ACME_EMAIL_PLACEHOLDER/${ACME_EMAIL}/g" /opt/stacks/core/traefik/traefik.yml
+log_success "Traefik email configured"
+
 # Replace domain placeholder in authelia configuration
 log_info "Configuring Authelia for domain: $DOMAIN..."
 sed -i "s/your-domain.duckdns.org/${DOMAIN}/g" /opt/stacks/core/authelia/configuration.yml
 
-# Create Authelia users database with admin credentials from setup script
-if [ -f /tmp/authelia_admin_credentials.tmp ]; then
-    log_info "Configuring Authelia admin user..."
-    source /tmp/authelia_admin_credentials.tmp
+# Generate Authelia admin password if not already configured
+if grep -q "CHANGEME" /opt/stacks/core/authelia/users_database.yml 2>/dev/null || [ ! -f /opt/stacks/core/authelia/users_database.yml ]; then
+    log_info "Generating Authelia admin credentials..."
     
-    cat > /opt/stacks/core/authelia/users_database.yml << EOF
+    # Generate a random password if not provided
+    ADMIN_PASSWORD="${AUTHELIA_ADMIN_PASSWORD:-$(openssl rand -base64 16)}"
+    
+    # Generate password hash using Authelia container
+    log_info "Generating password hash (this may take a moment)..."
+    PASSWORD_HASH=$(docker run --rm authelia/authelia:4.37 authelia crypto hash generate argon2 --password "$ADMIN_PASSWORD" | grep 'Digest:' | awk '{print $2}')
+    
+    if [ -z "$PASSWORD_HASH" ]; then
+        log_error "Failed to generate password hash"
+        log_info "Using template users_database.yml - please configure manually"
+    else
+        # Create users_database.yml with generated credentials
+        cat > /opt/stacks/core/authelia/users_database.yml << EOF
 ###############################################################
 #                         Users Database                      #
 ###############################################################
 
 users:
-  ${ADMIN_USER}:
-    displayname: "${ADMIN_USER}"
+  admin:
+    displayname: "Admin User"
     password: "${PASSWORD_HASH}"
-    email: ${ADMIN_EMAIL}
+    email: ${ACME_EMAIL}
     groups:
       - admins
-      - dev
+      - users
 EOF
-    
-    log_success "Authelia admin user configured: $ADMIN_USER"
-    rm -f /tmp/authelia_admin_credentials.tmp
+        
+        log_success "Authelia admin user configured"
+        log_info "Admin username: admin"
+        log_info "Admin password: $ADMIN_PASSWORD"
+        log_warning "SAVE THIS PASSWORD! Writing to /opt/stacks/core/authelia/ADMIN_PASSWORD.txt"
+        echo "$ADMIN_PASSWORD" > /opt/stacks/core/authelia/ADMIN_PASSWORD.txt
+        chmod 600 /opt/stacks/core/authelia/ADMIN_PASSWORD.txt
+    fi
 else
-    log_warning "Admin credentials not found. Using template users_database.yml"
-    log_info "You will need to manually configure /opt/stacks/core/authelia/users_database.yml"
+    log_info "Authelia users_database.yml already configured"
 fi
 
 # Deploy core stack

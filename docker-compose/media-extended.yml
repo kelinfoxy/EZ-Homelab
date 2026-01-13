@@ -14,7 +14,7 @@ services:
       - homelab-network
       - traefik-network
     volumes:
-      - /opt/stacks/readarr/config:/config
+      - ./$(basename $file .yml)/config:/config
       - /mnt/media/books:/books
       - /mnt/downloads:/downloads
     environment:
@@ -42,7 +42,7 @@ services:
       - homelab-network
       - traefik-network
     volumes:
-      - /opt/stacks/lidarr/config:/config
+      - ./$(basename $file .yml)/config:/config
       - /mnt/media/music:/music
       - /mnt/downloads:/downloads
     environment:
@@ -70,7 +70,7 @@ services:
       - homelab-network
       - traefik-network
     volumes:
-      - /opt/stacks/lazylibrarian/config:/config
+      - ./$(basename $file .yml)/config:/config
       - /mnt/media/books:/books
       - /mnt/downloads:/downloads
     environment:
@@ -127,7 +127,7 @@ services:
       - homelab-network
       - traefik-network
     volumes:
-      - /opt/stacks/calibre-web/config:/config
+      - ./$(basename $file .yml)/config:/config
       - /mnt/media/books:/books
     environment:
       - PUID=${PUID:-1000}
@@ -155,7 +155,7 @@ services:
       - homelab-network
       - traefik-network
     volumes:
-      - /opt/stacks/jellyseerr/config:/app/config
+      - ./$(basename $file .yml)/config:/app/config
     environment:
       - LOG_LEVEL=info
       - TZ=${TZ}
@@ -198,7 +198,7 @@ services:
       - "8266:8266"  # Server port
     volumes:
       - /opt/stacks/tdarr/server:/app/server
-      - /opt/stacks/tdarr/configs:/app/configs
+      - ./$(basename $file .yml)/configs:/app/configs
       - /opt/stacks/tdarr/logs:/app/logs
       - /mnt/media:/media
       - /mnt/tdarr-transcode:/temp  # Transcode cache on separate drive
@@ -228,7 +228,7 @@ services:
     networks:
       - media-network
     volumes:
-      - /opt/stacks/tdarr/configs:/app/configs
+      - ./$(basename $file .yml)/configs:/app/configs
       - /opt/stacks/tdarr/logs:/app/logs
       - /mnt/media:/media
       - /mnt/tdarr-transcode:/temp
@@ -256,7 +256,7 @@ services:
       - homelab-network
       - traefik-network
     volumes:
-      - /opt/stacks/unmanic/config:/config
+      - ./$(basename $file .yml)/config:/config
       - /mnt/media:/library
       - /mnt/unmanic-cache:/tmp/unmanic  # Transcode cache on separate drive
     environment:

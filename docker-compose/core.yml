@@ -18,7 +18,7 @@ services:
       - TOKEN=${DUCKDNS_TOKEN}            # Your DuckDNS token
       - UPDATE_IP=ipv4                    # or ipv6, or both
     volumes:
-      - /opt/stacks/core/duckdns:/config
+      - ./duckdns:/config
     labels:
       - "homelab.category=infrastructure"
       - "homelab.description=Dynamic DNS updater"
@@ -40,9 +40,9 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /opt/stacks/core/traefik/traefik.yml:/traefik.yml:ro
-      - /opt/stacks/core/traefik/dynamic:/dynamic:ro
-      - /opt/stacks/core/traefik/acme.json:/acme.json
+      - ./traefik/traefik.yml:/traefik.yml:ro
+      - ./traefik/dynamic:/dynamic:ro
+      - ./traefik/acme.json:/acme.json
     environment:
       - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}  # If using Cloudflare DNS challenge
       - DUCKDNS_TOKEN=${DUCKDNS_TOKEN}        # If using DuckDNS
@@ -73,8 +73,8 @@ services:
     networks:
       - traefik-network
     volumes:
-      - /opt/stacks/core/authelia/configuration.yml:/config/configuration.yml:ro
-      - /opt/stacks/core/authelia/users_database.yml:/config/users_database.yml
+      - ./authelia/configuration.yml:/config/configuration.yml:ro
+      - ./authelia/users_database.yml:/config/users_database.yml
       - authelia-data:/data
     environment:
       - TZ=${TZ}
@@ -115,7 +115,7 @@ services:
       - "6881:6881"      # qBittorrent
       - "6881:6881/udp"  # qBittorrent
     volumes:
-      - /opt/stacks/core/gluetun:/gluetun
+      - ./gluetun:/gluetun
     environment:
       - VPN_SERVICE_PROVIDER=surfshark
       - VPN_TYPE=openvpn

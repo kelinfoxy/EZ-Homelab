@@ -14,7 +14,7 @@ services:
       - traefik-network
       - dockerproxy-network
     volumes:
-      - /opt/stacks/homepage/config:/app/config
+      - ./homepage:/app/config
       - /var/run/docker.sock:/var/run/docker.sock:ro  # For Docker integration
       - /opt/stacks:/opt/stacks:ro  # To discover other stacks
     environment:
@@ -42,9 +42,9 @@ services:
       - homelab-network
       - traefik-network
     volumes:
-      - /opt/stacks/homarr/configs:/app/data/configs
-      - /opt/stacks/homarr/data:/data
-      - /opt/stacks/homarr/icons:/app/public/icons
+      - ./homarr/config:/app/config/configs
+      - ./homarr/data:/data
+      - ./homarr/icons:/app/public/icons
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       - TZ=${TZ}

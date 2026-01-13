@@ -75,29 +75,51 @@ The infrastructure uses Traefik for reverse proxy with automatic SSL, Authelia f
    cp .env.example .env
    nano .env  # Edit with your domain, API keys, and passwords
    ```
-   > Alternativly you can ssh in from VS Code using the Remote-ssh plugin and edit in a nice editor
+   > Alternatively you can ssh in from VS Code using the Remote-SSH plugin and edit in a nice editor
 
-   Required variables: DOMAIN, DUCKDNS_TOKEN, TZ, Authelia user credentials, API keys for services you plan to use.
-   > See [Getting Started](docs/getting-started.md) for more details
+   **Required variables:**
+   - `DOMAIN` - Your DuckDNS domain (e.g., yourdomain.duckdns.org)
+   - `DUCKDNS_TOKEN` - Your DuckDNS token
+   - `ACME_EMAIL` - Your email for Let's Encrypt certificates
+   - `AUTHELIA_JWT_SECRET` - Generate with: `openssl rand -hex 64`
+   - `AUTHELIA_SESSION_SECRET` - Generate with: `openssl rand -hex 64`
+   - `AUTHELIA_STORAGE_ENCRYPTION_KEY` - Generate with: `openssl rand -hex 64`
+   - `SURFSHARK_USERNAME` and `SURFSHARK_PASSWORD` - If using VPN
+   
+   > See [Getting Started](docs/getting-started.md) for detailed instructions
+
 4. **Run deployment script:**
    
-   This automated script will create required directories, verify Docker networks exist, deploy core stack (DuckDNS, Traefik, Authelia, Gluetun), deploy the infrastructure stack and open Dockge in your browser when ready.
+   This automated script will:
+   - Create Docker networks
+   - Configure Traefik with your email
+   - Generate Authelia admin password (saved to `/opt/stacks/core/authelia/ADMIN_PASSWORD.txt`)
+   - Deploy core stack (DuckDNS, Traefik, Authelia, Gluetun)
+   - Deploy infrastructure stack (Dockge, Pi-hole, monitoring tools)
+   - Open Dockge in your browser
    
    ```bash
    ./scripts/deploy-homelab.sh
    ```
    
+   **Login credentials:** Username: `admin` | Password: Check `/opt/stacks/core/authelia/ADMIN_PASSWORD.txt`
 
 5. **Deploy additional stacks through Dockge:**
    
-   Log in to Dockge with your Authelia credentials and deploy additional stacks: dashboards.yml, media.yml, media-extended.yml, homeassistant.yml, productivity.yml, monitoring.yml, utilities.yml.
+   Log in to Dockge at `https://dockge.yourdomain.duckdns.org` and deploy additional stacks from the repository's `docker-compose/` directory:
+   - `dashboards.yml` - Homepage, Homarr
+   - `media.yml` - Plex, Jellyfin, Sonarr, Radarr, etc.
+   - `media-extended.yml` - Readarr, Lidarr, etc.
+   - `homeassistant.yml` - Home Assistant and accessories
+   - `productivity.yml` - Nextcloud, Gitea, wikis
+   - `monitoring.yml` - Grafana, Prometheus, etc.
+   - `utilities.yml` - Backups, code editors, etc.
 
-6. **Configure VS Code to control the server via Github Copilot**
+6. **Configure VS Code to control the server via GitHub Copilot**
    
-   Log into VS Code, install and configure the Github Copilot extension with your api key. 
-   Use the Copilot chat window to manage your homelab
+   Install and configure the GitHub Copilot extension in VS Code, then use the Copilot chat window to manage your homelab.
    
-   > Tip: If you have a paid account use the free models to perform simple tasks like starting/stopping a service, and premium models to do more advanced tasks.
+   > Tip: Use free models for simple tasks like starting/stopping services, and premium models for complex configurations.
 
 # #
 

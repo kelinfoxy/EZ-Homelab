@@ -35,23 +35,33 @@ For most users, the automated setup script handles everything:
    
    # Copy these values and add them to your .env file
    ```
-7. **Generate Authelia Admin Password Hash**:
-   ```bash
-   # Replace 'yourpassword' with your desired admin password
-   docker run --rm authelia/authelia:4.37 authelia crypto hash generate argon2 --password 'yourpassword'
-   
-   # Copy the output hash and update /opt/stacks/core/authelia/users_database.yml
-   # Replace the password field for the admin user
-   ```
-8. **Configure environment**:
+7. **Configure environment**:
    ```bash
    cp .env.example .env
    nano .env  # Edit with your settings and paste the Authelia secrets
    ```
-9. **Deploy core services**:
+   
+   **Required variables in .env:**
+   - `DOMAIN` - Your DuckDNS domain (e.g., yourdomain.duckdns.org)
+   - `DUCKDNS_TOKEN` - Your DuckDNS token
+   - `ACME_EMAIL` - Your email for Let's Encrypt certificates
+   - `AUTHELIA_JWT_SECRET` - Generated in step 6
+   - `AUTHELIA_SESSION_SECRET` - Generated in step 6
+   - `AUTHELIA_STORAGE_ENCRYPTION_KEY` - Generated in step 6
+   - `SURFSHARK_USERNAME` and `SURFSHARK_PASSWORD` - If using VPN
+
+8. **Deploy homelab**:
    ```bash
    ./scripts/deploy-homelab.sh
    ```
+   
+   **The deploy script automatically:**
+   - Creates Docker networks
+   - Configures Traefik with your email
+   - Generates Authelia admin password
+   - Deploys core stack (DuckDNS, Traefik, Authelia, Gluetun)
+   - Deploys infrastructure stack (Dockge, Pi-hole, monitoring)
+   - Opens Dockge in your browser
 
 **That's it!** Your homelab is ready. Access Dockge at `https://dockge.yourdomain.duckdns.org`
 
@@ -225,3 +235,36 @@ docker compose up -d --build service-name
 5. **Use AI assistance** for custom configurations
 
 Happy homelabbing! 🚀
+
+## Deployment Improvements (Round 4)
+
+The repository has been enhanced with the following improvements for better user experience:
+
+### Automated Configuration
+- **Email Substitution**: Deploy script automatically configures Traefik with your ACME_EMAIL
+- **Password Generation**: Authelia admin password is auto-generated and saved to `/opt/stacks/core/authelia/ADMIN_PASSWORD.txt`
+- **Network Creation**: Docker networks are created automatically before deployment
+
+### Volume Path Standardization
+- All compose files now use **relative paths** (e.g., `./service/config`) for portability
+- Stacks work correctly when deployed via Dockge or docker compose
+- Large shared data still uses absolute paths (`/mnt/media`, `/mnt/downloads`)
+
+### SSL Certificate Configuration
+- **Default**: HTTP challenge (simple setup, works immediately)
+- **Optional**: DNS challenge for wildcard certificates (see comments in traefik.yml)
+- Certificates are automatically requested and renewed by Traefik
+
+### What's Automated
+✅ Docker network creation  
+✅ Traefik email configuration  
+✅ Authelia password generation  
+✅ Domain configuration in Authelia  
+✅ Directory structure creation  
+✅ Service deployment  
+
+### What You Configure
+📝 `.env` file with your domain and API keys  
+📝 DuckDNS token  
+📝 VPN credentials (if using Gluetun)  
+📝 Service-specific settings via Dockge  

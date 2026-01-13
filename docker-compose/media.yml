@@ -16,7 +16,7 @@ services:
       - homelab-network
       - traefik-network
     volumes:
-      - /opt/stacks/plex/config:/config
+      - ./plex/config:/config
       - /mnt/media:/media:ro  # Large media files on separate drive
       - plex-transcode:/transcode
     environment:
@@ -64,8 +64,8 @@ services:
       - homelab-network
       - traefik-network
     volumes:
-      - /opt/stacks/jellyfin/config:/config
-      - /opt/stacks/jellyfin/cache:/cache
+      - ./jellyfin/config:/config
+      - ./jellyfin/cache:/cache
       - /mnt/media:/media:ro  # Large media files on separate drive
     environment:
       - PUID=${PUID:-1000}
@@ -95,7 +95,7 @@ services:
       - homelab-network
       - traefik-network
     volumes:
-      - /opt/stacks/sonarr/config:/config
+      - ./sonarr/config:/config
       - /mnt/media:/media
       - /mnt/downloads:/downloads  # Large downloads on separate drive
     environment:
@@ -124,7 +124,7 @@ services:
       - homelab-network
       - traefik-network
     volumes:
-      - /opt/stacks/radarr/config:/config
+      - ./radarr/config:/config
       - /mnt/media:/media
       - /mnt/downloads:/downloads  # Large downloads on separate drive
     environment:
@@ -153,7 +153,7 @@ services:
       - homelab-network
       - traefik-network
     volumes:
-      - /opt/stacks/prowlarr/config:/config
+      - ./prowlarr/config:/config
     environment:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
