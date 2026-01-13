@@ -77,6 +77,8 @@ The infrastructure uses Traefik for reverse proxy with automatic SSL, Authelia f
    ```
    > Alternatively you can ssh in from VS Code using the Remote-SSH plugin and edit in a nice editor
 
+   **IMPORTANT:** Keep your `.env` file in the repository folder (`~/AI-Homelab/.env`). The deploy script will automatically copy it where needed.
+
    **Required variables:**
    - `DOMAIN` - Your DuckDNS domain (e.g., yourdomain.duckdns.org)
    - `DUCKDNS_TOKEN` - Your DuckDNS token
@@ -96,6 +98,7 @@ The infrastructure uses Traefik for reverse proxy with automatic SSL, Authelia f
    - Generate Authelia admin password (saved to `/opt/stacks/core/authelia/ADMIN_PASSWORD.txt`)
    - Deploy core stack (DuckDNS, Traefik, Authelia, Gluetun)
    - Deploy infrastructure stack (Dockge, Pi-hole, monitoring tools)
+   - Deploy dashboards stack (Homepage, Homarr)
    - Open Dockge in your browser
    
    ```bash
@@ -107,7 +110,6 @@ The infrastructure uses Traefik for reverse proxy with automatic SSL, Authelia f
 5. **Deploy additional stacks through Dockge:**
    
    Log in to Dockge at `https://dockge.yourdomain.duckdns.org` and deploy additional stacks from the repository's `docker-compose/` directory:
-   - `dashboards.yml` - Homepage, Homarr
    - `media.yml` - Plex, Jellyfin, Sonarr, Radarr, etc.
    - `media-extended.yml` - Readarr, Lidarr, etc.
    - `homeassistant.yml` - Home Assistant and accessories

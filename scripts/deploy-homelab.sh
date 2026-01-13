@@ -171,6 +171,7 @@ EOF
         log_warning "SAVE THIS PASSWORD! Writing to /opt/stacks/core/authelia/ADMIN_PASSWORD.txt"
         echo "$ADMIN_PASSWORD" > /opt/stacks/core/authelia/ADMIN_PASSWORD.txt
         chmod 600 /opt/stacks/core/authelia/ADMIN_PASSWORD.txt
+        chown $ACTUAL_USER:$ACTUAL_USER /opt/stacks/core/authelia/ADMIN_PASSWORD.txt
     fi
 else
     log_info "Authelia users_database.yml already configured"
@@ -196,7 +197,7 @@ fi
 echo ""
 
 # Step 4: Deploy infrastructure stack (Dockge and monitoring tools)
-log_info "Step 4/5: Deploying infrastructure stack..."
+log_info "Step 4/6: Deploying infrastructure stack..."
 log_info "  - Dockge (Docker Compose Manager)"
 log_info "  - Pi-hole (DNS Ad Blocker)"
 log_info "  - Watchtower (Container Updates)"
@@ -216,8 +217,32 @@ docker compose up -d
 log_success "Infrastructure stack deployed"
 echo ""
 
-# Step 5: Wait for Dockge to be ready and open browser
-log_info "Step 5/5: Waiting for Dockge web UI to be ready..."
+# Step 5: Deploy dashboards stack (Homepage and Homarr)
+log_info "Step 5/6: Deploying dashboards stack..."
+log_info "  - Homepage (AI-configurable Dashboard)"
+log_info "  - Homarr (Modern Dashboard)"
+echo ""
+
+# Copy dashboards stack
+mkdir -p /opt/stacks/dashboards
+cp "$REPO_DIR/docker-compose/dashboards.yml" /opt/stacks/dashboards/docker-compose.yml
+cp "$REPO_DIR/.env" /opt/stacks/dashboards/.env
+
+# Copy homepage config templates
+if [ -d "$REPO_DIR/config-templates/homepage" ]; then
+    cp -r "$REPO_DIR/config-templates/homepage" /opt/stacks/dashboards/
+    log_info "Homepage configuration templates copied"
+fi
+
+# Deploy dashboards stack
+cd /opt/stacks/dashboards
+docker compose up -d
+
+log_success "Dashboards stack deployed"
+echo ""
+
+# Step 6: Wait for Dockge to be ready and open browser
+log_info "Step 6/6: Waiting for Dockge web UI to be ready..."
 
 DOCKGE_URL="https://dockge.${DOMAIN}"
 MAX_WAIT=60  # Maximum wait time in seconds
@@ -280,22 +305,32 @@ echo "  🚀 Dockge:   $DOCKGE_URL"
 echo "  🔒 Authelia: https://auth.${DOMAIN}"
 echo "  🔀 Traefik:  https://traefik.${DOMAIN}"
 echo ""
+log_info "SSL Certificates:"
+echo "  📝 Let's Encrypt certificates will be acquired automatically within 2-5 minutes"
+echo "  ⚠️  Initial access uses self-signed certs (browser warning is normal)"
+echo "  🔓 Ensure ports 80/443 are accessible from internet for Let's Encrypt"
+echo "  💾 Admin password saved to: /opt/stacks/core/authelia/ADMIN_PASSWORD.txt"
+echo ""
 log_info "Next steps:"
 echo ""
 echo "  1. Log in to Dockge using your Authelia credentials"
-echo "     (configured in /opt/stacks/core/authelia/users_database.yml)"
+echo "     Username: admin"
+echo "     Password: (saved in /opt/stacks/core/authelia/ADMIN_PASSWORD.txt)"
 echo ""
 echo "  2. Deploy additional stacks through Dockge's web UI:"
-echo "     - alternatives.yml (Portainer, Authentik - optional alternatives)"
-echo "     - dashboards.yml (Homepage, Homarr)"
 echo "     - media.yml (Plex, Jellyfin, Sonarr, Radarr, etc.)"
 echo "     - media-extended.yml (Readarr, Lidarr, etc.)"
 echo "     - homeassistant.yml (Home Assistant and accessories)"
 echo "     - productivity.yml (Nextcloud, Gitea, wikis)"
 echo "     - monitoring.yml (Grafana, Prometheus, etc.)"
 echo "     - utilities.yml (Backups, code editors, etc.)"
+echo "     - alternatives.yml (Portainer, Authentik - optional)"
 echo ""
-echo "  3. Configure services via the AI assistant in VS Code"
+echo "  3. Access your dashboards:"
+echo "     \ud83c\udfe0 Homepage: https://home.${DOMAIN}"
+echo "     \ud83d\udcca Homarr:   https://homarr.${DOMAIN}"
+echo ""
+echo "  4. Configure services via the AI assistant in VS Code"
 echo ""
 echo "=========================================="
 echo ""

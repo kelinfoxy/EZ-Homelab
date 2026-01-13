@@ -41,6 +41,12 @@ For most users, the automated setup script handles everything:
    nano .env  # Edit with your settings and paste the Authelia secrets
    ```
    
+   **IMPORTANT: .env File Location**
+   - The `.env` file should remain in the **repository folder** (`~/AI-Homelab/.env`)
+   - The deploy script will automatically copy it to `/opt/stacks/*/` as needed
+   - Always edit the repo copy, not the deployed copies
+   - Changes to deployed copies will be overwritten on next deployment
+   
    **Required variables in .env:**
    - `DOMAIN` - Your DuckDNS domain (e.g., yourdomain.duckdns.org)
    - `DUCKDNS_TOKEN` - Your DuckDNS token
@@ -58,10 +64,15 @@ For most users, the automated setup script handles everything:
    **The deploy script automatically:**
    - Creates Docker networks
    - Configures Traefik with your email
-   - Generates Authelia admin password
+   - Generates Authelia admin password (saved to `/opt/stacks/core/authelia/ADMIN_PASSWORD.txt`)
    - Deploys core stack (DuckDNS, Traefik, Authelia, Gluetun)
    - Deploys infrastructure stack (Dockge, Pi-hole, monitoring)
+   - Deploys dashboards stack (Homepage, Homarr)
    - Opens Dockge in your browser
+   
+   **Login credentials:**
+   - Username: `admin`
+   - Password: Check `/opt/stacks/core/authelia/ADMIN_PASSWORD.txt` or see script output
 
 **That's it!** Your homelab is ready. Access Dockge at `https://dockge.yourdomain.duckdns.org`
 
