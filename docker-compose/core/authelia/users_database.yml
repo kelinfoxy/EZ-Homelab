@@ -1,0 +1,12 @@
+###############################################################
+#                         Users Database                      #
+###############################################################
+
+users:
+  kelin:
+    displayname: "kelin"
+    password: "$argon2id$v=19$m=65536,t=3,p=4$GirJvw4ecHIr1nnM3ALpwg$7+XjPev3P7AwEveRw5yiq5OmsitXYQp5xR8AxWjDNbI"
+    email: kelinfoxy@gmail.com
+    groups:
+      - admins
+      - dev

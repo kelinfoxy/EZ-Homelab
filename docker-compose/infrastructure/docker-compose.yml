@@ -1,0 +1,169 @@
+# Infrastructure Services
+# Core services that other services depend on
+# Place in /opt/stacks/infrastructure/docker-compose.yml
+# NOTE: Traefik, Authelia, DuckDNS, and Gluetun have their own separate stacks
+# See /opt/stacks/traefik/, /opt/stacks/authelia/, etc.
+
+services:
+  # Dockge - Docker Compose Stack Manager (PRIMARY - preferred over Portainer)
+  # Access at: https://dockge.${DOMAIN}
+  dockge:
+    image: louislam/dockge:1
+    container_name: dockge
+    restart: unless-stopped
+    networks:
+      - homelab-network
+      - traefik-network
+    ports:
+      - 5001:5001 # Optional: direct access
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /opt/stacks:/opt/stacks # Dockge manages stacks in this directory
+      - /opt/dockge/data:/app/data
+    environment:
+      - DOCKGE_STACKS_DIR=/opt/stacks
+      - DOCKGE_ENABLE_CONSOLE=true
+    labels:
+      - homelab.category=infrastructure
+      - homelab.description=Docker Compose stack manager (PRIMARY)
+      - dockge.managed=true
+      - dockge.url=https://dockge.${DOMAIN}
+      - traefik.enable=true
+      - traefik.http.routers.dockge.rule=Host(`dockge.${DOMAIN}`)
+      - traefik.http.routers.dockge.entrypoints=websecure
+      - traefik.http.routers.dockge.tls=true
+      - traefik.http.routers.dockge.middlewares=authelia@docker
+      - traefik.http.services.dockge.loadbalancer.server.port=5001
+  # Pi-hole - Network-wide ad blocker and DNS server
+  # Access at: https://pihole.${DOMAIN}
+  pihole:
+    image: pihole/pihole:2024.01.0
+    container_name: pihole
+    restart: unless-stopped
+    networks:
+      - homelab-network
+      - traefik-network
+    ports:
+      - 53:53/tcp # DNS TCP
+      - 53:53/udp # DNS UDP
+    volumes:
+      - /opt/stacks/pihole/etc-pihole:/etc/pihole
+      - /opt/stacks/pihole/etc-dnsmasq.d:/etc/dnsmasq.d
+    environment:
+      - TZ=${TZ:-America/New_York}
+      - WEBPASSWORD=${PIHOLE_PASSWORD:-changeme}
+      - FTLCONF_LOCAL_IPV4=${SERVER_IP}
+    dns:
+      - 127.0.0.1
+      - 1.1.1.1
+    cap_add:
+      - NET_ADMIN
+    labels:
+      - homelab.category=infrastructure
+      - homelab.description=Network-wide ad blocking and DNS      - dockge.managed=true
+      - dockge.url=https://pihole.${DOMAIN}      - traefik.enable=true
+      - traefik.http.routers.pihole.rule=Host(`pihole.${DOMAIN}`)
+      - traefik.http.routers.pihole.entrypoints=websecure
+      - traefik.http.routers.pihole.tls=true
+      - traefik.http.routers.pihole.middlewares=authelia@docker
+      - traefik.http.services.pihole.loadbalancer.server.port=80
+  # Watchtower - Automatic container updates
+  # Runs silently in background, no UI
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower
+    restart: unless-stopped
+    networks:
+      - homelab-network
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_INCLUDE_RESTARTING=true
+      - WATCHTOWER_SCHEDULE=0 0 4 * * * # 4 AM daily
+      - WATCHTOWER_NOTIFICATIONS=shoutrrr
+      - WATCHTOWER_NOTIFICATION_URL=${WATCHTOWER_NOTIFICATION_URL}
+      - DOCKER_API_VERSION=1.44
+    labels:
+      - homelab.category=infrastructure
+      - homelab.description=Automatic Docker container updates
+  # Dozzle - Real-time Docker log viewer
+  # Access at: https://dozzle.${DOMAIN}
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dozzle
+    restart: unless-stopped
+    networks:
+      - homelab-network
+      - traefik-network
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - DOZZLE_LEVEL=info
+      - DOZZLE_TAILSIZE=300
+      - DOZZLE_FILTER=status=running
+    labels:
+      - homelab.category=infrastructure
+      - homelab.description=Real-time Docker log viewer
+      - dockge.managed=true
+      - dockge.url=https://dozzle.${DOMAIN}
+      - traefik.enable=true
+      - traefik.http.routers.dozzle.rule=Host(`dozzle.${DOMAIN}`)
+      - traefik.http.routers.dozzle.entrypoints=websecure
+      - traefik.http.routers.dozzle.tls=true
+      - traefik.http.routers.dozzle.middlewares=authelia@docker
+      - traefik.http.services.dozzle.loadbalancer.server.port=8080
+  # Docker Proxy - Socket proxy for security
+  # Used by services that need Docker socket access
+  dockerproxy:
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: dockerproxy
+    restart: unless-stopped
+    networks:
+      - dockerproxy-network
+    ports:
+      - 127.0.0.1:2375:2375
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - CONTAINERS=1
+      - SERVICES=1
+      - TASKS=1
+      - NETWORKS=1
+      - NODES=1
+    labels:
+      - homelab.category=infrastructure
+      - homelab.description=Docker socket proxy for security
+  # Glances - System monitoring
+  # Access at: https://glances.${DOMAIN}
+  glances:
+    image: nicolargo/glances:latest-full
+    container_name: glances
+    restart: unless-stopped
+    networks:
+      - homelab-network
+      - traefik-network
+    pid: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /opt/stacks/glances/config:/glances/conf
+    environment:
+      - GLANCES_OPT=-w
+    labels:
+      - homelab.category=infrastructure
+      - homelab.description=System and Docker monitoring
+      - dockge.managed=true
+      - dockge.url=https://glances.${DOMAIN}
+      - traefik.enable=true
+      - traefik.http.routers.glances.rule=Host(`glances.${DOMAIN}`)
+      - traefik.http.routers.glances.entrypoints=websecure
+      - traefik.http.routers.glances.tls=true
+      - traefik.http.routers.glances.middlewares=authelia@docker
+      - traefik.http.services.glances.loadbalancer.server.port=61208
+networks:
+  homelab-network:
+    driver: bridge
+  dockerproxy-network:
+    driver: bridge
+  traefik-network:
+    external: true
