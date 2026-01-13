@@ -1,5 +1,6 @@
 # Authelia Configuration
 # Copy to /opt/stacks/authelia/configuration.yml
+# IMPORTANT: Replace 'your-domain.duckdns.org' with your actual DuckDNS domain
 
 server:
   host: 0.0.0.0
@@ -12,10 +13,10 @@ theme: dark
 
 jwt_secret: ${AUTHELIA_JWT_SECRET}
 
-default_redirection_url: https://auth.${DOMAIN}
+default_redirection_url: https://auth.your-domain.duckdns.org
 
 totp:
-  issuer: ${DOMAIN}
+  issuer: your-domain.duckdns.org
   period: 30
   skew: 1
 
@@ -35,25 +36,25 @@ access_control:
   
   rules:
     # Bypass Authelia for Jellyfin (allow app access)
-    - domain: jellyfin.${DOMAIN}
+    - domain: jellyfin.your-domain.duckdns.org
       policy: bypass
     
     # Bypass for Plex (allow app access)
-    - domain: plex.${DOMAIN}
+    - domain: plex.your-domain.duckdns.org
       policy: bypass
     
     # Bypass for Home Assistant (has its own auth)
-    - domain: ha.${DOMAIN}
+    - domain: ha.your-domain.duckdns.org
       policy: bypass
     
     # Protected: All other services require authentication
-    - domain: "*.${DOMAIN}"
+    - domain: "*.your-domain.duckdns.org"
       policy: one_factor
     
     # Two-factor for admin services (optional)
     # - domain:
-    #     - "admin.${DOMAIN}"
-    #     - "portainer.${DOMAIN}"
+    #     - "admin.your-domain.duckdns.org"
+    #     - "portainer.your-domain.duckdns.org"
     #   policy: two_factor
 
 session:
@@ -62,7 +63,7 @@ session:
   expiration: 1h
   inactivity: 5m
   remember_me_duration: 1M
-  domain: ${DOMAIN}
+  domain: your-domain.duckdns.org
 
 regulation:
   max_retries: 3
@@ -72,22 +73,9 @@ regulation:
 storage:
   encryption_key: ${AUTHELIA_STORAGE_ENCRYPTION_KEY}
   local:
-    path: /config/db.sqlite3
+    path: /data/db.sqlite3
 
 notifier:
-  # File-based notifications (for testing)
+  # File-based notifications (for development/testing)
   filesystem:
-    filename: /config/notification.txt
-  
-  # SMTP notifications (recommended for production)
-  # smtp:
-  #   host: smtp.gmail.com
-  #   port: 587
-  #   username: ${SMTP_USERNAME}
-  #   password: ${AUTHELIA_NOTIFIER_SMTP_PASSWORD}
-  #   sender: authelia@${DOMAIN}
-  #   identifier: localhost
-  #   subject: "[Authelia] {title}"
-  #   startup_check_address: test@authelia.com
-  #   disable_require_tls: false
-  #   disable_html_emails: false
+    filename: /data/notification.txt

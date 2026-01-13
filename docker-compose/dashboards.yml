@@ -21,13 +21,14 @@ services:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
       - TZ=${TZ}
+      - HOMEPAGE_ALLOWED_HOSTS=home.${DOMAIN}
     labels:
       - "homelab.category=dashboard"
       - "homelab.description=Application dashboard (AI-configurable)"
       - "traefik.enable=true"
       - "traefik.http.routers.homepage.rule=Host(`home.${DOMAIN}`)"
       - "traefik.http.routers.homepage.entrypoints=websecure"
-      - "traefik.http.routers.homepage.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.homepage.tls=true"
       - "traefik.http.routers.homepage.middlewares=authelia@docker"
       - "traefik.http.services.homepage.loadbalancer.server.port=3000"
 
@@ -53,7 +54,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.homarr.rule=Host(`homarr.${DOMAIN}`)"
       - "traefik.http.routers.homarr.entrypoints=websecure"
-      - "traefik.http.routers.homarr.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.homarr.tls=true"
       - "traefik.http.routers.homarr.middlewares=authelia@docker"
       - "traefik.http.services.homarr.loadbalancer.server.port=7575"
 

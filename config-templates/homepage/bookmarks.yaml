@@ -1,0 +1,29 @@
+---
+# Homepage Bookmarks
+
+- Documentation:
+    - GitHub Repository:
+        - icon: github.png
+          href: https://github.com/kelinfoxy/AI-Homelab
+          description: AI-Homelab Repository
+          
+    - Homepage Docs:
+        - icon: homepage.png
+          href: https://gethomepage.dev
+          description: Homepage Documentation
+
+- Useful Links:
+    - DuckDNS:
+        - icon: duckdns.png
+          href: https://www.duckdns.org
+          description: Dynamic DNS Service
+          
+    - Let's Encrypt:
+        - icon: si-letsencrypt
+          href: https://letsencrypt.org
+          description: SSL Certificate Provider
+          
+    - Docker Hub:
+        - icon: docker.png
+          href: https://hub.docker.com
+          description: Container Images

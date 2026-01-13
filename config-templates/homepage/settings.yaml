@@ -1,63 +1,45 @@
-# Homepage Configuration - Settings
-# Copy to /opt/stacks/homepage/config/settings.yaml
-
 ---
-title: Homelab Dashboard
-background: https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d
-backgroundOpacity: 0.2
+# Homepage Settings
+# For all configuration options: https://gethomepage.dev/configs/settings/
+
+title: AI Homelab Dashboard
+
 theme: dark
 color: slate
-headerStyle: boxed
-hideVersion: true
-hideErrors: false
-showStats: true
-target: _self  # Open links in same tab
 
-# Layout configuration
 layout:
-  Infrastructure:
-    style: row
-    columns: 4
-  Dashboards:
-    style: row
+  Core Stack (core.yml):
+    style: column
     columns: 2
-  Media Streaming:
-    style: row
-    columns: 3
-  Media Management:
-    style: row
+  Infrastructure Stack (infrastructure.yml):
+    style: column
     columns: 4
-  Downloads:
-    style: row
+  Dashboards Stack (dashboards.yml):
+    style: column
     columns: 2
-  Books & Comics:
-    style: row
-    columns: 3
-  Home Automation:
-    style: row
-    columns: 4
-  Productivity:
-    style: row
-    columns: 4
-  Documentation:
-    style: row
-    columns: 4
-  Backups & Tools:
-    style: row
+  Alternatives Stack (alternatives.yml):
+    style: column
     columns: 2
-  Monitoring:
-    style: row
+  Media Stack (media.yml):
+    style: column
     columns: 3
+  Media Extended Stack (media-extended.yml):
+    style: column
+    columns: 3
+  Home Automation Stack (homeassistant.yml):
+    style: column
+    columns: 3
+  Productivity Stack (productivity.yml):
+    style: column
+    columns: 3
+  Monitoring Stack (monitoring.yml):
+    style: column
+    columns: 3
+  Development Stack (development.yml):
+    style: column
+    columns: 4
+  Utilities Stack (utilities.yml):
+    style: column
+    columns: 4
 
-# Quick search
-quicklaunch:
-  searchDescriptions: true
-  hideInternetSearch: false
-  showSearchSuggestions: true
-
-# Providers for additional functionality
-providers:
-  longhorn:
-    url: http://longhorn:9500
-  openweathermap: {{HOMEPAGE_VAR_OPENWEATHER_KEY}}
-  weatherapi: {{HOMEPAGE_VAR_WEATHERAPI_KEY}}
+headerStyle: boxed

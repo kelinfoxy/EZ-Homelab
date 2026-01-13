@@ -31,9 +31,15 @@ log_error() {
 }
 
 # Check if running as root
-if [ "$EUID" -eq 0 ]; then 
-    log_error "Please do NOT run this script as root or with sudo"
-    log_info "Run as: ./deploy-homelab.sh"
+if [ "$EUID" -ne 0 ]; then 
+    log_error "Please run as root (use: sudo ./deploy-homelab.sh)"
+    exit 1
+fi
+
+# Get the actual user who invoked sudo
+ACTUAL_USER="${SUDO_USER:-$USER}"
+if [ "$ACTUAL_USER" = "root" ]; then
+    log_error "Please run this script with sudo, not as root user"
     exit 1
 fi
 
@@ -42,6 +48,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 REPO_DIR="$( cd "$SCRIPT_DIR/.." && pwd )"
 
 log_info "AI-Homelab Deployment Script"
+log_info "Running as user: $ACTUAL_USER"
 echo ""
 
 # Check if .env file exists
@@ -111,6 +118,37 @@ cp -r "$REPO_DIR/config-templates/traefik" /opt/stacks/core/
 cp -r "$REPO_DIR/config-templates/authelia" /opt/stacks/core/
 cp "$REPO_DIR/.env" /opt/stacks/core/.env
 
+# Replace domain placeholder in authelia configuration
+log_info "Configuring Authelia for domain: $DOMAIN..."
+sed -i "s/your-domain.duckdns.org/${DOMAIN}/g" /opt/stacks/core/authelia/configuration.yml
+
+# Create Authelia users database with admin credentials from setup script
+if [ -f /tmp/authelia_admin_credentials.tmp ]; then
+    log_info "Configuring Authelia admin user..."
+    source /tmp/authelia_admin_credentials.tmp
+    
+    cat > /opt/stacks/core/authelia/users_database.yml << EOF
+###############################################################
+#                         Users Database                      #
+###############################################################
+
+users:
+  ${ADMIN_USER}:
+    displayname: "${ADMIN_USER}"
+    password: "${PASSWORD_HASH}"
+    email: ${ADMIN_EMAIL}
+    groups:
+      - admins
+      - dev
+EOF
+    
+    log_success "Authelia admin user configured: $ADMIN_USER"
+    rm -f /tmp/authelia_admin_credentials.tmp
+else
+    log_warning "Admin credentials not found. Using template users_database.yml"
+    log_info "You will need to manually configure /opt/stacks/core/authelia/users_database.yml"
+fi
+
 # Deploy core stack
 cd /opt/stacks/core
 docker compose up -d
@@ -133,7 +171,6 @@ echo ""
 # Step 4: Deploy infrastructure stack (Dockge and monitoring tools)
 log_info "Step 4/5: Deploying infrastructure stack..."
 log_info "  - Dockge (Docker Compose Manager)"
-log_info "  - Portainer (Alternative Docker UI)"
 log_info "  - Pi-hole (DNS Ad Blocker)"
 log_info "  - Watchtower (Container Updates)"
 log_info "  - Dozzle (Log Viewer)"
@@ -222,6 +259,7 @@ echo "  1. Log in to Dockge using your Authelia credentials"
 echo "     (configured in /opt/stacks/core/authelia/users_database.yml)"
 echo ""
 echo "  2. Deploy additional stacks through Dockge's web UI:"
+echo "     - alternatives.yml (Portainer, Authentik - optional alternatives)"
 echo "     - dashboards.yml (Homepage, Homarr)"
 echo "     - media.yml (Plex, Jellyfin, Sonarr, Radarr, etc.)"
 echo "     - media-extended.yml (Readarr, Lidarr, etc.)"

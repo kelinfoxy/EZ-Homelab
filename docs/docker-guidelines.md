@@ -990,6 +990,65 @@ docker compose -f docker-compose/service.yml logs -f
 # Access service and verify it works
 ```
 
+## AI Automation Guidelines
+
+### Homepage Dashboard Management
+
+**Automatic Configuration Updates**
+
+Homepage configuration must be kept synchronized with deployed services. The AI assistant handles this automatically:
+
+**Template Location:**
+- Config templates: `/home/kelin/AI-Homelab/config-templates/homepage/`
+- Active configs: `/opt/stacks/homepage/config/`
+
+**Key Principles:**
+
+1. **Hard-Coded URLs Required**: Homepage does NOT support variables in href links
+   - Template uses `{{HOMEPAGE_VAR_DOMAIN}}` as placeholder
+   - Active config uses `kelin-hass.duckdns.org` hard-coded
+   - AI must replace placeholders when deploying configs
+
+2. **No Container Restart Needed**: Homepage picks up config changes instantly
+   - Simply edit YAML files in `/opt/stacks/homepage/config/`
+   - Refresh browser to see changes
+   - DO NOT restart the container
+
+3. **Stack-Based Organization**: Services grouped by their compose file
+   - **Currently Installed**: Shows running services grouped by stack
+   - **Available to Install**: Shows undeployed services from repository
+
+4. **Automatic Updates Required**: AI must update Homepage configs when:
+   - New service is deployed → Add to appropriate stack section
+   - Service is removed → Remove from stack section
+   - Domain/subdomain changes → Update all affected href URLs
+   - Stack file is renamed → Update section headers
+
+**Configuration Structure:**
+
+```yaml
+# services.yaml
+- Stack Name (compose-file.yml):
+    - Service Name:
+        icon: service.png
+        href: https://subdomain.kelin-hass.duckdns.org  # Hard-coded!
+        description: Service description
+```
+
+**Deployment Workflow:**
+
+```bash
+# When deploying from template:
+cp /home/kelin/AI-Homelab/config-templates/homepage/*.yaml /opt/stacks/homepage/config/
+sed -i 's/{{HOMEPAGE_VAR_DOMAIN}}/kelin-hass.duckdns.org/g' /opt/stacks/homepage/config/services.yaml
+
+# No restart needed - configs load instantly
+```
+
+**Critical Reminder:** Homepage is the single source of truth for service inventory. Keep it updated or users won't know what's deployed.
+
+---
+
 ## Conclusion
 
 Following these guidelines ensures:
