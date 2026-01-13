@@ -162,7 +162,8 @@ generate_secret() {
 }
 
 # Check if .env file exists in the repo
-REPO_ENV_FILE="$HOME/AI-Homelab/.env"
+ACTUAL_USER_HOME=$(eval echo ~$ACTUAL_USER)
+REPO_ENV_FILE="$ACTUAL_USER_HOME/AI-Homelab/.env"
 if [ ! -f "$REPO_ENV_FILE" ]; then
     log_error ".env file not found at $REPO_ENV_FILE"
     log_info "Please create .env file from .env.example first"

@@ -101,6 +101,7 @@ echo ""
 log_info "Step 2/5: Creating Docker networks..."
 docker network create homelab-network 2>/dev/null && log_success "Created homelab-network" || log_info "homelab-network already exists"
 docker network create traefik-network 2>/dev/null && log_success "Created traefik-network" || log_info "traefik-network already exists"
+docker network create dockerproxy-network 2>/dev/null && log_success "Created dockerproxy-network" || log_info "dockerproxy-network already exists"
 docker network create media-network 2>/dev/null && log_success "Created media-network" || log_info "media-network already exists"
 echo ""
 
@@ -117,6 +118,12 @@ cp "$REPO_DIR/docker-compose/core.yml" /opt/stacks/core/docker-compose.yml
 cp -r "$REPO_DIR/config-templates/traefik" /opt/stacks/core/
 cp -r "$REPO_DIR/config-templates/authelia" /opt/stacks/core/
 cp "$REPO_DIR/.env" /opt/stacks/core/.env
+
+# Create acme.json as a file (not directory) with correct permissions
+log_info "Creating acme.json for SSL certificates..."
+touch /opt/stacks/core/traefik/acme.json
+chmod 600 /opt/stacks/core/traefik/acme.json
+log_success "acme.json created with correct permissions"
 
 # Replace domain placeholder in authelia configuration
 log_info "Configuring Authelia for domain: $DOMAIN..."
