@@ -52,6 +52,8 @@ services:
       - "traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN}`)"
       - "traefik.http.routers.traefik.entrypoints=websecure"
       - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.traefik.tls.domains[0].main=${DOMAIN}"
+      - "traefik.http.routers.traefik.tls.domains[0].sans=*.${DOMAIN}"
       - "traefik.http.routers.traefik.middlewares=authelia@docker"
       - "traefik.http.routers.traefik.service=api@internal"
       # Global HTTP to HTTPS redirect
@@ -73,18 +75,17 @@ services:
     volumes:
       - /opt/stacks/core/authelia/configuration.yml:/config/configuration.yml:ro
       - /opt/stacks/core/authelia/users_database.yml:/config/users_database.yml
-      - authelia-data:/config
+      - authelia-data:/data
     environment:
       - TZ=${TZ}
       - AUTHELIA_JWT_SECRET=${AUTHELIA_JWT_SECRET}
       - AUTHELIA_SESSION_SECRET=${AUTHELIA_SESSION_SECRET}
       - AUTHELIA_STORAGE_ENCRYPTION_KEY=${AUTHELIA_STORAGE_ENCRYPTION_KEY}
-      - AUTHELIA_NOTIFIER_SMTP_PASSWORD=${SMTP_PASSWORD}  # If using email notifications
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.authelia.rule=Host(`auth.${DOMAIN}`)"
       - "traefik.http.routers.authelia.entrypoints=websecure"
-      - "traefik.http.routers.authelia.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.authelia.tls=true"
       - "traefik.http.services.authelia.loadbalancer.server.port=9091"
       # Authelia middleware for other services
       - "traefik.http.middlewares.authelia.forwardauth.address=http://authelia:9091/api/verify?rd=https://auth.${DOMAIN}"
@@ -110,16 +111,16 @@ services:
       - "8888:8888/tcp"  # HTTP proxy
       - "8388:8388/tcp"  # Shadowsocks
       - "8388:8388/udp"  # Shadowsocks
-      - "8080:8080"      # qBittorrent web UI
+      - "8081:8080"      # qBittorrent web UI
       - "6881:6881"      # qBittorrent
       - "6881:6881/udp"  # qBittorrent
     volumes:
       - /opt/stacks/core/gluetun:/gluetun
     environment:
       - VPN_SERVICE_PROVIDER=surfshark
-      - VPN_TYPE=wireguard
-      - WIREGUARD_PRIVATE_KEY=${SURFSHARK_PRIVATE_KEY}
-      - WIREGUARD_ADDRESSES=${SURFSHARK_ADDRESSES}
+      - VPN_TYPE=openvpn
+      - OPENVPN_USER=${SURFSHARK_USERNAME}
+      - OPENVPN_PASSWORD=${SURFSHARK_PASSWORD}
       - SERVER_COUNTRIES=${VPN_SERVER_COUNTRIES:-Netherlands}
       - TZ=${TZ}
     labels:
