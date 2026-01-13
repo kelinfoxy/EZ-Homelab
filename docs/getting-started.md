@@ -26,18 +26,27 @@ For most users, the automated setup script handles everything:
    sudo ./scripts/setup-homelab.sh
    ```
 5. **Log out and back in** (or run `newgrp docker`)
-6. **Generate Authelia/Authentik Secrets
+6. **Generate Authelia Secrets**:
    ```bash
-   # TODO: provide instructions for generating required secrets
-   AUTHELIA_JWT_SECRET=your-jwt-secret-here-64-chars
-   AUTHELIA_SESSION_SECRET=your-session-secret-here-64-chars
-   AUTHELIA_STORAGE_ENCRYPTION_KEY=your-encryption-key-here-64-chars
-   AUTHENTIK_SECRET_KEY=your-authentik-secret-key-here-100-chars
-
+   # Generate three required secrets for Authelia (128 characters each)
+   echo "AUTHELIA_JWT_SECRET=$(openssl rand -hex 64)"
+   echo "AUTHELIA_SESSION_SECRET=$(openssl rand -hex 64)"
+   echo "AUTHELIA_STORAGE_ENCRYPTION_KEY=$(openssl rand -hex 64)"
+   
+   # Copy these values and add them to your .env file
+   ```
+7. **Generate Authelia Admin Password Hash**:
+   ```bash
+   # Replace 'yourpassword' with your desired admin password
+   docker run --rm authelia/authelia:4.37 authelia crypto hash generate argon2 --password 'yourpassword'
+   
+   # Copy the output hash and update /opt/stacks/core/authelia/users_database.yml
+   # Replace the password field for the admin user
+   ```
 8. **Configure environment**:
    ```bash
    cp .env.example .env
-   nano .env  # Edit with your settings
+   nano .env  # Edit with your settings and paste the Authelia secrets
    ```
 9. **Deploy core services**:
    ```bash
@@ -176,9 +185,12 @@ Use Dockge to deploy stacks like:
 - **Network conflicts**: Check existing networks with `docker network ls`
 
 ### Service Issues
-- **Can't access services**: Check Traefik dashboard
-- **SSL certificate errors**: Wait for Let's Encrypt
-- **Authelia login fails**: Check user database configuration
+- **Can't access services**: Check Traefik dashboard at `https://traefik.yourdomain.duckdns.org`
+- **SSL certificate errors**: Wait 2-5 minutes for wildcard certificate to be obtained from Let's Encrypt
+  - Check status: `python3 -c "import json; d=json.load(open('/opt/stacks/core/traefik/acme.json')); print(f'Certificates: {len(d[\"letsencrypt\"][\"Certificates\"])}')"`
+  - View logs: `docker exec traefik tail -50 /var/log/traefik/traefik.log | grep certificate`
+- **Authelia login fails**: Check user database configuration at `/opt/stacks/core/authelia/users_database.yml`
+- **"Not secure" warnings**: Clear browser cache or wait for DNS propagation (up to 5 minutes)
 
 ### Common Fixes
 ```bash

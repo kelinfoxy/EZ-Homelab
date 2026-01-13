@@ -323,6 +323,34 @@ https://prometheus.${DOMAIN}   - Metrics collection
 https://status.${DOMAIN}       - Uptime monitoring
 ```
 
+## Troubleshooting
+
+### SSL Certificates
+
+```bash
+# Check wildcard certificate status
+python3 -c "import json; d=json.load(open('/opt/stacks/core/traefik/acme.json')); print(f'Certificates: {len(d[\"letsencrypt\"][\"Certificates\"])}')"
+
+# Verify certificate being served
+echo | openssl s_client -connect auth.yourdomain.duckdns.org:443 -servername auth.yourdomain.duckdns.org 2>/dev/null | openssl x509 -noout -subject -issuer
+
+# Check DNS TXT records (for DNS challenge)
+dig +short TXT _acme-challenge.yourdomain.duckdns.org
+
+# View Traefik certificate logs
+docker exec traefik tail -50 /var/log/traefik/traefik.log | grep -E "acme|certificate"
+
+# Reset certificates (if needed)
+docker compose -f /opt/stacks/core/docker-compose.yml down
+rm /opt/stacks/core/traefik/acme.json
+touch /opt/stacks/core/traefik/acme.json
+chmod 600 /opt/stacks/core/traefik/acme.json
+sleep 60  # Wait for DNS to clear
+docker compose -f /opt/stacks/core/docker-compose.yml up -d
+```
+
+**Important:** With DuckDNS, only Traefik should request certificates (wildcard cert covers all subdomains). Other services use `tls=true` without `certresolver`.
+
 ## Troubleshooting Quick Fixes
 
 ### Service won't start

@@ -119,8 +119,12 @@ certificatesResolvers:
     acme:
       email: your-email@example.com
       storage: /acme.json
-      httpChallenge:
-        entryPoint: web
+      dnsChallenge:
+        provider: duckdns
+        disablePropagationCheck: true
+        resolvers:
+          - "1.1.1.1:53"
+          - "8.8.8.8:53"
 
 providers:
   docker:
@@ -148,7 +152,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.myservice.rule=Host(`myservice.${DOMAIN}`)"
       - "traefik.http.routers.myservice.entrypoints=websecure"
-      - "traefik.http.routers.myservice.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.myservice.tls=true"  # Uses wildcard cert automatically
       - "traefik.http.routers.myservice.middlewares=authelia@docker"
       - "traefik.http.services.myservice.loadbalancer.server.port=8080"
     networks:
@@ -218,6 +222,8 @@ traefik:
     - "traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN}`)"
     - "traefik.http.routers.traefik.entrypoints=websecure"
     - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
+    - "traefik.http.routers.traefik.tls.domains[0].main=${DOMAIN}"
+    - "traefik.http.routers.traefik.tls.domains[0].sans=*.${DOMAIN}"
     - "traefik.http.routers.traefik.middlewares=authelia@docker"
     - "traefik.http.routers.traefik.service=api@internal"
 ```
@@ -344,6 +350,42 @@ docker inspect service-name | grep Networks
 docker inspect service-name | grep traefik
 ```
 
+#### Wildcard Certificates with DuckDNS
+
+**IMPORTANT:** When using DuckDNS for DNS challenge, only ONE service should request certificates:
+
+```yaml
+# ✅ CORRECT: Only Traefik requests wildcard certificate
+traefik:
+  labels:
+    - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
+    - "traefik.http.routers.traefik.tls.domains[0].main=${DOMAIN}"
+    - "traefik.http.routers.traefik.tls.domains[0].sans=*.${DOMAIN}"
+
+# ✅ CORRECT: Other services just enable TLS
+other-service:
+  labels:
+    - "traefik.http.routers.service.tls=true"  # Uses wildcard cert
+
+# ❌ WRONG: Multiple services requesting individual certs
+other-service:
+  labels:
+    - "traefik.http.routers.service.tls.certresolver=letsencrypt"  # Causes conflicts!
+```
+
+**Why?** DuckDNS can only maintain ONE TXT record at `_acme-challenge.yourdomain.duckdns.org`. Multiple simultaneous certificate requests will fail with "Incorrect TXT record" errors.
+
+**Solution:** Use a wildcard certificate (`*.yourdomain.duckdns.org`) that covers all subdomains.
+
+**Verify Certificate:**
+```bash
+# Check wildcard certificate is obtained
+python3 -c "import json; d=json.load(open('/opt/stacks/core/traefik/acme.json')); print(f'Certificates: {len(d[\"letsencrypt\"][\"Certificates\"])}')"
+
+# Test certificate being served
+echo | openssl s_client -connect yourdomain.duckdns.org:443 -servername yourdomain.duckdns.org 2>/dev/null | openssl x509 -noout -subject -issuer
+```
+
 #### SSL Certificate Issues
 
 ```bash
@@ -352,7 +394,7 @@ ls -la /opt/stacks/core/traefik/acme.json
 # Should be: -rw------- (600)
 
 # Check certificate generation logs
-docker logs traefik | grep acme
+docker exec traefik tail -50 /var/log/traefik/traefik.log | grep -E "acme|certificate"
 
 # Verify ports 80/443 are accessible
 curl -I http://yourdomain.duckdns.org
