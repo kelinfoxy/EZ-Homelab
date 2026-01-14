@@ -96,7 +96,7 @@ docker compose up -d
 **Solution:**
 ```bash
 # Re-run deployment script (safe - won't affect running services)
-./scripts/deploy-homelab.sh
+sudo ./scripts/deploy-homelab.sh
 
 # Or manually fix:
 cd /opt/stacks/dashboards/homepage
@@ -182,7 +182,7 @@ sudo systemctl stop systemd-resolved
 ls -la /opt/stacks/
 
 # Re-run deployment to copy stacks
-./scripts/deploy-homelab.sh
+sudo ./scripts/deploy-homelab.sh
 ```
 
 ## Performance Issues
@@ -235,7 +235,7 @@ sudo ./scripts/reset-test-environment.sh
 
 # Then re-run setup and deploy
 sudo ./scripts/setup-homelab.sh
-./scripts/deploy-homelab.sh
+sudo ./scripts/deploy-homelab.sh
 ```
 
 ### Partial Reset (Single Stack)

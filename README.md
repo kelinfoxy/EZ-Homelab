@@ -98,7 +98,7 @@ The infrastructure uses Traefik for reverse proxy with automatic SSL, Authelia f
    - **Create admin user and password hash**
    - Set up directory structure and Docker networks
    
-   **Important:** Log out and back in (or run `newgrp docker`) after setup completes.
+   **Important:** If NVIDIA drivers were installed, reboot before continuing. Otherwise, proceed to step 4.
 
 4. **Run deployment script:**
    
@@ -113,7 +113,7 @@ The infrastructure uses Traefik for reverse proxy with automatic SSL, Authelia f
    - Open Dockge in your browser
    
    ```bash
-   ./scripts/deploy-homelab.sh
+   sudo ./scripts/deploy-homelab.sh
    ```
    
    **Note:** The script will prompt to optionally pre-pull images for additional stacks. This takes time but speeds up future deployments. Default is no. Wildcard certificate generation takes 2-5 minutes.

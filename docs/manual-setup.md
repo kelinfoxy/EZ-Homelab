@@ -210,7 +210,7 @@ If manual setup works, you can switch to the automated scripts for future update
 ```bash
 # Just run the deploy script
 cd ~/AI-Homelab
-./scripts/deploy-homelab.sh
+sudo ./scripts/deploy-homelab.sh
 ```
 
 The deploy script is idempotent - it won't break existing configurations.

@@ -67,13 +67,11 @@ For most users, the automated setup script handles everything:
    - Set up Docker networks (homelab, traefik, dockerproxy, media)
    - Detect NVIDIA GPU and offer driver installation
    
-6. **Log out and back in** (or run `newgrp docker`)
-   > Don't skip this step!  
-   Required for Docker group permissions.
+   **Important:** If NVIDIA drivers were installed, reboot your system now before continuing.
 
-7. **Deploy homelab**:
+6. **Deploy homelab**:
    ```bash
-   ./scripts/deploy-homelab.sh
+   sudo ./scripts/deploy-homelab.sh
    ```
    
    **The deploy script automatically:**
