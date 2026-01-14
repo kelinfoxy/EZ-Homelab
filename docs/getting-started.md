@@ -77,12 +77,14 @@ For most users, the automated setup script handles everything:
    
    **The deploy script automatically:**
    - Creates Docker networks
-   - Configures Traefik with your email
-   - Generates Authelia admin password (saved to `/opt/stacks/core/authelia/ADMIN_PASSWORD.txt`)
+   - Configures Traefik with your email and domain
+   - **Obtains wildcard SSL certificate** (*.yourdomain.duckdns.org) via DNS challenge
    - Deploys core stack (DuckDNS, Traefik, Authelia, Gluetun)
    - Deploys infrastructure stack (Dockge, Pi-hole, monitoring)
    - Deploys dashboards stack (Homepage, Homarr)
    - Opens Dockge in your browser
+   
+   **Note:** Certificate generation may take 2-5 minutes. All services will use the wildcard certificate automatically.
    
    **Login credentials:**
    - Username: `admin` (default username - or the custom username you specified during setup)

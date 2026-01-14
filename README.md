@@ -24,7 +24,7 @@ The infrastructure uses Traefik for reverse proxy with automatic SSL, Authelia f
 - **Automated Setup & Deployment**: Two-script installation process with intelligent error handling
 - **Dockge Structure**: All stacks organized in `/opt/stacks/` for easy management via Dockge web UI
 - **60+ Pre-configured Services**: Production-ready compose files across infrastructure, media, home automation, productivity, and monitoring
-- **Traefik Reverse Proxy**: Automatic HTTPS with Let's Encrypt via file-based configuration (no web UI needed)
+- **Traefik Reverse Proxy**: Automatic HTTPS with Let's Encrypt wildcard certificates via DNS challenge
 - **Authelia SSO**: Single Sign-On protection for all admin interfaces with automated password generation
 - **Gluetun VPN**: Surfshark WireGuard integration for secure downloads
 - **Homepage Dashboard**: AI-configurable dashboard with automatic domain variable replacement
@@ -104,7 +104,7 @@ The infrastructure uses Traefik for reverse proxy with automatic SSL, Authelia f
    
    This automated script will:
    - Configure Traefik with your email and domain
-   - Deploy admin password from setup script
+   - **Obtain wildcard SSL certificate** (*.yourdomain.duckdns.org) via DNS challenge
    - Deploy core stack (DuckDNS, Traefik, Authelia, Gluetun) - 4 services
    - Deploy infrastructure stack (Dockge, Pi-hole, monitoring) - 6 services
    - Deploy dashboards stack (Homepage with configured URLs, Homarr) - 2 services
@@ -116,7 +116,7 @@ The infrastructure uses Traefik for reverse proxy with automatic SSL, Authelia f
    ./scripts/deploy-homelab.sh
    ```
    
-   **Note:** The script will prompt to optionally pre-pull images for additional stacks. This takes time but speeds up future deployments. Default is no.
+   **Note:** The script will prompt to optionally pre-pull images for additional stacks. This takes time but speeds up future deployments. Default is no. Wildcard certificate generation takes 2-5 minutes.
 
 5. **Deploy additional stacks through Dockge:**
    
