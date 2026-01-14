@@ -3,15 +3,15 @@
 Welcome to your AI-powered homelab! This guide will walk you through setting up your production-ready infrastructure with Dockge, Traefik, Authelia, and 60+ services.
 
 ## Getting Started Checklist
-
+- [ ] Clone this repository to your home folder
 - [ ] Configure `.env` file with your domain and tokens
 - [ ] Run setup script (generates Authelia secrets and admin user)
 - [ ] Log out and back in for Docker group permissions
-- [ ] Run deployment script (deploys all core services)
+- [ ] Run deployment script (deploys all core, infrastructure & dashboard services)
 - [ ] Access Dockge web UI
 - [ ] Set up 2FA with Authelia
-- [ ] Deploy additional stacks as needed via Dockge
-- [ ] Configure Homepage dashboard widgets
+- [ ] (optional) Deploy additional stacks as needed via Dockge
+- [ ] Configure and use VS Code with Github Copilot to manage the server
 
 ## Quick Setup (Recommended)
 
@@ -26,21 +26,21 @@ For most users, the automated setup script handles everything:
 ### Simple Setup
 
 1. **Connect to your server** via SSH
+   >Tip: Use VS Code on your local machine to ssh  
+   in to your server for the easiest install!
+
 2. **Install git if needed**
    ```bash
       sudo apt update && sudo apt upgrade -y && sudo apt install git
-
 3. **Clone the rep**:
    ```bash
    git clone https://github.com/kelinfoxy/AI-Homelab.git
-   cd AI-Homelab
-
+   cd AI-Homeb
 4. **Configure environment**:
    ```bash
    cp .env.example .env
    nano .env  # Edit with your domain and tokens
    ```
-   
    **Required variables in .env:**
    - `DOMAIN` - Your DuckDNS domain (e.g., yourdomain.duckdns.org)
    - `DUCKDNS_TOKEN` - Your DuckDNS token from [duckdns.org](https://www.duckdns.org/)
@@ -68,7 +68,8 @@ For most users, the automated setup script handles everything:
    - Detect NVIDIA GPU and offer driver installation
    
 6. **Log out and back in** (or run `newgrp docker`)
-   > Don't skip this step! Required for Docker group permissions.
+   > Don't skip this step!  
+   Required for Docker group permissions.
 
 7. **Deploy homelab**:
    ```bash
@@ -90,7 +91,8 @@ For most users, the automated setup script handles everything:
    - Username: `admin` (default username - or the custom username you specified during setup)
    - Password: The secure password you created when prompted by the setup script
 
-**That's it!** Your homelab is ready. Access Dockge at `https://dockge.yourdomain.duckdns.org`
+**That's it!** Your homelab is ready.  
+**Access Dockge at `https://dockge.yourdomain.duckdns.org`**
 
 ## What the Setup Script Does
 
@@ -165,6 +167,15 @@ Use Dockge to deploy stacks like:
    - Adding new services
    - Configuring Traefik routing
    - Managing Docker stacks
+
+## Debloat or add custom service
+>Use VS Code on the server or on your local machine  
+Tell the chat **Agent** what changes to make to the server.
+
+Be sure to choose an LLM that is good at code.
+
+Tell the AI what service you want to install or give it a docker based github repository or docker hub image.
+Use your imagination, the copilot instructions are configured with best practices and a framework to add new services.
 
 ## Troubleshooting
 

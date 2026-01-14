@@ -1,12 +1,3 @@
 getting-started.md
-    Move Getting Started Checklist to just before Simple Setup
-    Remove Round 4 Deployment inprovments section
-    Update location reference to alternatives 'If you need a web UI for user management, Authentik is included in the infrastructure stack:'
-
-manual-setup.md
-    Ensure manual steps aligned with the two scripts and include everything
-
-In services-overview.md make the stack names link to the stack compose file
-
-Modify setup script so that on success it prompts the user to choose to run the deployment script, defaults to yes, and update all relevant documentation
-In all documentation ensure there is no info that conflicts with the project requirement of using wildcard certs with DNS Challenge.
+    Getting Started Checklist
+      include clone repository as first step
