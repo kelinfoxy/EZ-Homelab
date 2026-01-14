@@ -298,10 +298,10 @@ echo ""
 log_info "Step 4/6: Deploying infrastructure stack..."
 log_info "  - Dockge (Docker Compose Manager)"
 log_info "  - Pi-hole (DNS Ad Blocker)"
-log_info "  - Watchtower (Container Updates)"
 log_info "  - Dozzle (Log Viewer)"
 log_info "  - Glances (System Monitor)"
 log_info "  - Docker Proxy (Security)"
+log_info "  Note: Watchtower temporarily disabled (Docker API compatibility)"
 echo ""
 
 # Copy infrastructure stack
@@ -326,10 +326,15 @@ mkdir -p /opt/stacks/dashboards
 cp "$REPO_DIR/docker-compose/dashboards.yml" /opt/stacks/dashboards/docker-compose.yml
 cp "$REPO_DIR/.env" /opt/stacks/dashboards/.env
 
-# Copy homepage config templates
+# Copy and configure homepage templates
 if [ -d "$REPO_DIR/config-templates/homepage" ]; then
     cp -r "$REPO_DIR/config-templates/homepage" /opt/stacks/dashboards/
-    log_info "Homepage configuration templates copied"
+    
+    # Replace HOMEPAGE_VAR_DOMAIN with actual domain in all homepage config files
+    # Homepage doesn't support environment variables in configs
+    find /opt/stacks/dashboards/homepage -type f \( -name "*.yaml" -o -name "*.yml" \) -exec sed -i "s/{{HOMEPAGE_VAR_DOMAIN}}/${DOMAIN}/g" {} \;
+    
+    log_info "Homepage configuration templates copied and configured"
 fi
 
 # Deploy dashboards stack
@@ -339,8 +344,45 @@ docker compose up -d
 log_success "Dashboards stack deployed"
 echo ""
 
-# Step 6: Wait for Dockge to be ready and open browser
-log_info "Step 6/6: Waiting for Dockge web UI to be ready..."
+# Step 6: Deploy additional stacks to Dockge (not started)
+log_info "Step 6/7: Preparing additional stacks for Dockge..."
+echo ""
+log_info "The following stacks can be deployed through Dockge's web UI:"
+log_info "  - media.yml (Plex, Jellyfin, Sonarr, Radarr, etc.)"
+log_info "  - media-extended.yml (Readarr, Lidarr, etc.)"
+log_info "  - homeassistant.yml (Home Assistant and accessories)"
+log_info "  - productivity.yml (Nextcloud, Gitea, wikis)"
+log_info "  - monitoring.yml (Grafana, Prometheus, etc.)"
+log_info "  - utilities.yml (Backups, code editors, etc.)"
+log_info "  - alternatives.yml (Portainer, Authentik)"
+echo ""
+
+# Ask user if they want to pre-pull images for additional stacks
+read -p "Pre-pull Docker images for additional stacks? This will take time but speeds up first deployment (y/N): " PULL_IMAGES
+PULL_IMAGES=${PULL_IMAGES:-n}
+
+# Copy additional stacks to Dockge directory
+ADDITIONAL_STACKS=("media" "media-extended" "homeassistant" "productivity" "monitoring" "utilities" "alternatives")
+
+for stack in "${ADDITIONAL_STACKS[@]}"; do
+    mkdir -p "/opt/stacks/$stack"
+    cp "$REPO_DIR/docker-compose/${stack}.yml" "/opt/stacks/$stack/docker-compose.yml"
+    cp "$REPO_DIR/.env" "/opt/stacks/$stack/.env"
+    
+    # Pre-pull images if requested
+    if [[ "$PULL_IMAGES" =~ ^[Yy]$ ]]; then
+        log_info "Pulling images for $stack stack..."
+        cd "/opt/stacks/$stack"
+        docker compose pull 2>&1 | grep -E '(Pulling|Downloaded|Already exists|up to date)' || true
+    fi
+done
+
+log_success "Additional stacks prepared in Dockge"
+log_info "These stacks are NOT started - deploy them via Dockge web UI as needed"
+echo ""
+
+# Step 7: Wait for Dockge to be ready and open browser
+log_info "Step 7/7: Waiting for Dockge web UI to be ready..."
 
 DOCKGE_URL="https://dockge.${DOMAIN}"
 MAX_WAIT=60  # Maximum wait time in seconds

@@ -67,25 +67,31 @@ services:
       - "traefik.http.services.pihole.loadbalancer.server.port=80"
 
   # Watchtower - Automatic container updates
-  # Runs silently in background, no UI  
-  watchtower:
-    image: containrrr/watchtower:1.7.2
-    container_name: watchtower
-    restart: unless-stopped
-    networks:
-      - homelab-network
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - DOCKER_API_VERSION=1.44
-      - WATCHTOWER_CLEANUP=true
-      - WATCHTOWER_INCLUDE_RESTARTING=true
-      - WATCHTOWER_SCHEDULE=0 0 4 * * *  # 4 AM daily
-      - WATCHTOWER_NOTIFICATIONS=shoutrrr
-      - WATCHTOWER_NOTIFICATION_URL=${WATCHTOWER_NOTIFICATION_URL}
-    labels:
-      - "homelab.category=infrastructure"
-      - "homelab.description=Automatic Docker container updates"
+  # TEMPORARILY DISABLED: Docker API version incompatibility with Docker 29.x
+  # Watchtower versions have API compatibility issues:
+  # - v1.7.1: Uses API v1.25 (too old for Docker 29.x which requires min v1.44)
+  # - v1.7.2+/latest: Has issues with API negotiation
+  # Issue tracked for resolution in future release
+  # To enable: Uncomment service below and run: docker compose up -d watchtower
+  # 
+  # watchtower:
+  #   image: containrrr/watchtower:1.7.1
+  #   container_name: watchtower
+  #   restart: unless-stopped
+  #   networks:
+  #     - homelab-network
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   environment:
+  #     - DOCKER_API_VERSION=1.44
+  #     - WATCHTOWER_CLEANUP=true
+  #     - WATCHTOWER_INCLUDE_RESTARTING=true
+  #     - WATCHTOWER_SCHEDULE=0 0 4 * * *  # 4 AM daily
+  #     - WATCHTOWER_NOTIFICATIONS=shoutrrr
+  #     - WATCHTOWER_NOTIFICATION_URL=${WATCHTOWER_NOTIFICATION_URL}
+  #   labels:
+  #     - "homelab.category=infrastructure"
+  #     - "homelab.description=Automatic Docker container updates"
 
   # Dozzle - Real-time Docker log viewer
   # Access at: https://dozzle.${DOMAIN}
