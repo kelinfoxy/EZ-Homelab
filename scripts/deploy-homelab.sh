@@ -384,8 +384,8 @@ echo ""
 log_info "Step 6/7: Preparing additional stacks for Dockge..."
 echo ""
 log_info "The following stacks can be deployed through Dockge's web UI:"
-log_info "  - media.yml (Plex, Jellyfin, Sonarr, Radarr, etc.)"
-log_info "  - media-extended.yml (Readarr, Lidarr, etc.)"
+log_info "  - media.yml (Jellyfin, Calibre-web, qBittorrent)"
+log_info "  - media-management.yml (Sonarr, Radarr, *arr apps)"
 log_info "  - homeassistant.yml (Home Assistant and accessories)"
 log_info "  - productivity.yml (Nextcloud, Gitea, wikis)"
 log_info "  - monitoring.yml (Grafana, Prometheus, etc.)"
@@ -398,7 +398,7 @@ read -p "Pre-pull Docker images for additional stacks? This will take time but s
 PULL_IMAGES=${PULL_IMAGES:-n}
 
 # Copy additional stacks to Dockge directory
-ADDITIONAL_STACKS=("media" "media-extended" "homeassistant" "productivity" "monitoring" "utilities" "alternatives")
+ADDITIONAL_STACKS=("media" "media-management" "homeassistant" "productivity" "monitoring" "utilities" "alternatives")
 
 for stack in "${ADDITIONAL_STACKS[@]}"; do
     mkdir -p "/opt/stacks/$stack"
@@ -494,8 +494,8 @@ echo "     Username: admin"
 echo "     Password: (saved in /opt/stacks/core/authelia/ADMIN_PASSWORD.txt)"
 echo ""
 echo "  2. Deploy additional stacks through Dockge's web UI:"
-echo "     - media.yml (Plex, Jellyfin, Sonarr, Radarr, etc.)"
-echo "     - media-extended.yml (Readarr, Lidarr, etc.)"
+echo "     - media.yml (Jellyfin, Calibre-web, qBittorrent)"
+echo "     - media-management.yml (Sonarr, Radarr, *arr apps)"
 echo "     - homeassistant.yml (Home Assistant and accessories)"
 echo "     - productivity.yml (Nextcloud, Gitea, wikis)"
 echo "     - monitoring.yml (Grafana, Prometheus, etc.)"
