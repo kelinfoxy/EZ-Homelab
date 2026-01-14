@@ -313,8 +313,11 @@ fi
 echo ""
 log_info "Generating password hash..."
 
-# Generate hash with timeout and better error capture
-HASH_OUTPUT=$(timeout 60 docker run --rm authelia/authelia:4.37 authelia crypto hash generate argon2 --password "$ADMIN_PASSWORD" 2>&1)
+# Generate hash and write DIRECTLY to file to avoid bash variable expansion of $ characters
+# The argon2 hash contains multiple $ characters that bash would try to expand as variables
+timeout 60 docker run --rm authelia/authelia:4.37 authelia crypto hash generate argon2 --password "$ADMIN_PASSWORD" 2>&1 | \
+    grep -oP 'Digest: \K\$argon2.*' > /tmp/authelia_password_hash.tmp
+
 HASH_EXIT_CODE=$?
 
 if [ $HASH_EXIT_CODE -eq 124 ]; then
@@ -324,27 +327,15 @@ if [ $HASH_EXIT_CODE -eq 124 ]; then
     log_info "  2. Docker status: docker ps"
     log_info "  3. Try manually: docker run --rm authelia/authelia:4.37 authelia crypto hash generate argon2"
     exit 1
-elif [ $HASH_EXIT_CODE -ne 0 ]; then
-    log_error "Failed to generate password hash (exit code: $HASH_EXIT_CODE)"
-    log_info "Error output:"
-    echo "$HASH_OUTPUT"
-    exit 1
-fi
-
-# Extract hash - format is "Digest: $argon2id$..."
-PASSWORD_HASH=$(echo "$HASH_OUTPUT" | grep -oP 'Digest: \K\$argon2.*' || echo "$HASH_OUTPUT" | grep '^\$argon2')
-
-if [ -z "$PASSWORD_HASH" ]; then
-    log_error "Failed to extract password hash from output"
-    log_info "Command output:"
-    echo "$HASH_OUTPUT"
-    log_info ""
+elif [ $HASH_EXIT_CODE -ne 0 ] || [ ! -s /tmp/authelia_password_hash.tmp ]; then
+    log_error "Failed to generate password hash"
     log_info "You can generate the hash manually after setup:"
     log_info "  docker run --rm authelia/authelia:4.37 authelia crypto hash generate argon2"
     log_info "  Then edit: /opt/stacks/core/authelia/users_database.yml"
     exit 1
 fi
 
+chmod 600 /tmp/authelia_password_hash.tmp
 log_success "Password hash generated successfully"
 
 # Read admin email from .env or prompt
@@ -358,13 +349,13 @@ log_success "Admin user configured: $ADMIN_USER"
 log_success "Password hash generated and will be applied during deployment"
 
 # Store the admin credentials for the deployment script
-# Include both password and hash so deploy can show the password to user
-cat > /tmp/authelia_admin_credentials.tmp << EOF
-ADMIN_USER=$ADMIN_USER
-ADMIN_EMAIL=$ADMIN_EMAIL
-ADMIN_PASSWORD=$ADMIN_PASSWORD
-PASSWORD_HASH=$PASSWORD_HASH
-EOF
+# Password hash is already in /tmp/authelia_password_hash.tmp (written directly from Docker)
+# This avoids bash variable expansion issues with $ characters in argon2 hashes
+{
+    echo "ADMIN_USER=$ADMIN_USER"
+    echo "ADMIN_EMAIL=$ADMIN_EMAIL"
+    echo "ADMIN_PASSWORD=$ADMIN_PASSWORD"
+} > /tmp/authelia_admin_credentials.tmp
 chmod 600 /tmp/authelia_admin_credentials.tmp
 
 log_info "Credentials saved for deployment script"

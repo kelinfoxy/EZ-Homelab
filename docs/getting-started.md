@@ -19,29 +19,18 @@ For most users, the automated setup script handles everything:
    ```bash
       sudo apt update && sudo apt upgrade -y && sudo apt install git
 
-4. **Run the setup script**:
+3. **Clone the rep**:
    ```bash
    git clone https://github.com/kelinfoxy/AI-Homelab.git
    cd AI-Homelab
-   sudo ./scripts/setup-homelab.sh
-   ```
-5. **Log out and back in** (or run `newgrp docker`)
-6. **Generate Authelia Secrets**:
-   ```bash
-   # Generate three required secrets for Authelia (128 characters each)
-   echo "AUTHELIA_JWT_SECRET=$(openssl rand -hex 64)"
-   echo "AUTHELIA_SESSION_SECRET=$(openssl rand -hex 64)"
-   echo "AUTHELIA_STORAGE_ENCRYPTION_KEY=$(openssl rand -hex 64)"
-   
-   # Copy these values and add them to your .env file
-   ```
-7. **Configure environment**:
+
+4. **Configure environment**:
    ```bash
    cp .env.example .env
    nano .env  # Edit with your settings and paste the Authelia secrets
    ```
    
-   **IMPORTANT: .env File Location**
+   **Testing considerations: .env File Location**
    - The `.env` file should remain in the **repository folder** (`~/AI-Homelab/.env`)
    - The deploy script will automatically copy it to `/opt/stacks/*/` as needed
    - Always edit the repo copy, not the deployed copies
@@ -55,6 +44,23 @@ For most users, the automated setup script handles everything:
    - `AUTHELIA_SESSION_SECRET` - Generated in step 6
    - `AUTHELIA_STORAGE_ENCRYPTION_KEY` - Generated in step 6
    - `SURFSHARK_USERNAME` and `SURFSHARK_PASSWORD` - If using VPN
+
+5. **Run the setup script**   
+    ```bash
+      sudo ./scripts/setup-homelab.sh
+   
+6. **Log out and back in** (or run `newgrp docker`)
+   >Don't skip this step!
+
+7. **Generate Authelia Secrets**:
+   ```bash
+   # Generate three required secrets for Authelia (128 characters each)
+   echo "AUTHELIA_JWT_SECRET=$(openssl rand -hex 64)"
+   echo "AUTHELIA_SESSION_SECRET=$(openssl rand -hex 64)"
+   echo "AUTHELIA_STORAGE_ENCRYPTION_KEY=$(openssl rand -hex 64)"
+   
+   # Copy these values and add them to your .env file
+   ```
 
 8. **Deploy homelab**:
    ```bash

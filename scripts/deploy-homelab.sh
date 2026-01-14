@@ -179,11 +179,11 @@ log_info "Configuring Authelia for domain: $DOMAIN..."
 sed -i "s/your-domain.duckdns.org/${DOMAIN}/g" /opt/stacks/core/authelia/configuration.yml
 
 # Configure Authelia admin user from setup script
-if [ -f /tmp/authelia_admin_credentials.tmp ]; then
+if [ -f /tmp/authelia_admin_credentials.tmp ] && [ -f /tmp/authelia_password_hash.tmp ]; then
     log_info "Loading Authelia admin credentials from setup script..."
     source /tmp/authelia_admin_credentials.tmp
     
-    if [ -n "$PASSWORD_HASH" ] && [ -n "$ADMIN_USER" ] && [ -n "$ADMIN_EMAIL" ]; then
+    if [ -n "$ADMIN_USER" ] && [ -n "$ADMIN_EMAIL" ]; then
         log_success "Using credentials: $ADMIN_USER ($ADMIN_EMAIL)"
         
         # Create users_database.yml with credentials from setup
@@ -203,13 +203,36 @@ users:
       - users
 EOF
         # Now safely replace placeholders
-        # Escape special characters in PASSWORD_HASH for sed
-        ESCAPED_HASH=$(printf '%s\n' "$PASSWORD_HASH" | sed 's:[\/&]:\\&:g;$!s/$/\\/')
-        ESCAPED_HASH="${ESCAPED_HASH%\\}"
-        
-        sed -i "s/ADMIN_USER_PLACEHOLDER/${ADMIN_USER}/g" /opt/stacks/core/authelia/users_database.yml
-        sed -i "s|PASSWORD_HASH_PLACEHOLDER|${ESCAPED_HASH}|g" /opt/stacks/core/authelia/users_database.yml  
-        sed -i "s/ADMIN_EMAIL_PLACEHOLDER/${ADMIN_EMAIL}/g" /opt/stacks/core/authelia/users_database.yml
+        # Read hash from file (not bash variable) to avoid shell expansion
+        # The hash file was written directly from Docker output in setup script
+        export ADMIN_USER
+        export ADMIN_EMAIL
+        python3 << 'PYTHON_EOF'
+# Read password hash from file to completely avoid bash variable expansion
+with open('/tmp/authelia_password_hash.tmp', 'r') as f:
+    password_hash = f.read().strip()
+
+import os
+admin_user = os.environ['ADMIN_USER']
+admin_email = os.environ['ADMIN_EMAIL']
+
+content = f"""###############################################################
+#                         Users Database                      #
+###############################################################
+
+users:
+  {admin_user}:
+    displayname: "Admin User"
+    password: "{password_hash}"
+    email: {admin_email}
+    groups:
+      - admins
+      - users
+"""
+
+with open('/opt/stacks/core/authelia/users_database.yml', 'w') as f:
+    f.write(content)
+PYTHON_EOF
         
         log_success "Authelia admin user configured from setup script"
         echo ""
