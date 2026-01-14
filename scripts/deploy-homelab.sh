@@ -62,19 +62,33 @@ if [ ! -f "$REPO_DIR/.env" ]; then
 fi
 
 # Check if Docker is installed and running
+log_info "Validating Docker installation..."
+
 if ! command -v docker &> /dev/null; then
-    log_error "Docker is not installed. Please run setup-homelab.sh first."
+    log_error "Docker is not installed"
+    log_info "Please run the setup script first:"
+    log_info "  cd ~/AI-Homelab/scripts"
+    log_info "  sudo ./setup-homelab.sh"
     exit 1
 fi
 
-if ! docker info &> /dev/null; then
-    log_error "Docker daemon is not running or you don't have permission."
-    log_info "Try: sudo systemctl start docker"
-    log_info "Or log out and log back in for group changes to take effect"
+if ! docker info &> /dev/null 2>&1; then
+    log_error "Docker daemon is not running or not accessible"
+    echo ""
+    log_info "Troubleshooting steps:"
+    log_info "  1. Start Docker: sudo systemctl start docker"
+    log_info "  2. Enable Docker on boot: sudo systemctl enable docker"
+    log_info "  3. Check Docker status: sudo systemctl status docker"
+    log_info "  4. If recently added to docker group, log out and back in"
+    log_info "  5. Test access: docker ps"
+    echo ""
+    log_info "Current user: $ACTUAL_USER"
+    log_info "Docker group membership: $(groups $ACTUAL_USER | grep -o docker || echo 'NOT IN DOCKER GROUP')"
     exit 1
 fi
 
 log_success "Docker is available and running"
+log_info "Docker version: $(docker --version | cut -d' ' -f3 | tr -d ',')"
 echo ""
 
 # Load environment variables for domain check
@@ -114,9 +128,26 @@ log_info "  - Gluetun (VPN Client)"
 echo ""
 
 # Copy core stack files
+log_info "Preparing core stack configuration files..."
+
+# Clean up any incorrect directory structure from previous runs
+if [ -d "/opt/stacks/core/traefik/acme.json" ]; then
+    log_warning "Removing incorrectly created acme.json directory"
+    rm -rf /opt/stacks/core/traefik/acme.json
+fi
+if [ -d "/opt/stacks/core/traefik/traefik.yml" ]; then
+    log_warning "Removing incorrectly created traefik.yml directory"
+    rm -rf /opt/stacks/core/traefik/traefik.yml
+fi
+
+# Copy compose file
 cp "$REPO_DIR/docker-compose/core.yml" /opt/stacks/core/docker-compose.yml
+
+# Remove existing config directories and copy fresh ones
+rm -rf /opt/stacks/core/traefik /opt/stacks/core/authelia
 cp -r "$REPO_DIR/config-templates/traefik" /opt/stacks/core/
 cp -r "$REPO_DIR/config-templates/authelia" /opt/stacks/core/
+
 cp "$REPO_DIR/.env" /opt/stacks/core/.env
 
 # Create acme.json as a file (not directory) with correct permissions
@@ -134,47 +165,71 @@ log_success "Traefik email configured"
 log_info "Configuring Authelia for domain: $DOMAIN..."
 sed -i "s/your-domain.duckdns.org/${DOMAIN}/g" /opt/stacks/core/authelia/configuration.yml
 
-# Generate Authelia admin password if not already configured
-if grep -q "CHANGEME" /opt/stacks/core/authelia/users_database.yml 2>/dev/null || [ ! -f /opt/stacks/core/authelia/users_database.yml ]; then
-    log_info "Generating Authelia admin credentials..."
+# Configure Authelia admin user from setup script
+if [ -f /tmp/authelia_admin_credentials.tmp ]; then
+    log_info "Loading Authelia admin credentials from setup script..."
+    source /tmp/authelia_admin_credentials.tmp
     
-    # Generate a random password if not provided
-    ADMIN_PASSWORD="${AUTHELIA_ADMIN_PASSWORD:-$(openssl rand -base64 16)}"
-    
-    # Generate password hash using Authelia container
-    log_info "Generating password hash (this may take a moment)..."
-    PASSWORD_HASH=$(docker run --rm authelia/authelia:4.37 authelia crypto hash generate argon2 --password "$ADMIN_PASSWORD" | grep 'Digest:' | awk '{print $2}')
-    
-    if [ -z "$PASSWORD_HASH" ]; then
-        log_error "Failed to generate password hash"
-        log_info "Using template users_database.yml - please configure manually"
-    else
-        # Create users_database.yml with generated credentials
+    if [ -n "$PASSWORD_HASH" ] && [ -n "$ADMIN_USER" ] && [ -n "$ADMIN_EMAIL" ]; then
+        log_success "Using credentials: $ADMIN_USER ($ADMIN_EMAIL)"
+        
+        # Create users_database.yml with credentials from setup
         cat > /opt/stacks/core/authelia/users_database.yml << EOF
 ###############################################################
 #                         Users Database                      #
 ###############################################################
 
 users:
-  admin:
+  ${ADMIN_USER}:
     displayname: "Admin User"
     password: "${PASSWORD_HASH}"
-    email: ${ACME_EMAIL}
+    email: ${ADMIN_EMAIL}
     groups:
       - admins
       - users
 EOF
         
-        log_success "Authelia admin user configured"
-        log_info "Admin username: admin"
-        log_info "Admin password: $ADMIN_PASSWORD"
-        log_warning "SAVE THIS PASSWORD! Writing to /opt/stacks/core/authelia/ADMIN_PASSWORD.txt"
+        log_success "Authelia admin user configured from setup script"
+        echo ""
+        echo "==========================================="
+        log_info "Authelia Login Credentials:"
+        echo "  Username: $ADMIN_USER"
+        echo "  Password: $ADMIN_PASSWORD"
+        echo "  Email: $ADMIN_EMAIL"
+        echo "==========================================="
+        echo ""
+        log_warning "SAVE THESE CREDENTIALS!"
+        
+        # Save password to file for reference
         echo "$ADMIN_PASSWORD" > /opt/stacks/core/authelia/ADMIN_PASSWORD.txt
         chmod 600 /opt/stacks/core/authelia/ADMIN_PASSWORD.txt
         chown $ACTUAL_USER:$ACTUAL_USER /opt/stacks/core/authelia/ADMIN_PASSWORD.txt
+        log_info "Password also saved to: /opt/stacks/core/authelia/ADMIN_PASSWORD.txt"
+        echo ""
+        
+        # Clean up credentials file
+        rm -f /tmp/authelia_admin_credentials.tmp
+    else
+        log_warning "Incomplete credentials from setup script"
+        log_info "Using template users_database.yml - please configure manually"
     fi
 else
-    log_info "Authelia users_database.yml already configured"
+    log_warning "No credentials file found from setup script"
+    log_info "Using template users_database.yml from config-templates"
+    log_info "Please run setup-homelab.sh first or configure manually"
+fi
+
+# Clean up old Authelia database if encryption key changed
+# This prevents "encryption key does not appear to be valid" errors
+if [ -d "/var/lib/docker/volumes/core_authelia-data/_data" ]; then
+    log_info "Checking for Authelia database encryption key issues..."
+    # Test if Authelia can start, if not, clean the database
+    docker compose up -d authelia 2>&1 | grep -q "encryption key" && {
+        log_warning "Encryption key mismatch detected, cleaning Authelia database..."
+        docker compose down authelia
+        sudo rm -rf /var/lib/docker/volumes/core_authelia-data/_data/*
+        log_success "Authelia database cleaned"
+    } || log_info "Database check passed"
 fi
 
 # Deploy core stack

@@ -6,7 +6,7 @@ You are an AI agent specialized in managing Docker-based homelab infrastructure 
 ## Repository Context
 - **Repository Location**: `/home/kelin/AI-Homelab/`
 - **Purpose**: Development and testing of automated homelab management via GitHub Copilot
-- **Testing Phase**: Round 4 - Focus on stability, permission handling, and production readiness
+- **Testing Phase**: Round 6 - Focus on script reliability, error handling, and deployment robustness
 - **User**: `kelin` (PUID=1000, PGID=1000)
 - **Critical**: All file operations must respect user ownership - avoid permission escalation issues
 
@@ -158,7 +158,7 @@ labels:
 
 ## Agent Actions Checklist
 
-### Permission Safety (CRITICAL for Round 4)
+### Permission Safety (CRITICAL - Established in Round 4)
 - [ ] **NEVER** use sudo for file operations in user directories
 - [ ] Always check file ownership before modifying: `ls -la`
 - [ ] Respect existing ownership - files should be owned by `kelin:kelin`
@@ -196,7 +196,7 @@ labels:
 
 ## Common Agent Tasks
 
-### Development Workflow (Round 4 Focus)
+### Development Workflow (Current Focus - Round 6)
 1. **Repository Testing**
    - Test deployment scripts: `./scripts/setup-homelab.sh`, `./scripts/deploy-homelab.sh`
    - Verify compose file syntax across all stacks
@@ -354,7 +354,7 @@ labels:
 - **Respect user ownership boundaries**
 - **Ask before modifying system directories**
 
-## Testing and Development Guidelines (Round 4)
+## Testing and Development Guidelines (Round 6)
 
 ### Repository Development
 - Work within `~/AI-Homelab/` for all development
@@ -394,7 +394,7 @@ ls -la ~/AI-Homelab/
 - [ ] VPN: Test Gluetun routing
 - [ ] Documentation: Validate all steps in docs/
 
-### Round 4 Success Criteria
+### Round 6 Success Criteria
 - [ ] No permission-related crashes
 - [ ] All deployment scripts work on fresh Debian install
 - [ ] Documentation matches actual implementation

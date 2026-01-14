@@ -42,17 +42,62 @@ if [ "$ACTUAL_USER" = "root" ]; then
     exit 1
 fi
 
+# Add trap for cleanup on error
+cleanup_on_error() {
+    local exit_code=$?
+    if [ $exit_code -ne 0 ]; then
+        log_error "Script failed with exit code: $exit_code"
+        echo ""
+        log_info "Partial setup may have occurred. To resume:"
+        log_info "  1. Review error messages above"
+        log_info "  2. Fix the issue if possible"
+        log_info "  3. Re-run: sudo ./setup-homelab.sh"
+        echo ""
+        log_info "The script is designed to be idempotent (safe to re-run)"
+    fi
+}
+
+trap cleanup_on_error EXIT
+
 log_info "Setting up AI-Homelab for user: $ACTUAL_USER"
 echo ""
 
+# Step 0: Pre-flight validation
+log_info "Step 0/10: Running pre-flight checks..."
+
+# Check internet connectivity
+if ! ping -c 1 -W 2 8.8.8.8 &> /dev/null && ! ping -c 1 -W 2 1.1.1.1 &> /dev/null; then
+    log_error "No internet connectivity detected"
+    log_info "Internet access is required for:"
+    log_info "  - Installing packages"
+    log_info "  - Downloading Docker images"
+    log_info "  - Accessing Docker Hub"
+    exit 1
+fi
+
+# Check disk space (require at least 5GB free)
+AVAILABLE_SPACE=$(df / | tail -1 | awk '{print $4}')
+REQUIRED_SPACE=5000000  # 5GB in KB
+if [ "$AVAILABLE_SPACE" -lt "$REQUIRED_SPACE" ]; then
+    log_error "Insufficient disk space on root partition"
+    log_info "Available: $(($AVAILABLE_SPACE / 1024 / 1024))GB"
+    log_info "Required: $(($REQUIRED_SPACE / 1024 / 1024))GB"
+    exit 1
+fi
+
+log_success "Pre-flight checks passed"
+log_info "Internet: Connected"
+log_info "Disk space: $(($AVAILABLE_SPACE / 1024 / 1024))GB available"
+echo ""
+
 # Step 1: System Update
-log_info "Step 1/9: Updating system packages..."
+log_info "Step 1/10: Updating system packages..."
 apt-get update && apt-get upgrade -y
 log_success "System updated successfully"
 echo ""
 
 # Step 2: Install Required Packages
-log_info "Step 2/9: Installing required packages..."
+log_info "Step 2/10: Installing required packages..."
 apt-get install -y \
     apt-transport-https \
     ca-certificates \
@@ -71,7 +116,7 @@ log_success "Required packages installed"
 echo ""
 
 # Step 3: Install Docker
-log_info "Step 3/9: Installing Docker..."
+log_info "Step 3/10: Installing Docker..."
 if command -v docker &> /dev/null && docker --version &> /dev/null; then
     log_warning "Docker is already installed ($(docker --version))"
 else
@@ -95,7 +140,7 @@ fi
 echo ""
 
 # Step 4: Configure User Groups
-log_info "Step 4/9: Configuring user groups..."
+log_info "Step 4/10: Configuring user groups..."
 
 # Add user to sudo group if not already
 if groups "$ACTUAL_USER" | grep -q '\bsudo\b'; then
@@ -115,7 +160,7 @@ fi
 echo ""
 
 # Step 5: Configure Firewall
-log_info "Step 5/9: Configuring firewall..."
+log_info "Step 5/10: Configuring firewall..."
 # Enable UFW if not already enabled
 if ufw status | grep -q "Status: active"; then
     log_warning "Firewall is already active"
@@ -139,7 +184,7 @@ log_success "HTTP/HTTPS ports allowed in firewall"
 echo ""
 
 # Step 6: Configure SSH
-log_info "Step 6/9: Configuring SSH server..."
+log_info "Step 6/10: Configuring SSH server..."
 systemctl enable ssh
 systemctl start ssh
 
@@ -153,7 +198,23 @@ else
 fi
 echo ""
 # Step 7: Generate Authelia Secrets
-log_info "Step 7/9: Generating Authelia authentication secrets..."
+log_info "Step 7/10: Generating Authelia authentication secrets..."
+echo ""
+
+# Validate Docker is available for password hash generation
+if ! docker info &> /dev/null 2>&1; then
+    log_error "Docker is not available for password hash generation"
+    log_info "Docker must be running to generate Authelia password hashes."
+    log_info "Please ensure:"
+    log_info "  1. Docker daemon is started: sudo systemctl start docker"
+    log_info "  2. User can access Docker: docker ps"
+    log_info "  3. Log out and log back in if recently added to docker group"
+    echo ""
+    log_info "After fixing, re-run: sudo ./setup-homelab.sh"
+    exit 1
+fi
+
+log_success "Docker is available for password operations"
 echo ""
 
 # Function to generate a secure random secret
@@ -236,13 +297,55 @@ while true; do
 done
 
 # Generate password hash using Docker
-log_info "Generating password hash (this may take a moment)..."
-PASSWORD_HASH=$(docker run --rm authelia/authelia:4.37 authelia crypto hash generate argon2 --password "$ADMIN_PASSWORD" | grep '^\$argon2')
+log_info "Generating password hash (this may take 30-60 seconds)..."
+log_info "Pulling Authelia image if not already present..."
 
-if [ -z "$PASSWORD_HASH" ]; then
-    log_error "Failed to generate password hash"
+# Pull image first to show progress
+if ! docker pull authelia/authelia:4.37 2>&1 | grep -E '(Pulling|Downloaded|Already exists|Status)'; then
+    log_error "Failed to pull Authelia Docker image"
+    log_info "Please check:"
+    log_info "  1. Internet connectivity: ping docker.io"
+    log_info "  2. Docker Hub access: docker search authelia"
+    log_info "  3. Disk space: df -h"
     exit 1
 fi
+
+echo ""
+log_info "Generating password hash..."
+
+# Generate hash with timeout and better error capture
+HASH_OUTPUT=$(timeout 60 docker run --rm authelia/authelia:4.37 authelia crypto hash generate argon2 --password "$ADMIN_PASSWORD" 2>&1)
+HASH_EXIT_CODE=$?
+
+if [ $HASH_EXIT_CODE -eq 124 ]; then
+    log_error "Password hash generation timed out after 60 seconds"
+    log_info "This is unusual. Please check:"
+    log_info "  1. System resources: top or htop"
+    log_info "  2. Docker status: docker ps"
+    log_info "  3. Try manually: docker run --rm authelia/authelia:4.37 authelia crypto hash generate argon2"
+    exit 1
+elif [ $HASH_EXIT_CODE -ne 0 ]; then
+    log_error "Failed to generate password hash (exit code: $HASH_EXIT_CODE)"
+    log_info "Error output:"
+    echo "$HASH_OUTPUT"
+    exit 1
+fi
+
+# Extract hash - format is "Digest: $argon2id$..."
+PASSWORD_HASH=$(echo "$HASH_OUTPUT" | grep -oP 'Digest: \K\$argon2.*' || echo "$HASH_OUTPUT" | grep '^\$argon2')
+
+if [ -z "$PASSWORD_HASH" ]; then
+    log_error "Failed to extract password hash from output"
+    log_info "Command output:"
+    echo "$HASH_OUTPUT"
+    log_info ""
+    log_info "You can generate the hash manually after setup:"
+    log_info "  docker run --rm authelia/authelia:4.37 authelia crypto hash generate argon2"
+    log_info "  Then edit: /opt/stacks/core/authelia/users_database.yml"
+    exit 1
+fi
+
+log_success "Password hash generated successfully"
 
 # Read admin email from .env or prompt
 ADMIN_EMAIL=$(grep "^ADMIN_EMAIL=" "$REPO_ENV_FILE" | cut -d'=' -f2)
@@ -255,17 +358,20 @@ log_success "Admin user configured: $ADMIN_USER"
 log_success "Password hash generated and will be applied during deployment"
 
 # Store the admin credentials for the deployment script
+# Include both password and hash so deploy can show the password to user
 cat > /tmp/authelia_admin_credentials.tmp << EOF
 ADMIN_USER=$ADMIN_USER
 ADMIN_EMAIL=$ADMIN_EMAIL
+ADMIN_PASSWORD=$ADMIN_PASSWORD
 PASSWORD_HASH=$PASSWORD_HASH
 EOF
 chmod 600 /tmp/authelia_admin_credentials.tmp
 
+log_info "Credentials saved for deployment script"
 echo ""
 
 # Step 8: Create Directory Structure
-log_info "Step 8/9: Creating directory structure..."
+log_info "Step 8/10: Creating directory structure..."
 mkdir -p /opt/stacks
 mkdir -p /opt/dockge/data
 mkdir -p /mnt/media/{movies,tv,music,books,photos}
@@ -288,7 +394,7 @@ log_success "Directory structure created"
 echo ""
 
 # Step 9: Create Docker Networks
-log_info "Step 9/9: Creating Docker networks..."
+log_info "Step 9/10: Creating Docker networks..."
 su - "$ACTUAL_USER" -c "docker network create homelab-network 2>/dev/null || true"
 su - "$ACTUAL_USER" -c "docker network create traefik-network 2>/dev/null || true"
 su - "$ACTUAL_USER" -c "docker network create media-network 2>/dev/null || true"
@@ -296,8 +402,8 @@ su - "$ACTUAL_USER" -c "docker network create dockerproxy-network 2>/dev/null ||
 log_success "Docker networks created"
 echo ""
 
-# Optional: Detect and Install NVIDIA Drivers (if applicable)
-log_info "Optional: Checking for NVIDIA GPU..."
+# Step 10: Optional - Detect and Install NVIDIA Drivers
+log_info "Step 10/10 (Optional): Checking for NVIDIA GPU..."
 
 # Detect NVIDIA GPU
 if lspci | grep -i nvidia > /dev/null; then
