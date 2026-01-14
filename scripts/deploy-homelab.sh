@@ -180,7 +180,40 @@ sed -i "s/your-domain.duckdns.org/${DOMAIN}/g" /opt/stacks/core/authelia/configu
 
 # Configure Authelia admin user from setup script
 if [ -f /opt/stacks/.setup-temp/authelia_admin_credentials.tmp ] && [ -f /opt/stacks/.setup-temp/authelia_password_hash.tmp ]; then
-    log_info "Loading Authelia admin credentials from setup script..."
+    log_info "Loading Authelia admin credentials from setup temp files..."
+    source /opt/stacks/.setup-temp/authelia_admin_credentials.tmp
+elif [ -n "${AUTHELIA_ADMIN_USER}" ] && [ -n "${AUTHELIA_ADMIN_EMAIL}" ] && [ -n "${AUTHELIA_ADMIN_PASSWORD}" ]; then
+    log_info "Loading Authelia admin credentials from .env file..."
+    ADMIN_USER="${AUTHELIA_ADMIN_USER}"
+    ADMIN_EMAIL="${AUTHELIA_ADMIN_EMAIL}"
+    ADMIN_PASSWORD="${AUTHELIA_ADMIN_PASSWORD}"
+    
+    # Generate password hash from the password in .env
+    log_info "Generating password hash from .env credentials..."
+    docker run --rm authelia/authelia:4.37 authelia crypto hash generate argon2 --password "$ADMIN_PASSWORD" > /tmp/authelia_password_hash_from_env.tmp 2>/dev/null
+    
+    if [ $? -eq 0 ]; then
+        # Create temp directory and files for the rest of the script
+        mkdir -p /opt/stacks/.setup-temp
+        echo "ADMIN_USER=$ADMIN_USER" > /opt/stacks/.setup-temp/authelia_admin_credentials.tmp
+        echo "ADMIN_EMAIL=$ADMIN_EMAIL" >> /opt/stacks/.setup-temp/authelia_admin_credentials.tmp
+        echo "ADMIN_PASSWORD=$ADMIN_PASSWORD" >> /opt/stacks/.setup-temp/authelia_admin_credentials.tmp
+        chmod 600 /opt/stacks/.setup-temp/authelia_admin_credentials.tmp
+        
+        # Extract just the hash line
+        grep '^\$argon2' /tmp/authelia_password_hash_from_env.tmp > /opt/stacks/.setup-temp/authelia_password_hash.tmp || tail -1 /tmp/authelia_password_hash_from_env.tmp > /opt/stacks/.setup-temp/authelia_password_hash.tmp
+        chmod 600 /opt/stacks/.setup-temp/authelia_password_hash.tmp
+        rm -f /tmp/authelia_password_hash_from_env.tmp
+        
+        log_success "Credentials loaded from .env file"
+    else
+        log_error "Failed to generate password hash from .env credentials"
+        ADMIN_USER=""
+        ADMIN_EMAIL=""
+    fi
+fi
+
+if [ -f /opt/stacks/.setup-temp/authelia_admin_credentials.tmp ] && [ -f /opt/stacks/.setup-temp/authelia_password_hash.tmp ]; then
     source /opt/stacks/.setup-temp/authelia_admin_credentials.tmp
     
     if [ -n "$ADMIN_USER" ] && [ -n "$ADMIN_EMAIL" ]; then
