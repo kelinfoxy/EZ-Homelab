@@ -1,9 +1,0 @@
-reorganize the media stack
-  move plex to alternatives
-  move calibre-web from media-extended
-  move all the arr apps to the media-extended folder
-
-rename media-extended stack to media-management
-
-move code-server to infrastructure
-
