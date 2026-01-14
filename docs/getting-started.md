@@ -2,6 +2,17 @@
 
 Welcome to your AI-powered homelab! This guide will walk you through setting up your production-ready infrastructure with Dockge, Traefik, Authelia, and 60+ services.
 
+## Getting Started Checklist
+
+- [ ] Configure `.env` file with your domain and tokens
+- [ ] Run setup script (generates Authelia secrets and admin user)
+- [ ] Log out and back in for Docker group permissions
+- [ ] Run deployment script (deploys all core services)
+- [ ] Access Dockge web UI
+- [ ] Set up 2FA with Authelia
+- [ ] Deploy additional stacks as needed via Dockge
+- [ ] Configure Homepage dashboard widgets
+
 ## Quick Setup (Recommended)
 
 For most users, the automated setup script handles everything:
@@ -182,17 +193,6 @@ docker compose logs -f
 docker compose up -d --build service-name
 ```
 
-## Getting Started Checklist
-
-- [ ] Run setup script or manual setup
-- [ ] Configure `.env` file
-- [ ] Deploy core infrastructure
-- [ ] Access Dockge web UI
-- [ ] Set up Authelia authentication
-- [ ] Deploy additional stacks as needed
-- [ ] Configure Homepage dashboard
-- [ ] Install VS Code with Copilot
-
 ## Next Steps
 
 1. **Explore services** through Dockge
@@ -201,37 +201,4 @@ docker compose up -d --build service-name
 4. **Add external services** via Traefik proxying
 5. **Use AI assistance** for custom configurations
 
-Happy homelabbing! 🚀
-
-## Deployment Improvements (Round 4)
-
-The repository has been enhanced with the following improvements for better user experience:
-
-### Automated Configuration
-- **Email Substitution**: Deploy script automatically configures Traefik with your ACME_EMAIL
-- **Password Generation**: Authelia admin password is auto-generated and saved to `/opt/stacks/core/authelia/ADMIN_PASSWORD.txt`
-- **Network Creation**: Docker networks are created automatically before deployment
-
-### Volume Path Standardization
-- All compose files now use **relative paths** (e.g., `./service/config`) for portability
-- Stacks work correctly when deployed via Dockge or docker compose
-- Large shared data still uses absolute paths (`/mnt/media`, `/mnt/downloads`)
-
-### SSL Certificate Configuration
-- **Default**: HTTP challenge (simple setup, works immediately)
-- **Optional**: DNS challenge for wildcard certificates (see comments in traefik.yml)
-- Certificates are automatically requested and renewed by Traefik
-
-### What's Automated
-✅ Docker network creation  
-✅ Traefik email configuration  
-✅ Authelia password generation  
-✅ Domain configuration in Authelia  
-✅ Directory structure creation  
-✅ Service deployment  
-
-### What You Configure
-📝 `.env` file with your domain and API keys  
-📝 DuckDNS token  
-📝 VPN credentials (if using Gluetun)  
-📝 Service-specific settings via Dockge  
+Happy homelabbing! 🚀  

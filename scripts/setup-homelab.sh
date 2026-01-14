@@ -559,29 +559,53 @@ if [ "${NVIDIA_REBOOT_NEEDED:-false}" = true ]; then
 echo "  2. REBOOT YOUR SYSTEM for NVIDIA drivers to load"
 echo "     Run: sudo reboot"
 echo ""
-echo "  3. After reboot, navigate to your AI-Homelab repository:"
+echo "  3. After reboot, run the deployment script to deploy your homelab"
 else
-echo "  2. Navigate to your AI-Homelab repository:"
+echo "  2. Run the deployment script to deploy your homelab"
 fi
-echo "     cd ~/AI-Homelab"
-echo ""
-if [ "${NVIDIA_REBOOT_NEEDED:-false}" = true ]; then
-echo "  4. Run the deployment script:"
-else
-echo "  3. Run the deployment script:"
-fi
-echo "     ./scripts/deploy-homelab.sh"
-echo ""
-if [ "${NVIDIA_REBOOT_NEEDED:-false}" = true ]; then
-echo "  5. Access Dockge at: https://dockge.yourdomain.duckdns.org"
-else
-echo "  4. Access Dockge at: https://dockge.yourdomain.duckdns.org"
-fi
-echo "     (Use your configured domain and Authelia credentials)"
 echo ""
 echo "=========================================="
 echo ""
 log_info "Setup complete!"
+echo ""
+
+# Prompt to run deployment script
 if [ "${NVIDIA_REBOOT_NEEDED:-false}" != true ]; then
-    log_info "Please log out and log back in."
+    echo ""
+    read -p "Would you like to run the deployment script now? [Y/n]: " -n 1 -r RUN_DEPLOY
+    echo ""
+    
+    # Default to yes if empty
+    RUN_DEPLOY=${RUN_DEPLOY:-Y}
+    
+    if [[ $RUN_DEPLOY =~ ^[Yy]$ ]]; then
+        log_info "Starting deployment script..."
+        echo ""
+        
+        # Check if user needs to log out first for Docker group
+        if ! groups "$ACTUAL_USER" | grep -q docker; then
+            log_warning "You need to log out and back in for Docker group permissions."
+            log_info "Run this command after logging back in:"
+            echo ""
+            echo "  cd ~/AI-Homelab && ./scripts/deploy-homelab.sh"
+            echo ""
+        else
+            # Run deployment script as the actual user
+            cd "$(dirname "$0")/.." || exit 1
+            su - "$ACTUAL_USER" -c "cd $PWD && ./scripts/deploy-homelab.sh"
+        fi
+    else
+        log_info "Deployment skipped. Run it manually when ready:"
+        echo ""
+        echo "  cd ~/AI-Homelab"
+        echo "  ./scripts/deploy-homelab.sh"
+        echo ""
+    fi
+else
+    log_info "Please reboot your system for NVIDIA drivers, then run:"
+    echo ""
+    echo "  cd ~/AI-Homelab"
+    echo "  ./scripts/deploy-homelab.sh"
+    echo ""
 fi
+

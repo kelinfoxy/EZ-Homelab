@@ -29,17 +29,13 @@ certificatesResolvers:
     acme:
       email: ACME_EMAIL_PLACEHOLDER  # Will be replaced by deploy script
       storage: /acme.json
-      # HTTP challenge - Simple setup, port 80 must be accessible
-      # Works for individual domain certificates
-      httpChallenge:
-        entryPoint: web
-      # DNS challenge - For wildcard certificates (advanced)
-      # Uncomment and comment out httpChallenge to use:
-      # dnsChallenge:
-      #   provider: duckdns
-      #   resolvers:
-      #     - "1.1.1.1:53"
-      #     - "8.8.8.8:53"
+      # DNS challenge - For wildcard certificates (*.yourdomain.duckdns.org)
+      # Works with DuckDNS - requires DUCKDNS_TOKEN in environment
+      dnsChallenge:
+        provider: duckdns
+        resolvers:
+          - "1.1.1.1:53"
+          - "8.8.8.8:53"
 
 providers:
   docker:

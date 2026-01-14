@@ -110,12 +110,12 @@ This is **by design** and makes Authelia perfect for AI management and security-
 
 ## Alternative with Web UI: Authentik
 
-If you need a web UI for user management, Authentik is included in the infrastructure stack:
+If you need a web UI for user management, Authentik is included in the alternatives stack:
 - **Authentik**: Full-featured SSO with web UI for user/group management
 - Access at: `https://authentik.${DOMAIN}`
 - Includes PostgreSQL database and Redis cache
 - More complex but offers GUI-based configuration
-- Deploy only if you need web-based user management
+- Deploy via Dockge when needed
 
 **Other Alternatives:**
 - **Keycloak**: Enterprise-grade SSO with web UI
