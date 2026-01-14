@@ -608,9 +608,9 @@ if [ "${NVIDIA_REBOOT_NEEDED:-false}" != true ]; then
             echo "  cd ~/AI-Homelab && ./scripts/deploy-homelab.sh"
             echo ""
         else
-            # Run deployment script as the actual user
+            # Run deployment script as the actual user with sudo
             cd "$(dirname "$0")/.." || exit 1
-            su - "$ACTUAL_USER" -c "cd $PWD && ./scripts/deploy-homelab.sh"
+            su - "$ACTUAL_USER" -c "cd $PWD && sudo ./scripts/deploy-homelab.sh"
         fi
     else
         log_info "Deployment skipped. Run it manually when ready:"

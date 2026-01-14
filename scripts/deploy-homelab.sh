@@ -200,8 +200,8 @@ elif [ -n "${AUTHELIA_ADMIN_USER}" ] && [ -n "${AUTHELIA_ADMIN_EMAIL}" ] && [ -n
         echo "ADMIN_PASSWORD=$ADMIN_PASSWORD" >> /opt/stacks/.setup-temp/authelia_admin_credentials.tmp
         chmod 600 /opt/stacks/.setup-temp/authelia_admin_credentials.tmp
         
-        # Extract just the hash line
-        grep '^\$argon2' /tmp/authelia_password_hash_from_env.tmp > /opt/stacks/.setup-temp/authelia_password_hash.tmp || tail -1 /tmp/authelia_password_hash_from_env.tmp > /opt/stacks/.setup-temp/authelia_password_hash.tmp
+        # Extract just the hash (remove "Digest: " prefix if present)
+        sed 's/^Digest: //' /tmp/authelia_password_hash_from_env.tmp | grep '^\$argon2' > /opt/stacks/.setup-temp/authelia_password_hash.tmp
         chmod 600 /opt/stacks/.setup-temp/authelia_password_hash.tmp
         rm -f /tmp/authelia_password_hash_from_env.tmp
         
