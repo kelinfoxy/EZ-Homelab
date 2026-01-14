@@ -122,6 +122,8 @@ echo ""
 log_info "Step 4/6: Cleaning temporary files..."
 
 rm -f /tmp/authelia_admin_credentials.tmp
+rm -f /tmp/authelia_password_hash.tmp
+rm -rf /opt/stacks/.setup-temp
 rm -f /tmp/nvidia*.log
 log_success "Temporary files cleaned"
 echo ""

@@ -351,12 +351,18 @@ log_success "Password hash generated and will be applied during deployment"
 # Store the admin credentials for the deployment script
 # Password hash is already in /tmp/authelia_password_hash.tmp (written directly from Docker)
 # This avoids bash variable expansion issues with $ characters in argon2 hashes
+# Store in /opt/stacks/ which is accessible across user contexts
+mkdir -p /opt/stacks/.setup-temp
 {
     echo "ADMIN_USER=$ADMIN_USER"
     echo "ADMIN_EMAIL=$ADMIN_EMAIL"
     echo "ADMIN_PASSWORD=$ADMIN_PASSWORD"
-} > /tmp/authelia_admin_credentials.tmp
-chmod 600 /tmp/authelia_admin_credentials.tmp
+} > /opt/stacks/.setup-temp/authelia_admin_credentials.tmp
+chmod 600 /opt/stacks/.setup-temp/authelia_admin_credentials.tmp
+
+# Copy password hash to persistent location
+cp /tmp/authelia_password_hash.tmp /opt/stacks/.setup-temp/authelia_password_hash.tmp
+chmod 600 /opt/stacks/.setup-temp/authelia_password_hash.tmp
 
 log_info "Credentials saved for deployment script"
 echo ""

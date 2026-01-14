@@ -179,9 +179,9 @@ log_info "Configuring Authelia for domain: $DOMAIN..."
 sed -i "s/your-domain.duckdns.org/${DOMAIN}/g" /opt/stacks/core/authelia/configuration.yml
 
 # Configure Authelia admin user from setup script
-if [ -f /tmp/authelia_admin_credentials.tmp ] && [ -f /tmp/authelia_password_hash.tmp ]; then
+if [ -f /opt/stacks/.setup-temp/authelia_admin_credentials.tmp ] && [ -f /opt/stacks/.setup-temp/authelia_password_hash.tmp ]; then
     log_info "Loading Authelia admin credentials from setup script..."
-    source /tmp/authelia_admin_credentials.tmp
+    source /opt/stacks/.setup-temp/authelia_admin_credentials.tmp
     
     if [ -n "$ADMIN_USER" ] && [ -n "$ADMIN_EMAIL" ]; then
         log_success "Using credentials: $ADMIN_USER ($ADMIN_EMAIL)"
@@ -209,7 +209,7 @@ EOF
         export ADMIN_EMAIL
         python3 << 'PYTHON_EOF'
 # Read password hash from file to completely avoid bash variable expansion
-with open('/tmp/authelia_password_hash.tmp', 'r') as f:
+with open('/opt/stacks/.setup-temp/authelia_password_hash.tmp', 'r') as f:
     password_hash = f.read().strip()
 
 import os
@@ -252,8 +252,11 @@ PYTHON_EOF
         log_info "Password also saved to: /opt/stacks/core/authelia/ADMIN_PASSWORD.txt"
         echo ""
         
-        # Clean up credentials file
-        rm -f /tmp/authelia_admin_credentials.tmp
+        # Clean up credentials files from setup script
+        rm -f /opt/stacks/.setup-temp/authelia_admin_credentials.tmp
+        rm -f /opt/stacks/.setup-temp/authelia_password_hash.tmp
+        rmdir /opt/stacks/.setup-temp 2>/dev/null || true
+        log_info "Cleaned up temporary setup files"
     else
         log_warning "Incomplete credentials from setup script"
         log_info "Using template users_database.yml - please configure manually"
