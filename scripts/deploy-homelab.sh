@@ -203,8 +203,12 @@ users:
       - users
 EOF
         # Now safely replace placeholders
+        # Escape special characters in PASSWORD_HASH for sed
+        ESCAPED_HASH=$(printf '%s\n' "$PASSWORD_HASH" | sed 's:[\/&]:\\&:g;$!s/$/\\/')
+        ESCAPED_HASH="${ESCAPED_HASH%\\}"
+        
         sed -i "s/ADMIN_USER_PLACEHOLDER/${ADMIN_USER}/g" /opt/stacks/core/authelia/users_database.yml
-        sed -i "s|PASSWORD_HASH_PLACEHOLDER|${PASSWORD_HASH}|g" /opt/stacks/core/authelia/users_database.yml
+        sed -i "s|PASSWORD_HASH_PLACEHOLDER|${ESCAPED_HASH}|g" /opt/stacks/core/authelia/users_database.yml  
         sed -i "s/ADMIN_EMAIL_PLACEHOLDER/${ADMIN_EMAIL}/g" /opt/stacks/core/authelia/users_database.yml
         
         log_success "Authelia admin user configured from setup script"
