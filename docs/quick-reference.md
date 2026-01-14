@@ -23,58 +23,12 @@ Your homelab uses separate stacks for organization:
 
 ## Deployment Scripts
 
-### setup-homelab.sh
+For detailed information about the deployment scripts, their features, and usage, see [scripts/README.md](../scripts/README.md).
 
-First-run system preparation and Authelia configuration:
-
-```bash
-sudo ./scripts/setup-homelab.sh
-```
-
-**What it does:**
-- Pre-flight checks (internet, disk space 50GB+)
-- Installs Docker Engine + Compose V2
-- Configures user groups and firewall
-- Generates Authelia secrets automatically
-- Creates admin user with secure password hash
-- Sets up Docker networks and directory structure
-- Detects NVIDIA GPU and offers driver installation
-
-**Safe to re-run** - skips completed steps
-
-### deploy-homelab.sh
-
-Deploys all core services and prepares additional stacks:
-
-```bash
-./scripts/deploy-homelab.sh
-```
-
-**What it does:**
-- Validates Docker installation
-- Deploys core stack (4 containers)
-- Deploys infrastructure stack (6 containers)
-- Deploys dashboards with configured URLs (2 containers)
-- Copies 7 additional stacks to Dockge (not started)
-- Optional: Pre-pull images for additional stacks
-- Opens Dockge in browser
-
-### reset-test-environment.sh
-
-**Testing/development only** - safely removes all deployed services:
-
-```bash
-sudo ./scripts/reset-test-environment.sh
-```
-
-**What it does:**
-- Gracefully stops all Docker Compose stacks
-- Removes Docker volumes (after 3s wait)
-- Cleans stack directories and temp files
-- Removes Docker networks
-- Prunes unused Docker resources
-
-**Warning:** This is destructive! Only use for testing or complete reset.
+**Quick summary:**
+- `setup-homelab.sh` - First-run system setup and Authelia configuration
+- `deploy-homelab.sh` - Deploy all core services and prepare additional stacks
+- `reset-test-environment.sh` - Testing/development only - removes all deployed services
 
 ## Common Commands
 
