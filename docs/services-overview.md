@@ -11,18 +11,20 @@ This document provides a comprehensive overview of all 60+ pre-configured servic
 | ├─ Traefik | Reverse proxy + SSL | ✓ | /opt/stacks/core/traefik | traefik.${DOMAIN} |
 | ├─ Authelia | SSO authentication | - | /opt/stacks/core/authelia | auth.${DOMAIN} |
 | └─ Gluetun | VPN (Surfshark) | - | /opt/stacks/core/gluetun | No UI |
-| **🔧 infrastructure.yaml** (12) | | | | |
+| **🔧 infrastructure.yaml (6+5)** | **Deployed: 6** | | | |
 | ├─ Dockge | Stack manager (PRIMARY) | ✓ | /opt/stacks/infrastructure | dockge.${DOMAIN} |
-| ├─ Portainer | Container management | ✓ | /opt/stacks/infrastructure | portainer.${DOMAIN} |
-| ├─ Authentik Server | SSO with web UI | ✓ | /opt/stacks/authentik | authentik.${DOMAIN} |
-| │  ├─ authentik-worker | Background tasks | - | /opt/stacks/authentik | No UI |
-| │  ├─ authentik-db | PostgreSQL | - | /opt/stacks/authentik | No UI |
-| │  └─ authentik-redis | Cache/messaging | - | /opt/stacks/authentik | No UI |
 | ├─ Pi-hole | DNS + Ad blocking | ✓ | /opt/stacks/infrastructure | pihole.${DOMAIN} |
-| ├─ Watchtower | Auto container updates | - | /opt/stacks/infrastructure | No UI |
 | ├─ Dozzle | Docker log viewer | ✓ | /opt/stacks/infrastructure | dozzle.${DOMAIN} |
 | ├─ Glances | System monitoring | ✓ | /opt/stacks/infrastructure | glances.${DOMAIN} |
 | └─ Docker Proxy | Secure socket access | - | /opt/stacks/infrastructure | No UI |
+| **⚠️ Disabled:** | | | | |
+| ├─ Watchtower | Auto updates (disabled) | - | Docker API issue | No UI |
+| **📦 alternatives.yaml (5)** | **Not deployed** | | | |
+| ├─ Portainer | Container management | ✓ | /opt/stacks/alternatives | portainer.${DOMAIN} |
+| ├─ Authentik Server | SSO with web UI | ✓ | /opt/stacks/alternatives | authentik.${DOMAIN} |
+| │  ├─ authentik-worker | Background tasks | - | /opt/stacks/alternatives | No UI |
+| │  ├─ authentik-db | PostgreSQL | - | /opt/stacks/alternatives | No UI |
+| │  └─ authentik-redis | Cache/messaging | - | /opt/stacks/alternatives | No UI |
 | **📊 dashboards.yaml** (2) | | | | |
 | ├─ Homepage | App dashboard (AI cfg) | ✓ | /opt/stacks/dashboards | home.${DOMAIN} |
 | └─ Homarr | Modern dashboard | ✓ | /opt/stacks/dashboards | homarr.${DOMAIN} |
