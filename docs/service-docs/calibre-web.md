@@ -49,7 +49,7 @@ Calibre-Web is a web-based ebook reader and library manager. It provides a clean
 ### Directory Structure
 
 ```
-/opt/stacks/media-extended/calibre-web/config/    # Config
+/opt/stacks/media-management/calibre-web/config/    # Config
 /mnt/media/books/                                 # Calibre library
 ```
 
@@ -84,7 +84,7 @@ calibre-web:
     - TZ=America/New_York
     - DOCKER_MODS=linuxserver/mods:universal-calibre
   volumes:
-    - /opt/stacks/media-extended/calibre-web/config:/config
+    - /opt/stacks/media-management/calibre-web/config:/config
     - /mnt/media/books:/books
   labels:
     - "traefik.enable=true"

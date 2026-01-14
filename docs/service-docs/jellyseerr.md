@@ -79,7 +79,7 @@ User Watches Content
 ### Directory Structure
 
 ```
-/opt/stacks/media-extended/jellyseerr/config/    # Jellyseerr configuration
+/opt/stacks/media-management/jellyseerr/config/    # Jellyseerr configuration
 ```
 
 ### Environment Variables
@@ -137,7 +137,7 @@ jellyseerr:
     - LOG_LEVEL=info
     - TZ=America/New_York
   volumes:
-    - /opt/stacks/media-extended/jellyseerr/config:/app/config
+    - /opt/stacks/media-management/jellyseerr/config:/app/config
   labels:
     - "traefik.enable=true"
     - "traefik.http.routers.jellyseerr.rule=Host(`jellyseerr.${DOMAIN}`)"
@@ -516,7 +516,7 @@ docker logs jellyseerr | grep -i notification
 docker stop jellyseerr
 
 # Vacuum database
-sqlite3 /opt/stacks/media-extended/jellyseerr/config/db/db.sqlite3 "VACUUM;"
+sqlite3 /opt/stacks/media-management/jellyseerr/config/db/db.sqlite3 "VACUUM;"
 
 # Restart
 docker start jellyseerr
@@ -549,8 +549,8 @@ docker start jellyseerr
 
 **Critical Files:**
 ```bash
-/opt/stacks/media-extended/jellyseerr/config/db/db.sqlite3  # Database
-/opt/stacks/media-extended/jellyseerr/config/settings.json  # Settings
+/opt/stacks/media-management/jellyseerr/config/db/db.sqlite3  # Database
+/opt/stacks/media-management/jellyseerr/config/settings.json  # Settings
 ```
 
 **Backup Script:**
@@ -561,7 +561,7 @@ BACKUP_DIR=/opt/backups/jellyseerr
 
 docker stop jellyseerr
 tar -czf $BACKUP_DIR/jellyseerr-$DATE.tar.gz \
-  /opt/stacks/media-extended/jellyseerr/config/
+  /opt/stacks/media-management/jellyseerr/config/
 docker start jellyseerr
 
 find $BACKUP_DIR -name "jellyseerr-*.tar.gz" -mtime +7 -delete

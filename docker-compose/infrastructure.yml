@@ -165,8 +165,35 @@ services:
       - "traefik.http.routers.glances.middlewares=authelia@docker"
       - "traefik.http.services.glances.loadbalancer.server.port=61208"
 
-networks:
-  traefik-network:
+  # Code Server - VS Code in browser
+  # Access at: https://code.${DOMAIN}
+  code-server:
+    image: lscr.io/linuxserver/code-server:latest
+    container_name: code-server
+    restart: unless-stopped
+    networks:
+      - homelab-network
+      - traefik-network
+    volumes:
+      - ./code-server/config:/config
+      - /opt/stacks:/opt/stacks  # Access to all stacks
+      - /mnt:/mnt:ro  # Read-only access to data
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ}
+      - PASSWORD=${CODE_SERVER_PASSWORD}
+      - SUDO_PASSWORD=${CODE_SERVER_SUDO_PASSWORD}
+    labels:
+      - "homelab.category=infrastructure"
+      - "homelab.description=VS Code in browser"
+      - "traefik.enable=true"
+      - "traefik.http.routers.code-server.rule=Host(`code.${DOMAIN}`)"
+      - "traefik.http.routers.code-server.entrypoints=websecure"
+      - "traefik.http.routers.code-server.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.code-server.middlewares=authelia@docker"
+      - "traefik.http.services.code-server.loadbalancer.server.port=8443"
+
     external: true
   homelab-network:
     driver: bridge

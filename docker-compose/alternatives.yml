@@ -133,6 +133,54 @@ services:
       timeout: 3s
       retries: 5
 
+  # Plex Media Server - Alternative to Jellyfin
+  # Access at: https://plex.yourdomain.duckdns.org
+  # NOTE: No Authelia - allows app access from Roku, Fire TV, mobile, etc.
+  plex:
+    image: plexinc/pms-docker:1.40.0.7998-f68041501
+    container_name: plex
+    restart: unless-stopped
+    networks:
+      - media-network
+      - homelab-network
+      - traefik-network
+    volumes:
+      - ./plex/config:/config
+      - /mnt/media:/media:ro  # Large media files on separate drive
+      - plex-transcode:/transcode
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-America/New_York}
+      - PLEX_CLAIM=${PLEX_CLAIM}
+    # Hardware transcoding support
+    # Uncomment ONE of the following options:
+    
+    # Option 1: Intel QuickSync (most common)
+    # devices:
+    #   - /dev/dri:/dev/dri
+    
+    # Option 2: NVIDIA GPU (requires nvidia-container-toolkit installed)
+    # runtime: nvidia
+    # devices:
+    #   - /dev/nvidia0:/dev/nvidia0
+    #   - /dev/nvidiactl:/dev/nvidiactl
+    #   - /dev/nvidia-modeset:/dev/nvidia-modeset
+    #   - /dev/nvidia-uvm:/dev/nvidia-uvm
+    #   - /dev/nvidia-uvm-tools:/dev/nvidia-uvm-tools
+    # environment:
+    #   - NVIDIA_VISIBLE_DEVICES=all
+    #   - NVIDIA_DRIVER_CAPABILITIES=compute,video,utility
+    labels:
+      - "homelab.category=alternatives"
+      - "homelab.description=Alternative media streaming server to Jellyfin"
+      # Traefik labels - NO Authelia for app access
+      - "traefik.enable=true"
+      - "traefik.http.routers.plex.rule=Host(`plex.${DOMAIN}`)"
+      - "traefik.http.routers.plex.entrypoints=websecure"
+      - "traefik.http.routers.plex.tls.certresolver=letsencrypt"
+      - "traefik.http.services.plex.loadbalancer.server.port=32400"
+
 volumes:
   portainer-data:
     driver: local
@@ -140,10 +188,14 @@ volumes:
     driver: local
   authentik-redis-data:
     driver: local
+  plex-transcode:
+    driver: local
 
 networks:
   homelab-network:
     external: true
   traefik-network:
+    external: true
+  media-network:
     external: true
 

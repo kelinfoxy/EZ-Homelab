@@ -75,7 +75,7 @@ Library Optimized
 ### Directory Structure
 
 ```
-/opt/stacks/media-extended/unmanic/config/    # Configuration
+/opt/stacks/media-management/unmanic/config/    # Configuration
 /mnt/media/movies/                            # Movie library
 /mnt/media/tv/                               # TV library
 /tmp/unmanic/                                # Temp files
@@ -135,7 +135,7 @@ unmanic:
     - PGID=1000
     - TZ=America/New_York
   volumes:
-    - /opt/stacks/media-extended/unmanic/config:/config
+    - /opt/stacks/media-management/unmanic/config:/config
     - /mnt/media:/library
     - /tmp/unmanic:/tmp/unmanic
   devices:

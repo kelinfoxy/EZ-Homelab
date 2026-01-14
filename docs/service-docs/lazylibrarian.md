@@ -47,7 +47,7 @@ Lazy Librarian is an automated book downloader similar to Sonarr/Radarr but for 
 ### Directory Structure
 
 ```
-/opt/stacks/media-extended/lazylibrarian/config/    # Config
+/opt/stacks/media-management/lazylibrarian/config/    # Config
 /mnt/media/books/                                    # Book library
 /mnt/downloads/                                      # Downloads
 ```
@@ -82,7 +82,7 @@ lazylibrarian:
     - PGID=1000
     - TZ=America/New_York
   volumes:
-    - /opt/stacks/media-extended/lazylibrarian/config:/config
+    - /opt/stacks/media-management/lazylibrarian/config:/config
     - /mnt/media/books:/books
     - /mnt/downloads:/downloads
   labels:

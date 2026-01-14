@@ -17,7 +17,7 @@
 
 **Category:** Subtitle Management  
 **Docker Image:** [linuxserver/bazarr](https://hub.docker.com/r/linuxserver/bazarr)  
-**Default Stack:** `media-extended.yml`  
+**Default Stack:** `media-management.yml`  
 **Web UI:** `https://bazarr.${DOMAIN}` or `http://SERVER_IP:6767`  
 **Authentication:** Optional (configurable)  
 **Ports:** 6767
@@ -79,7 +79,7 @@ Subtitle Available in Player
 ### Directory Structure
 
 ```
-/opt/stacks/media-extended/bazarr/config/    # Bazarr configuration
+/opt/stacks/media-management/bazarr/config/    # Bazarr configuration
 /mnt/media/movies/                           # Movie library (with subtitles)
 /mnt/media/tv/                              # TV library (with subtitles)
 
@@ -151,7 +151,7 @@ bazarr:
     - PGID=1000
     - TZ=America/New_York
   volumes:
-    - /opt/stacks/media-extended/bazarr/config:/config
+    - /opt/stacks/media-management/bazarr/config:/config
     - /mnt/media/movies:/movies
     - /mnt/media/tv:/tv
   labels:
@@ -548,13 +548,13 @@ sudo chown -R 1000:1000 /mnt/media/movies/
 docker stop bazarr
 
 # Backup database
-cp /opt/stacks/media-extended/bazarr/config/db/bazarr.db /opt/backups/
+cp /opt/stacks/media-management/bazarr/config/db/bazarr.db /opt/backups/
 
 # Check integrity
-sqlite3 /opt/stacks/media-extended/bazarr/config/db/bazarr.db "PRAGMA integrity_check;"
+sqlite3 /opt/stacks/media-management/bazarr/config/db/bazarr.db "PRAGMA integrity_check;"
 
 # Vacuum if needed
-sqlite3 /opt/stacks/media-extended/bazarr/config/db/bazarr.db "VACUUM;"
+sqlite3 /opt/stacks/media-management/bazarr/config/db/bazarr.db "VACUUM;"
 
 # Restart
 docker start bazarr
@@ -610,8 +610,8 @@ docker start bazarr
 
 **Critical Files:**
 ```bash
-/opt/stacks/media-extended/bazarr/config/db/bazarr.db    # Database
-/opt/stacks/media-extended/bazarr/config/config/config.yaml  # Settings
+/opt/stacks/media-management/bazarr/config/db/bazarr.db    # Database
+/opt/stacks/media-management/bazarr/config/config/config.yaml  # Settings
 ```
 
 **Backup Script:**
@@ -622,7 +622,7 @@ BACKUP_DIR=/opt/backups/bazarr
 
 docker stop bazarr
 tar -czf $BACKUP_DIR/bazarr-$DATE.tar.gz \
-  /opt/stacks/media-extended/bazarr/config/
+  /opt/stacks/media-management/bazarr/config/
 docker start bazarr
 
 find $BACKUP_DIR -name "bazarr-*.tar.gz" -mtime +7 -delete

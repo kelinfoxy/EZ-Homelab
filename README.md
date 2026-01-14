@@ -121,13 +121,13 @@ The infrastructure uses Traefik for reverse proxy with automatic SSL, Authelia f
 5. **Deploy additional stacks through Dockge:**
    
    Log in to Dockge at `https://dockge.yourdomain.duckdns.org` - all stacks are already loaded and ready to deploy:
-   - **media** - Plex, Jellyfin, Sonarr, Radarr, Prowlarr, qBittorrent
-   - **media-extended** - Readarr, Lidarr, Mylar, Calibre
+   - **media** - Jellyfin, Calibre-web, qBittorrent
+   - **media-management** - Sonarr, Radarr, Prowlarr, Readarr, Lidarr, Mylar, Bazarr
    - **homeassistant** - Home Assistant, Node-RED, Zigbee2MQTT, ESPHome
    - **productivity** - Nextcloud, Gitea, Bookstack, Outline, Excalidraw
    - **monitoring** - Grafana, Prometheus, Uptime Kuma, Netdata
-   - **utilities** - Duplicati, Code Server, FreshRSS, Wallabag
-   - **alternatives** - Portainer, Authentik (alternative to Dockge/Authelia)
+   - **utilities** - Duplicati, FreshRSS, Wallabag
+   - **alternatives** - Plex, Portainer, Authentik
    
    Simply click any stack in Dockge and press "Start" to deploy it.
 

@@ -11,13 +11,15 @@ This document provides a comprehensive overview of all 60+ pre-configured servic
 | ├─ [Traefik](service-docs/traefik.md) | Reverse proxy + SSL | ✓ | /opt/stacks/core/traefik | traefik.${DOMAIN} |
 | ├─ [Authelia](service-docs/authelia.md) | SSO authentication | - | /opt/stacks/core/authelia | auth.${DOMAIN} |
 | └─ [Gluetun](service-docs/gluetun.md) | VPN (Surfshark) | - | /opt/stacks/core/gluetun | No UI |
-| **🔧 [infrastructure.yaml](../docker-compose/infrastructure.yml) (6+5)** | **Deployed: 6** | | | |
+| **🔧 [infrastructure.yaml](../docker-compose/infrastructure.yml) (7+5)** | **Deployed: 7** | | | |
 | ├─ [Dockge](service-docs/dockge.md) | Stack manager (PRIMARY) | ✓ | /opt/stacks/infrastructure | dockge.${DOMAIN} |
 | ├─ [Pi-hole](service-docs/pihole.md) | DNS + Ad blocking | ✓ | /opt/stacks/infrastructure | pihole.${DOMAIN} |
 | ├─ [Dozzle](service-docs/dozzle.md) | Docker log viewer | ✓ | /opt/stacks/infrastructure | dozzle.${DOMAIN} |
 | ├─ [Glances](service-docs/glances.md) | System monitoring | ✓ | /opt/stacks/infrastructure | glances.${DOMAIN} |
+| ├─ Code Server | VS Code in browser | ✓ | /opt/stacks/infrastructure | code.${DOMAIN} |
 | └─ [Docker Proxy](service-docs/docker-proxy.md) | Secure socket access | - | /opt/stacks/infrastructure | No UI |
-| **📦 [alternatives.yaml](../docker-compose/alternatives.yml) (5)** | **Not deployed** | | | |
+| **📦 [alternatives.yaml](../docker-compose/alternatives.yml) (6)** | **Not deployed** | | | |
+| ├─ Plex | Media server (Alt) | ✗ | /mnt/media, /mnt/transcode | plex.${DOMAIN} |
 | ├─ Portainer | Container management | ✓ | /opt/stacks/alternatives | portainer.${DOMAIN} |
 | ├─ Authentik Server | SSO with web UI | ✓ | /opt/stacks/alternatives | authentik.${DOMAIN} |
 | │  ├─ authentik-worker | Background tasks | - | /opt/stacks/alternatives | No UI |
@@ -26,24 +28,24 @@ This document provides a comprehensive overview of all 60+ pre-configured servic
 | **📊 [dashboards.yaml](../docker-compose/dashboards.yml)** (2) | | | | |
 | ├─ Homepage | App dashboard (AI cfg) | ✓ | /opt/stacks/dashboards | home.${DOMAIN} |
 | └─ Homarr | Modern dashboard | ✓ | /opt/stacks/dashboards | homarr.${DOMAIN} |
-| **🎬 [media.yml](../docker-compose/media.yml)** (6) | | | | |
-| ├─ Plex | Media server | ✗ | /mnt/media, /mnt/transcode | plex.${DOMAIN} |
+| **🎬 [media.yml](../docker-compose/media.yml)** (3) | | | | |
 | ├─ Jellyfin | Media server (OSS) | ✗ | /mnt/media, /mnt/transcode | jellyfin.${DOMAIN} |
-| ├─ Sonarr | TV automation | ✓ | /opt/stacks/media, /mnt/media | sonarr.${DOMAIN} |
-| ├─ Radarr | Movie automation | ✓ | /opt/stacks/media, /mnt/media | radarr.${DOMAIN} |
-| ├─ Prowlarr | Indexer manager | ✓ | /opt/stacks/media | prowlarr.${DOMAIN} |
+| ├─ Calibre-Web | Ebook reader | ✓ | /opt/stacks/media, /mnt/media | calibre.${DOMAIN} |
 | └─ qBittorrent | Torrent (via VPN) | ✓ | /mnt/downloads | qbit.${DOMAIN} |
-| **📚 [media-extended.yaml](../docker-compose/media-extended.yml)** (10) | | | | |
-| ├─ Readarr | Ebooks/Audiobooks | ✓ | /opt/stacks/media-ext, /mnt/media | readarr.${DOMAIN} |
-| ├─ Lidarr | Music manager | ✓ | /opt/stacks/media-ext, /mnt/media | lidarr.${DOMAIN} |
-| ├─ Lazy Librarian | Book automation | ✓ | /opt/stacks/media-ext, /mnt/media | lazylibrarian.${DOMAIN} |
-| ├─ Mylar3 | Comic manager | ✓ | /opt/stacks/media-ext, /mnt/media | mylar.${DOMAIN} |
-| ├─ Calibre-Web | Ebook reader | ✓ | /opt/stacks/media-ext, /mnt/media | calibre.${DOMAIN} |
-| ├─ Jellyseerr | Media requests | ✓ | /opt/stacks/media-ext | jellyseerr.${DOMAIN} |
-| ├─ FlareSolverr | Cloudflare bypass | - | /opt/stacks/media-ext | No UI |
-| ├─ Tdarr Server | Transcoding server | ✓ | /opt/stacks/media-ext, /mnt/transcode | tdarr.${DOMAIN} |
+| **📚 [media-management.yml](../docker-compose/media-management.yml)** (10) | | | | |
+| ├─ Sonarr | TV automation | ✓ | /opt/stacks/media-mgmt, /mnt/media | sonarr.${DOMAIN} |
+| ├─ Radarr | Movie automation | ✓ | /opt/stacks/media-mgmt, /mnt/media | radarr.${DOMAIN} |
+| ├─ Prowlarr | Indexer manager | ✓ | /opt/stacks/media-mgmt | prowlarr.${DOMAIN} |
+| ├─ Readarr | Ebooks/Audiobooks | ✓ | /opt/stacks/media-mgmt, /mnt/media | readarr.${DOMAIN} |
+| ├─ Lidarr | Music manager | ✓ | /opt/stacks/media-mgmt, /mnt/media | lidarr.${DOMAIN} |
+| ├─ Lazy Librarian | Book automation | ✓ | /opt/stacks/media-mgmt, /mnt/media | lazylibrarian.${DOMAIN} |
+| ├─ Mylar3 | Comic manager | ✓ | /opt/stacks/media-mgmt, /mnt/media | mylar.${DOMAIN} |
+| ├─ Jellyseerr | Media requests | ✓ | /opt/stacks/media-mgmt | jellyseerr.${DOMAIN} |
+| ├─ FlareSolverr | Cloudflare bypass | - | /opt/stacks/media-mgmt | No UI |
+| ├─ Tdarr Server | Transcoding server | ✓ | /opt/stacks/media-mgmt, /mnt/transcode | tdarr.${DOMAIN} |
 | ├─ Tdarr Node | Transcoding worker | - | /mnt/transcode-cache | No UI |
-| └─ Unmanic | Library optimizer | ✓ | /opt/stacks/media-ext, /mnt/transcode | unmanic.${DOMAIN} |
+| ├─ Unmanic | Library optimizer | ✓ | /opt/stacks/media-mgmt, /mnt/transcode | unmanic.${DOMAIN} |
+| └─ Bazarr | Subtitle automation | ✓ | /opt/stacks/media-mgmt, /mnt/media | bazarr.${DOMAIN} |
 | **🏠 [homeassistant.yaml](../docker-compose/homeassistant.yml)** (7) | | | | |
 | ├─ Home Assistant | HA platform | ✗ | /opt/stacks/homeassistant | ha.${DOMAIN} |
 | ├─ ESPHome | ESP firmware mgr | ✓ | /opt/stacks/homeassistant | esphome.${DOMAIN} |
@@ -67,11 +69,10 @@ This document provides a comprehensive overview of all 60+ pre-configured servic
 | │  └─ mediawiki-db | MariaDB | - | /opt/stacks/productivity | No UI |
 | └─ Form.io | Form builder | ✓ | /opt/stacks/productivity | forms.${DOMAIN} |
 |    └─ formio-mongo | MongoDB | - | /opt/stacks/productivity | No UI |
-| **🛠️ [utilities.yaml](../docker-compose/utilities.yml)** (7) | | | | |
+| **🛠️ [utilities.yaml](../docker-compose/utilities.yml)** (6) | | | | |
 | ├─ Vaultwarden | Password manager | ✗ | /opt/stacks/utilities | bitwarden.${DOMAIN} |
 | ├─ Backrest | Backup (restic) | ✓ | /opt/stacks/utilities, /mnt/backups | backrest.${DOMAIN} |
 | ├─ Duplicati | Encrypted backups | ✓ | /opt/stacks/utilities, /mnt/backups | duplicati.${DOMAIN} |
-| ├─ Code Server | VS Code in browser | ✓ | /opt/stacks/utilities | code.${DOMAIN} |
 | ├─ Form.io | Form platform | ✓ | /opt/stacks/utilities | forms.${DOMAIN} |
 | │  └─ formio-mongo | MongoDB | - | /opt/stacks/utilities | No UI |
 | └─ Authelia-Redis | Session storage | - | /opt/stacks/utilities | No UI |

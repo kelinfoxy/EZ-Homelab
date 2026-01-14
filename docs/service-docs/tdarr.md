@@ -93,7 +93,7 @@ Library Updated
 ### Directory Structure
 
 ```
-/opt/stacks/media-extended/tdarr/
+/opt/stacks/media-management/tdarr/
 ├── server/              # Tdarr server data
 ├── config/              # Configuration
 ├── logs/                # Logs
@@ -175,10 +175,10 @@ tdarr:
     - PGID=1000
     - TZ=America/New_York
   volumes:
-    - /opt/stacks/media-extended/tdarr/server:/app/server
-    - /opt/stacks/media-extended/tdarr/config:/app/configs
-    - /opt/stacks/media-extended/tdarr/logs:/app/logs
-    - /opt/stacks/media-extended/tdarr/temp:/temp
+    - /opt/stacks/media-management/tdarr/server:/app/server
+    - /opt/stacks/media-management/tdarr/config:/app/configs
+    - /opt/stacks/media-management/tdarr/logs:/app/logs
+    - /opt/stacks/media-management/tdarr/temp:/temp
     - /mnt/media:/media
   devices:
     - /dev/dri:/dev/dri  # Intel QuickSync
@@ -219,9 +219,9 @@ tdarr-node:
     - PUID=1000
     - PGID=1000
   volumes:
-    - /opt/stacks/media-extended/tdarr/config:/app/configs
-    - /opt/stacks/media-extended/tdarr/logs:/app/logs
-    - /opt/stacks/media-extended/tdarr/temp:/temp
+    - /opt/stacks/media-management/tdarr/config:/app/configs
+    - /opt/stacks/media-management/tdarr/logs:/app/logs
+    - /opt/stacks/media-management/tdarr/temp:/temp
     - /mnt/media:/media
   devices:
     - /dev/dri:/dev/dri
@@ -500,7 +500,7 @@ docker logs tdarr-node
 docker logs tdarr-node | tail -50
 
 # Check temp directory space
-df -h /opt/stacks/media-extended/tdarr/temp/
+df -h /opt/stacks/media-management/tdarr/temp/
 
 # Check FFmpeg
 docker exec tdarr-node ffmpeg -version
@@ -557,7 +557,7 @@ docker stats tdarr tdarr-node
 ls -la /mnt/media/
 
 # Check temp directory
-ls -la /opt/stacks/media-extended/tdarr/temp/
+ls -la /opt/stacks/media-management/tdarr/temp/
 
 # Check logs for errors
 docker logs tdarr-node | grep -i error
@@ -626,8 +626,8 @@ volumes:
 
 **Critical Files:**
 ```bash
-/opt/stacks/media-extended/tdarr/server/  # Database
-/opt/stacks/media-extended/tdarr/config/  # Configuration
+/opt/stacks/media-management/tdarr/server/  # Database
+/opt/stacks/media-management/tdarr/config/  # Configuration
 ```
 
 **Backup Script:**
@@ -637,8 +637,8 @@ DATE=$(date +%Y%m%d)
 BACKUP_DIR=/opt/backups/tdarr
 
 tar -czf $BACKUP_DIR/tdarr-$DATE.tar.gz \
-  /opt/stacks/media-extended/tdarr/server/ \
-  /opt/stacks/media-extended/tdarr/config/
+  /opt/stacks/media-management/tdarr/server/ \
+  /opt/stacks/media-management/tdarr/config/
 
 find $BACKUP_DIR -name "tdarr-*.tar.gz" -mtime +7 -delete
 ```

@@ -13,7 +13,7 @@
 
 **Category:** Comic Book Management  
 **Docker Image:** [linuxserver/mylar3](https://hub.docker.com/r/linuxserver/mylar3)  
-**Default Stack:** `media-extended.yml`  
+**Default Stack:** `media-management.yml`  
 **Web UI:** `http://SERVER_IP:8090`  
 **Ports:** 8090
 
@@ -49,7 +49,7 @@ Mylar3 is an automated comic book download manager. It's like Sonarr/Radarr but 
 ### Directory Structure
 
 ```
-/opt/stacks/media-extended/mylar3/config/    # Configuration
+/opt/stacks/media-management/mylar3/config/    # Configuration
 /mnt/media/comics/                           # Comic library
 /mnt/downloads/                              # Downloads
 
@@ -90,7 +90,7 @@ mylar3:
     - PGID=1000
     - TZ=America/New_York
   volumes:
-    - /opt/stacks/media-extended/mylar3/config:/config
+    - /opt/stacks/media-management/mylar3/config:/config
     - /mnt/media/comics:/comics
     - /mnt/downloads:/downloads
   labels:

@@ -17,7 +17,7 @@
 
 **Category:** Media Management & Automation  
 **Docker Image:** [linuxserver/readarr](https://hub.docker.com/r/linuxserver/readarr)  
-**Default Stack:** `media-extended.yml`  
+**Default Stack:** `media-management.yml`  
 **Web UI:** `https://readarr.${DOMAIN}` or `http://SERVER_IP:8787`  
 **Authentication:** Optional (configurable)  
 **Ports:** 8787
@@ -77,7 +77,7 @@ Calibre-Web / Calibre Access
 ### Directory Structure
 
 ```
-/opt/stacks/media-extended/readarr/config/    # Readarr configuration
+/opt/stacks/media-management/readarr/config/    # Readarr configuration
 /mnt/downloads/complete/books-readarr/        # Downloaded books
 /mnt/media/books/                             # Final book library
 
@@ -148,7 +148,7 @@ readarr:
     - PGID=1000
     - TZ=America/New_York
   volumes:
-    - /opt/stacks/media-extended/readarr/config:/config
+    - /opt/stacks/media-management/readarr/config:/config
     - /mnt/media/books:/books
     - /mnt/downloads:/downloads
   labels:
@@ -337,7 +337,7 @@ readarr-audio:
   ports:
     - "8788:8787"
   volumes:
-    - /opt/stacks/media-extended/readarr-audio/config:/config
+    - /opt/stacks/media-management/readarr-audio/config:/config
     - /mnt/media/audiobooks:/books
     - /mnt/downloads:/downloads
   environment:
@@ -467,10 +467,10 @@ docker logs readarr | grep -i import
 docker stop readarr
 
 # Backup database
-cp /opt/stacks/media-extended/readarr/config/readarr.db /opt/backups/
+cp /opt/stacks/media-management/readarr/config/readarr.db /opt/backups/
 
 # Check integrity
-sqlite3 /opt/stacks/media-extended/readarr/config/readarr.db "PRAGMA integrity_check;"
+sqlite3 /opt/stacks/media-management/readarr/config/readarr.db "PRAGMA integrity_check;"
 
 # Restore from backup if corrupted
 docker start readarr
@@ -491,7 +491,7 @@ docker start readarr
 docker stop readarr
 
 # Vacuum database
-sqlite3 /opt/stacks/media-extended/readarr/config/readarr.db "VACUUM;"
+sqlite3 /opt/stacks/media-management/readarr/config/readarr.db "VACUUM;"
 
 # Clear old history
 # Settings → General → History Cleanup: 30 days
@@ -521,9 +521,9 @@ docker start readarr
 
 **Critical Files:**
 ```bash
-/opt/stacks/media-extended/readarr/config/readarr.db     # Database
-/opt/stacks/media-extended/readarr/config/config.xml     # Settings
-/opt/stacks/media-extended/readarr/config/Backup/        # Auto backups
+/opt/stacks/media-management/readarr/config/readarr.db     # Database
+/opt/stacks/media-management/readarr/config/config.xml     # Settings
+/opt/stacks/media-management/readarr/config/Backup/        # Auto backups
 ```
 
 **Backup Script:**
@@ -532,7 +532,7 @@ docker start readarr
 DATE=$(date +%Y%m%d)
 BACKUP_DIR=/opt/backups/readarr
 
-cp /opt/stacks/media-extended/readarr/config/readarr.db $BACKUP_DIR/readarr-$DATE.db
+cp /opt/stacks/media-management/readarr/config/readarr.db $BACKUP_DIR/readarr-$DATE.db
 find $BACKUP_DIR -name "readarr-*.db" -mtime +7 -delete
 ```
 

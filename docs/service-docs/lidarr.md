@@ -77,7 +77,7 @@ Plex/Jellyfin/Subsonic Access
 ### Directory Structure
 
 ```
-/opt/stacks/media-extended/lidarr/config/    # Lidarr configuration
+/opt/stacks/media-management/lidarr/config/    # Lidarr configuration
 /mnt/downloads/complete/music-lidarr/        # Downloaded music
 /mnt/media/music/                            # Final music library
 
@@ -149,7 +149,7 @@ lidarr:
     - PGID=1000
     - TZ=America/New_York
   volumes:
-    - /opt/stacks/media-extended/lidarr/config:/config
+    - /opt/stacks/media-management/lidarr/config:/config
     - /mnt/media/music:/music
     - /mnt/downloads:/downloads
   labels:
@@ -403,7 +403,7 @@ lidarr-lossless:
   ports:
     - "8687:8686"
   volumes:
-    - /opt/stacks/media-extended/lidarr-lossless/config:/config
+    - /opt/stacks/media-management/lidarr-lossless/config:/config
     - /mnt/media/music-flac:/music
     - /mnt/downloads:/downloads
 ```
@@ -498,10 +498,10 @@ docker exec lidarr exiftool /music/Artist/Album/track.flac
 docker stop lidarr
 
 # Backup database
-cp /opt/stacks/media-extended/lidarr/config/lidarr.db /opt/backups/
+cp /opt/stacks/media-management/lidarr/config/lidarr.db /opt/backups/
 
 # Check integrity
-sqlite3 /opt/stacks/media-extended/lidarr/config/lidarr.db "PRAGMA integrity_check;"
+sqlite3 /opt/stacks/media-management/lidarr/config/lidarr.db "PRAGMA integrity_check;"
 
 # Restore from backup if corrupted
 docker start lidarr
@@ -522,7 +522,7 @@ docker start lidarr
 docker stop lidarr
 
 # Vacuum database
-sqlite3 /opt/stacks/media-extended/lidarr/config/lidarr.db "VACUUM;"
+sqlite3 /opt/stacks/media-management/lidarr/config/lidarr.db "VACUUM;"
 
 # Clear old history
 # Settings → General → History Cleanup: 30 days
@@ -558,9 +558,9 @@ docker start lidarr
 
 **Critical Files:**
 ```bash
-/opt/stacks/media-extended/lidarr/config/lidarr.db     # Database
-/opt/stacks/media-extended/lidarr/config/config.xml    # Settings
-/opt/stacks/media-extended/lidarr/config/Backup/       # Auto backups
+/opt/stacks/media-management/lidarr/config/lidarr.db     # Database
+/opt/stacks/media-management/lidarr/config/config.xml    # Settings
+/opt/stacks/media-management/lidarr/config/Backup/       # Auto backups
 ```
 
 **Backup Script:**
@@ -569,7 +569,7 @@ docker start lidarr
 DATE=$(date +%Y%m%d)
 BACKUP_DIR=/opt/backups/lidarr
 
-cp /opt/stacks/media-extended/lidarr/config/lidarr.db $BACKUP_DIR/lidarr-$DATE.db
+cp /opt/stacks/media-management/lidarr/config/lidarr.db $BACKUP_DIR/lidarr-$DATE.db
 find $BACKUP_DIR -name "lidarr-*.db" -mtime +7 -delete
 ```
 
