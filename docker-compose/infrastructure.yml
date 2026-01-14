@@ -194,8 +194,10 @@ services:
       - "traefik.http.routers.code-server.middlewares=authelia@docker"
       - "traefik.http.services.code-server.loadbalancer.server.port=8443"
 
-    external: true
+networks:
   homelab-network:
-    driver: bridge
+    external: true
+  traefik-network:
+    external: true
   dockerproxy-network:
-    driver: bridge
+    external: true
