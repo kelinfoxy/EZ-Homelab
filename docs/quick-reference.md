@@ -4,19 +4,77 @@
 
 Your homelab uses separate stacks for organization:
 
-- **`core.yml`** - Essential infrastructure (Traefik, Authelia, DuckDNS, Gluetun)
-- **`infrastructure.yml`** - Management tools (Dockge, Portainer, Pi-hole, etc.)
-- **`dashboards.yml`** - Dashboard services (Homepage, Homarr)
-- **`media.yml`** - Media services (Plex, Jellyfin, Sonarr, Radarr, etc.)
-- **`media-extended.yml`** - Additional media tools
-- **`homeassistant.yml`** - Home automation
-- **`productivity.yml`** - Productivity apps (Nextcloud, Gitea, etc.)
-- **`monitoring.yml`** - Monitoring stack (Grafana, Prometheus)
-- **`utilities.yml`** - Utility services (backups, code server)
-- **`development.yml`** - Development tools
+**Deployed by default (12 containers):**
+- **`core.yml`** - Essential infrastructure (Traefik, Authelia, DuckDNS, Gluetun) - 4 services
+- **`infrastructure.yml`** - Management tools (Dockge, Pi-hole, Dozzle, Glances, Docker Proxy) - 6 services  
+  _Note: Watchtower temporarily disabled due to Docker API compatibility_
+- **`dashboards.yml`** - Dashboard services (Homepage, Homarr) - 2 services
 
-> The default stacks offer a wide selection of services  
-And can be modified by the AI suit your preferences.
+**Available in Dockge (deploy as needed):**
+- **`media.yml`** - Media services (Plex, Jellyfin, Sonarr, Radarr, Prowlarr, qBittorrent)
+- **`media-extended.yml`** - Additional media tools (Readarr, Lidarr, Mylar, Calibre)
+- **`homeassistant.yml`** - Home automation (Home Assistant, Node-RED, Zigbee2MQTT, ESPHome)
+- **`productivity.yml`** - Productivity apps (Nextcloud, Gitea, Bookstack, Outline, Excalidraw)
+- **`monitoring.yml`** - Monitoring stack (Grafana, Prometheus, Uptime Kuma, Netdata)
+- **`utilities.yml`** - Utility services (Duplicati, Code Server, FreshRSS, Wallabag)
+- **`alternatives.yml`** - Alternative tools (Portainer, Authentik)
+
+> All stacks can be modified by the AI to suit your preferences.
+
+## Deployment Scripts
+
+### setup-homelab.sh
+
+First-run system preparation and Authelia configuration:
+
+```bash
+sudo ./scripts/setup-homelab.sh
+```
+
+**What it does:**
+- Pre-flight checks (internet, disk space 50GB+)
+- Installs Docker Engine + Compose V2
+- Configures user groups and firewall
+- Generates Authelia secrets automatically
+- Creates admin user with secure password hash
+- Sets up Docker networks and directory structure
+- Detects NVIDIA GPU and offers driver installation
+
+**Safe to re-run** - skips completed steps
+
+### deploy-homelab.sh
+
+Deploys all core services and prepares additional stacks:
+
+```bash
+./scripts/deploy-homelab.sh
+```
+
+**What it does:**
+- Validates Docker installation
+- Deploys core stack (4 containers)
+- Deploys infrastructure stack (6 containers)
+- Deploys dashboards with configured URLs (2 containers)
+- Copies 7 additional stacks to Dockge (not started)
+- Optional: Pre-pull images for additional stacks
+- Opens Dockge in browser
+
+### reset-test-environment.sh
+
+**Testing/development only** - safely removes all deployed services:
+
+```bash
+sudo ./scripts/reset-test-environment.sh
+```
+
+**What it does:**
+- Gracefully stops all Docker Compose stacks
+- Removes Docker volumes (after 3s wait)
+- Cleans stack directories and temp files
+- Removes Docker networks
+- Prunes unused Docker resources
+
+**Warning:** This is destructive! Only use for testing or complete reset.
 
 ## Common Commands
 
