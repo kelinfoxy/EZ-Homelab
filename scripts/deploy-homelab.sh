@@ -130,6 +130,13 @@ echo ""
 # Copy core stack files
 log_info "Preparing core stack configuration files..."
 
+# Safety: Stop existing core stack if running (prevents file conflicts)
+if [ -f "/opt/stacks/core/docker-compose.yml" ]; then
+    log_info "Stopping existing core stack for safe reconfiguration..."
+    cd /opt/stacks/core && docker compose down 2>/dev/null || true
+    sleep 2
+fi
+
 # Clean up any incorrect directory structure from previous runs
 if [ -d "/opt/stacks/core/traefik/acme.json" ]; then
     log_warning "Removing incorrectly created acme.json directory"
@@ -143,8 +150,14 @@ fi
 # Copy compose file
 cp "$REPO_DIR/docker-compose/core.yml" /opt/stacks/core/docker-compose.yml
 
-# Remove existing config directories and copy fresh ones
-rm -rf /opt/stacks/core/traefik /opt/stacks/core/authelia
+# Safely remove and replace config directories
+if [ -d "/opt/stacks/core/traefik" ]; then
+    rm -rf /opt/stacks/core/traefik
+fi
+if [ -d "/opt/stacks/core/authelia" ]; then
+    rm -rf /opt/stacks/core/authelia
+fi
+
 cp -r "$REPO_DIR/config-templates/traefik" /opt/stacks/core/
 cp -r "$REPO_DIR/config-templates/authelia" /opt/stacks/core/
 
@@ -222,14 +235,12 @@ fi
 # Clean up old Authelia database if encryption key changed
 # This prevents "encryption key does not appear to be valid" errors
 if [ -d "/var/lib/docker/volumes/core_authelia-data/_data" ]; then
-    log_info "Checking for Authelia database encryption key issues..."
-    # Test if Authelia can start, if not, clean the database
-    docker compose up -d authelia 2>&1 | grep -q "encryption key" && {
-        log_warning "Encryption key mismatch detected, cleaning Authelia database..."
-        docker compose down authelia
-        sudo rm -rf /var/lib/docker/volumes/core_authelia-data/_data/*
-        log_success "Authelia database cleaned"
-    } || log_info "Database check passed"
+    log_info "Checking for existing Authelia database..."
+    # Check if database exists and might have encryption key mismatch
+    if [ -f "/var/lib/docker/volumes/core_authelia-data/_data/db.sqlite3" ]; then
+        log_warning "Existing Authelia database found from previous deployment"
+        log_info "If deployment fails with encryption key errors, run: sudo ./scripts/reset-test-environment.sh"
+    fi
 fi
 
 # Deploy core stack
