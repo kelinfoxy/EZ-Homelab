@@ -187,20 +187,25 @@ if [ -f /tmp/authelia_admin_credentials.tmp ]; then
         log_success "Using credentials: $ADMIN_USER ($ADMIN_EMAIL)"
         
         # Create users_database.yml with credentials from setup
-        cat > /opt/stacks/core/authelia/users_database.yml << EOF
+        # Use single quotes in heredoc to prevent variable expansion issues with $ in hash
+        cat > /opt/stacks/core/authelia/users_database.yml << 'EOF'
 ###############################################################
 #                         Users Database                      #
 ###############################################################
 
 users:
-  ${ADMIN_USER}:
+  ADMIN_USER_PLACEHOLDER:
     displayname: "Admin User"
-    password: "${PASSWORD_HASH}"
-    email: ${ADMIN_EMAIL}
+    password: "PASSWORD_HASH_PLACEHOLDER"
+    email: ADMIN_EMAIL_PLACEHOLDER
     groups:
       - admins
       - users
 EOF
+        # Now safely replace placeholders
+        sed -i "s/ADMIN_USER_PLACEHOLDER/${ADMIN_USER}/g" /opt/stacks/core/authelia/users_database.yml
+        sed -i "s|PASSWORD_HASH_PLACEHOLDER|${PASSWORD_HASH}|g" /opt/stacks/core/authelia/users_database.yml
+        sed -i "s/ADMIN_EMAIL_PLACEHOLDER/${ADMIN_EMAIL}/g" /opt/stacks/core/authelia/users_database.yml
         
         log_success "Authelia admin user configured from setup script"
         echo ""
