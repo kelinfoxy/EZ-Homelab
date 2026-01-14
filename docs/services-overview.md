@@ -11,11 +11,12 @@ This document provides a comprehensive overview of all 60+ pre-configured servic
 | ├─ [Traefik](service-docs/traefik.md) | Reverse proxy + SSL | ✓ | /opt/stacks/core/traefik | traefik.${DOMAIN} |
 | ├─ [Authelia](service-docs/authelia.md) | SSO authentication | - | /opt/stacks/core/authelia | auth.${DOMAIN} |
 | └─ [Gluetun](service-docs/gluetun.md) | VPN (Surfshark) | - | /opt/stacks/core/gluetun | No UI |
-| **🔧 [infrastructure.yaml](../docker-compose/infrastructure.yml) (7+5)** | **Deployed: 7** | | | |
+| **🔧 [infrastructure.yaml](../docker-compose/infrastructure.yml) (8+5)** | **Deployed: 8** | | | |
 | ├─ [Dockge](service-docs/dockge.md) | Stack manager (PRIMARY) | ✓ | /opt/stacks/infrastructure | dockge.${DOMAIN} |
 | ├─ [Pi-hole](service-docs/pihole.md) | DNS + Ad blocking | ✓ | /opt/stacks/infrastructure | pihole.${DOMAIN} |
 | ├─ [Dozzle](service-docs/dozzle.md) | Docker log viewer | ✓ | /opt/stacks/infrastructure | dozzle.${DOMAIN} |
 | ├─ [Glances](service-docs/glances.md) | System monitoring | ✓ | /opt/stacks/infrastructure | glances.${DOMAIN} |
+| ├─ Watchtower | Auto container updates | - | /opt/stacks/infrastructure | No UI |
 | ├─ Code Server | VS Code in browser | ✓ | /opt/stacks/infrastructure | code.${DOMAIN} |
 | └─ [Docker Proxy](service-docs/docker-proxy.md) | Secure socket access | - | /opt/stacks/infrastructure | No UI |
 | **📦 [alternatives.yaml](../docker-compose/alternatives.yml) (6)** | **Not deployed** | | | |

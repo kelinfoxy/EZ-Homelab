@@ -74,24 +74,27 @@ services:
   # Issue tracked for resolution in future release
   # To enable: Uncomment service below and run: docker compose up -d watchtower
   # 
-  # watchtower:
-  #   image: containrrr/watchtower:1.7.1
-  #   container_name: watchtower
-  #   restart: unless-stopped
-  #   networks:
-  #     - homelab-network
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #   environment:
-  #     - DOCKER_API_VERSION=1.44
-  #     - WATCHTOWER_CLEANUP=true
-  #     - WATCHTOWER_INCLUDE_RESTARTING=true
-  #     - WATCHTOWER_SCHEDULE=0 0 4 * * *  # 4 AM daily
-  #     - WATCHTOWER_NOTIFICATIONS=shoutrrr
-  #     - WATCHTOWER_NOTIFICATION_URL=${WATCHTOWER_NOTIFICATION_URL}
-  #   labels:
-  #     - "homelab.category=infrastructure"
-  #     - "homelab.description=Automatic Docker container updates"
+  # Watchtower - Automatic container updates
+  # Monitors and updates Docker containers to latest versions
+  # Runs daily at 4 AM
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower
+    restart: unless-stopped
+    networks:
+      - homelab-network
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - DOCKER_API_VERSION=1.52
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_INCLUDE_RESTARTING=true
+      - WATCHTOWER_SCHEDULE=0 0 4 * * *  # 4 AM daily
+      - WATCHTOWER_NOTIFICATIONS=shoutrrr
+      - WATCHTOWER_NOTIFICATION_URL=${WATCHTOWER_NOTIFICATION_URL:-}
+    labels:
+      - "homelab.category=infrastructure"
+      - "homelab.description=Automatic Docker container updates"
 
   # Dozzle - Real-time Docker log viewer
   # Access at: https://dozzle.${DOMAIN}

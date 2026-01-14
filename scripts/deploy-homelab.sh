@@ -337,7 +337,7 @@ log_info "  - Pi-hole (DNS Ad Blocker)"
 log_info "  - Dozzle (Log Viewer)"
 log_info "  - Glances (System Monitor)"
 log_info "  - Docker Proxy (Security)"
-log_info "  Note: Watchtower temporarily disabled (Docker API compatibility)"
+log_info "  - Watchtower (Automatic Updates)"
 echo ""
 
 # Copy infrastructure stack
