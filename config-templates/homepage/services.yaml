@@ -205,7 +205,7 @@
 
     - Uptime Kuma:
         icon: uptime-kuma.png
-        href: https://uptime.kelin-casa.duckdns.org
+        href: https://uptime-kuma.kelin-casa.duckdns.org
         description: Uptime Monitoring
         container: uptime-kuma
 

@@ -138,7 +138,7 @@ services:
       - "traefik.http.services.cadvisor.loadbalancer.server.port=8080"
 
   # Uptime Kuma - Uptime monitoring
-  # Access at: https://status.${DOMAIN}
+  # Access at: https://uptime-kuma.${DOMAIN}
   uptime-kuma:
     image: louislam/uptime-kuma:1
     container_name: uptime-kuma
@@ -154,7 +154,7 @@ services:
       - "homelab.category=monitoring"
       - "homelab.description=Service uptime monitoring and alerts"
       - "traefik.enable=true"
-      - "traefik.http.routers.uptime-kuma.rule=Host(`status.${DOMAIN}`)"
+      - "traefik.http.routers.uptime-kuma.rule=Host(`uptime-kuma.${DOMAIN}`)"
       - "traefik.http.routers.uptime-kuma.entrypoints=websecure"
       - "traefik.http.routers.uptime-kuma.tls=true"
       - "traefik.http.routers.uptime-kuma.tls.certresolver=letsencrypt"
