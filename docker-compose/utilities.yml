@@ -5,7 +5,7 @@
 # - Backrest: https://backrest.${DOMAIN}
 # - Duplicati: https://duplicati.${DOMAIN}
 # - Form.io: https://forms.${DOMAIN}
-# - Vaultwarden (Bitwarden): https://bitwarden.${DOMAIN}
+# - Vaultwarden (Bitwarden): https://vault.${DOMAIN}
 
 services:
   # Backrest - Backup solution for restic
@@ -104,7 +104,7 @@ services:
   #     - "homelab.description=Form.io database"
 
   # Bitwarden (Vaultwarden) - Password manager
-  # Access at: https://bitwarden.${DOMAIN}
+  # Access at: https://vault.${DOMAIN}
   # Note: SSO disabled for browser extension and mobile app compatibility
   vaultwarden:
     image: vaultwarden/server:1.30.1
@@ -116,7 +116,7 @@ services:
     volumes:
       - ./vaultwarden/data:/data
     environment:
-      - DOMAIN=https://bitwarden.${DOMAIN}
+      - DOMAIN=https://vault.${DOMAIN}
       - SIGNUPS_ALLOWED=${BITWARDEN_SIGNUPS_ALLOWED:-true}
       - INVITATIONS_ALLOWED=${BITWARDEN_INVITATIONS_ALLOWED:-true}
       - ADMIN_TOKEN=${BITWARDEN_ADMIN_TOKEN}
@@ -131,7 +131,7 @@ services:
       - "homelab.category=utilities"
       - "homelab.description=Self-hosted password manager (Bitwarden)"
       - "traefik.enable=true"
-      - "traefik.http.routers.vaultwarden.rule=Host(`bitwarden.${DOMAIN}`)"
+      - "traefik.http.routers.vaultwarden.rule=Host(`vault.${DOMAIN}`)"
       - "traefik.http.routers.vaultwarden.entrypoints=websecure"
       - "traefik.http.routers.vaultwarden.tls=true"
       - "traefik.http.routers.vaultwarden.tls.certresolver=letsencrypt"
