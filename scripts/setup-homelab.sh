@@ -235,8 +235,8 @@ step_2_install_packages() {
 
 step_3_install_docker() {
     log_info "Step 3/$STEPS_TOTAL: Installing Docker..."
-    if command -v docker &> /dev/null && docker --version &> /dev/null; then
-        log_warning "Docker is already installed ($(docker --version))"
+    if command -v docker &> /dev/null && docker --version &> /dev/null && docker compose version &> /dev/null 2>&1; then
+        log_warning "Docker and Docker Compose are already installed ($(docker --version), $(docker compose version))"
     else
         # Add Docker's official GPG key
         install -m 0755 -d /etc/apt/keyrings
@@ -253,7 +253,7 @@ step_3_install_docker() {
         apt-get update
         apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-        log_success "Docker installed successfully ($(docker --version))"
+        log_success "Docker installed successfully ($(docker --version), $(docker compose version))"
     fi
     STEPS_COMPLETED=$((STEPS_COMPLETED + 1))
     log_progress "Completed: $STEPS_COMPLETED/$STEPS_TOTAL steps"
