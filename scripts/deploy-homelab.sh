@@ -398,6 +398,7 @@ step_6_prepare_additional_stacks() {
     log_info "  - monitoring.yml (Grafana, Prometheus, etc.)"
     log_info "  - utilities.yml (Backups, code editors, etc.)"
     log_info "  - alternatives.yml (Portainer, Authentik)"
+    log_info "  - development.yml (VS Code Server, GitLab, Jupyter)"
     echo ""
     
     # Ask user if they want to pre-pull images for additional stacks
@@ -405,7 +406,7 @@ step_6_prepare_additional_stacks() {
     PULL_IMAGES=${PULL_IMAGES:-n}
     
     # Copy additional stacks to Dockge directory
-    ADDITIONAL_STACKS=("media" "media-management" "homeassistant" "productivity" "monitoring" "utilities" "alternatives")
+    ADDITIONAL_STACKS=("media" "media-management" "homeassistant" "productivity" "monitoring" "utilities" "alternatives" "development")
     
     for stack in "${ADDITIONAL_STACKS[@]}"; do
         mkdir -p "/opt/stacks/$stack"
