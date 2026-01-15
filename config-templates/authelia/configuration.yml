@@ -60,8 +60,8 @@ access_control:
 session:
   name: authelia_session
   secret: ${AUTHELIA_SESSION_SECRET}
-  expiration: 1h
-  inactivity: 5m
+  expiration: 24h      # Session expires after 24 hours
+  inactivity: 24h      # Session expires after 24 hours of inactivity
   remember_me_duration: 1M
   domain: your-domain.duckdns.org
 

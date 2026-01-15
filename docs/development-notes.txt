@@ -1,0 +1,24 @@
+Install Process Excellent
+Deploy Porcess Excellent
+Core, dashboards, infrastructure, & media deployed successfully!
+Install & Deply script status: Working on the test system, needs testing on an actual fresh install.
+
+Notes:
+
+Authelia timeouts way too low set to 24 hours
+
+media-extended stack was renamed to media-management, homepage refers to old stack name
+media-extended folder still exist, needs Removed
+
+media-management stack & utilities stack have many invalid image:tag errors, requires image:tag validation
+
+monitoring-stack, prometheus, loki & promtail have errors
+
+productivity stack came up without errors, but nextcloud gave untrusted domain error in browser, mealie works, but the rest of the stack gave error 404 in browser
+
+EVERY compose file should include a section for the dockge urls containing all the proxy urls for services in the stack
+
+homeassistant stack the zigbee2mqtt container gives an error cause it can't find the device, which doesn't exist on this system
+
+resource limiting on a per stack or per container basis need to be implimented
+

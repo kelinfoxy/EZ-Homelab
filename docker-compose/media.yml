@@ -3,6 +3,11 @@
 # Place in /opt/stacks/media/docker-compose.yml
 # NOTE: qBittorrent is configured to use Gluetun VPN (see gluetun.yml)
 
+# Service Access URLs:
+# - Jellyfin: https://jellyfin.${DOMAIN} (no SSO - app access)
+# - Plex: https://plex.${DOMAIN} (no SSO - app access)
+# - qBittorrent: https://qbit.${DOMAIN} (routed through Gluetun VPN)
+
 services:
   # Jellyfin - Open-source media streaming server
   # Access at: https://jellyfin.yourdomain.duckdns.org
@@ -33,6 +38,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.jellyfin.rule=Host(`jellyfin.${DOMAIN}`)"
       - "traefik.http.routers.jellyfin.entrypoints=websecure"
+      - "traefik.http.routers.jellyfin.tls=true"
       - "traefik.http.routers.jellyfin.tls.certresolver=letsencrypt"
       - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
 

@@ -2,6 +2,13 @@
 # Home automation platform and related tools
 # Place in /opt/stacks/homeassistant/docker-compose.yml
 
+# Service Access URLs:
+# - Home Assistant: https://ha.${DOMAIN} (configure via Traefik file provider - uses host network)
+# - ESPHome: https://esphome.${DOMAIN}
+# - Node-RED: https://nodered.${DOMAIN}
+# - Mosquitto MQTT: mqtt://server-ip:1883 (no web UI)
+# - Zigbee2MQTT: https://zigbee2mqtt.${DOMAIN} (requires USB adapter)
+
 services:
   # Home Assistant - Home automation platform
   # Access at: https://ha.${DOMAIN}
@@ -12,7 +19,7 @@ services:
     restart: unless-stopped
     network_mode: host  # Required for device discovery
     volumes:
-      - ./$(basename $file .yml)/config:/config
+      - ./homeassistant/config:/config
       - /etc/localtime:/etc/localtime:ro
     environment:
       - TZ=${TZ}
@@ -33,7 +40,7 @@ services:
       - homelab-network
       - traefik-network
     volumes:
-      - ./$(basename $file .yml)/config:/config
+      - ./esphome/config:/config
       - /etc/localtime:/etc/localtime:ro
     environment:
       - TZ=${TZ}
@@ -133,38 +140,43 @@ services:
       - "1883:1883"  # MQTT
       - "9001:9001"  # Websockets
     volumes:
-      - ./$(basename $file .yml)/config:/mosquitto/config
-      - /opt/stacks/mosquitto/data:/mosquitto/data
-      - /opt/stacks/mosquitto/log:/mosquitto/log
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
     labels:
       - "homelab.category=iot"
       - "homelab.description=MQTT message broker"
 
-  # Zigbee2MQTT - Zigbee to MQTT bridge (Home Assistant addon alternative)
+  # Zigbee2MQTT - Zigbee to MQTT bridge (DISABLED - requires USB adapter)
   # Access at: https://zigbee2mqtt.${DOMAIN}
-  zigbee2mqtt:
-    image: koenkk/zigbee2mqtt:latest
-    container_name: zigbee2mqtt
-    restart: unless-stopped
-    networks:
-      - homelab-network
-      - traefik-network
-    volumes:
-      - /opt/stacks/zigbee2mqtt/data:/app/data
-      - /run/udev:/run/udev:ro
-    devices:
-      - /dev/ttyACM0:/dev/ttyACM0  # Zigbee adapter - adjust as needed
-    environment:
-      - TZ=${TZ}
-    labels:
-      - "homelab.category=iot"
-      - "homelab.description=Zigbee to MQTT bridge"
-      - "traefik.enable=true"
-      - "traefik.http.routers.zigbee2mqtt.rule=Host(`zigbee2mqtt.${DOMAIN}`)"
-      - "traefik.http.routers.zigbee2mqtt.entrypoints=websecure"
-      - "traefik.http.routers.zigbee2mqtt.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.zigbee2mqtt.middlewares=authelia@docker"
-      - "traefik.http.services.zigbee2mqtt.loadbalancer.server.port=8080"
+  # NOTE: Requires USB Zigbee adapter (e.g., ConBee II, Sonoff ZBDongle)
+  # Uncomment after connecting adapter
+  # zigbee2mqtt:
+  #   image: koenkk/zigbee2mqtt:1.35.1
+  #   container_name: zigbee2mqtt
+  #   restart: unless-stopped
+  #   networks:
+  #     - homelab-network
+  #     - traefik-network
+  #   volumes:
+  #     - ./zigbee2mqtt/data:/app/data
+  #     - /run/udev:/run/udev:ro
+  #   # Uncomment and adjust device path after connecting USB adapter:
+  #   # devices:
+  #   #   - /dev/ttyACM0:/dev/ttyACM0  # Adjust based on your adapter
+  #   # Common paths: /dev/ttyACM0, /dev/ttyUSB0, /dev/serial/by-id/...
+  #   # Run 'ls -l /dev/serial/by-id/' to find your adapter
+  #   environment:
+  #     - TZ=${TZ}
+  #   labels:
+  #     - "homelab.category=iot"
+  #     - "homelab.description=Zigbee to MQTT bridge"
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.zigbee2mqtt.rule=Host(`zigbee2mqtt.${DOMAIN}`)"
+  #     - "traefik.http.routers.zigbee2mqtt.entrypoints=websecure"
+  #     - "traefik.http.routers.zigbee2mqtt.tls.certresolver=letsencrypt"
+  #     - "traefik.http.routers.zigbee2mqtt.middlewares=authelia@docker"
+  #     - "traefik.http.services.zigbee2mqtt.loadbalancer.server.port=8080"
 
 networks:
   homelab-network:

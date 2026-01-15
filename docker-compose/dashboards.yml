@@ -2,6 +2,10 @@
 # Homepage and Homarr for homelab dashboards
 # Place in /opt/stacks/dashboards/docker-compose.yml
 
+# Service Access URLs:
+# - Homepage: https://home.${DOMAIN}
+# - Homarr: https://homarr.${DOMAIN}
+
 services:
   # Homepage - Application dashboard (AI-configurable via YAML)
   # Access at: https://home.${DOMAIN}

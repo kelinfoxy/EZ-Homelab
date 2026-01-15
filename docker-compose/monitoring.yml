@@ -1,5 +1,16 @@
 # Monitoring and Observability Services
 # Services for monitoring your homelab infrastructure
+# Place in /opt/stacks/monitoring/docker-compose.yml
+
+# Service Access URLs:
+# - Prometheus: http://server-ip:9090 (or configure Traefik)
+# - Grafana: http://server-ip:3000 (or configure Traefik)
+# - Uptime Kuma: https://status.${DOMAIN}
+# - Node Exporter: http://server-ip:9100/metrics
+# - cAdvisor: http://server-ip:8082
+# - Loki: http://server-ip:3100
+# NOTE: Prometheus, Grafana, Loki use ports because they need to be accessible to other services
+#       Add Traefik labels if you want https://prometheus.${DOMAIN} access
 
 services:
   # Prometheus - Metrics collection and storage
@@ -11,6 +22,7 @@ services:
     networks:
       - monitoring-network
       - homelab-network
+      - traefik-network
     ports:
       - "9090:9090"
     volumes:
@@ -27,6 +39,13 @@ services:
     labels:
       - "homelab.category=monitoring"
       - "homelab.description=Metrics collection and time-series database"
+      - "traefik.enable=true"
+      - "traefik.http.routers.prometheus.rule=Host(`prometheus.${DOMAIN}`)"
+      - "traefik.http.routers.prometheus.entrypoints=websecure"
+      - "traefik.http.routers.prometheus.tls=true"
+      - "traefik.http.routers.prometheus.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.prometheus.middlewares=authelia@docker"
+      - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
 
   # Grafana - Metrics visualization
   # Access at: http://server-ip:3000
@@ -38,6 +57,7 @@ services:
     networks:
       - monitoring-network
       - homelab-network
+      - traefik-network
     ports:
       - "3000:3000"
     volumes:
@@ -46,7 +66,7 @@ services:
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
       - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_SERVER_ROOT_URL=http://${SERVER_IP}:3000
+      - GF_SERVER_ROOT_URL=https://grafana.${DOMAIN}
       - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource,grafana-piechart-panel
     user: "${PUID:-1000}:${PGID:-1000}"
     depends_on:
@@ -54,6 +74,13 @@ services:
     labels:
       - "homelab.category=monitoring"
       - "homelab.description=Metrics visualization and dashboards"
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.${DOMAIN}`)"
+      - "traefik.http.routers.grafana.entrypoints=websecure"
+      - "traefik.http.routers.grafana.tls=true"
+      - "traefik.http.routers.grafana.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.grafana.middlewares=authelia@docker"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
 
   # Node Exporter - Host metrics exporter
   # Metrics at: http://server-ip:9100/metrics
@@ -86,6 +113,8 @@ services:
     restart: unless-stopped
     networks:
       - monitoring-network
+      - homelab-network
+      - traefik-network
     ports:
       - "8082:8080"
     volumes:
@@ -100,6 +129,13 @@ services:
     labels:
       - "homelab.category=monitoring"
       - "homelab.description=Container metrics and performance monitoring"
+      - "traefik.enable=true"
+      - "traefik.http.routers.cadvisor.rule=Host(`cadvisor.${DOMAIN}`)"
+      - "traefik.http.routers.cadvisor.entrypoints=websecure"
+      - "traefik.http.routers.cadvisor.tls=true"
+      - "traefik.http.routers.cadvisor.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.cadvisor.middlewares=authelia@docker"
+      - "traefik.http.services.cadvisor.loadbalancer.server.port=8080"
 
   # Uptime Kuma - Uptime monitoring
   # Access at: https://status.${DOMAIN}
@@ -120,6 +156,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.uptime-kuma.rule=Host(`status.${DOMAIN}`)"
       - "traefik.http.routers.uptime-kuma.entrypoints=websecure"
+      - "traefik.http.routers.uptime-kuma.tls=true"
       - "traefik.http.routers.uptime-kuma.tls.certresolver=letsencrypt"
       - "traefik.http.routers.uptime-kuma.middlewares=authelia@docker"
       - "traefik.http.services.uptime-kuma.loadbalancer.server.port=3001"
@@ -132,6 +169,8 @@ services:
     restart: unless-stopped
     networks:
       - monitoring-network
+      - homelab-network
+      - traefik-network
     ports:
       - "3100:3100"
     volumes:
@@ -142,6 +181,13 @@ services:
     labels:
       - "homelab.category=monitoring"
       - "homelab.description=Log aggregation system"
+      - "traefik.enable=true"
+      - "traefik.http.routers.loki.rule=Host(`loki.${DOMAIN}`)"
+      - "traefik.http.routers.loki.entrypoints=websecure"
+      - "traefik.http.routers.loki.tls=true"
+      - "traefik.http.routers.loki.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.loki.middlewares=authelia@docker"
+      - "traefik.http.services.loki.loadbalancer.server.port=3100"
 
   # Promtail - Log shipper for Loki
   # Ships Docker container logs to Loki

@@ -1,11 +1,20 @@
 # Productivity and Content Management Services
 # Place in /opt/stacks/productivity/docker-compose.yml
 
+# Service Access URLs:
+# - Nextcloud: https://nextcloud.${DOMAIN}
+# - Mealie: https://mealie.${DOMAIN}
+# - WordPress: https://blog.${DOMAIN}
+# - Gitea: https://git.${DOMAIN}
+# - DokuWiki: https://wiki.${DOMAIN}
+# - BookStack: https://docs.${DOMAIN}
+# - MediaWiki: https://mediawiki.${DOMAIN}
+
 services:
   # Nextcloud - File sync and collaboration
   # Access at: https://nextcloud.${DOMAIN}
   nextcloud:
-    image: nextcloud:latest
+    image: nextcloud:28
     container_name: nextcloud
     restart: unless-stopped
     networks:
@@ -13,7 +22,7 @@ services:
       - traefik-network
       - nextcloud-network
     volumes:
-      - /opt/stacks/nextcloud/html:/var/www/html
+      - ./nextcloud/html:/var/www/html
       - /mnt/nextcloud-data:/var/www/html/data  # Large data on separate drive
     environment:
       - MYSQL_HOST=nextcloud-db
@@ -22,9 +31,10 @@ services:
       - MYSQL_PASSWORD=${NEXTCLOUD_DB_PASSWORD}
       - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER:-admin}
       - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD}
-      - NEXTCLOUD_TRUSTED_DOMAINS=${DOMAIN}
+      - NEXTCLOUD_TRUSTED_DOMAINS=nextcloud.${DOMAIN}
       - TRUSTED_PROXIES=172.18.0.0/16
       - OVERWRITEPROTOCOL=https
+      - OVERWRITEHOST=nextcloud.${DOMAIN}
     depends_on:
       - nextcloud-db
     labels:
@@ -65,7 +75,7 @@ services:
       - homelab-network
       - traefik-network
     volumes:
-      - /opt/stacks/mealie/data:/app/data
+      - ./mealie/data:/app/data
     environment:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
@@ -93,7 +103,7 @@ services:
       - traefik-network
       - wordpress-network
     volumes:
-      - /opt/stacks/wordpress/html:/var/www/html
+      - ./wordpress/html:/var/www/html
     environment:
       - WORDPRESS_DB_HOST=wordpress-db
       - WORDPRESS_DB_USER=wordpress
@@ -105,7 +115,7 @@ services:
       - "homelab.category=productivity"
       - "homelab.description=Blog and website platform"
       - "traefik.enable=true"
-      - "traefik.http.routers.wordpress.rule=Host(`blog.${DOMAIN}`)"
+      - "traefik.http.routers.wordpress.rule=Host(`wordpress.${DOMAIN}`)"
       - "traefik.http.routers.wordpress.entrypoints=websecure"
       - "traefik.http.routers.wordpress.tls.certresolver=letsencrypt"
       - "traefik.http.services.wordpress.loadbalancer.server.port=80"
@@ -139,7 +149,7 @@ services:
       - traefik-network
       - gitea-network
     volumes:
-      - /opt/stacks/gitea/data:/data
+      - ./gitea/data:/data
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     environment:
@@ -156,7 +166,7 @@ services:
       - "homelab.category=productivity"
       - "homelab.description=Self-hosted Git service"
       - "traefik.enable=true"
-      - "traefik.http.routers.gitea.rule=Host(`git.${DOMAIN}`)"
+      - "traefik.http.routers.gitea.rule=Host(`gitea.${DOMAIN}`)"
       - "traefik.http.routers.gitea.entrypoints=websecure"
       - "traefik.http.routers.gitea.tls.certresolver=letsencrypt"
       - "traefik.http.routers.gitea.middlewares=authelia@docker"
@@ -188,7 +198,7 @@ services:
       - homelab-network
       - traefik-network
     volumes:
-      - ./$(basename $file .yml)/config:/config
+      - ./dokuwiki/config:/config
     environment:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
@@ -197,7 +207,7 @@ services:
       - "homelab.category=productivity"
       - "homelab.description=File-based wiki"
       - "traefik.enable=true"
-      - "traefik.http.routers.dokuwiki.rule=Host(`wiki.${DOMAIN}`)"
+      - "traefik.http.routers.dokuwiki.rule=Host(`dokuwiki.${DOMAIN}`)"
       - "traefik.http.routers.dokuwiki.entrypoints=websecure"
       - "traefik.http.routers.dokuwiki.tls.certresolver=letsencrypt"
       - "traefik.http.routers.dokuwiki.middlewares=authelia@docker"
@@ -214,23 +224,24 @@ services:
       - traefik-network
       - bookstack-network
     volumes:
-      - ./$(basename $file .yml)/config:/config
+      - ./bookstack/config:/config
     environment:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
-      - APP_URL=https://docs.${DOMAIN}
+      - APP_URL=https://bookstack.${DOMAIN}
       - DB_HOST=bookstack-db
       - DB_PORT=3306
       - DB_DATABASE=bookstack
       - DB_USERNAME=bookstack
       - DB_PASSWORD=${BOOKSTACK_DB_PASSWORD}
+      - APP_KEY=base64:NsYD8+8MAvtBhK8xw9p8pxQDy4x8aOQi/78M3CsseAw=
     depends_on:
       - bookstack-db
     labels:
       - "homelab.category=productivity"
       - "homelab.description=Documentation and wiki platform"
       - "traefik.enable=true"
-      - "traefik.http.routers.bookstack.rule=Host(`docs.${DOMAIN}`)"
+      - "traefik.http.routers.bookstack.rule=Host(`bookstack.${DOMAIN}`)"
       - "traefik.http.routers.bookstack.entrypoints=websecure"
       - "traefik.http.routers.bookstack.tls.certresolver=letsencrypt"
       - "traefik.http.routers.bookstack.middlewares=authelia@docker"
@@ -264,8 +275,8 @@ services:
       - traefik-network
       - mediawiki-network
     volumes:
-      - /opt/stacks/mediawiki/images:/var/www/html/images
-      - /opt/stacks/mediawiki/LocalSettings.php:/var/www/html/LocalSettings.php
+      - ./mediawiki/images:/var/www/html/images
+      - ./mediawiki/LocalSettings.php:/var/www/html/LocalSettings.php
     environment:
       - MEDIAWIKI_DB_HOST=mediawiki-db
       - MEDIAWIKI_DB_NAME=mediawiki

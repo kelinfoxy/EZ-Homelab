@@ -4,6 +4,14 @@
 # NOTE: Traefik, Authelia, DuckDNS, and Gluetun have their own separate stacks
 # See /opt/stacks/traefik/, /opt/stacks/authelia/, etc.
 
+# Service Access URLs:
+# - Dockge: https://dockge.${DOMAIN}
+# - Portainer: https://portainer.${DOMAIN}
+# - Pi-hole: https://pihole.${DOMAIN}
+# - Dozzle: https://dozzle.${DOMAIN}
+# - Glances: https://glances.${DOMAIN}
+# - Netdata: https://netdata.${DOMAIN}
+
 services:
   # Dockge - Docker Compose Stack Manager (PRIMARY - preferred over Portainer)
   # Access at: https://dockge.${DOMAIN}
@@ -22,6 +30,7 @@ services:
       - /opt/dockge/data:/app/data
     environment:
       - DOCKGE_STACKS_DIR=/opt/stacks
+      - DOCKGE_ENABLE_CONSOLE=true
     labels:
       - "homelab.category=infrastructure"
       - "homelab.description=Docker Compose stack manager (PRIMARY)"
@@ -63,6 +72,7 @@ services:
       - "traefik.http.routers.pihole.rule=Host(`pihole.${DOMAIN}`)"
       - "traefik.http.routers.pihole.entrypoints=websecure"
       - "traefik.http.routers.pihole.tls=true"
+      - "traefik.http.routers.pihole.tls.certresolver=letsencrypt"
       - "traefik.http.routers.pihole.middlewares=authelia@docker"
       - "traefik.http.services.pihole.loadbalancer.server.port=80"
 

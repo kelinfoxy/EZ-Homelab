@@ -3,6 +3,12 @@
 # Deploy this stack FIRST before any other services
 # Place in /opt/stacks/core/docker-compose.yml
 
+# Service Access URLs:
+# - DuckDNS: No web UI (updates IP automatically)
+# - Traefik: https://traefik.${DOMAIN}
+# - Authelia: https://auth.${DOMAIN}
+# - Gluetun: No web UI (VPN client for other services)
+
 services:
   # DuckDNS - Dynamic DNS updater
   # Updates your public IP automatically for Let's Encrypt SSL

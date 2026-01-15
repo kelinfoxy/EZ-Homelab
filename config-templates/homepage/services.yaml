@@ -88,7 +88,7 @@
         href: https://qbit.{{HOMEPAGE_VAR_DOMAIN}}
         description: Torrent Client
 
-- Media Extended Stack (media-extended.yml):
+- Media Management Stack (media-management.yml):
     - Readarr:
         icon: readarr.png
         href: https://readarr.{{HOMEPAGE_VAR_DOMAIN}}
