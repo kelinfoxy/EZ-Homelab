@@ -15,11 +15,11 @@ services:
       - dockerproxy-network
     volumes:
       - /opt/stacks/homepage/config:/app/config
-      - /var/run/docker.sock:/var/run/docker.sock  # For Docker integration
+      - /var/run/docker.sock:/var/run/docker.sock  # For Docker integration do not mount RO
       - /opt/stacks:/opt/stacks:ro  # To discover other stacks
     environment:
-      - PUID=995
-      - PGID=995
+      - PUID=995  # Must be set to the docker user ID
+      - PGID=995  # Must be set to the docker group ID
       - TZ=${TZ}
       - HOMEPAGE_ALLOWED_HOSTS=home.${DOMAIN}
     labels:

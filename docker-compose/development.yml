@@ -2,29 +2,6 @@
 # Tools and services for development work
 
 services:
-  # Code Server - VS Code in the browser
-  # Access at: http://server-ip:8443
-  code-server:
-    image: lscr.io/linuxserver/code-server:4.20.0
-    container_name: code-server
-    restart: unless-stopped
-    networks:
-      - homelab-network
-    ports:
-      - "8443:8443"
-    volumes:
-      - ./config/code-server:/config
-      - ${PROJECTDIR:-/home/user/projects}:/projects
-    environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
-      - TZ=${TZ:-America/New_York}
-      - PASSWORD=${CODE_SERVER_PASSWORD:-changeme}
-      - SUDO_PASSWORD=${CODE_SERVER_SUDO_PASSWORD:-changeme}
-    labels:
-      - "homelab.category=development"
-      - "homelab.description=VS Code in browser for remote development"
-
   # GitLab CE - Self-hosted Git repository manager
   # Access at: http://server-ip:8929
   # Note: Requires significant resources (4GB+ RAM recommended)
@@ -152,24 +129,6 @@ services:
       - "homelab.category=development"
       - "homelab.description=Jupyter Lab for data science and ML"
 
-  # Node-RED - Visual programming for automation
-  # Access at: http://server-ip:1880
-  nodered:
-    image: nodered/node-red:3.1.3
-    container_name: nodered
-    restart: unless-stopped
-    networks:
-      - homelab-network
-    ports:
-      - "1880:1880"
-    volumes:
-      - nodered-data:/data
-    environment:
-      - TZ=${TZ:-America/New_York}
-    labels:
-      - "homelab.category=development"
-      - "homelab.description=Visual automation and workflow tool"
-
 volumes:
   gitlab-logs:
     driver: local
@@ -180,8 +139,6 @@ volumes:
   redis-data:
     driver: local
   pgadmin-data:
-    driver: local
-  nodered-data:
     driver: local
 
 networks:

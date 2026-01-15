@@ -19,14 +19,13 @@ services:
       - dockerproxy-network
     volumes:
       - ./homepage:/app/config
-      - /var/run/docker.sock:/var/run/docker.sock:ro  # For Docker integration
-      - /opt/stacks:/opt/stacks:ro  # To discover other stacks
+      - /var/run/docker.sock:/var/run/docker.sock # For Docker integration do not mount RO
+      - /opt/stacks:/opt/stacks # To discover other stacks
     environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
+      - PUID=995  # Must be set to the docker user ID
+      - PGID=995  # Must be set to the docker group ID
       - TZ=${TZ}
       - HOMEPAGE_ALLOWED_HOSTS=home.${DOMAIN}
-    user: "${PUID:-1000}:${DOCKER_GID:-999}"
     labels:
       - "homelab.category=dashboard"
       - "homelab.description=Application dashboard (AI-configurable)"
@@ -50,7 +49,7 @@ services:
       - ./homarr/config:/app/config/configs
       - ./homarr/data:/data
       - ./homarr/icons:/app/public/icons
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - TZ=${TZ}
     labels:
