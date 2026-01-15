@@ -15,11 +15,11 @@ services:
       - dockerproxy-network
     volumes:
       - /opt/stacks/homepage/config:/app/config
-      - /var/run/docker.sock:/var/run/docker.sock:ro  # For Docker integration
+      - /var/run/docker.sock:/var/run/docker.sock  # For Docker integration
       - /opt/stacks:/opt/stacks:ro  # To discover other stacks
     environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
+      - PUID=995
+      - PGID=995
       - TZ=${TZ}
       - HOMEPAGE_ALLOWED_HOSTS=home.${DOMAIN}
     labels:
@@ -47,7 +47,7 @@ services:
       - /opt/stacks/homarr/configs:/app/data/configs
       - /opt/stacks/homarr/data:/data
       - /opt/stacks/homarr/icons:/app/public/icons
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - TZ=${TZ}
     labels:
