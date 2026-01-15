@@ -26,6 +26,7 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ}
       - HOMEPAGE_ALLOWED_HOSTS=home.${DOMAIN}
+    user: "${PUID:-1000}:${DOCKER_GID:-999}"
     labels:
       - "homelab.category=dashboard"
       - "homelab.description=Application dashboard (AI-configurable)"
