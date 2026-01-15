@@ -7,7 +7,6 @@
 # - DuckDNS: No web UI (updates IP automatically)
 # - Traefik: https://traefik.${DOMAIN}
 # - Authelia: https://auth.${DOMAIN}
-# - Gluetun: No web UI (VPN client for other services)
 
 services:
   # DuckDNS - Dynamic DNS updater
@@ -100,51 +99,10 @@ services:
     depends_on:
       - traefik
 
-  # Gluetun - VPN client (Surfshark WireGuard)
-  # Routes download clients through VPN for security
-  gluetun:
-    image: qmcgaw/gluetun:latest
-    container_name: gluetun
-    restart: unless-stopped
-    cap_add:
-      - NET_ADMIN
-    devices:
-      - /dev/net/tun:/dev/net/tun
-    networks:
-      - homelab-network
-      - traefik-network
-    ports:
-      - "8888:8888/tcp"  # HTTP proxy
-      - "8388:8388/tcp"  # Shadowsocks
-      - "8388:8388/udp"  # Shadowsocks
-      - "8081:8080"      # qBittorrent web UI
-      - "6881:6881"      # qBittorrent
-      - "6881:6881/udp"  # qBittorrent
-    volumes:
-      - ./gluetun:/gluetun
-    environment:
-      - VPN_SERVICE_PROVIDER=surfshark
-      - VPN_TYPE=openvpn
-      - OPENVPN_USER=${SURFSHARK_USERNAME}
-      - OPENVPN_PASSWORD=${SURFSHARK_PASSWORD}
-      - SERVER_COUNTRIES=${VPN_SERVER_COUNTRIES:-Netherlands}
-      - TZ=${TZ}
-    labels:
-      - "homelab.category=infrastructure"
-      - "homelab.description=VPN client for secure downloads"
-      - "traefik.enable=true"
-      - "traefik.http.routers.qbittorrent.rule=Host(`qbit.${DOMAIN}`)"
-      - "traefik.http.routers.qbittorrent.entrypoints=websecure"
-      - "traefik.http.routers.qbittorrent.tls=true"
-      - "traefik.http.routers.qbittorrent.middlewares=authelia@docker"
-      - "traefik.http.services.qbittorrent.loadbalancer.server.port=8080"
-
 volumes:
   authelia-data:
     driver: local
 
 networks:
   traefik-network:
-    external: true
-  homelab-network:
     external: true
