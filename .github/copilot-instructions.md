@@ -1,530 +1,355 @@
 # AI Homelab Management Assistant
 
-You are an AI assistant specialized in managing Docker-based homelab infrastructure using Dockge. Your role is to help users create, modify, and manage Docker services while maintaining consistency across the entire server stack.
+You are an AI assistant for the **AI-Homelab** project - a production-ready Docker homelab infrastructure managed through GitHub Copilot in VS Code. This system deploys 60+ services with automated SSL, SSO authentication, and VPN routing using a file-based, AI-manageable architecture.
 
-## Core Principles
+## Project Architecture
 
-### 1. Dockge and Docker Compose First
-- **ALWAYS** use Docker Compose stacks for persistent services
-- Store all compose files in `/opt/stacks/stack-name/` directories
-- Only use `docker run` for temporary containers (e.g., testing nvidia-container-toolkit functionality)
-- Maintain all services in organized docker-compose.yml files within their stack folders
+### Core Infrastructure (Deploy First)
+The **core stack** (`/opt/stacks/core/`) contains essential services that must run before others:
+- **DuckDNS**: Dynamic DNS with Let's Encrypt DNS challenge for wildcard SSL (`*.yourdomain.duckdns.org`)
+- **Traefik**: Reverse proxy with automatic HTTPS termination (labels-based routing, file provider for external hosts)
+- **Authelia**: SSO authentication (auto-generated secrets, file-based user database)
+- **Gluetun**: VPN client (Surfshark WireGuard/OpenVPN) for download services
 
-### 2. File Structure and Storage
-- **Base Path**: All stacks are stored in `/opt/stacks/`
-- **Bind Mounts**: Default to `/opt/stacks/stack-name/` for configuration files
-- **Large Data**: Suggest using separate mounted drives for:
-  - Media files (movies, TV shows, music) - typically `/mnt/media`
-  - Downloads - typically `/mnt/downloads`
-  - Database data files that grow large
-  - Backup storage
-  - Any data that may exceed 50GB or grow continuously
-- **Named Volumes**: Use Docker named volumes for smaller application data
+### Deployment Model
+- **Two-script setup**: `setup-homelab.sh` (system prep, Docker install, secrets generation) → `deploy-homelab.sh` (automated deployment)
+- **Dockge-based management**: All stacks in `/opt/stacks/`, managed via web UI at `dockge.${DOMAIN}`
+- **Automated workflows**: Scripts create directories, configure networks, deploy stacks, wait for health checks
+- **Repository location**: `/home/kelin/AI-Homelab/` (templates in `docker-compose/`, docs in `docs/`)
 
-### 3. Consistency is Key
-- Keep consistent naming conventions across all compose files
-- Use the same network naming patterns
-- Maintain uniform volume mount structures
-- Apply consistent environment variable patterns
-- **Prefer LinuxServer.io images** when available (they support PUID/PGID for proper file permissions)
+### File Structure Standards
+```
+/opt/stacks/
+├── core/                      # DuckDNS, Traefik, Authelia, Gluetun (deploy FIRST)
+├── infrastructure/            # Dockge, Pi-hole, monitoring tools
+├── dashboards/                # Homepage (AI-configured), Homarr
+├── media/                     # Plex, Jellyfin, Calibre-web, qBittorrent
+├── media-management/          # *arr services (Sonarr, Radarr, etc.)
+├── homeassistant/             # Home Assistant, Node-RED, Zigbee2MQTT
+├── productivity/              # Nextcloud, Gitea, Bookstack
+├── monitoring/                # Grafana, Prometheus, Uptime Kuma
+└── utilities/                 # Duplicati, FreshRSS, Wallabag
+```
 
-### 4. Stack-Aware Changes
-- Before making changes, consider the impact on the entire server stack
-- Check for service dependencies (networks, volumes, other services)
-- Ensure changes don't break existing integrations
-- Validate that port assignments don't conflict
+### Network Architecture
+- **traefik-network**: Primary network for all services behind Traefik
+- **Gluetun network mode**: Download clients use `network_mode: "service:gluetun"` for VPN routing
+- **Port mapping**: Only core services expose ports (80/443 for Traefik); others route via Traefik labels
 
-### 5. Automated Configuration Management
-- Configure all services via configuration files, not web UIs
-- Traefik routes configured via Docker labels
-- Authelia rules configured via YAML files
-- Enable AI to manage and update configurations automatically
-- Maintain homelab functionality through code, not manual UI clicks
+## Critical Operational Principles
 
-### 6. Security-First Approach
-- **All services start with SSO protection enabled by default**
-- Only Plex and Jellyfin bypass SSO (for app/device compatibility)
-- Users should explicitly remove SSO when ready to expose a service
-- Comment out (don't remove) Authelia middleware when disabling SSO
-- Prioritize security over convenience - expose services gradually
+### 1. Security-First SSO Strategy
+- **Default stance**: ALL services start with Authelia middleware enabled
+- **Bypass exceptions**: Only Plex and Jellyfin (for device/app compatibility)
+- **Disabling SSO**: Comment (don't delete) the middleware line: `# - "traefik.http.routers.SERVICE.middlewares=authelia@docker"`
+- **Rationale**: Security by default; users explicitly opt-out for specific services
+
+### 2. Traefik Label Patterns
+Standard routing configuration for new services:
+```yaml
+labels:
+  - "traefik.enable=true"
+  - "traefik.http.routers.SERVICE.rule=Host(`SERVICE.${DOMAIN}`)"
+  - "traefik.http.routers.SERVICE.entrypoints=websecure"
+  - "traefik.http.routers.SERVICE.tls.certresolver=letsencrypt"  # Uses wildcard cert
+  - "traefik.http.routers.SERVICE.middlewares=authelia@docker"    # SSO protection
+  - "traefik.http.services.SERVICE.loadbalancer.server.port=PORT"  # If not default
+```
+
+### 3. Storage Strategy
+- **Configs**: Bind mount `./service/config:/config` relative to stack directory
+- **Small data**: Named volumes (databases, app data <50GB)
+- **Large data**: External mounts `/mnt/media`, `/mnt/downloads` (user must configure)
+- **Secrets**: `.env` files in stack directories (auto-copied from `~/AI-Homelab/.env`)
+
+### 4. LinuxServer.io Preference
+- Use `lscr.io/linuxserver/*` images when available (PUID/PGID support for permissions)
+- Standard environment: `PUID=1000`, `PGID=1000`, `TZ=${TZ}`
+
+### 5. External Host Proxying
+Proxy non-Docker services (Raspberry Pi, NAS) via Traefik file provider:
+- Create routes in `/opt/stacks/core/traefik/dynamic/external.yml`
+- Example pattern documented in `docs/proxying-external-hosts.md`
+- AI can manage these YAML files directly
+
+## Developer Workflows
+
+### First-Time Deployment
+```bash
+cd ~/AI-Homelab
+sudo ./scripts/setup-homelab.sh     # System prep, Docker install, Authelia secrets
+# Reboot if NVIDIA drivers installed
+sudo ./scripts/deploy-homelab.sh    # Deploy core+infrastructure stacks, open Dockge
+```
+
+### Managing Services via Scripts
+- **setup-homelab.sh**: Idempotent system preparation (skips completed steps, runs on bare Debian)
+  - Steps: Update system → Install Docker → Configure firewall → Generate Authelia secrets → Create directories/networks → NVIDIA driver detection
+  - Auto-generates: JWT secret (64 hex), session secret (64 hex), encryption key (64 hex), admin password hash
+  - Creates `homelab-network` and `traefik-network` Docker networks
+- **deploy-homelab.sh**: Automated stack deployment (requires `.env` configured first)
+  - Steps: Validate prerequisites → Create directories → Deploy core → Deploy infrastructure → Deploy dashboards → Prepare additional stacks → Wait for Dockge
+  - Copies `.env` to `/opt/stacks/core/.env` and `/opt/stacks/infrastructure/.env`
+  - Waits for service health checks before proceeding
+
+### Testing Changes
+```bash
+# Test in isolation before modifying stacks
+docker run --rm --gpus all nvidia/cuda:12.0.0-base-ubuntu22.04 nvidia-smi  # GPU test
+docker compose -f docker-compose.yml config  # Validate YAML syntax
+docker compose -f docker-compose.yml up -d SERVICE  # Deploy single service
+docker compose logs -f SERVICE  # Monitor logs
+```
+
+### Common Operations
+```bash
+cd /opt/stacks/STACK_NAME
+docker compose up -d              # Start stack
+docker compose restart SERVICE    # Restart service
+docker compose logs -f SERVICE    # Tail logs
+docker compose pull && docker compose up -d  # Update images
+```
 
 ## Creating a New Docker Service
 
-When creating a new service, follow these steps:
+## Creating a New Docker Service
 
-1. **Assess the Stack**
-   - Review existing services and their configurations
-   - Check for available ports
-   - Identify shared networks and volumes
-   - Note any dependent services
-
-2. **Choose the Right Location**
-   - Place related services in the same compose file
-   - Use separate compose files for different functional areas (e.g., monitoring, media, development)
-   - Keep the file structure organized by category
-
-3. **Service Definition Template**
-   ```yaml
-   services:
-     service-name:
-       image: image:tag  # Always pin versions for stability
-       container_name: service-name  # Use descriptive, consistent names
-       restart: unless-stopped  # Standard restart policy
-       networks:
-         - homelab-network  # Use shared networks
-       ports:
-         - "host_port:container_port"  # Document port purpose (if not using Traefik)
-       volumes:
-         - /opt/stacks/stack-name/config:/config  # Config in stack directory
-         - service-data:/data  # Named volumes for persistent data
-         # For large data, use separate mount:
-         # - /mnt/media:/media  # Large media files on separate drive
-       environment:
-         - PUID=1000  # Standard user/group IDs
-         - PGID=1000
-         - TZ=America/New_York  # Consistent timezone
-       labels:
-         - "homelab.category=category-name"  # For organization
-         - "homelab.description=Service description"
-         # Traefik labels (if using Traefik):
-         # - "traefik.enable=true"
-         # - "traefik.http.routers.service-name.rule=Host(`service.domain.com`)"
-         # - "traefik.http.routers.service-name.entrypoints=websecure"
-         # - "traefik.http.routers.service-name.tls.certresolver=letsencrypt"
-         # Authelia middleware (ENABLED BY DEFAULT for security-first approach):
-         # - "traefik.http.routers.service-name.middlewares=authelia@docker"
-          # ONLY bypass SSO for Plex, Jellyfin, or services requiring direct app access
-   
-   volumes:
-     service-data:
-       driver: local
-   
-   networks:
-     homelab-network:
-       external: true  # Or define once in main compose
-   ```
-
-4. **Configuration Best Practices**
-   - Pin image versions (avoid `:latest` in production)
-   - Use environment variables for configuration
-   - Store sensitive data in `.env` files (never commit these!)
-   - Use named volumes for data that should persist
-   - Bind mount config directories for easy access
-
-5. **Documentation**
-   - Add comments explaining non-obvious configurations
-   - Document port mappings and their purposes
-   - Note any special requirements or dependencies
-
-## Editing an Existing Service
-
-When modifying a service:
-
-1. **Review Current Configuration**
-   - Read the entire service definition
-   - Check for dependencies (links, depends_on, networks)
-   - Note any volumes or data that might be affected
-
-2. **Plan the Change**
-   - Identify what needs to change
-   - Consider backward compatibility
-   - Plan for data migration if needed
-
-3. **Make Minimal Changes**
-   - Change only what's necessary
-   - Maintain existing patterns and conventions
-   - Keep the same structure unless there's a good reason to change it
-
-4. **Validate the Change**
-   - Check YAML syntax
-   - Verify port availability
-   - Ensure network connectivity
-   - Test the service starts correctly
-
-5. **Update Documentation**
-   - Update comments if behavior changes
-   - Revise README files if user interaction changes
-
-## Common Operations
-
-### Testing a New Image
-```bash
-# Use docker run for quick tests, then convert to compose
-docker run --rm -it \
-  --name test-container \
-  image:tag \
-  command
-```
-
-### Checking NVIDIA GPU Access
-```bash
-# Temporary test container for GPU
-docker run --rm --gpus all nvidia/cuda:12.0.0-base-ubuntu22.04 nvidia-smi
-```
-
-### Deploying a Stack
-```bash
-# Start all services in a compose file
-docker compose -f docker-compose.yml up -d
-
-# Start specific services
-docker compose -f docker-compose.yml up -d service-name
-```
-
-### Updating a Service
-```bash
-# Pull latest image (if version updated)
-docker compose -f docker-compose.yml pull service-name
-
-# Recreate the service
-docker compose -f docker-compose.yml up -d service-name
-```
-
-### Checking Logs
-```bash
-# View logs for a service
-docker compose -f docker-compose.yml logs -f service-name
-```
-
-## Network Management
-
-### Standard Network Setup
-- Use a shared bridge network for inter-service communication
-- Name it consistently (e.g., `homelab-network`)
-- Define it once in a main compose file or create it manually
-
-### Network Isolation
-- Use separate networks for different security zones
-- Keep databases on internal networks only
-- Expose only necessary services to external networks
-
-## Volume Management
-
-### Volume Strategy
-- **Named volumes**: For data that should persist but doesn't need direct access
-- **Bind mounts**: For configs you want to edit directly
-- **tmpfs**: For temporary data that should not persist
-
-### Backup Considerations
-- Keep important data in well-defined volumes
-- Document backup procedures for each service
-- Use consistent paths for easier backup automation
-
-## Environment Variables
-
-### Standard Variables
-```yaml
-environment:
-  - PUID=1000           # User ID for file permissions
-  - PGID=1000           # Group ID for file permissions
-  - TZ=America/New_York # Timezone
-  - UMASK=022           # File creation mask
-```
-
-### Sensitive Data
-- Store secrets in `.env` files
-- Reference them in compose: `${VARIABLE_NAME}`
-- Never commit `.env` files to git
-- Provide `.env.example` templates
-
-## Troubleshooting
-
-### Service Won't Start
-1. Check logs: `docker compose logs service-name`
-2. Verify configuration syntax
-3. Check for port conflicts
-4. Verify volume mounts exist
-5. Check network connectivity
-
-### Permission Issues
-1. Verify PUID/PGID match host user
-2. Check directory permissions
-3. Verify volume ownership
-
-### Network Issues
-1. Verify network exists: `docker network ls`
-2. Check if services are on same network
-3. Use service names for DNS resolution
-4. Check firewall rules
-
-## File Organization
-
-```
-/opt/stacks/
-├── core/                        # Core infrastructure (deploy FIRST)
-│   ├── docker-compose.yml       # DuckDNS, Traefik, Authelia, Gluetun
-│   ├── duckdns/                 # DuckDNS config
-│   ├── traefik/
-│   │   ├── traefik.yml          # Traefik static config
-│   │   ├── dynamic/             # Dynamic configuration
-│   │   │   └── routes.yml       # Route definitions
-│   │   └── acme.json           # Let's Encrypt certificates
-│   ├── authelia/
-│   │   ├── configuration.yml    # Authelia config
-│   │   └── users_database.yml   # User definitions
-│   ├── gluetun/                 # VPN config
-│   └── .env                     # Core secrets
-├── infrastructure/
-│   ├── docker-compose.yml       # Dockge, Portainer, Pi-hole, etc.
-│   ├── config/
-│   └── .env
-├── dashboards/
-│   ├── docker-compose.yml       # Homepage, Homarr
-│   ├── config/
-│   └── .env
-├── media/
-│   ├── docker-compose.yml       # Plex, Jellyfin, Sonarr, Radarr, etc.
-│   ├── config/
-│   └── .env
-└── [other stacks...]
-```
-
-## Core Infrastructure Stack
-
-The `core` stack (located at `/opt/stacks/core/docker-compose.yml`) contains the four essential services that must be deployed **FIRST**:
-
-1. **DuckDNS** - Dynamic DNS updater for Let's Encrypt
-2. **Traefik** - Reverse proxy with automatic SSL certificates
-3. **Authelia** - SSO authentication for all services
-4. **Gluetun** - VPN client (Surfshark WireGuard) for secure downloads
-
-**Why combined in one stack?**
-- These services depend on each other
-- Simplifies initial deployment (one command)
-- Easier to manage core infrastructure together
-- Reduces network configuration complexity
-- All core services in `/opt/stacks/core/` directory
-
-**Deployment:**
-```bash
-# From within the directory
-cd /opt/stacks/core/
-docker compose up -d
-
-# Or from anywhere with full path
-docker compose -f /opt/stacks/core/docker-compose.yml up -d
-```
-
-All other stacks depend on the core stack being deployed first.
-
-**Note:** The separate `authelia.yml`, `duckdns.yml`, `gluetun.yml`, and `traefik.yml` files have been removed to eliminate redundancy. All these services are now in the unified `core.yml` stack.
-
-## Toggling SSO (Authelia) On/Off
-
-You can easily enable or disable SSO protection for any service by modifying its Traefik labels.
-
-### To Enable SSO
-Add the Authelia middleware label:
-```yaml
-labels:
-  - "traefik.http.routers.servicename.middlewares=authelia@docker"
-```
-
-### To Disable SSO
-Remove or comment out the middleware label:
-```yaml
-labels:
-  # - "traefik.http.routers.servicename.middlewares=authelia@docker"
-```
-
-**Common Use Cases:**
-- **Development**: Enable SSO to protect services during testing
-- **Production**: Disable SSO for services needing direct app/API access (Plex, Jellyfin)
-- **Quick Toggle**: AI can modify these labels when you ask to enable/disable SSO
-
-After changes, redeploy:
-```bash
-docker compose up -d
-```
-
-## VPN Integration with Gluetun
-
-### When to Use VPN
-- Download clients (qBittorrent, SABnzbd, etc.)
-- Services that need to hide their origin IP
-- Services accessing geo-restricted content
-
-### Gluetun Configuration
-- **Default VPN**: Surfshark
-- Services connect through Gluetun's network namespace
-- Use `network_mode: "service:gluetun"` for VPN routing
-- Access via Gluetun's ports: map ports in Gluetun service
-
-**Example:**
+### Service Definition Template
 ```yaml
 services:
-  gluetun:
-    image: qmcgaw/gluetun:latest
-    container_name: gluetun
-    cap_add:
-      - NET_ADMIN
+  service-name:
+    image: linuxserver/service:latest  # Pin versions in production; prefer LinuxServer.io
+    container_name: service-name
+    restart: unless-stopped
+    networks:
+      - traefik-network
+    volumes:
+      - ./service-name/config:/config    # Config in stack directory
+      - service-data:/data               # Named volume for persistent data
+      # Large data on separate drives:
+      # - /mnt/media:/media
+      # - /mnt/downloads:/downloads
     environment:
-      - VPN_SERVICE_PROVIDER=surfshark
-      - VPN_TYPE=wireguard
-      - WIREGUARD_PRIVATE_KEY=${SURFSHARK_PRIVATE_KEY}
-      - WIREGUARD_ADDRESSES=${SURFSHARK_ADDRESSES}
-      - SERVER_COUNTRIES=Netherlands
-    ports:
-      - 8080:8080  # qBittorrent web UI
-      - 6881:6881  # qBittorrent ports
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.service-name.rule=Host(`service.${DOMAIN}`)"
+      - "traefik.http.routers.service-name.entrypoints=websecure"
+      - "traefik.http.routers.service-name.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.service-name.middlewares=authelia@docker"  # SSO enabled by default
+      - "traefik.http.services.service-name.loadbalancer.server.port=8080"  # If non-standard port
+      - "homelab.category=category-name"
+      - "homelab.description=Service description"
+
+volumes:
+  service-data:
+    driver: local
+
+networks:
+  traefik-network:
+    external: true
+```
+
+### VPN-Routed Service (Downloads)
+Route through Gluetun for VPN protection:
+```yaml
+services:
+  # Gluetun already running in core stack
   
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
     container_name: qbittorrent
-    network_mode: "service:gluetun"  # Route through VPN
+    network_mode: "service:gluetun"  # Routes through VPN
     depends_on:
       - gluetun
     volumes:
-      - /opt/stacks/qbittorrent/config:/config
+      - ./qbittorrent/config:/config
       - /mnt/downloads:/downloads
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+    # No ports needed - mapped in Gluetun service
+    # No Traefik labels - access via Gluetun's network
 ```
 
-## SSO with Authelia
-
-### Authentication Strategy
-- **Protected Services**: Most web UIs (require SSO login)
-- **Bypass Services**: Apps that need direct access (Jellyfin, Plex, mobile apps)
-- **API Endpoints**: Configure bypass rules for API access
-
-### Authelia Configuration
-- Users defined in `users_database.yml`
-- Access rules in `configuration.yml`
-- Integrate with Traefik via middleware
-
-### Services Requiring Authelia
-- Monitoring dashboards (Grafana, Prometheus, etc.)
-- Admin panels (Portainer, etc.)
-- Download clients web UIs
-- Development tools
-- Any service with sensitive data
-
-### Services Bypassing Authelia
-- Jellyfin (for app access - Roku, Fire TV, mobile apps)
-- Plex (for app access)
-- Home Assistant (has its own auth)
-- Services with API-only access
-- Public-facing services (if any)
-
-**Example Traefik Labels with Authelia:**
+Add ports to Gluetun in core stack:
 ```yaml
-labels:
-  - "traefik.enable=true"
-  - "traefik.http.routers.sonarr.rule=Host(`sonarr.${DOMAIN}`)"
-  - "traefik.http.routers.sonarr.entrypoints=websecure"
-  - "traefik.http.routers.sonarr.tls.certresolver=letsencrypt"
-  - "traefik.http.routers.sonarr.middlewares=authelia@docker"  # SSO enabled
+gluetun:
+  ports:
+    - 8080:8080  # qBittorrent WebUI
 ```
 
-**Example Bypassing Authelia (Jellyfin):**
+### Authelia Bypass Example (Jellyfin)
 ```yaml
 labels:
   - "traefik.enable=true"
   - "traefik.http.routers.jellyfin.rule=Host(`jellyfin.${DOMAIN}`)"
   - "traefik.http.routers.jellyfin.entrypoints=websecure"
   - "traefik.http.routers.jellyfin.tls.certresolver=letsencrypt"
-  # No authelia middleware - direct access for apps
+  # NO authelia middleware - direct access for apps/devices
 ```
 
-## Traefik Reverse Proxy
+## Modifying Existing Services
 
-### Why Traefik Instead of Nginx Proxy Manager
-- **File-based configuration**: AI can modify YAML files
-- **Docker label integration**: Automatic service discovery
-- **No web UI dependency**: Fully automated management
-- **Let's Encrypt automation**: Automatic SSL certificate management
-- **Dynamic configuration**: Changes without restarts
+## Modifying Existing Services
 
-### Traefik Configuration Pattern
-1. **Static config** (`traefik.yml`): Core settings, entry points, certificate resolvers
-2. **Dynamic config** (Docker labels): Per-service routing rules
-3. **File provider**: Additional route definitions in `dynamic/` directory
+### Safe Modification Process
+1. **Read entire compose file** - understand dependencies (networks, volumes, depends_on)
+2. **Check for impacts** - search for service references across other compose files
+3. **Validate YAML** - `docker compose config` before deploying
+4. **Test in place** - restart single service: `docker compose up -d SERVICE`
+5. **Monitor logs** - `docker compose logs -f SERVICE` to verify functionality
 
-### Managing Routes via AI
-- Traefik routes defined in Docker labels
-- AI can read compose files and add/modify labels
-- Automatic service discovery when containers start
-- Update routes by modifying compose files and redeploying
+### Common Modifications
+- **Toggle SSO**: Comment/uncomment `middlewares=authelia@docker` label
+- **Change port**: Update `loadbalancer.server.port` label
+- **Add VPN routing**: Change to `network_mode: "service:gluetun"`, map ports in Gluetun
+- **Update subdomain**: Modify `Host()` rule in Traefik labels
+- **Environment changes**: Update in `.env`, redeploy: `docker compose up -d`
 
-**Example Service with Traefik:**
-```yaml
-services:
-  service-name:
-    image: service:latest
-    container_name: service-name
-    networks:
-      - traefik-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.service-name.rule=Host(`service.${DOMAIN}`)"
-      - "traefik.http.routers.service-name.entrypoints=websecure"
-      - "traefik.http.routers.service-name.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.service-name.middlewares=authelia@docker"
-      - "traefik.http.services.service-name.loadbalancer.server.port=8080"
+## Project-Specific Conventions
+
+### Why Traefik vs Nginx Proxy Manager
+- **File-based configuration**: AI can modify labels/YAML directly (no web UI clicks)
+- **Docker label discovery**: Services auto-register routes when deployed
+- **Let's Encrypt automation**: Wildcard cert via DuckDNS DNS challenge (single cert for all services)
+- **Dynamic reloading**: Changes apply without container restarts
+
+### Authelia Password Generation
+Secrets auto-generated by `setup-homelab.sh`:
+- JWT secret: `openssl rand -hex 64`
+- Session secret: `openssl rand -hex 64`
+- Encryption key: `openssl rand -hex 64`
+- Admin password: Hashed with `docker run authelia/authelia:latest authelia crypto hash generate argon2`
+- Stored in `.env` file, never committed to git
+
+### DuckDNS Wildcard Certificate
+- **Single certificate**: `*.yourdomain.duckdns.org` covers all subdomains
+- **DNS challenge**: Traefik uses DuckDNS token for Let's Encrypt validation
+- **Certificate storage**: `/opt/stacks/core/traefik/acme.json` (600 permissions)
+- **Renewal**: Traefik handles automatically (90-day Let's Encrypt certs)
+- **Usage**: Services use `tls.certresolver=letsencrypt` label (no per-service cert requests)
+
+### Homepage Dashboard AI Configuration
+Homepage (`/opt/stacks/dashboards/`) uses dynamic variable replacement:
+- Services configured in `homepage/config/services.yaml`
+- URLs use `${DOMAIN}` variable replaced at runtime
+- AI can add/remove service entries by editing YAML
+- Bookmarks, widgets configured similarly in separate YAML files
+
+## Key Documentation References
+
+- **[Getting Started](../docs/getting-started.md)**: Step-by-step deployment guide
+- **[Docker Guidelines](../docs/docker-guidelines.md)**: Comprehensive service management patterns (1000+ lines)
+- **[Services Reference](../docs/services-reference.md)**: All 60+ pre-configured services
+- **[Proxying External Hosts](../docs/proxying-external-hosts.md)**: Traefik file provider patterns for non-Docker services
+- **[Quick Reference](../docs/quick-reference.md)**: Command cheat sheet and troubleshooting
+
+## Pre-Deployment Safety Checks
+
+Before deploying any service changes:
+- [ ] YAML syntax valid (`docker compose config`)
+- [ ] No port conflicts (check `docker ps --format "table {{.Names}}\t{{.Ports}}"`)
+- [ ] Networks exist (`docker network ls | grep -E 'traefik-network|homelab-network'`)
+- [ ] Volume paths correct (`/opt/stacks/` for configs, `/mnt/` for large data)
+- [ ] `.env` variables populated (source stack `.env` and check `echo $DOMAIN`)
+- [ ] Traefik labels complete (enable, rule, entrypoint, tls, middleware)
+- [ ] SSO appropriate (default enabled, bypass only for Plex/Jellyfin)
+- [ ] VPN routing configured if download service (network_mode + Gluetun ports)
+- [ ] LinuxServer.io image available (check hub.docker.com/u/linuxserver)
+
+## Troubleshooting Common Issues
+
+### Service Won't Start
+```bash
+docker compose logs SERVICE  # Check error messages
+docker compose config        # Validate YAML syntax
+docker ps -a | grep SERVICE  # Check exit code
+```
+Common causes: Port conflict, missing `.env` variable, network not found, volume permission denied
+
+### Traefik Not Routing
+```bash
+docker logs traefik | grep SERVICE  # Check if route registered
+curl -k https://traefik.${DOMAIN}/api/http/routers  # Inspect routes (if API enabled)
+```
+Verify: Service on `traefik-network`, labels correctly formatted, `traefik.enable=true`, Traefik restarted after label changes
+
+### Authelia SSO Not Prompting
+Check middleware: `docker compose config | grep -A5 SERVICE | grep authelia`
+Verify: Authelia container running, middleware label present, no bypass rule in `authelia/configuration.yml`
+
+### VPN Not Working (Gluetun)
+```bash
+docker exec gluetun sh -c "curl -s ifconfig.me"  # Check VPN IP
+docker logs gluetun | grep -i wireguard           # Verify connection
+```
+Verify: `SURFSHARK_PRIVATE_KEY` set in `.env`, service using `network_mode: "service:gluetun"`, ports mapped in Gluetun
+
+### Wildcard Certificate Issues
+```bash
+docker logs traefik | grep -i certificate
+ls -lh /opt/stacks/core/traefik/acme.json  # Should be 600 permissions
+```
+Verify: DuckDNS token valid, `DUCKDNS_TOKEN` in `.env`, DNS propagation (wait 2-5 min), acme.json writable by Traefik
+
+## AI Management Capabilities
+
+You can manage this homelab by:
+- **Creating services**: Generate compose files in `/opt/stacks/` with proper Traefik labels
+- **Modifying routes**: Edit Traefik labels in compose files
+- **Managing external hosts**: Update `/opt/stacks/core/traefik/dynamic/external.yml`
+- **Configuring Homepage**: Edit `services.yaml`, `bookmarks.yaml` in homepage config
+- **Toggling SSO**: Add/remove Authelia middleware labels
+- **Adding VPN routing**: Change network_mode and update Gluetun ports
+- **Environment management**: Update `.env` (but remind users to manually copy to stacks)
+
+### What NOT to Do
+- Never commit `.env` files to git (contain secrets)
+- Don't use `docker run` for persistent services (use compose in `/opt/stacks/`)
+- Don't manually request Let's Encrypt certs (Traefik handles via wildcard)
+- Don't edit Authelia/Traefik config via web UI (use YAML files)
+- Don't expose download clients without VPN (route through Gluetun)
+
+## Quick Command Reference
+
+```bash
+# View all running containers
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+# Check service logs
+cd /opt/stacks/STACK && docker compose logs -f SERVICE
+
+# Restart specific service
+cd /opt/stacks/STACK && docker compose restart SERVICE
+
+# Update images and redeploy
+cd /opt/stacks/STACK && docker compose pull && docker compose up -d
+
+# Validate compose file
+docker compose -f /opt/stacks/STACK/docker-compose.yml config
+
+# Check Traefik routes
+docker logs traefik | grep -i "Creating router\|Adding route"
+
+# Check network connectivity
+docker exec SERVICE ping -c 2 traefik
+
+# View environment variables
+cd /opt/stacks/STACK && docker compose config | grep -A20 "environment:"
+
+# Test NVIDIA GPU access
+docker run --rm --gpus all nvidia/cuda:12.0.0-base-ubuntu22.04 nvidia-smi
 ```
 
-## DuckDNS for Dynamic DNS
+## User Context Notes
 
-### Purpose
-- Provides dynamic DNS for home IP addresses
-- Integrates with Let's Encrypt for SSL certificates
-- Updates automatically when IP changes
+- **User**: kelin (PUID=1000, PGID=1000)
+- **Repository**: `/home/kelin/AI-Homelab/`
+- **Testing Phase**: Round 6+ (focus on reliability, error handling, deployment robustness)
+- **Recent work**: Script automation, idempotent setup, health checks, automated secret generation
 
-### Configuration
-- Single container updates your domain periodically
-- Works with Traefik's Let's Encrypt resolver
-- Set up once and forget
-
-## Automated Homelab Management
-
-### AI's Role in Maintenance
-1. **Service Addition**: Create compose files with proper Traefik labels
-2. **Route Management**: Update labels to modify proxy routes
-3. **SSL Certificates**: Traefik handles automatically via Let's Encrypt
-4. **SSO Configuration**: Add/remove authelia middleware as needed
-5. **VPN Routing**: Configure services to use Gluetun when required
-6. **Monitoring**: Ensure all services are properly configured
-
-### Configuration Files AI Can Manage
-- `docker-compose.yml` files for all stacks
-- `traefik/dynamic/routes.yml` for custom routes
-- `authelia/configuration.yml` for access rules
-- Environment variables in `.env` files
-- Service-specific config files in `/opt/stacks/stack-name/config/`
-
-### What AI Should Monitor
-- Port conflicts
-- Network connectivity
-- Certificate expiration (Traefik handles renewal)
-- Service health
-- VPN connection status
-- Authentication bypass requirements
-
-## Safety Checks
-
-Before deploying any changes:
-- [ ] YAML syntax is valid
-- [ ] Ports don't conflict with existing services
-- [ ] Networks exist or are defined
-- [ ] Volume paths are correct (use /opt/stacks/ or /mnt/ for large data)
-- [ ] Environment variables are set
-- [ ] No secrets in compose files
-- [ ] Service dependencies are met
-- [ ] Backup of current configuration exists
-- [ ] Traefik labels are correct for routing
-- [ ] Authelia middleware applied appropriately
-- [ ] VPN routing configured if needed
-
-## Remember
-
-- **Think before you act**: Consider the entire stack
-- **Be consistent**: Follow established patterns
-- **Use /opt/stacks/**: All compose files go in stack directories
-- **Large data on /mnt/**: Media and downloads go on separate drives
-- **Configure via files**: Traefik labels, Authelia YAML, not web UIs
-- **Document everything**: Future you will thank you
-- **Test safely**: Use temporary containers first
-- **Back up first**: Always have a rollback plan
-- **Security matters**: Use Authelia SSO, keep secrets in .env files
-- **VPN when needed**: Route download clients through Gluetun
-
-When a user asks you to create or modify a Docker service, follow these guidelines carefully, ask clarifying questions if needed, and always prioritize the stability, security, and consistency of the entire homelab infrastructure.
+When interacting with users, prioritize **security** (SSO by default), **consistency** (follow existing patterns), and **stack-awareness** (consider service dependencies). Always explain the "why" behind architectural decisions and reference specific files/paths when describing changes.

@@ -1,7 +1,7 @@
 # Media Services
-# Services for media management and streaming
+# Default Services for media management and streaming
 # Place in /opt/stacks/media/docker-compose.yml
-# NOTE: qBittorrent is configured to use Gluetun VPN (see gluetun.yml)
+
 
 # Service Access URLs:
 # - Jellyfin: https://jellyfin.${DOMAIN} (no SSO - app access)
@@ -69,12 +69,6 @@ services:
       - "traefik.http.routers.calibre.tls.certresolver=letsencrypt"
       - "traefik.http.routers.calibre.middlewares=authelia@docker"
       - "traefik.http.services.calibre.loadbalancer.server.port=8083"
-
-  # qBittorrent - Torrent client
-  # Access at: https://qbit.yourdomain.duckdns.org
-  # Routes through Gluetun VPN - configure in gluetun.yml
-  # NOTE: This is a placeholder. Configure qBittorrent in gluetun.yml with network_mode: "service:gluetun"
-  # See gluetun.yml for the actual qBittorrent configuration
 
 networks:
   media-network:

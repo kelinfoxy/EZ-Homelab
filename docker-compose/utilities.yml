@@ -133,6 +133,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.vaultwarden.rule=Host(`bitwarden.${DOMAIN}`)"
       - "traefik.http.routers.vaultwarden.entrypoints=websecure"
+      - "traefik.http.routers.vaultwarden.tls=true"
       - "traefik.http.routers.vaultwarden.tls.certresolver=letsencrypt"
       # SSO disabled for browser extension and mobile app compatibility
       # - "traefik.http.routers.vaultwarden.middlewares=authelia@docker"

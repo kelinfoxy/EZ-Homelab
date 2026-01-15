@@ -132,6 +132,12 @@ services:
     labels:
       - "homelab.category=infrastructure"
       - "homelab.description=VPN client for secure downloads"
+      - "traefik.enable=true"
+      - "traefik.http.routers.qbittorrent.rule=Host(`qbit.${DOMAIN}`)"
+      - "traefik.http.routers.qbittorrent.entrypoints=websecure"
+      - "traefik.http.routers.qbittorrent.tls=true"
+      - "traefik.http.routers.qbittorrent.middlewares=authelia@docker"
+      - "traefik.http.services.qbittorrent.loadbalancer.server.port=8080"
 
 volumes:
   authelia-data:
