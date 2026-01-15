@@ -7,39 +7,5 @@ title: AI Homelab Dashboard
 theme: dark
 color: slate
 
-layout:
-  Core Stack (core.yml):
-    style: column
-    columns: 2
-  Infrastructure Stack (infrastructure.yml):
-    style: column
-    columns: 4
-  Dashboards Stack (dashboards.yml):
-    style: column
-    columns: 2
-  Alternatives Stack (alternatives.yml):
-    style: column
-    columns: 2
-  Media Stack (media.yml):
-    style: column
-    columns: 3
-  Media Extended Stack (media-extended.yml):
-    style: column
-    columns: 3
-  Home Automation Stack (homeassistant.yml):
-    style: column
-    columns: 3
-  Productivity Stack (productivity.yml):
-    style: column
-    columns: 3
-  Monitoring Stack (monitoring.yml):
-    style: column
-    columns: 3
-  Development Stack (development.yml):
-    style: column
-    columns: 4
-  Utilities Stack (utilities.yml):
-    style: column
-    columns: 4
 
 headerStyle: boxed

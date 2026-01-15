@@ -1,13 +1,8 @@
 # Homepage Configuration - Docker Integration
 # Copy to /opt/stacks/homepage/config/docker.yaml
 # Enables auto-discovery of containers and status monitoring
-
----
 # Docker socket (via proxy for security)
 my-docker:
   socket: /var/run/docker.sock
 
-# Or use Docker socket proxy (recommended for production)
-# my-docker:
-#   host: dockerproxy
-#   port: 2375
+

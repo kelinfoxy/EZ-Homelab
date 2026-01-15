@@ -1,245 +1,291 @@
 ---
 # Currently Installed Services - Grouped by Stack
 
-- Core Stack (core.yml):
-    - Traefik:
-        icon: traefik.png
-        href: https://traefik.{{HOMEPAGE_VAR_DOMAIN}}
-        description: Reverse Proxy & SSL
-        
-    - Authelia:
-        icon: authelia.png
-        href: https://auth.{{HOMEPAGE_VAR_DOMAIN}}
-        description: Authentication Portal
-
-- Infrastructure Stack (infrastructure.yml):
-    - Dockge:
-        icon: dockge.png
-        href: https://dockge.{{HOMEPAGE_VAR_DOMAIN}}
-        description: Docker Compose Manager
-        
-    - Dozzle:
-        icon: dozzle.png
-        href: https://dozzle.{{HOMEPAGE_VAR_DOMAIN}}
-        description: Real-time Log Viewer
-        
-    - Glances:
-        icon: glances.png
-        href: https://glances.{{HOMEPAGE_VAR_DOMAIN}}
-        description: System Monitoring
-        
-    - Pi-hole:
-        icon: pi-hole.png
-        href: https://pihole.{{HOMEPAGE_VAR_DOMAIN}}
-        description: Network-wide Ad Blocking
-
-- Dashboards Stack (dashboards.yml):
+- Dashboards:
     - Homepage:
         icon: homepage.png
-        href: https://home.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://home.kelin-casa.duckdns.org
         description: This Dashboard
-        
+        container: homepage
+
     - Homarr:
         icon: homarr.png
-        href: https://homarr.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://homarr.kelin-casa.duckdns.org
         description: Alternative Dashboard
+        container: homarr
 
-- Alternatives Stack (alternatives.yml):
-    - Portainer:
-        icon: portainer.png
-        href: https://portainer.{{HOMEPAGE_VAR_DOMAIN}}
-        description: Container Management UI
-        
-    - Authentik:
-        icon: authentik.png
-        href: https://authentik.{{HOMEPAGE_VAR_DOMAIN}}
-        description: Alternative Auth Provider
+- Core:
+    - Dockge:
+        icon: dockge.png
+        href: https://dockge.kelin-casa.duckdns.org
+        description: Docker Compose Manager
+        container: dockge
+
+    - Traefik:
+        icon: traefik.png
+        href: https://traefik.kelin-casa.duckdns.org
+        description: Reverse Proxy & SSL
+        container: traefik
+
+    - Authelia:
+        icon: authelia.png
+        href: https://auth.kelin-casa.duckdns.org
+        description: Authentication Portal
+        container: authelia
+
+- Infrastructure:
+    - Dozzle:
+        icon: dozzle.png
+        href: https://dozzle.kelin-casa.duckdns.org
+        description: Real-time Log Viewer
+        container: dozzle
+
+    - Glances:
+        icon: glances.png
+        href: https://glances.kelin-casa.duckdns.org
+        description: System Monitoring
+        container: glances
+
+    - Pi-hole:
+        icon: pi-hole.png
+        href: https://pihole.kelin-casa.duckdns.org
+        description: Network-wide Ad Blocking
+        container: pihole
 
 # Available to Install - Grouped by Stack
 
-- Media Stack (media.yml):
-    - Plex:
-        icon: plex.png
-        href: https://plex.{{HOMEPAGE_VAR_DOMAIN}}
-        description: Media Server
-        
+- Media:
     - Jellyfin:
         icon: jellyfin.png
-        href: https://jellyfin.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://jellyfin.kelin-casa.duckdns.org
         description: Open Source Media Server
-        
-    - Sonarr:
-        icon: sonarr.png
-        href: https://sonarr.{{HOMEPAGE_VAR_DOMAIN}}
-        description: TV Shows Automation
-        
-    - Radarr:
-        icon: radarr.png
-        href: https://radarr.{{HOMEPAGE_VAR_DOMAIN}}
-        description: Movies Automation
-        
-    - Prowlarr:
-        icon: prowlarr.png
-        href: https://prowlarr.{{HOMEPAGE_VAR_DOMAIN}}
-        description: Indexer Manager
-        
-    - qBittorrent:
-        icon: qbittorrent.png
-        href: https://qbit.{{HOMEPAGE_VAR_DOMAIN}}
-        description: Torrent Client
+        container: jellyfin
 
-- Media Management Stack (media-management.yml):
-    - Readarr:
-        icon: readarr.png
-        href: https://readarr.{{HOMEPAGE_VAR_DOMAIN}}
-        description: Books Automation
-        
-    - Lidarr:
-        icon: lidarr.png
-        href: https://lidarr.{{HOMEPAGE_VAR_DOMAIN}}
-        description: Music Automation
-        
-    - Mylar3:
-        icon: mylar.png
-        href: https://mylar.{{HOMEPAGE_VAR_DOMAIN}}
-        description: Comics Manager
-        
-    - Calibre-Web:
-        icon: calibre-web.png
-        href: https://calibre.{{HOMEPAGE_VAR_DOMAIN}}
-        description: Ebook Library
-        
     - Jellyseerr:
         icon: jellyseerr.png
-        href: https://jellyseerr.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://jellyseerr.kelin-casa.duckdns.org
         description: Media Request Manager
-        
+        container: jellyseerr
+
+    - Calibre-Web:
+        icon: calibre-web.png
+        href: https://calibre.kelin-casa.duckdns.org
+        description: Ebook Library
+        container: calibre-web
+
+- Media Management:
+    - Sonarr:
+        icon: sonarr.png
+        href: https://sonarr.kelin-casa.duckdns.org
+        description: TV Shows Automation
+        container: sonarr
+
+    - Radarr:
+        icon: radarr.png
+        href: https://radarr.kelin-casa.duckdns.org
+        description: Movies Automation
+        container: radarr
+
+    - Prowlarr:
+        icon: prowlarr.png
+        href: https://prowlarr.kelin-casa.duckdns.org
+        description: Indexer Manager
+        container: prowlarr
+
+    - Readarr:
+        icon: readarr.png
+        href: https://readarr.kelin-casa.duckdns.org
+        description: Books Automation
+        container: readarr
+
+    - Lidarr:
+        icon: lidarr.png
+        href: https://lidarr.kelin-casa.duckdns.org
+        description: Music Automation
+        container: lidarr
+
+    - Mylar3:
+        icon: mylar.png
+        href: https://mylar.kelin-casa.duckdns.org
+        description: Comics Manager
+        container: mylar3
+
+    - qBittorrent:
+        icon: qbittorrent.png
+        href: https://qbit.kelin-casa.duckdns.org
+        description: Torrent Client
+        container: qbittorrent
+
     - Tdarr:
         icon: tdarr.png
-        href: https://tdarr.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://tdarr.kelin-casa.duckdns.org
         description: Media Transcoding
+        container: tdarr
 
-- Home Automation Stack (homeassistant.yml):
+- Home Automation:
     - Home Assistant:
         icon: home-assistant.png
-        href: https://ha.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://ha.kelin-casa.duckdns.org
         description: Home Automation Platform
-        
+        container: homeassistant
+
     - ESPHome:
         icon: esphome.png
-        href: https://esphome.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://esphome.kelin-casa.duckdns.org
         description: ESP Device Manager
-        
+        container: esphome
+
     - Node-RED:
         icon: node-red.png
-        href: https://nodered.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://nodered.kelin-casa.duckdns.org
         description: Flow-based Automation
-        
+        container: nodered
+
     - Zigbee2MQTT:
         icon: zigbee2mqtt.png
-        href: https://zigbee.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://zigbee.kelin-casa.duckdns.org
         description: Zigbee Bridge
-        
+        container: zigbee2mqtt
+
     - Mosquitto:
         icon: mosquitto.png
-        href: https://mqtt.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://mqtt.kelin-casa.duckdns.org
         description: MQTT Broker
+        container: mosquitto
 
-- Productivity Stack (productivity.yml):
+- Productivity:
     - Nextcloud:
         icon: nextcloud.png
-        href: https://nextcloud.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://nextcloud.kelin-casa.duckdns.org
         description: Cloud Storage & Collaboration
-        
+        container: nextcloud
+
     - Gitea:
         icon: gitea.png
-        href: https://gitea.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://gitea.kelin-casa.duckdns.org
         description: Git Repository
-        
+        container: gitea
+
     - Mealie:
         icon: mealie.png
-        href: https://mealie.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://mealie.kelin-casa.duckdns.org
         description: Recipe Manager
-        
+        container: mealie
+
     - BookStack:
         icon: bookstack.png
-        href: https://bookstack.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://bookstack.kelin-casa.duckdns.org
         description: Wiki Platform
-        
+        container: bookstack
+
     - DokuWiki:
         icon: dokuwiki.png
-        href: https://dokuwiki.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://dokuwiki.kelin-casa.duckdns.org
         description: Simple Wiki
-        
+        container: dokuwiki
+
     - WordPress:
         icon: wordpress.png
-        href: https://wordpress.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://wordpress.kelin-casa.duckdns.org
         description: CMS Platform
+        container: wordpress
 
-- Monitoring Stack (monitoring.yml):
+- Monitoring Stack:
     - Grafana:
         icon: grafana.png
-        href: https://grafana.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://grafana.kelin-casa.duckdns.org
         description: Metrics Dashboard
-        
+        container: grafana
+
     - Prometheus:
         icon: prometheus.png
-        href: https://prometheus.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://prometheus.kelin-casa.duckdns.org
         description: Metrics Collection
-        
+        container: prometheus
+
     - Uptime Kuma:
         icon: uptime-kuma.png
-        href: https://uptime.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://uptime.kelin-casa.duckdns.org
         description: Uptime Monitoring
-        
+        container: uptime-kuma
+
     - Loki:
         icon: loki.png
-        href: https://loki.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://loki.kelin-casa.duckdns.org
         description: Log Aggregation
+        container: loki
         
     - cAdvisor:
         icon: cadvisor.png
-        href: https://cadvisor.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://cadvisor.kelin-casa.duckdns.org
         description: Container Metrics
+        container: cadvisor
 
-- Development Stack (development.yml):
+- Development:
     - VS Code Server:
         icon: vscode.png
-        href: https://code.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://code.kelin-casa.duckdns.org
         description: Browser-based IDE
-        
+        container: code-server
+
     - GitLab:
         icon: gitlab.png
-        href: https://gitlab.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://gitlab.kelin-casa.duckdns.org
         description: DevOps Platform
-        
+        container: gitea
+
     - Jupyter:
         icon: jupyter.png
-        href: https://jupyter.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://jupyter.kelin-casa.duckdns.org
         description: Data Science Notebooks
-        
+        container: jupyter
+
     - pgAdmin:
         icon: pgadmin.png
-        href: https://pgadmin.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://pgadmin.kelin-casa.duckdns.org
         description: PostgreSQL Admin
+        container: pgadmin
 
-- Utilities Stack (utilities.yml):
+- Utilities:
     - Backrest:
         icon: mdi-backup-restore
-        href: https://backrest.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://backrest.kelin-casa.duckdns.org
         description: Backup Solution
-        
+        container: backrest
+
     - Duplicati:
         icon: duplicati.png
-        href: https://duplicati.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://duplicati.kelin-casa.duckdns.org
         description: Backup Software
-        
+        container: duplicati
+
     - Vaultwarden:
         icon: vaultwarden.png
-        href: https://vault.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://vault.kelin-casa.duckdns.org
         description: Password Manager
-        
+        container: vaultwarden
+
     - Formio:
         icon: mdi-form-select
-        href: https://formio.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://formio.kelin-casa.duckdns.org
         description: Form Builder
+        container: formio
+
+- Alternatives:
+    - Portainer:
+        icon: portainer.png
+        href: https://portainer.kelin-casa.duckdns.org
+        description: Container Management UI
+        container: portainer
+
+    - Authentik:
+        icon: authentik.png
+        href: https://authentik.kelin-casa.duckdns.org
+        description: Alternative Auth Provider
+        container: authentik
+
+    - Plex:
+        icon: plex.png
+        href: https://plex.kelin-casa.duckdns.org
+        description: Media Server
+        container: plex
