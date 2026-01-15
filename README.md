@@ -1,48 +1,36 @@
 # AI-Homelab
 
-Leverage Github Copilot in VS Code as a complete homelab management interface.
 
-## Overview
+# AI-Homelab: Modern, AI-Managed Homelab Infrastructure
 
-This repository provides a comprehensive, production-ready homelab infrastructure using Docker Compose with Dockge, featuring 60+ pre-configured services. Integrated AI assistance through GitHub Copilot helps you create, modify, and manage Docker services while maintaining consistency across your entire server stack.
+AI-Homelab is a production-ready, Docker Compose-based homelab stack managed with Dockge and supercharged by GitHub Copilot in VS Code. It features 60+ pre-configured services, automated SSL, SSO, VPN routing, and a file-based, AI-friendly architecture.
 
-The infrastructure uses Traefik for reverse proxy with automatic SSL, Authelia for Single Sign-On, Gluetun for VPN routing, and DuckDNS for dynamic DNS - all managed through file-based configurations that the AI can manage.
+## Key Features
 
-## Designed to be noob friendly
-
-* simple install process
-* Just tell the AI what you want
-* doesn't require setting up a raid
-* you can start with the hardware you have and add raid as your homelab grows
-* The AI can guide you through advanced concepts
-   * setting up a raid and transfering your data
-   * adding a 2nd or 3rd server to your homelab
-
-## Features
-
-- **AI-Powered Management**: GitHub Copilot integration with specialized instructions for Docker service management
-- **Automated Setup & Deployment**: Two-script installation process with intelligent error handling
-- **Dockge Structure**: All stacks organized in `/opt/stacks/` for easy management via Dockge web UI
-- **60+ Pre-configured Services**: Production-ready compose files across infrastructure, media, home automation, productivity, and monitoring
-- **Traefik Reverse Proxy**: Automatic HTTPS with Let's Encrypt wildcard certificates via DNS challenge
-- **Authelia SSO**: Single Sign-On protection for all admin interfaces with automated password generation
-- **Gluetun VPN**: Surfshark WireGuard integration for secure downloads
-- **Homepage Dashboard**: AI-configurable dashboard with automatic domain variable replacement
-- **External Host Proxying**: Proxy external services (Raspberry Pi, routers, NAS) through Traefik
-- **Stack-Aware Changes**: AI considers the entire infrastructure when making changes
-- **Comprehensive Documentation**: Detailed guidelines including proxying external hosts and troubleshooting
-- **File-Based Configuration**: Everything managed via YAML files - no web UI dependencies
+- **AI-Driven Management**: Use GitHub Copilot to create, modify, and manage all services and infrastructure. Just describe what you want—the AI handles the rest.
+- **Dockge Structure**: All stacks live in `/opt/stacks/` for easy, visual management via Dockge web UI.
+- **Automated Setup**: Two-script install (setup + deploy) with robust error handling and auto-generated secrets.
+- **Comprehensive Service Catalog**: 60+ production-ready services across infrastructure, media, automation, productivity, and monitoring.
+- **Traefik Reverse Proxy**: Automatic HTTPS with Let's Encrypt wildcard certs (DNS challenge via DuckDNS).
+- **Authelia SSO**: Single Sign-On for all admin interfaces, with secure defaults and 2FA support.
+- **Gluetun VPN**: Secure download stack with Surfshark WireGuard/OpenVPN integration.
+- **Homepage Dashboard**: AI-configurable dashboard with dynamic service discovery and widgets.
+- **Proxy External Hosts**: Easily route non-Docker services (e.g., Raspberry Pi, NAS) through Traefik.
+- **Stack-Aware Changes**: AI considers the entire infrastructure for every change.
+- **File-Based Configuration**: Everything managed via YAML—no web UI lock-in.
 
 ## Documentation
 
-- **[Getting Started](docs/getting-started.md)**: Step-by-step setup guide
-- **[Services Reference](docs/services-reference.md)**: Complete list of all 60+ pre-configured services
-- **[Docker Guidelines](docs/docker-guidelines.md)**: Comprehensive guide to Docker service management with Dockge
-- **[Quick Reference](docs/quick-reference.md)**: Command reference and troubleshooting
-- **[Proxying External Hosts](docs/proxying-external-hosts.md)**: Guide for proxying Raspberry Pi, routers, NAS via Traefik
-- **[Copilot Instructions](.github/copilot-instructions.md)**: AI assistant guidelines (Traefik, Authelia, Dockge aware)
+- [Getting Started](docs/getting-started.md): Step-by-step setup
+- [Services Overview](docs/services-overview.md): All included services
+- [Docker Guidelines](docs/docker-guidelines.md): Compose, network, and security patterns
+- [Quick Reference](docs/quick-reference.md): Commands and troubleshooting
+- [Proxying External Hosts](docs/proxying-external-hosts.md): Traefik file provider and SSO
+- [Copilot Instructions](.github/copilot-instructions.md): AI agent guidelines
 
-# Quick Start
+---
+
+## Quick Start
 
 ### Prerequisites
 
@@ -85,103 +73,79 @@ The infrastructure uses Traefik for reverse proxy with automatic SSL, Authelia f
 3. **Run first-run setup script:**
    
    This automated script handles system preparation and Authelia configuration. Safe to run on partially configured systems - it skips completed steps.
-   
+
+   ### Prerequisites
+
+   - Docker Engine 24.0+
+   - Docker Compose V2
+   - Git
+   - VS Code with GitHub Copilot extension
+   - DuckDNS domain (free)
+   - Surfshark VPN (optional, for VPN features)
+   - 120GB+ system drive (SSD/NVMe recommended), 2TB+ for media
+
+   ### 1. Clone the repository
+   ```bash
+   cd ~
+   git clone https://github.com/kelinfoxy/AI-Homelab.git
+   cd AI-Homelab
+   ```
+
+   ### 2. Configure environment
+   ```bash
+   cp .env.example .env
+   nano .env  # Set your domain, tokens, and passwords
+   ```
+   > Keep `.env` in `~/AI-Homelab/`. The deploy script copies it as needed.
+
+   ### 3. Run setup script
    ```bash
    sudo ./scripts/setup-homelab.sh
    ```
-   
-   The script will:
-   - Install Docker Engine + Compose V2 (if needed)
-   - Configure user groups and firewall
-   - Detect NVIDIA GPU and offer driver installation
-   - **Generate Authelia secrets automatically**
-   - **Create admin user and password hash**
-   - Set up directory structure and Docker networks
-   
-   **Important:** If NVIDIA drivers were installed, reboot before continuing. Otherwise, proceed to step 4.
+   > Handles system prep, Docker install, secrets, and directory structure.
 
-4. **Run deployment script:**
-   
-   This automated script will:
-   - Configure Traefik with your email and domain
-   - **Obtain wildcard SSL certificate** (*.yourdomain.duckdns.org) via DNS challenge
-   - Deploy core stack (DuckDNS, Traefik, Authelia, Gluetun) - 4 services
-   - Deploy infrastructure stack (Dockge, Pi-hole, monitoring) - 6 services
-   - Deploy dashboards stack (Homepage with configured URLs, Homarr) - 2 services
-   - **Prepare 7 additional stacks in Dockge** (not started, ready to deploy)
-   - Wait for services to be healthy
-   - Open Dockge in your browser
-   
+   ### 4. Run deployment script
    ```bash
    sudo ./scripts/deploy-homelab.sh
    ```
-   
-   **Note:** The script will prompt to optionally pre-pull images for additional stacks. This takes time but speeds up future deployments. Default is no. Wildcard certificate generation takes 2-5 minutes.
+   > Deploys core, infrastructure, and dashboard stacks. Prepares all others for Dockge.
 
-5. **Deploy additional stacks through Dockge:**
-   
-   Log in to Dockge at `https://dockge.yourdomain.duckdns.org` - all stacks are already loaded and ready to deploy:
-   - **media** - Jellyfin, Calibre-web, qBittorrent
-   - **media-management** - Sonarr, Radarr, Prowlarr, Readarr, Lidarr, Mylar, Bazarr
-   - **homeassistant** - Home Assistant, Node-RED, Zigbee2MQTT, ESPHome
-   - **productivity** - Nextcloud, Gitea, Bookstack, Outline, Excalidraw
-   - **monitoring** - Grafana, Prometheus, Uptime Kuma, Netdata
-   - **utilities** - Duplicati, FreshRSS, Wallabag
-   - **alternatives** - Plex, Portainer, Authentik
-   
-   Simply click any stack in Dockge and press "Start" to deploy it.
+   ### 5. Deploy more stacks via Dockge
+   Visit `https://dockge.yourdomain.duckdns.org` and start any stack you want.
 
-6. **Configure VS Code to control the server via GitHub Copilot**
-   
-   Install and configure the GitHub Copilot extension in VS Code, then use the Copilot chat window to manage your homelab.
-   
-   > Tip: Use free models for simple tasks like starting/stopping services, and premium models for complex configurations.
+   ### 6. Use VS Code + Copilot for management
+   Install GitHub Copilot in VS Code. Use chat to manage, modify, and extend your homelab—just describe what you want!
 
-# #
+   ---
 
-# AI Capabilities and Examples #
+   ## AI Capabilities & Examples
 
-   Ask the AI to modify anything about the AI-Homelab folder to suit your purposes.  
+   You can ask the AI to:
+   - Add, remove, or modify any service or stack
+   - Refactor the stack structure (e.g., switch to Portainer)
+   - Configure Traefik routing and Authelia SSO
+   - Proxy external hosts (e.g., Raspberry Pi)
+   - Create Homepage widgets and dashboards
+   - Route services through VPN
+   - Reorganize or customize anything
 
-   Want to change /opt/stacks to something else? Just tell the AI what you want.  
-   Prefer Portainer over Dockge? Ask the AI to refactor the entire AI-Homelab folder to convert to Portainer as default instead of Dockge.  
-   Don't like the selection of included services? Tell the AI exactly what services you want and what you don't.  
-   Don't like how the services are arranged in the stacks?  
-   Want to replace one service with a different service?  
+   > Just describe your goal. The AI will handle the details, following `.github/copilot-instructions.md` for best practices.
 
-   > Just tell the AI what you want.
+   ---
 
-   - "Help me add a new media service to my homelab"
-   - "Configure Traefik routing for my new service"
-   - "Add Authelia SSO protection to this service"
-   - "How do I proxy my Raspberry Pi through Traefik?"
-   - "Create a Homepage widget for this service"
-   - "Help me reorganize or customize my Homepage"
-   - "Route this download client through Gluetun VPN"
-   - "Disable SSO for Wordpress"
+   ## License & Acknowledgments
 
-The AI assistant automatically follows the guidelines in `.github/copilot-instructions.md`  
-   * to use `/opt/stacks/` directory structure, 
-   * configure Traefik labels, 
-   * apply Authelia middleware where appropriate, 
-   * suggest `/mnt/` for large data storage, 
-   * add services to Homepage dashboard with widgets, 
-   * maintain consistency with existing services, 
-   * and consider the entire stack when making changes.
+   This project is provided as-is for personal homelab use.
 
-## License
+   **Thanks to:**
+   - Docker & Compose communities
+   - LinuxServer.io for container images
+   - GitHub Copilot for AI capabilities
+   - All open-source projects referenced
 
-This project is provided as-is for personal homelab use.
+   ---
 
-## Acknowledgments
+   ## Support
 
-- Docker and Docker Compose communities
-- LinuxServer.io for excellent container images
-- GitHub Copilot for AI assistance capabilities
-- All the open-source projects used in example compose files
-
-## Support
-
-For issues, or questions:
-- Use GitHub Copilot in VS Code for real-time assistance
-- Consult the comprehensive documentation
+   - Use GitHub Copilot in VS Code for real-time help
+   - Consult the comprehensive documentation in `/docs`
