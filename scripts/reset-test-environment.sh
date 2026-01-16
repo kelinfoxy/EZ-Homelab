@@ -61,7 +61,7 @@ log_info "Starting safe cleanup process..."
 echo ""
 
 # Step 1: Stop all Docker Compose stacks gracefully
-log_info "Step 1/6: Stopping all Docker Compose stacks..."
+log_info "Step 1/7: Stopping all Docker Compose stacks..."
 
 if [ -d "/opt/stacks/dashboards" ]; then
     cd /opt/stacks/dashboards && docker compose down 2>/dev/null || true
@@ -83,8 +83,21 @@ sleep 3
 log_success "All stacks stopped gracefully"
 echo ""
 
-# Step 2: Remove Docker volumes (data will be lost)
-log_info "Step 2/6: Removing Docker volumes..."
+# Step 2: Preserve SSL certificates for test environment reuse
+log_info "Step 2/7: Preserving SSL certificates..."
+
+if [ -f "/opt/stacks/core/traefik/acme.json" ]; then
+    cp "/opt/stacks/core/traefik/acme.json" "/home/$ACTUAL_USER/AI-Homelab/acme.json" 2>/dev/null && \
+    log_success "SSL certificates preserved in repo folder" || \
+    log_warning "Could not preserve SSL certificates"
+else
+    log_info "No SSL certificates found to preserve"
+fi
+
+echo ""
+
+# Step 3: Remove Docker volumes (data will be lost)
+log_info "Step 3/7: Removing Docker volumes..."
 
 # List volumes to remove
 VOLUMES=$(docker volume ls -q | grep -E "^(core_|infrastructure_|dashboards_)" 2>/dev/null || true)
@@ -99,8 +112,8 @@ fi
 
 echo ""
 
-# Step 3: Remove stack directories (configs will be regenerated)
-log_info "Step 3/6: Removing stack configuration directories..."
+# Step 4: Remove stack directories (configs will be regenerated)
+log_info "Step 4/7: Removing stack configuration directories..."
 
 if [ -d "/opt/stacks" ]; then
     rm -rf /opt/stacks/core
@@ -118,8 +131,8 @@ fi
 
 echo ""
 
-# Step 4: Clean up temporary files
-log_info "Step 4/6: Cleaning temporary files..."
+# Step 5: Clean up temporary files
+log_info "Step 5/7: Cleaning temporary files..."
 
 rm -f /tmp/authelia_admin_credentials.tmp
 rm -f /tmp/authelia_password_hash.tmp
@@ -128,8 +141,8 @@ rm -f /tmp/nvidia*.log
 log_success "Temporary files cleaned"
 echo ""
 
-# Step 5: Remove Docker networks
-log_info "Step 5/6: Removing Docker networks..."
+# Step 6: Remove Docker networks
+log_info "Step 6/7: Removing Docker networks..."
 
 docker network rm homelab-network 2>/dev/null && log_success "Removed homelab-network" || log_info "homelab-network not found"
 docker network rm traefik-network 2>/dev/null && log_success "Removed traefik-network" || log_info "traefik-network not found"
@@ -138,8 +151,8 @@ docker network rm media-network 2>/dev/null && log_success "Removed media-networ
 
 echo ""
 
-# Step 6: Prune unused Docker resources
-log_info "Step 6/6: Pruning unused Docker resources..."
+# Step 7: Prune unused Docker resources
+log_info "Step 7/7: Pruning unused Docker resources..."
 
 docker system prune -f --volumes 2>&1 | grep -E "(Deleted|Total reclaimed)" || true
 log_success "Docker cleanup complete"

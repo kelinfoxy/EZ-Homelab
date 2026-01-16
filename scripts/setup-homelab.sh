@@ -491,6 +491,18 @@ step_8_create_directories() {
     chown -R "$ACTUAL_USER:$ACTUAL_USER" /mnt/git
 
     log_success "Directory structure created"
+
+    # Restore SSL certificates if available
+    if [ -f "$REPO_DIR/acme.json" ]; then
+        mkdir -p /opt/stacks/core/traefik
+        cp "$REPO_DIR/acme.json" /opt/stacks/core/traefik/acme.json
+        chmod 600 /opt/stacks/core/traefik/acme.json
+        chown "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/core/traefik/acme.json
+        log_success "SSL certificates restored from repository"
+    else
+        log_info "No SSL certificates found in repository (first-time setup)"
+    fi
+
     STEPS_COMPLETED=$((STEPS_COMPLETED + 1))
     log_progress "Completed: $STEPS_COMPLETED/$STEPS_TOTAL steps"
     echo ""
