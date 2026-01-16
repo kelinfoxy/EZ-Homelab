@@ -11,6 +11,15 @@ services:
   # Access at: https://home.${DOMAIN}
   homepage:
     image: ghcr.io/gethomepage/homepage:latest
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+          pids: 512
+        reservations:
+          cpus: '0.25'
+          memory: 128M
     container_name: homepage
     restart: unless-stopped
     networks:
@@ -40,6 +49,15 @@ services:
   # Access at: https://homarr.${DOMAIN}
   homarr:
     image: ghcr.io/ajnart/homarr:latest
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+          pids: 512
+        reservations:
+          cpus: '0.25'
+          memory: 128M
     container_name: homarr
     restart: unless-stopped
     networks:
