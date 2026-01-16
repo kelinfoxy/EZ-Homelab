@@ -101,8 +101,6 @@ services:
     restart: unless-stopped
     networks:
       - formio-network
-    volumes:
-      - formio-mongo-data:/data/db
     labels:
       - "homelab.category=utilities"
       - "homelab.description=Form.io database"
