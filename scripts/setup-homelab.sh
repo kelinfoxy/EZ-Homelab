@@ -424,6 +424,31 @@ fi
 PUID=$(get_env_value "PUID" "1000")
 PGID=$(get_env_value "PGID" "1000")
 TZ=$(get_env_value "TZ" "America/New_York")
+
+    # Get admin user from .env or default
+    ADMIN_USER=$(get_env_value "AUTHELIA_ADMIN_USER" "admin")
+    if is_placeholder "$ADMIN_USER"; then
+        if [ "$AUTO_YES" = true ]; then
+            ADMIN_USER="admin"
+        else
+            prompt_user "Enter admin username" "admin"
+            read -p "> " ADMIN_USER
+            ADMIN_USER=${ADMIN_USER:-admin}
+        fi
+    fi
+
+    # Get admin email from .env or prompt
+    ADMIN_EMAIL=$(get_env_value "AUTHELIA_ADMIN_EMAIL" "your-email@example.com")
+    if is_placeholder "$ADMIN_EMAIL"; then
+        if [ "$AUTO_YES" = true ]; then
+            log_error "AUTHELIA_ADMIN_EMAIL not set in .env and running in --yes mode"
+            exit 1
+        else
+            prompt_user "Enter admin email address"
+            read -p "> " ADMIN_EMAIL
+        fi
+    fi
+
     ADMIN_PASSWORD=$(get_env_value "AUTHELIA_ADMIN_PASSWORD" "YourStrongPassword123!")
     if is_placeholder "$ADMIN_PASSWORD" || [ "$AUTO_YES" != true ]; then
         if [ "$AUTO_YES" = true ]; then
@@ -683,7 +708,7 @@ get_env_value() {
     local var_name="$1"
     local default_value="$2"
     local value
-    value=$(grep "^${var_name}=" "$REPO_ENV_FILE" 2>/dev/null | cut -d'=' -f2-)
+    value=$(grep "^${var_name}=" "$REPO_ENV_FILE" 2>/dev/null | cut -d'=' -f2- | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
     if [ -n "$value" ] && ! is_placeholder "$value"; then
         echo "$value"
     else
