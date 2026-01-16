@@ -368,7 +368,8 @@ step_7_generate_authelia_secrets() {
             prompt_user "Enter your DuckDNS domain (e.g., yourname.duckdns.org)"
             read -p "> " DOMAIN
         fi
-        sed -i "s#^DOMAIN=.*#DOMAIN=${DOMAIN}#" "$REPO_ENV_FILE"
+        escaped_domain=$(printf '%s\n' "$DOMAIN" | sed 's/|/\\|/g')
+        sed -i "s|^DOMAIN=.*|DOMAIN=$escaped_domain|" "$REPO_ENV_FILE"
     fi
 
     SERVER_IP=$(get_env_value "SERVER_IP" "")
@@ -387,7 +388,8 @@ step_7_generate_authelia_secrets() {
                 read -p "> " SERVER_IP
             fi
         fi
-        sed -i "s#^SERVER_IP=.*#SERVER_IP=${SERVER_IP}#" "$REPO_ENV_FILE"
+        escaped_ip=$(printf '%s\n' "$SERVER_IP" | sed 's/|/\\|/g')
+        sed -i "s|^SERVER_IP=.*|SERVER_IP=$escaped_ip|" "$REPO_ENV_FILE"
     fi
 
     # Load other variables with defaults
@@ -524,9 +526,13 @@ step_7_generate_authelia_secrets() {
 
     # Save to .env file for persistence
     log_info "Saving credentials to .env file for persistence..."
-    sed -i "s#^AUTHELIA_ADMIN_USER=.*#AUTHELIA_ADMIN_USER=$ADMIN_USER#" "$REPO_ENV_FILE"
-    sed -i "s#^AUTHELIA_ADMIN_EMAIL=.*#AUTHELIA_ADMIN_EMAIL=$ADMIN_EMAIL#" "$REPO_ENV_FILE"
-    sed -i "s#^AUTHELIA_ADMIN_PASSWORD=.*#AUTHELIA_ADMIN_PASSWORD=$ADMIN_PASSWORD#" "$REPO_ENV_FILE"
+    # Escape | in variables for sed
+    escaped_user=$(printf '%s\n' "$ADMIN_USER" | sed 's/|/\\|/g')
+    escaped_email=$(printf '%s\n' "$ADMIN_EMAIL" | sed 's/|/\\|/g')
+    escaped_password=$(printf '%s\n' "$ADMIN_PASSWORD" | sed 's/|/\\|/g')
+    sed -i "s|^AUTHELIA_ADMIN_USER=.*|AUTHELIA_ADMIN_USER=$escaped_user|" "$REPO_ENV_FILE"
+    sed -i "s|^AUTHELIA_ADMIN_EMAIL=.*|AUTHELIA_ADMIN_EMAIL=$escaped_email|" "$REPO_ENV_FILE"
+    sed -i "s|^AUTHELIA_ADMIN_PASSWORD=.*|AUTHELIA_ADMIN_PASSWORD=$escaped_password|" "$REPO_ENV_FILE"
     log_success "Credentials saved to .env file"
 
     log_info "Credentials saved for deployment script"
@@ -710,9 +716,12 @@ generate_new_secrets() {
     ENCRYPTION_KEY=$(generate_secret)
     
     # Update .env file
-    sed -i "s#^AUTHELIA_JWT_SECRET=.*#AUTHELIA_JWT_SECRET=${JWT_SECRET}#" "$REPO_ENV_FILE"
-    sed -i "s#^AUTHELIA_SESSION_SECRET=.*#AUTHELIA_SESSION_SECRET=${SESSION_SECRET}#" "$REPO_ENV_FILE"
-    sed -i "s#^AUTHELIA_STORAGE_ENCRYPTION_KEY=.*#AUTHELIA_STORAGE_ENCRYPTION_KEY=${ENCRYPTION_KEY}#" "$REPO_ENV_FILE"
+    escaped_jwt=$(printf '%s\n' "$JWT_SECRET" | sed 's/|/\\|/g')
+    escaped_session=$(printf '%s\n' "$SESSION_SECRET" | sed 's/|/\\|/g')
+    escaped_encryption=$(printf '%s\n' "$ENCRYPTION_KEY" | sed 's/|/\\|/g')
+    sed -i "s|^AUTHELIA_JWT_SECRET=.*|AUTHELIA_JWT_SECRET=$escaped_jwt|" "$REPO_ENV_FILE"
+    sed -i "s|^AUTHELIA_SESSION_SECRET=.*|AUTHELIA_SESSION_SECRET=$escaped_session|" "$REPO_ENV_FILE"
+    sed -i "s|^AUTHELIA_STORAGE_ENCRYPTION_KEY=.*|AUTHELIA_STORAGE_ENCRYPTION_KEY=$escaped_encryption|" "$REPO_ENV_FILE"
     
     log_success "New secrets generated and saved to .env"
 }
