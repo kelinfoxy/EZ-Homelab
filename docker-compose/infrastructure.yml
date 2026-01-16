@@ -17,6 +17,15 @@ services:
   # Access at: https://dockge.${DOMAIN}
   dockge:
     image: louislam/dockge:1
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+          pids: 512
+        reservations:
+          cpus: '0.25'
+          memory: 128M
     container_name: dockge
     restart: unless-stopped
     networks:
@@ -45,6 +54,15 @@ services:
   # Access at: https://pihole.${DOMAIN}
   pihole:
     image: pihole/pihole:2024.01.0
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+          pids: 256
+        reservations:
+          cpus: '0.10'
+          memory: 64M
     container_name: pihole
     restart: unless-stopped
     networks:
@@ -110,6 +128,15 @@ services:
   # Access at: https://dozzle.${DOMAIN}
   dozzle:
     image: amir20/dozzle:latest
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+          pids: 512
+        reservations:
+          cpus: '0.25'
+          memory: 128M
     container_name: dozzle
     restart: unless-stopped
     networks:
@@ -157,6 +184,15 @@ services:
   # Access at: https://glances.${DOMAIN}
   glances:
     image: nicolargo/glances:latest-full
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+          pids: 512
+        reservations:
+          cpus: '0.25'
+          memory: 128M
     container_name: glances
     restart: unless-stopped
     networks:
@@ -182,6 +218,15 @@ services:
   # Access at: https://code.${DOMAIN}
   code-server:
     image: lscr.io/linuxserver/code-server:latest
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1G
+          pids: 2048
+        reservations:
+          cpus: '0.75'
+          memory: 512M
     container_name: code-server
     restart: unless-stopped
     networks:
