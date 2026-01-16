@@ -1,26 +1,29 @@
 # Development Services
 # Tools and services for development work
 
+# Service Access URLs:
+# - GitLab: https://gitlab.${DOMAIN}
+# - pgAdmin: https://pgadmin.${DOMAIN}
+# - Jupyter: https://jupyter.${DOMAIN}
+
 services:
   # GitLab CE - Self-hosted Git repository manager
-  # Access at: http://server-ip:8929
+  # Access at: https://gitlab.${DOMAIN}
   # Note: Requires significant resources (4GB+ RAM recommended)
   gitlab:
-    image: gitlab/gitlab-ce:16.7.0-ce.0
+    image: gitlab/gitlab-ce:latest
     container_name: gitlab
     restart: unless-stopped
     networks:
       - homelab-network
-    ports:
-      - "8929:80"     # Web UI
-      - "2222:22"     # SSH
+      - traefik-network
     volumes:
       - ./config/gitlab/config:/etc/gitlab
       - gitlab-logs:/var/log/gitlab
       - gitlab-data:/var/opt/gitlab
     environment:
       GITLAB_OMNIBUS_CONFIG: |
-        external_url 'http://${SERVER_IP}:8929'
+        external_url 'https://gitlab.${DOMAIN}'
         gitlab_rails['gitlab_shell_ssh_port'] = 2222
         gitlab_rails['time_zone'] = '${TZ:-America/New_York}'
     shm_size: '256m'
@@ -33,6 +36,12 @@ services:
     labels:
       - "homelab.category=development"
       - "homelab.description=Self-hosted Git repository manager"
+      - "traefik.enable=true"
+      - "traefik.http.routers.gitlab.rule=Host(`gitlab.${DOMAIN}`)"
+      - "traefik.http.routers.gitlab.entrypoints=websecure"
+      - "traefik.http.routers.gitlab.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.gitlab.middlewares=authelia@docker"
+      - "traefik.http.services.gitlab.loadbalancer.server.port=80"
 
   # PostgreSQL - Database for development
   # Access at: localhost:5432 from other containers
@@ -77,16 +86,15 @@ services:
       - "homelab.description=Redis in-memory data store"
 
   # pgAdmin - PostgreSQL management UI
-  # Access at: http://server-ip:5050
+  # Access at: https://pgadmin.${DOMAIN}
   pgadmin:
-    image: dpage/pgadmin4:8.2
+    image: dpage/pgadmin4:latest
     container_name: pgadmin
     restart: unless-stopped
     networks:
       - database-network
       - homelab-network
-    ports:
-      - "5050:80"
+      - traefik-network
     volumes:
       - pgadmin-data:/var/lib/pgadmin
     environment:
@@ -98,18 +106,23 @@ services:
     labels:
       - "homelab.category=development"
       - "homelab.description=PostgreSQL administration UI"
+      - "traefik.enable=true"
+      - "traefik.http.routers.pgadmin.rule=Host(`pgadmin.${DOMAIN}`)"
+      - "traefik.http.routers.pgadmin.entrypoints=websecure"
+      - "traefik.http.routers.pgadmin.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.pgadmin.middlewares=authelia@docker"
+      - "traefik.http.services.pgadmin.loadbalancer.server.port=80"
 
   # Jupyter Lab - Interactive computing notebooks
-  # Access at: http://server-ip:8888
+  # Access at: https://jupyter.${DOMAIN}
   # Token displayed in logs on first start
   jupyter:
-    image: jupyter/scipy-notebook:2023-12-25
+    image: jupyter/scipy-notebook:latest
     container_name: jupyter
     restart: unless-stopped
     networks:
       - homelab-network
-    ports:
-      - "8888:8888"
+      - traefik-network
     volumes:
       - ./config/jupyter:/home/jovyan/work
     environment:
@@ -128,6 +141,12 @@ services:
     labels:
       - "homelab.category=development"
       - "homelab.description=Jupyter Lab for data science and ML"
+      - "traefik.enable=true"
+      - "traefik.http.routers.jupyter.rule=Host(`jupyter.${DOMAIN}`)"
+      - "traefik.http.routers.jupyter.entrypoints=websecure"
+      - "traefik.http.routers.jupyter.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.jupyter.middlewares=authelia@docker"
+      - "traefik.http.services.jupyter.loadbalancer.server.port=8888"
 
 volumes:
   gitlab-logs:
@@ -145,4 +164,6 @@ networks:
   database-network:
     driver: bridge
   homelab-network:
+    external: true
+  traefik-network:
     external: true
