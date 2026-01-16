@@ -1,5 +1,4 @@
 ---
-# Currently Installed Services - Grouped by Stack
 
 - Core:
     - Dockge:
@@ -32,7 +31,6 @@
             href: https://homarr.kelin-casa.duckdns.org
             description: Alternative Dashboard
             container: homarr
-
 - Infrastructure:
     - VS Code Server:
         icon: vscode.png
@@ -88,11 +86,6 @@
         href: https://cadvisor.kelin-casa.duckdns.org
         description: Container Metrics
         container: cadvisor
-        href: https://pihole.kelin-casa.duckdns.org
-        description: Network-wide Ad Blocking
-        container: pihole
-
-# Available to Install - Grouped by Stack
 
 - Media:
     - Jellyfin:
@@ -114,42 +107,81 @@
         container: calibre-web
 
 - Media Management:
-    - Sonarr:
-        icon: sonarr.png
-        href: https://sonarr.kelin-casa.duckdns.org
-        description: TV Shows Automation
-        container: sonarr
-
-    - Radarr:
-        icon: radarr.png
-        href: https://radarr.kelin-casa.duckdns.org
-        description: Movies Automation
-        container: radarr
-
-    - Prowlarr:
-        icon: prowlarr.png
-        href: https://prowlarr.kelin-casa.duckdns.org
-        description: Indexer Manager
-        container: prowlarr
-
-    - Readarr:
-        icon: readarr.png
-        href: https://readarr.kelin-casa.duckdns.org
-        description: Books Automation
-        container: readarr
-
     - Lidarr:
         icon: lidarr.png
         href: https://lidarr.kelin-casa.duckdns.org
         description: Music Automation
         container: lidarr
-
+    - Readarr:
+        icon: readarr.png
+        href: https://readarr.kelin-casa.duckdns.org
+        description: Books Automation
+        container: readarr
+    - Radarr:
+        icon: radarr.png
+        href: https://radarr.kelin-casa.duckdns.org
+        description: Movies Automation
+        container: radarr
+    - Sonarr:
+        icon: sonarr.png
+        href: https://sonarr.kelin-casa.duckdns.org
+        description: TV Shows Automation
+        container: sonarr
+    - Prowlarr:
+        icon: prowlarr.png
+        href: https://prowlarr.kelin-casa.duckdns.org
+        description: Indexer Manager
+        container: prowlarr
     - Mylar3:
         icon: mylar.png
         href: https://mylar.kelin-casa.duckdns.org
         description: Comics Manager
         container: mylar3
 
+- Productivity:
+    - Nextcloud:
+        icon: nextcloud.png
+        href: https://nextcloud.kelin-casa.duckdns.org
+        description: Cloud Storage & Collaboration
+        container: nextcloud
+
+    - Mealie:
+        icon: mealie.png
+        href: https://mealie.kelin-casa.duckdns.org
+        description: Recipe Manager
+        container: mealie
+
+    - WordPress:
+        icon: wordpress.png
+        href: https://wordpress.kelin-casa.duckdns.org
+        description: CMS Platform
+        container: wordpress
+
+    - Jupyter:
+        icon: jupyter.png
+        href: https://jupyter.kelin-casa.duckdns.org
+        description: Data Science Notebooks
+        container: jupyter
+    
+    - Gitea:
+        icon: gitea.png
+        href: https://gitea.kelin-casa.duckdns.org
+        description: Git Repository
+        container: gitea
+
+- Wiki:
+    - BookStack:
+        icon: bookstack.png
+        href: https://bookstack.kelin-casa.duckdns.org
+        description: Wiki Platform
+        container: bookstack
+
+    - DokuWiki:
+        icon: dokuwiki.png
+        href: https://dokuwiki.kelin-casa.duckdns.org
+        description: Simple Wiki
+        container: dokuwiki
+        
 - Home Automation:
     - Home Assistant:
         icon: home-assistant.png
@@ -181,88 +213,6 @@
         description: MQTT Broker
         container: mosquitto
 
-- Productivity:
-    - Nextcloud:
-        icon: nextcloud.png
-        href: https://nextcloud.kelin-casa.duckdns.org
-        description: Cloud Storage & Collaboration
-        container: nextcloud
-
-    - Gitea:
-        icon: gitea.png
-        href: https://gitea.kelin-casa.duckdns.org
-        description: Git Repository
-        container: gitea
-
-    - Mealie:
-        icon: mealie.png
-        href: https://mealie.kelin-casa.duckdns.org
-        description: Recipe Manager
-        container: mealie
-
-    - BookStack:
-        icon: bookstack.png
-        href: https://bookstack.kelin-casa.duckdns.org
-        description: Wiki Platform
-        container: bookstack
-
-    - DokuWiki:
-        icon: dokuwiki.png
-        href: https://dokuwiki.kelin-casa.duckdns.org
-        description: Simple Wiki
-        container: dokuwiki
-
-    - WordPress:
-        icon: wordpress.png
-        href: https://wordpress.kelin-casa.duckdns.org
-        description: CMS Platform
-        container: wordpress
-
-- Development:
-    - VS Code Server:
-        icon: vscode.png
-        href: https://code.kelin-casa.duckdns.org
-        description: Browser-based IDE
-        container: code-server
-
-    - GitLab:
-        icon: gitlab.png
-        href: https://gitlab.kelin-casa.duckdns.org
-        description: DevOps Platform
-        container: gitea
-
-    - Jupyter:
-        icon: jupyter.png
-        href: https://jupyter.kelin-casa.duckdns.org
-        description: Data Science Notebooks
-        container: jupyter
-
-    - pgAdmin:
-        icon: pgadmin.png
-        href: https://pgadmin.kelin-casa.duckdns.org
-        description: PostgreSQL Admin
-        container: pgadmin
-
-- VPN Protected:
-    - gluetun:
-        icon: gluetun.png
-        href: https://home.kelin-casa.duckdns.org
-        description: VPN Client
-        container: gluetun
-    - Downloaders:
-        - qBittorrent:
-            icon: qbittorrent.png
-            href: https://qbit.kelin-casa.duckdns.org
-            description: Torrent Client
-            container: qbittorrent
-
-- Transcoders:
-    - Tdarr:
-        icon: tdarr.png
-        href: https://tdarr.kelin-casa.duckdns.org
-        description: Media Transcoding
-        container: tdarr
-
 - Utilities:
     - Backrest:
         icon: mdi-backup-restore
@@ -287,6 +237,31 @@
         href: https://formio.kelin-casa.duckdns.org
         description: Form Builder
         container: formio
+
+- VPN Protected:
+    - gluetun:
+        icon: gluetun.png
+        href: https://home.kelin-casa.duckdns.org
+        description: VPN Client
+        container: gluetun
+    - Downloaders:
+        - qBittorrent:
+            icon: qbittorrent.png
+            href: https://qbit.kelin-casa.duckdns.org
+            description: Torrent Client
+            container: qbittorrent
+
+- Transcoders:
+    - Unmanic:
+        icon: unmanic.png
+        href: https://unmanic.kelin-casa.duckdns.org
+        description: Media Transcoding
+        container: unmanic
+    - Tdarr:
+        icon: tdarr.png
+        href: https://tdarr.kelin-casa.duckdns.org
+        description: Media Transcoding
+        container: tdarr-server
 
 - Alternatives:
     - Portainer:
