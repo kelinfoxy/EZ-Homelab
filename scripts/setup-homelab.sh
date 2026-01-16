@@ -731,7 +731,7 @@ get_env_value() {
     local var_name="$1"
     local default_value="$2"
     local value
-    value=$(grep "^${var_name}=" "$REPO_ENV_FILE" 2>/dev/null | cut -d'=' -f2- | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+    value=$(grep "^${var_name}=" "$REPO_ENV_FILE" 2>/dev/null | cut -d'=' -f2- | sed 's/#.*//' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
     if [ -n "$value" ] && ! is_placeholder "$value"; then
         echo "$value"
     else
