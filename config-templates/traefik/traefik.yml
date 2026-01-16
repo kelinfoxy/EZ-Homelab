@@ -33,9 +33,6 @@ certificatesResolvers:
       # Works with DuckDNS - requires DUCKDNS_TOKEN in environment
       dnsChallenge:
         provider: duckdns
-        resolvers:
-          - "1.1.1.1:53"
-          - "8.8.8.8:53"
 
 providers:
   docker:

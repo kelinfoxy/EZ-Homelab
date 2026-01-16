@@ -121,10 +121,8 @@ certificatesResolvers:
       storage: /acme.json
       dnsChallenge:
         provider: duckdns
-        disablePropagationCheck: true
-        resolvers:
-          - "1.1.1.1:53"
-          - "8.8.8.8:53"
+        # Note: Explicit resolvers can cause DNS propagation check failures
+        # Remove resolvers to use system's DNS for better DuckDNS TXT record resolution
 
 providers:
   docker:
