@@ -392,48 +392,38 @@ step_7_generate_authelia_secrets() {
         sed -i "s|^SERVER_IP=.*|SERVER_IP=$escaped_ip|" "$REPO_ENV_FILE"
     fi
 
-    # Load other variables with defaults
-    PUID=$(get_env_value "PUID" "1000")
-    PGID=$(get_env_value "PGID" "1000")
-    TZ=$(get_env_value "TZ" "America/New_York")
-    DUCKDNS_TOKEN=$(get_env_value "DUCKDNS_TOKEN" "")
-    DUCKDNS_SUBDOMAINS=$(get_env_value "DUCKDNS_SUBDOMAINS" "")
-
-    log_success "Environment variables validated"
-
-    # Check if secrets are already set (not placeholder values)
-    CURRENT_JWT=$(grep "^AUTHELIA_JWT_SECRET=" "$REPO_ENV_FILE" | cut -d'=' -f2)
-    if [ -n "$CURRENT_JWT" ] && [ "$CURRENT_JWT" != "your-jwt-secret-here" ] && [ "$CURRENT_JWT" != "generate-with-openssl-rand-hex-64" ] && [ ${#CURRENT_JWT} -ge 64 ]; then
-        log_warning "Authelia secrets appear to already be set in .env"
-        if [ "$AUTO_YES" = true ]; then
-            log_info "Auto-confirmed: Keeping existing secrets (--yes mode)"
-        elif confirm "Regenerate Authelia secrets?"; then
-            generate_new_secrets
-        else
-            log_info "Keeping existing secrets"
-        fi
+DUCKDNS_TOKEN=$(get_env_value "DUCKDNS_TOKEN" "")
+if is_placeholder "$DUCKDNS_TOKEN" || [ -z "$DUCKDNS_TOKEN" ]; then
+    if [ "$AUTO_YES" = true ]; then
+        log_error "DUCKDNS_TOKEN not set in .env and running in --yes mode"
+        log_info "Please set DUCKDNS_TOKEN in .env file"
+        exit 1
     else
-        generate_new_secrets
+        prompt_user "Enter your DuckDNS token"
+        read -p "> " DUCKDNS_TOKEN
     fi
+    escaped_token=$(printf '%s\n' "$DUCKDNS_TOKEN" | sed 's/|/\\|/g' | tr -d '\n')
+    sed -i "s|^DUCKDNS_TOKEN=.*|DUCKDNS_TOKEN=$escaped_token|" "$REPO_ENV_FILE"
+fi
 
-    # Get or set admin credentials
-    log_info "Setting up Authelia admin user..."
-    echo ""
-
-    # Get admin user from .env or default
-    ADMIN_USER=$(get_env_value "AUTHELIA_ADMIN_USER" "admin")
-    if is_placeholder "$ADMIN_USER"; then
-        ADMIN_USER="admin"
+DUCKDNS_SUBDOMAINS=$(get_env_value "DUCKDNS_SUBDOMAINS" "")
+if is_placeholder "$DUCKDNS_SUBDOMAINS" || [ -z "$DUCKDNS_SUBDOMAINS" ]; then
+    if [ "$AUTO_YES" = true ]; then
+        log_error "DUCKDNS_SUBDOMAINS not set in .env and running in --yes mode"
+        log_info "Please set DUCKDNS_SUBDOMAINS in .env file"
+        exit 1
+    else
+        prompt_user "Enter your DuckDNS subdomain (without .duckdns.org)"
+        read -p "> " DUCKDNS_SUBDOMAINS
     fi
+    escaped_subdomains=$(printf '%s\n' "$DUCKDNS_SUBDOMAINS" | sed 's/|/\\|/g' | tr -d '\n')
+    sed -i "s|^DUCKDNS_SUBDOMAINS=.*|DUCKDNS_SUBDOMAINS=$escaped_subdomains|" "$REPO_ENV_FILE"
+fi
 
-    # Get admin email from .env or prompt
-    ADMIN_EMAIL=$(get_env_value "AUTHELIA_ADMIN_EMAIL" "your-email@example.com")
-    if is_placeholder "$ADMIN_EMAIL"; then
-        prompt_user "Enter admin email address"
-        read -p "> " ADMIN_EMAIL
-    fi
-
-    # Get admin password from .env or prompt
+# Load other variables with defaults
+PUID=$(get_env_value "PUID" "1000")
+PGID=$(get_env_value "PGID" "1000")
+TZ=$(get_env_value "TZ" "America/New_York")
     ADMIN_PASSWORD=$(get_env_value "AUTHELIA_ADMIN_PASSWORD" "YourStrongPassword123!")
     if is_placeholder "$ADMIN_PASSWORD" || [ "$AUTO_YES" != true ]; then
         if [ "$AUTO_YES" = true ]; then
