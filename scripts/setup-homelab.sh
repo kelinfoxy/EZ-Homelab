@@ -425,69 +425,92 @@ PUID=$(get_env_value "PUID" "1000")
 PGID=$(get_env_value "PGID" "1000")
 TZ=$(get_env_value "TZ" "America/New_York")
 
+# Prompt for default credentials if placeholders
+DEFAULT_USER_VALUE=$(get_env_value "DEFAULT_USER" "admin")
+if is_placeholder "$DEFAULT_USER_VALUE"; then
+    if [ "$AUTO_YES" = true ]; then
+        DEFAULT_USER_VALUE="admin"
+    else
+        prompt_user "Enter default username" "admin"
+        read -p "> " DEFAULT_USER_VALUE
+        DEFAULT_USER_VALUE=${DEFAULT_USER_VALUE:-admin}
+    fi
+    escaped_default_user=$(printf '%s\n' "$DEFAULT_USER_VALUE" | sed 's/|/\\|/g' | tr -d '\n')
+    sed -i "s|^DEFAULT_USER=.*|DEFAULT_USER=$escaped_default_user|" "$REPO_ENV_FILE"
+fi
+
+DEFAULT_EMAIL_VALUE=$(get_env_value "DEFAULT_EMAIL" "your-email@example.com")
+if is_placeholder "$DEFAULT_EMAIL_VALUE"; then
+    if [ "$AUTO_YES" = true ]; then
+        log_error "DEFAULT_EMAIL not set in .env and running in --yes mode"
+        exit 1
+    else
+        prompt_user "Enter default email address"
+        read -p "> " DEFAULT_EMAIL_VALUE
+    fi
+    escaped_default_email=$(printf '%s\n' "$DEFAULT_EMAIL_VALUE" | sed 's/|/\\|/g' | tr -d '\n')
+    sed -i "s|^DEFAULT_EMAIL=.*|DEFAULT_EMAIL=$escaped_default_email|" "$REPO_ENV_FILE"
+fi
+
+DEFAULT_PASSWORD_VALUE=$(get_env_value "DEFAULT_PASSWORD" "YourStrongPassword123!")
+if is_placeholder "$DEFAULT_PASSWORD_VALUE" || [ "$AUTO_YES" != true ]; then
+    if [ "$AUTO_YES" = true ]; then
+        if is_placeholder "$DEFAULT_PASSWORD_VALUE"; then
+            log_warning "Default password not set in .env, generating random password"
+            DEFAULT_PASSWORD_VALUE=$(openssl rand -base64 12)
+            log_info "Generated password: $DEFAULT_PASSWORD_VALUE"
+        else
+            log_info "Using default password from .env"
+        fi
+    else
+        if ! is_placeholder "$DEFAULT_PASSWORD_VALUE"; then
+            if confirm "Use existing default password from .env?"; then
+                log_info "Using existing default password from .env"
+            else
+                DEFAULT_PASSWORD_VALUE=""
+            fi
+        fi
+        if [ -z "$DEFAULT_PASSWORD_VALUE" ] || is_placeholder "$DEFAULT_PASSWORD_VALUE"; then
+            while true; do
+                read -sp "Enter default password: " DEFAULT_PASSWORD_VALUE
+                echo ""
+                read -sp "Confirm default password: " DEFAULT_PASSWORD_CONFIRM
+                echo ""
+                
+                if [ "$DEFAULT_PASSWORD_VALUE" = "$DEFAULT_PASSWORD_CONFIRM" ]; then
+                    if [ ${#DEFAULT_PASSWORD_VALUE} -lt 8 ]; then
+                        log_warning "Password should be at least 8 characters long"
+                        continue
+                    fi
+                    break
+                else
+                    log_warning "Passwords do not match, please try again"
+                fi
+            done
+        fi
+    fi
+    escaped_default_password=$(printf '%s\n' "$DEFAULT_PASSWORD_VALUE" | sed 's/|/\\|/g' | tr -d '\n')
+    sed -i "s|^DEFAULT_PASSWORD=.*|DEFAULT_PASSWORD=$escaped_default_password|" "$REPO_ENV_FILE"
+fi
+
     # Get admin user from .env or default
     ADMIN_USER=$(get_env_value "AUTHELIA_ADMIN_USER" "admin")
     if is_placeholder "$ADMIN_USER"; then
-        if [ "$AUTO_YES" = true ]; then
-            ADMIN_USER="admin"
-        else
-            prompt_user "Enter admin username" "admin"
-            read -p "> " ADMIN_USER
-            ADMIN_USER=${ADMIN_USER:-admin}
-        fi
+        ADMIN_USER="$DEFAULT_USER_VALUE"
+        log_info "Using default username for Authelia: $ADMIN_USER"
     fi
 
-    # Get admin email from .env or prompt
+    # Get admin email from .env or default
     ADMIN_EMAIL=$(get_env_value "AUTHELIA_ADMIN_EMAIL" "your-email@example.com")
     if is_placeholder "$ADMIN_EMAIL"; then
-        if [ "$AUTO_YES" = true ]; then
-            log_error "AUTHELIA_ADMIN_EMAIL not set in .env and running in --yes mode"
-            exit 1
-        else
-            prompt_user "Enter admin email address"
-            read -p "> " ADMIN_EMAIL
-        fi
+        ADMIN_EMAIL="$DEFAULT_EMAIL_VALUE"
+        log_info "Using default email for Authelia: $ADMIN_EMAIL"
     fi
 
     ADMIN_PASSWORD=$(get_env_value "AUTHELIA_ADMIN_PASSWORD" "YourStrongPassword123!")
-    if is_placeholder "$ADMIN_PASSWORD" || [ "$AUTO_YES" != true ]; then
-        if [ "$AUTO_YES" = true ]; then
-            if is_placeholder "$ADMIN_PASSWORD"; then
-                log_warning "Admin password not set in .env, generating random password"
-                ADMIN_PASSWORD=$(openssl rand -base64 12)
-                log_info "Generated password: $ADMIN_PASSWORD"
-            else
-                log_info "Using password from .env"
-            fi
-        else
-            if ! is_placeholder "$ADMIN_PASSWORD"; then
-                if confirm "Use existing admin password from .env?"; then
-                    log_info "Using existing password from .env"
-                else
-                    ADMIN_PASSWORD=""
-                fi
-            fi
-            if [ -z "$ADMIN_PASSWORD" ] || is_placeholder "$ADMIN_PASSWORD"; then
-                while true; do
-                    read -sp "Enter password for $ADMIN_USER: " ADMIN_PASSWORD
-                    echo ""
-                    read -sp "Confirm password: " ADMIN_PASSWORD_CONFIRM
-                    echo ""
-                    
-                    if [ "$ADMIN_PASSWORD" = "$ADMIN_PASSWORD_CONFIRM" ]; then
-                        if [ ${#ADMIN_PASSWORD} -lt 8 ]; then
-                            log_warning "Password should be at least 8 characters long"
-                            continue
-                        fi
-                        break
-                    else
-                        log_warning "Passwords do not match, please try again"
-                    fi
-                done
-            fi
-        fi
-    else
-        log_info "Using admin password from .env"
+    if is_placeholder "$ADMIN_PASSWORD"; then
+        ADMIN_PASSWORD="$DEFAULT_PASSWORD_VALUE"
+        log_info "Using default password for Authelia"
     fi
 
     # Generate password hash using Docker
