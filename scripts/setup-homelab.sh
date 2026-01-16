@@ -679,7 +679,7 @@ show_final_summary() {
 is_placeholder() {
     local value="$1"
     case "$value" in
-        "your-generated-key"|"your-jwt-secret-here"|"generate-with-openssl-rand-hex-64"|"YourStrongPassword123!"|"your-email@example.com"|"your-subdomain.duckdns.org"|"192.168.x.x"|"kelin-casa"|"41ef7faa-fc93-41d2-a32f-340fd2b75b2f"|"admin"|"postgres"|"")
+        "your-generated-key"|"your-jwt-secret-here"|"generate-with-openssl-rand-hex-64"|"YourStrongPassword123!"|"your-email@example.com"|"your-subdomain.duckdns.org"|"192.168.x.x"|"kelin-casa"|"41ef7faa-fc93-41d2-a32f-340fd2b75b2f"|"admin"|"postgres"|"your-username"|"")
             return 0  # true, it's a placeholder
             ;;
         *)
