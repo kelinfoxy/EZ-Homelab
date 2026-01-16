@@ -29,6 +29,8 @@ certificatesResolvers:
     acme:
       email: ACME_EMAIL_PLACEHOLDER  # Will be replaced by deploy script
       storage: /acme.json
+      # For testing: Use staging to avoid production rate limits
+      # caServer: https://acme-staging-v02.api.letsencrypt.org/directory
       # DNS challenge - For wildcard certificates (*.yourdomain.duckdns.org)
       # Works with DuckDNS - requires DUCKDNS_TOKEN in environment
       dnsChallenge:

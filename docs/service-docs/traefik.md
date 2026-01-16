@@ -119,6 +119,8 @@ certificatesResolvers:
     acme:
       email: your-email@example.com
       storage: /acme.json
+      # For testing environments: Use Let's Encrypt staging to avoid rate limits
+      # caServer: https://acme-staging-v02.api.letsencrypt.org/directory
       dnsChallenge:
         provider: duckdns
         # Note: Explicit resolvers can cause DNS propagation check failures
@@ -401,6 +403,27 @@ curl -I https://yourdomain.duckdns.org
 # Check Let's Encrypt rate limits
 # Let's Encrypt allows 50 certificates per domain per week
 ```
+
+#### Testing Environment Setup
+
+When resetting test environments, use Let's Encrypt staging to avoid production rate limits:
+
+```yaml
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      caServer: https://acme-staging-v02.api.letsencrypt.org/directory
+      # ... rest of config
+```
+
+**Staging certificates are not trusted by browsers** - they're for testing only. Switch back to production when deploying.
+
+#### Certificate Conflicts During Testing
+
+- **Preserve acme.json** across test environment resets to reuse certificates
+- **Use staging server** for frequent testing to avoid rate limits
+- **Wait 1+ hours** between certificate requests to allow DNS propagation
+- **Ensure only one Traefik instance** performs DNS challenges (DuckDNS allows only one TXT record)
 
 #### Router Port Forwarding
 
