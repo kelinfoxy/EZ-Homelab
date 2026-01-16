@@ -356,6 +356,49 @@ step_7_generate_authelia_secrets() {
         exit 1
     fi
 
+    # Load and validate essential environment variables
+    log_info "Validating environment variables..."
+    DOMAIN=$(get_env_value "DOMAIN" "")
+    if is_placeholder "$DOMAIN" || [ -z "$DOMAIN" ]; then
+        if [ "$AUTO_YES" = true ]; then
+            log_error "DOMAIN not set in .env and running in --yes mode"
+            log_info "Please set DOMAIN in .env file"
+            exit 1
+        else
+            prompt_user "Enter your DuckDNS domain (e.g., yourname.duckdns.org)"
+            read -p "> " DOMAIN
+        fi
+        sed -i "s|^DOMAIN=.*|DOMAIN=${DOMAIN}|" "$REPO_ENV_FILE"
+    fi
+
+    SERVER_IP=$(get_env_value "SERVER_IP" "")
+    if is_placeholder "$SERVER_IP" || [ -z "$SERVER_IP" ]; then
+        # Try to detect server IP
+        DETECTED_IP=$(hostname -I | awk '{print $1}')
+        if [ -n "$DETECTED_IP" ]; then
+            SERVER_IP="$DETECTED_IP"
+            log_info "Detected server IP: $SERVER_IP"
+        else
+            if [ "$AUTO_YES" = true ]; then
+                log_error "SERVER_IP not set and could not detect"
+                exit 1
+            else
+                prompt_user "Enter your server IP address"
+                read -p "> " SERVER_IP
+            fi
+        fi
+        sed -i "s|^SERVER_IP=.*|SERVER_IP=${SERVER_IP}|" "$REPO_ENV_FILE"
+    fi
+
+    # Load other variables with defaults
+    PUID=$(get_env_value "PUID" "1000")
+    PGID=$(get_env_value "PGID" "1000")
+    TZ=$(get_env_value "TZ" "America/New_York")
+    DUCKDNS_TOKEN=$(get_env_value "DUCKDNS_TOKEN" "")
+    DUCKDNS_SUBDOMAINS=$(get_env_value "DUCKDNS_SUBDOMAINS" "")
+
+    log_success "Environment variables validated"
+
     # Check if secrets are already set (not placeholder values)
     CURRENT_JWT=$(grep "^AUTHELIA_JWT_SECRET=" "$REPO_ENV_FILE" | cut -d'=' -f2)
     if [ -n "$CURRENT_JWT" ] && [ "$CURRENT_JWT" != "your-jwt-secret-here" ] && [ "$CURRENT_JWT" != "generate-with-openssl-rand-hex-64" ] && [ ${#CURRENT_JWT} -ge 64 ]; then
@@ -371,30 +414,64 @@ step_7_generate_authelia_secrets() {
         generate_new_secrets
     fi
 
-    # Prompt for admin password
-    echo ""
+    # Get or set admin credentials
     log_info "Setting up Authelia admin user..."
     echo ""
-    prompt_user "Enter admin username" "admin"
-    read -p "> " ADMIN_USER
-    ADMIN_USER=${ADMIN_USER:-admin}
 
-    while true; do
-        read -sp "Enter password for $ADMIN_USER: " ADMIN_PASSWORD
-        echo ""
-        read -sp "Confirm password: " ADMIN_PASSWORD_CONFIRM
-        echo ""
-        
-        if [ "$ADMIN_PASSWORD" = "$ADMIN_PASSWORD_CONFIRM" ]; then
-            if [ ${#ADMIN_PASSWORD} -lt 8 ]; then
-                log_warning "Password should be at least 8 characters long"
-                continue
+    # Get admin user from .env or default
+    ADMIN_USER=$(get_env_value "AUTHELIA_ADMIN_USER" "admin")
+    if is_placeholder "$ADMIN_USER"; then
+        ADMIN_USER="admin"
+    fi
+
+    # Get admin email from .env or prompt
+    ADMIN_EMAIL=$(get_env_value "AUTHELIA_ADMIN_EMAIL" "your-email@example.com")
+    if is_placeholder "$ADMIN_EMAIL"; then
+        prompt_user "Enter admin email address"
+        read -p "> " ADMIN_EMAIL
+    fi
+
+    # Get admin password from .env or prompt
+    ADMIN_PASSWORD=$(get_env_value "AUTHELIA_ADMIN_PASSWORD" "YourStrongPassword123!")
+    if is_placeholder "$ADMIN_PASSWORD" || [ "$AUTO_YES" != true ]; then
+        if [ "$AUTO_YES" = true ]; then
+            if is_placeholder "$ADMIN_PASSWORD"; then
+                log_warning "Admin password not set in .env, generating random password"
+                ADMIN_PASSWORD=$(openssl rand -base64 12)
+                log_info "Generated password: $ADMIN_PASSWORD"
+            else
+                log_info "Using password from .env"
             fi
-            break
         else
-            log_warning "Passwords do not match, please try again"
+            if ! is_placeholder "$ADMIN_PASSWORD"; then
+                if confirm "Use existing admin password from .env?"; then
+                    log_info "Using existing password from .env"
+                else
+                    ADMIN_PASSWORD=""
+                fi
+            fi
+            if [ -z "$ADMIN_PASSWORD" ] || is_placeholder "$ADMIN_PASSWORD"; then
+                while true; do
+                    read -sp "Enter password for $ADMIN_USER: " ADMIN_PASSWORD
+                    echo ""
+                    read -sp "Confirm password: " ADMIN_PASSWORD_CONFIRM
+                    echo ""
+                    
+                    if [ "$ADMIN_PASSWORD" = "$ADMIN_PASSWORD_CONFIRM" ]; then
+                        if [ ${#ADMIN_PASSWORD} -lt 8 ]; then
+                            log_warning "Password should be at least 8 characters long"
+                            continue
+                        fi
+                        break
+                    else
+                        log_warning "Passwords do not match, please try again"
+                    fi
+                done
+            fi
         fi
-    done
+    else
+        log_info "Using admin password from .env"
+    fi
 
     # Generate password hash using Docker
     log_info "Generating password hash (this may take 30-60 seconds)..."
@@ -429,14 +506,6 @@ step_7_generate_authelia_secrets() {
 
     chmod 600 /tmp/authelia_password_hash.tmp
     log_success "Password hash generated successfully"
-
-    # Read admin email from .env or prompt
-    ADMIN_EMAIL=$(grep "^ADMIN_EMAIL=" "$REPO_ENV_FILE" | cut -d'=' -f2)
-    if [ -z "$ADMIN_EMAIL" ] || [ "$ADMIN_EMAIL" = "admin@example.com" ] || [ "$ADMIN_EMAIL" = "your-email@example.com" ]; then
-        prompt_user "Enter admin email address"
-        read -p "> " ADMIN_EMAIL
-        sed -i "s|^ADMIN_EMAIL=.*|ADMIN_EMAIL=${ADMIN_EMAIL}|" "$REPO_ENV_FILE"
-    fi
 
     log_success "Admin user configured: $ADMIN_USER"
     log_success "Password hash generated and will be applied during deployment"
@@ -605,9 +674,30 @@ show_final_summary() {
     echo ""
 }
 
-# Helper function to generate secrets
-generate_secret() {
-    openssl rand -hex 64
+# Helper function to check if a value is a placeholder
+is_placeholder() {
+    local value="$1"
+    case "$value" in
+        "your-generated-key"|"your-jwt-secret-here"|"generate-with-openssl-rand-hex-64"|"YourStrongPassword123!"|"your-email@example.com"|"your-subdomain.duckdns.org"|"192.168.x.x"|"kelin-casa"|"41ef7faa-fc93-41d2-a32f-340fd2b75b2f"|"admin"|"postgres"|"")
+            return 0  # true, it's a placeholder
+            ;;
+        *)
+            return 1  # false, it's a real value
+            ;;
+    esac
+}
+
+# Helper function to get value from .env, using default if placeholder
+get_env_value() {
+    local var_name="$1"
+    local default_value="$2"
+    local value
+    value=$(grep "^${var_name}=" "$REPO_ENV_FILE" 2>/dev/null | cut -d'=' -f2-)
+    if [ -n "$value" ] && ! is_placeholder "$value"; then
+        echo "$value"
+    else
+        echo "$default_value"
+    fi
 }
 
 # Helper function to generate new Authelia secrets
