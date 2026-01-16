@@ -47,8 +47,10 @@ access_control:
     - domain: ha.kelin-casa.duckdns.org
       policy: bypass
     
-    # Bypass for Uptime Kuma (has its own auth + needs initial setup)
-    - domain: status.kelin-casa.duckdns.org
+    # Bypass for development services (they have their own auth or setup)
+    - domain: pgadmin.kelin-casa.duckdns.org
+      policy: bypass
+    - domain: gitlab.kelin-casa.duckdns.org
       policy: bypass
     
     # Protected: All other services require authentication

@@ -1,0 +1,388 @@
+# Productivity and Content Management Services
+# Place in /opt/stacks/productivity/docker-compose.yml
+
+# Service Access URLs:
+# - Nextcloud: https://nextcloud.${DOMAIN}
+# - Mealie: https://mealie.${DOMAIN}
+# - WordPress: https://blog.${DOMAIN}
+# - Gitea: https://git.${DOMAIN}
+# - DokuWiki: https://wiki.${DOMAIN}
+# - BookStack: https://docs.${DOMAIN}
+# - MediaWiki: https://mediawiki.${DOMAIN}
+
+services:
+  # Nextcloud - File sync and collaboration
+  # Access at: https://nextcloud.${DOMAIN}
+  nextcloud:
+    image: nextcloud:28
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1G
+          pids: 2048
+        reservations:
+          cpus: '0.75'
+          memory: 512M
+    container_name: nextcloud
+    restart: unless-stopped
+    networks:
+      - homelab-network
+      - traefik-network
+      - nextcloud-network
+    volumes:
+      - ./nextcloud/html:/var/www/html
+      - /mnt/nextcloud-data:/var/www/html/data  # Large data on separate drive
+    environment:
+      - MYSQL_HOST=nextcloud-db
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - MYSQL_PASSWORD=${NEXTCLOUD_DB_PASSWORD}
+      - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER:-admin}
+      - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD}
+      - NEXTCLOUD_TRUSTED_DOMAINS=nextcloud.${DOMAIN}
+      - TRUSTED_PROXIES=172.18.0.0/16
+      - OVERWRITEPROTOCOL=https
+      - OVERWRITEHOST=nextcloud.${DOMAIN}
+    depends_on:
+      - nextcloud-db
+    labels:
+      - "homelab.category=productivity"
+      - "homelab.description=File sync and collaboration"
+      - "traefik.enable=true"
+      - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.${DOMAIN}`)"
+      - "traefik.http.routers.nextcloud.entrypoints=websecure"
+      - "traefik.http.routers.nextcloud.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.nextcloud.middlewares=authelia@docker"
+      - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
+
+  nextcloud-db:
+    image: mariadb:10.11
+    container_name: nextcloud-db
+    restart: unless-stopped
+    networks:
+      - nextcloud-network
+    volumes:
+      - nextcloud-db-data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${NEXTCLOUD_DB_ROOT_PASSWORD}
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - MYSQL_PASSWORD=${NEXTCLOUD_DB_PASSWORD}
+    command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
+    labels:
+      - "homelab.category=productivity"
+      - "homelab.description=Nextcloud database"
+
+  # Mealie - Recipe manager
+  # Access at: https://mealie.${DOMAIN}
+  mealie:
+    image: ghcr.io/mealie-recipes/mealie:latest
+    container_name: mealie
+    restart: unless-stopped
+    networks:
+      - homelab-network
+      - traefik-network
+    volumes:
+      - ./mealie/data:/app/data
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ}
+      - BASE_URL=https://mealie.${DOMAIN}
+      - DB_ENGINE=sqlite
+    labels:
+      - "homelab.category=productivity"
+      - "homelab.description=Recipe manager and meal planner"
+      - "traefik.enable=true"
+      - "traefik.http.routers.mealie.rule=Host(`mealie.${DOMAIN}`)"
+      - "traefik.http.routers.mealie.entrypoints=websecure"
+      - "traefik.http.routers.mealie.tls.certresolver=letsencrypt"
+      - "traefik.http.services.mealie.loadbalancer.server.port=9000"
+      # No Authelia - family members should access easily
+
+  # WordPress - Blog/website platform
+  # Access at: https://blog.${DOMAIN}
+  wordpress:
+    image: wordpress:latest
+    container_name: wordpress
+    restart: unless-stopped
+    networks:
+      - homelab-network
+      - traefik-network
+      - wordpress-network
+    volumes:
+      - ./wordpress/html:/var/www/html
+    environment:
+      - WORDPRESS_DB_HOST=wordpress-db
+      - WORDPRESS_DB_USER=wordpress
+      - WORDPRESS_DB_PASSWORD=${WORDPRESS_DB_PASSWORD}
+      - WORDPRESS_DB_NAME=wordpress
+    depends_on:
+      - wordpress-db
+    labels:
+      - "homelab.category=productivity"
+      - "homelab.description=Blog and website platform"
+      - "traefik.enable=true"
+      - "traefik.http.routers.wordpress.rule=Host(`wordpress.${DOMAIN}`)"
+      - "traefik.http.routers.wordpress.entrypoints=websecure"
+      - "traefik.http.routers.wordpress.tls.certresolver=letsencrypt"
+      - "traefik.http.services.wordpress.loadbalancer.server.port=80"
+      # No Authelia - public blog
+
+  wordpress-db:
+    image: mariadb:10.11
+    container_name: wordpress-db
+    restart: unless-stopped
+    networks:
+      - wordpress-network
+    volumes:
+      - wordpress-db-data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${WORDPRESS_DB_ROOT_PASSWORD}
+      - MYSQL_DATABASE=wordpress
+      - MYSQL_USER=wordpress
+      - MYSQL_PASSWORD=${WORDPRESS_DB_PASSWORD}
+    labels:
+      - "homelab.category=productivity"
+      - "homelab.description=WordPress database"
+
+  # Gitea - Self-hosted Git service
+  # Access at: https://git.${DOMAIN}
+  gitea:
+    image: gitea/gitea:latest
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+          pids: 512
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    container_name: gitea
+    restart: unless-stopped
+    networks:
+      - homelab-network
+      - traefik-network
+      - gitea-network
+    volumes:
+      - ./gitea/data:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - USER_UID=${PUID:-1000}
+      - USER_GID=${PGID:-1000}
+      - GITEA__database__DB_TYPE=postgres
+      - GITEA__database__HOST=gitea-db:5432
+      - GITEA__database__NAME=gitea
+      - GITEA__database__USER=gitea
+      - GITEA__database__PASSWD=${GITEA_DB_PASSWORD}
+    depends_on:
+      - gitea-db
+    labels:
+      - "homelab.category=productivity"
+      - "homelab.description=Self-hosted Git service"
+      - "traefik.enable=true"
+      - "traefik.http.routers.gitea.rule=Host(`gitea.${DOMAIN}`)"
+      - "traefik.http.routers.gitea.entrypoints=websecure"
+      - "traefik.http.routers.gitea.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.gitea.middlewares=authelia@docker"
+      - "traefik.http.services.gitea.loadbalancer.server.port=3000"
+
+  gitea-db:
+    image: postgres:14-alpine
+    container_name: gitea-db
+    restart: unless-stopped
+    networks:
+      - gitea-network
+    volumes:
+      - gitea-db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=gitea
+      - POSTGRES_PASSWORD=${GITEA_DB_PASSWORD}
+      - POSTGRES_DB=gitea
+    labels:
+      - "homelab.category=productivity"
+      - "homelab.description=Gitea database"
+
+  # DokuWiki - Wiki without database
+  # Access at: https://wiki.${DOMAIN}
+  dokuwiki:
+    image: lscr.io/linuxserver/dokuwiki:latest
+    container_name: dokuwiki
+    restart: unless-stopped
+    networks:
+      - homelab-network
+      - traefik-network
+    volumes:
+      - ./dokuwiki/config:/config
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ}
+    labels:
+      - "homelab.category=productivity"
+      - "homelab.description=File-based wiki"
+      - "traefik.enable=true"
+      - "traefik.http.routers.dokuwiki.rule=Host(`dokuwiki.${DOMAIN}`)"
+      - "traefik.http.routers.dokuwiki.entrypoints=websecure"
+      - "traefik.http.routers.dokuwiki.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.dokuwiki.middlewares=authelia@docker"
+      - "traefik.http.services.dokuwiki.loadbalancer.server.port=80"
+
+  # BookStack - Documentation platform
+  # Access at: https://docs.${DOMAIN}
+  bookstack:
+    image: lscr.io/linuxserver/bookstack:latest
+    container_name: bookstack
+    restart: unless-stopped
+    networks:
+      - homelab-network
+      - traefik-network
+      - bookstack-network
+    volumes:
+      - ./bookstack/config:/config
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - APP_URL=https://bookstack.${DOMAIN}
+      - DB_HOST=bookstack-db
+      - DB_PORT=3306
+      - DB_DATABASE=bookstack
+      - DB_USERNAME=bookstack
+      - DB_PASSWORD=${BOOKSTACK_DB_PASSWORD}
+      - APP_KEY=base64:NsYD8+8MAvtBhK8xw9p8pxQDy4x8aOQi/78M3CsseAw=
+    depends_on:
+      - bookstack-db
+    labels:
+      - "homelab.category=productivity"
+      - "homelab.description=Documentation and wiki platform"
+      - "traefik.enable=true"
+      - "traefik.http.routers.bookstack.rule=Host(`bookstack.${DOMAIN}`)"
+      - "traefik.http.routers.bookstack.entrypoints=websecure"
+      - "traefik.http.routers.bookstack.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.bookstack.middlewares=authelia@docker"
+      - "traefik.http.services.bookstack.loadbalancer.server.port=80"
+
+  bookstack-db:
+    image: mariadb:10.11
+    container_name: bookstack-db
+    restart: unless-stopped
+    networks:
+      - bookstack-network
+    volumes:
+      - bookstack-db-data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${BOOKSTACK_DB_ROOT_PASSWORD}
+      - MYSQL_DATABASE=bookstack
+      - MYSQL_USER=bookstack
+      - MYSQL_PASSWORD=${BOOKSTACK_DB_PASSWORD}
+    labels:
+      - "homelab.category=productivity"
+      - "homelab.description=BookStack database"
+
+  # MediaWiki - Wiki platform
+  # Access at: https://mediawiki.${DOMAIN}
+  mediawiki:
+    image: mediawiki:latest
+    container_name: mediawiki
+    restart: unless-stopped
+    networks:
+      - homelab-network
+      - traefik-network
+      - mediawiki-network
+    volumes:
+      - ./mediawiki/images:/var/www/html/images
+      - ./mediawiki/LocalSettings.php:/var/www/html/LocalSettings.php
+    environment:
+      - MEDIAWIKI_DB_HOST=mediawiki-db
+      - MEDIAWIKI_DB_NAME=mediawiki
+      - MEDIAWIKI_DB_USER=mediawiki
+      - MEDIAWIKI_DB_PASSWORD=${MEDIAWIKI_DB_PASSWORD}
+    depends_on:
+      - mediawiki-db
+    labels:
+      - "homelab.category=productivity"
+      - "homelab.description=MediaWiki platform"
+      - "traefik.enable=true"
+      - "traefik.http.routers.mediawiki.rule=Host(`mediawiki.${DOMAIN}`)"
+      - "traefik.http.routers.mediawiki.entrypoints=websecure"
+      - "traefik.http.routers.mediawiki.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.mediawiki.middlewares=authelia@docker"
+      - "traefik.http.services.mediawiki.loadbalancer.server.port=80"
+
+  mediawiki-db:
+    image: mariadb:10.11
+    container_name: mediawiki-db
+    restart: unless-stopped
+    networks:
+      - mediawiki-network
+    volumes:
+      - mediawiki-db-data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MEDIAWIKI_DB_ROOT_PASSWORD}
+      - MYSQL_DATABASE=mediawiki
+      - MYSQL_USER=mediawiki
+      - MYSQL_PASSWORD=${MEDIAWIKI_DB_PASSWORD}
+    labels:
+      - "homelab.category=productivity"
+      - "homelab.description=MediaWiki database"
+
+  # Jupyter Lab - Interactive computing notebooks
+  # Access at: https://jupyter.${DOMAIN}
+  # Token displayed in logs on first start
+  jupyter:
+    image: jupyter/scipy-notebook:latest
+    container_name: jupyter
+    restart: unless-stopped
+    networks:
+      - homelab-network
+      - traefik-network
+    volumes:
+      - ./config/jupyter:/home/jovyan/work
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - GRANT_SUDO=yes
+    user: root
+    command: start-notebook.sh --NotebookApp.token='${JUPYTER_TOKEN:-changeme}'
+    # Uncomment for GPU support (NVIDIA, requires nvidia-container-toolkit)
+    # runtime: nvidia
+    # devices:
+    #   - /dev/nvidia0:/dev/nvidia0
+    #   - /dev/nvidiactl:/dev/nvidiactl
+    # Add these to environment above:
+    #   - NVIDIA_VISIBLE_DEVICES=all
+    #   - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    labels:
+      - homelab.category=productivity
+      - homelab.description=Jupyter Lab for data science and ML
+      - traefik.enable=true
+      - traefik.http.routers.jupyter.rule=Host(`jupyter.${DOMAIN}`)
+      - traefik.http.routers.jupyter.entrypoints=websecure
+      - traefik.http.routers.jupyter.tls.certresolver=letsencrypt
+      - traefik.http.routers.jupyter.middlewares=authelia@docker
+      - traefik.http.services.jupyter.loadbalancer.server.port=8888
+
+volumes:
+  nextcloud-db-data:
+  wordpress-db-data:
+  gitea-db-data:
+  bookstack-db-data:
+  mediawiki-db-data:
+
+networks:
+  homelab-network:
+    external: true
+  traefik-network:
+    external: true
+  nextcloud-network:
+    driver: bridge
+  wordpress-network:
+    driver: bridge
+  gitea-network:
+    driver: bridge
+  bookstack-network:
+    driver: bridge
+  mediawiki-network:
+    driver: bridge
