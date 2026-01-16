@@ -168,7 +168,7 @@ Your setup uses a **wildcard certificate** (`*.yourdomain.duckdns.org`) that cov
 - **Backup**: Always backup this file - contains your certificates
 - **Renewal**: Automatic, 30 days before expiration
 
-## Testing vs Production Certificates
+# Testing vs Production Certificates
 
 ### Staging Server (For Testing)
 ```yaml
@@ -195,10 +195,14 @@ caServer: https://acme-staging-v02.api.letsencrypt.org/directory
 #       # No caServer = production
 ```
 
-**Production Limits:**
-- 50 certificates per domain per week
-- 5 duplicate certificates per week
-- Trusted by all browsers
+# Production Limits: 
+
+>**This is why you want to use staging certificates for testing purposes!!!**  
+**Always use staging certificates if you are running the setup & deploy scripts repeatedly**
+
+- **50 certificates per domain per week**
+- **5 duplicate certificates per week**
+- **Trusted by all browsers**
 
 ## Certificate Troubleshooting
 
@@ -272,51 +276,34 @@ echo | openssl s_client -connect yourdomain.duckdns.org:443 -servername any-subd
 - **Storage**: Persistent across container restarts
 - **Backup**: Include in your homelab backup strategy
 
-Your homelab is now secure with automatic SSL! 🔒
 
-
-## Post-Setup Next Steps
+# Post-Setup Next Steps
 
 ### Access Your Services
+- **Homepage**: `https://home.yourdomain.duckdns.org`
+  - Great place to start
+  - After configuring your services come back and add widgets to the services with the api keys (optional)
+  - Or ask the AI to find the api keys and add the widgets
+
 - **Dockge**: `https://dockge.yourdomain.duckdns.org`
+  - Deploy & Manage the stacks & services
+
 - **Authelia**: `https://auth.yourdomain.duckdns.org`
+  - Configure 2FA (optional)
+
 - **Traefik**: `https://traefik.yourdomain.duckdns.org`
+  - View/Edit your routing rules
+  - Tip: Let the AI manage the routing
 
-### Set Up 2FA with Authelia
-1. Access `https://auth.yourdomain.duckdns.org`
-2. Set up your admin user
-3. Configure 2FA for security
-
-### Deploy Additional Stacks
-Use Dockge to deploy stacks like:
-- `arr-apps.yml` - Media management (Radarr, Sonarr, Prowlarr, etc.)
-- `media-servers.yml` - Plex and Jellyfin
-- `downloaders.yml` - qBittorrent, Transmission, etc.
-- `monitoring.yml` - Uptime Kuma and metrics
-- `system-tools.yml` - Utility services
-- `automation.yml` - Automated workflows
-
-**Note:** The dashboards stack (Homepage and Homarr) is already deployed during initial setup.
-
-### Set Up Homepage Widgets
-1. Access Homepage dashboard
-2. Get API keys from services
-3. Configure widgets in `/opt/stacks/dashboards/homepage/config/`
-
-## VS Code Integration
-
-1. Install VS Code and GitHub Copilot
-2. Open the AI-Homelab repository
-3. Use AI assistance for:
-   - Adding new services
-   - Configuring Traefik routing
-   - Managing Docker stacks
+- **VS Code**: `https://code.yourdomin.duckdns.org`
+   - Install GitHub Copilot Chat extension
+   - Open the AI-Homelab repository
+   - Use AI assistance for:
+      - Adding new services
+      - Configuring Traefik routing
+      - Managing Docker stacks
 
 ## Debloat or add custom service
->Use VS Code on the server or on your local machine  
-Tell the chat **Agent** what changes to make to the server.
-
-Be sure to choose an LLM that is good at code.
 
 Tell the AI what service you want to install or give it a docker based github repository or docker hub image.
 Use your imagination, the copilot instructions are configured with best practices and a framework to add new services.
@@ -349,6 +336,88 @@ docker compose logs -f
 # Rebuild service
 docker compose up -d --build service-name
 ```
+
+## Managing Docker Stacks
+
+### Removing a Stack
+
+**Important:** Simply deleting the folder is NOT enough! You must properly stop the containers first.
+
+#### Safe Stack Removal Process:
+
+1. **Navigate to the stack directory:**
+   ```bash
+   cd /opt/stacks/stack-name
+   ```
+
+2. **Stop and remove containers:**
+   ```bash
+   docker compose down
+   ```
+
+3. **Optional: Remove volumes (WARNING: This deletes all data!):**
+   ```bash
+   docker compose down -v  # Removes named volumes
+   ```
+
+4. **Optional: Remove images:**
+   ```bash
+   docker compose down --rmi all  # Removes all images used by the stack
+   ```
+
+5. **Delete the stack folder:**
+   ```bash
+   cd /opt/stacks
+   sudo rm -rf stack-name
+   ```
+
+#### Complete Cleanup (Including Orphaned Resources):
+
+```bash
+# Stop stack and remove everything
+cd /opt/stacks/stack-name
+docker compose down -v --remove-orphans
+
+# Remove unused Docker resources
+docker system prune -a --volumes
+
+# Remove specific images if needed
+docker rmi image-name:tag
+```
+
+### Before Removing a Stack:
+
+- **Backup important data** from volumes or bind mounts
+- **Check dependencies** - other services might rely on this stack
+- **Review Traefik routes** - remove any custom routing rules
+- **Check network usage** - stacks might create custom networks
+
+### What Happens If You Just Delete the Folder?
+
+- **Containers keep running** - they'll continue consuming resources
+- **Data remains** - volumes and bind mounts are preserved
+- **Networks persist** - custom networks aren't automatically cleaned up
+- **Zombie processes** - orphaned containers may cause conflicts
+
+**Always use `docker compose down` before deleting the folder!**
+
+### Restoring a Removed Stack:
+
+If you accidentally removed a stack and want it back:
+
+1. **Check if it's in the repository:**
+   ```bash
+   cd ~/AI-Homelab/docker-compose
+   ls -la stack-name.yml
+   ```
+
+2. **Redeploy from Dockge** or run:
+   ```bash
+   cd ~/AI-Homelab/docker-compose
+   cp stack-name.yml /opt/stacks/
+   cd /opt/stacks/stack-name
+   docker compose up -d
+   ```
 
 ## Next Steps
 
