@@ -80,7 +80,7 @@ services:
       - traefik-network
       - formio-network
     environment:
-      - MONGO_URL=mongodb://formio-mongo:27017/formio
+      - MONGO=mongodb://formio-mongo:27017/formio
       - JWT_SECRET=${FORMIO_JWT_SECRET}
       - DB_SECRET=${FORMIO_DB_SECRET}
     depends_on:
@@ -93,7 +93,7 @@ services:
       - "traefik.http.routers.formio.entrypoints=websecure"
       - "traefik.http.routers.formio.tls.certresolver=letsencrypt"
       - "traefik.http.routers.formio.middlewares=authelia@docker"
-      - "traefik.http.services.formio.loadbalancer.server.port=3000"
+      - "traefik.http.services.formio.loadbalancer.server.port=3001"
 
   formio-mongo:
     image: mongo:6.0
