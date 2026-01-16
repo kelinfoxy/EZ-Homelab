@@ -72,7 +72,7 @@ services:
   # Form.io - Form builder
   # Uncomment and configure if formio/formio image becomes available
   formio:
-    image: unfao/formio:latest
+    image: calipseo/formio:latest
     container_name: formio
     restart: unless-stopped
     networks:
@@ -96,7 +96,7 @@ services:
       - "traefik.http.services.formio.loadbalancer.server.port=3001"
 
   formio-mongo:
-    image: mongo:6.0
+    image: mongo:4.4
     container_name: formio-mongo
     restart: unless-stopped
     networks:
