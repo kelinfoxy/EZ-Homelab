@@ -368,7 +368,7 @@ step_7_generate_authelia_secrets() {
             prompt_user "Enter your DuckDNS domain (e.g., yourname.duckdns.org)"
             read -p "> " DOMAIN
         fi
-        escaped_domain=$(printf '%s\n' "$DOMAIN" | sed 's/|/\\|/g')
+        escaped_domain=$(printf '%s\n' "$DOMAIN" | sed 's/|/\\|/g' | tr -d '\n')
         sed -i "s|^DOMAIN=.*|DOMAIN=$escaped_domain|" "$REPO_ENV_FILE"
     fi
 
@@ -388,7 +388,7 @@ step_7_generate_authelia_secrets() {
                 read -p "> " SERVER_IP
             fi
         fi
-        escaped_ip=$(printf '%s\n' "$SERVER_IP" | sed 's/|/\\|/g')
+        escaped_ip=$(printf '%s\n' "$SERVER_IP" | sed 's/|/\\|/g' | tr -d '\n')
         sed -i "s|^SERVER_IP=.*|SERVER_IP=$escaped_ip|" "$REPO_ENV_FILE"
     fi
 
@@ -526,10 +526,10 @@ step_7_generate_authelia_secrets() {
 
     # Save to .env file for persistence
     log_info "Saving credentials to .env file for persistence..."
-    # Escape | in variables for sed
-    escaped_user=$(printf '%s\n' "$ADMIN_USER" | sed 's/|/\\|/g')
-    escaped_email=$(printf '%s\n' "$ADMIN_EMAIL" | sed 's/|/\\|/g')
-    escaped_password=$(printf '%s\n' "$ADMIN_PASSWORD" | sed 's/|/\\|/g')
+    # Escape | in variables for sed and remove newlines
+    escaped_user=$(printf '%s\n' "$ADMIN_USER" | sed 's/|/\\|/g' | tr -d '\n')
+    escaped_email=$(printf '%s\n' "$ADMIN_EMAIL" | sed 's/|/\\|/g' | tr -d '\n')
+    escaped_password=$(printf '%s\n' "$ADMIN_PASSWORD" | sed 's/|/\\|/g' | tr -d '\n')
     sed -i "s|^AUTHELIA_ADMIN_USER=.*|AUTHELIA_ADMIN_USER=$escaped_user|" "$REPO_ENV_FILE"
     sed -i "s|^AUTHELIA_ADMIN_EMAIL=.*|AUTHELIA_ADMIN_EMAIL=$escaped_email|" "$REPO_ENV_FILE"
     sed -i "s|^AUTHELIA_ADMIN_PASSWORD=.*|AUTHELIA_ADMIN_PASSWORD=$escaped_password|" "$REPO_ENV_FILE"
