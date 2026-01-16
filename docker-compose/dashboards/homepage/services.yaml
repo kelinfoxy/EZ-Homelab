@@ -107,36 +107,31 @@
         container: calibre-web
 
 - Media Management:
-    - Sonarr:
-        icon: sonarr.png
-        href: https://sonarr.kelin-casa.duckdns.org
-        description: TV Shows Automation
-        container: sonarr
-
-    - Radarr:
-        icon: radarr.png
-        href: https://radarr.kelin-casa.duckdns.org
-        description: Movies Automation
-        container: radarr
-
-    - Prowlarr:
-        icon: prowlarr.png
-        href: https://prowlarr.kelin-casa.duckdns.org
-        description: Indexer Manager
-        container: prowlarr
-
-    - Readarr:
-        icon: readarr.png
-        href: https://readarr.kelin-casa.duckdns.org
-        description: Books Automation
-        container: readarr
-
     - Lidarr:
         icon: lidarr.png
         href: https://lidarr.kelin-casa.duckdns.org
         description: Music Automation
         container: lidarr
-
+    - Readarr:
+        icon: readarr.png
+        href: https://readarr.kelin-casa.duckdns.org
+        description: Books Automation
+        container: readarr
+    - Radarr:
+        icon: radarr.png
+        href: https://radarr.kelin-casa.duckdns.org
+        description: Movies Automation
+        container: radarr
+    - Sonarr:
+        icon: sonarr.png
+        href: https://sonarr.kelin-casa.duckdns.org
+        description: TV Shows Automation
+        container: sonarr
+    - Prowlarr:
+        icon: prowlarr.png
+        href: https://prowlarr.kelin-casa.duckdns.org
+        description: Indexer Manager
+        container: prowlarr
     - Mylar3:
         icon: mylar.png
         href: https://mylar.kelin-casa.duckdns.org
@@ -239,7 +234,7 @@
 
     - Formio:
         icon: mdi-form-select
-        href: https://formio.kelin-casa.duckdns.org
+        href: https://forms.kelin-casa.duckdns.org
         description: Form Builder
         container: formio
 
@@ -257,11 +252,16 @@
             container: qbittorrent
 
 - Transcoders:
+    - Unmanic:
+        icon: unmanic.png
+        href: https://unmanic.kelin-casa.duckdns.org
+        description: Media Transcoding
+        container: unmanic
     - Tdarr:
         icon: tdarr.png
         href: https://tdarr.kelin-casa.duckdns.org
         description: Media Transcoding
-        container: tdarr
+        container: tdarr-server
 
 - Alternatives:
     - Portainer:
