@@ -303,10 +303,33 @@ echo | openssl s_client -connect yourdomain.duckdns.org:443 -servername any-subd
       - Configuring Traefik routing
       - Managing Docker stacks
 
+- ## Monitoring services
+  - Use Dockge to easily view live container logs
+  - Configure Uptime Kuma to provide uptime tracking with dashboards
+
 ## Debloat or add custom service
 
-Tell the AI what service you want to install or give it a docker based github repository or docker hub image.
+Tell the AI what service you want to install  
+give it a docker based github repository or docker hub image.  
 Use your imagination, the copilot instructions are configured with best practices and a framework to add new services.
+
+### To remove a stack 
+   ```bash
+   cd /opt/stacks/stack-name
+   docker compose down
+   cd ..
+   sudo rm -rf stack-name 
+  ```
+### To remove the volumes/resources for the stack
+   ```bash
+   # Stop stack and remove everything
+   cd /opt/stacks/stack-name
+   docker compose down -v --remove-orphans
+
+   # Remove unused Docker resources
+   docker system prune -a --volumes
+   ```
+
 
 ## Troubleshooting
 
@@ -336,88 +359,6 @@ docker compose logs -f
 # Rebuild service
 docker compose up -d --build service-name
 ```
-
-## Managing Docker Stacks
-
-### Removing a Stack
-
-**Important:** Simply deleting the folder is NOT enough! You must properly stop the containers first.
-
-#### Safe Stack Removal Process:
-
-1. **Navigate to the stack directory:**
-   ```bash
-   cd /opt/stacks/stack-name
-   ```
-
-2. **Stop and remove containers:**
-   ```bash
-   docker compose down
-   ```
-
-3. **Optional: Remove volumes (WARNING: This deletes all data!):**
-   ```bash
-   docker compose down -v  # Removes named volumes
-   ```
-
-4. **Optional: Remove images:**
-   ```bash
-   docker compose down --rmi all  # Removes all images used by the stack
-   ```
-
-5. **Delete the stack folder:**
-   ```bash
-   cd /opt/stacks
-   sudo rm -rf stack-name
-   ```
-
-#### Complete Cleanup (Including Orphaned Resources):
-
-```bash
-# Stop stack and remove everything
-cd /opt/stacks/stack-name
-docker compose down -v --remove-orphans
-
-# Remove unused Docker resources
-docker system prune -a --volumes
-
-# Remove specific images if needed
-docker rmi image-name:tag
-```
-
-### Before Removing a Stack:
-
-- **Backup important data** from volumes or bind mounts
-- **Check dependencies** - other services might rely on this stack
-- **Review Traefik routes** - remove any custom routing rules
-- **Check network usage** - stacks might create custom networks
-
-### What Happens If You Just Delete the Folder?
-
-- **Containers keep running** - they'll continue consuming resources
-- **Data remains** - volumes and bind mounts are preserved
-- **Networks persist** - custom networks aren't automatically cleaned up
-- **Zombie processes** - orphaned containers may cause conflicts
-
-**Always use `docker compose down` before deleting the folder!**
-
-### Restoring a Removed Stack:
-
-If you accidentally removed a stack and want it back:
-
-1. **Check if it's in the repository:**
-   ```bash
-   cd ~/AI-Homelab/docker-compose
-   ls -la stack-name.yml
-   ```
-
-2. **Redeploy from Dockge** or run:
-   ```bash
-   cd ~/AI-Homelab/docker-compose
-   cp stack-name.yml /opt/stacks/
-   cd /opt/stacks/stack-name
-   docker compose up -d
-   ```
 
 ## Next Steps
 
