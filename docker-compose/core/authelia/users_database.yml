@@ -4,9 +4,9 @@
 
 users:
   kelin:
-    displayname: "kelin"
-    password: "$argon2id$v=19$m=65536,t=3,p=4$GirJvw4ecHIr1nnM3ALpwg$7+XjPev3P7AwEveRw5yiq5OmsitXYQp5xR8AxWjDNbI"
+    displayname: "Admin User"
+    password: "$argon2id$v=19$m=65536,t=3,p=4$a+3pIrywP/li9wy9J6UkMA$+3THyJiAnS/gNYnLaYtlsRCaYfgnnxsUyGZ4D3xGnUg"
     email: kelinfoxy@gmail.com
     groups:
       - admins
-      - dev
+      - users

@@ -4,11 +4,28 @@
 # NOTE: Traefik, Authelia, DuckDNS, and Gluetun have their own separate stacks
 # See /opt/stacks/traefik/, /opt/stacks/authelia/, etc.
 
+# Service Access URLs:
+# - Dockge: https://dockge.${DOMAIN}
+# - Portainer: https://portainer.${DOMAIN}
+# - Pi-hole: https://pihole.${DOMAIN}
+# - Dozzle: https://dozzle.${DOMAIN}
+# - Glances: https://glances.${DOMAIN}
+# - Netdata: https://netdata.${DOMAIN}
+
 services:
   # Dockge - Docker Compose Stack Manager (PRIMARY - preferred over Portainer)
   # Access at: https://dockge.${DOMAIN}
   dockge:
     image: louislam/dockge:1
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+          pids: 512
+        reservations:
+          cpus: '0.25'
+          memory: 128M
     container_name: dockge
     restart: unless-stopped
     networks:
@@ -22,6 +39,7 @@ services:
       - /opt/dockge/data:/app/data
     environment:
       - DOCKGE_STACKS_DIR=/opt/stacks
+      - DOCKGE_ENABLE_CONSOLE=true
     labels:
       - "homelab.category=infrastructure"
       - "homelab.description=Docker Compose stack manager (PRIMARY)"
@@ -31,11 +49,21 @@ services:
       - "traefik.http.routers.dockge.tls=true"
       - "traefik.http.routers.dockge.middlewares=authelia@docker"
       - "traefik.http.services.dockge.loadbalancer.server.port=5001"
+      - "x-dockge.url=https://dockge.${DOMAIN}"
 
   # Pi-hole - Network-wide ad blocker and DNS server
   # Access at: https://pihole.${DOMAIN}
   pihole:
     image: pihole/pihole:2024.01.0
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+          pids: 256
+        reservations:
+          cpus: '0.10'
+          memory: 64M
     container_name: pihole
     restart: unless-stopped
     networks:
@@ -45,8 +73,8 @@ services:
       - "53:53/tcp"    # DNS TCP
       - "53:53/udp"    # DNS UDP
     volumes:
-      - /opt/stacks/pihole/etc-pihole:/etc/pihole
-      - /opt/stacks/pihole/etc-dnsmasq.d:/etc/dnsmasq.d
+      - ./pihole/etc-pihole:/etc/pihole
+      - ./pihole/etc-dnsmasq.d:/etc/dnsmasq.d
     environment:
       - TZ=${TZ:-America/New_York}
       - WEBPASSWORD=${PIHOLE_PASSWORD:-changeme}
@@ -63,13 +91,24 @@ services:
       - "traefik.http.routers.pihole.rule=Host(`pihole.${DOMAIN}`)"
       - "traefik.http.routers.pihole.entrypoints=websecure"
       - "traefik.http.routers.pihole.tls=true"
+      - "traefik.http.routers.pihole.tls.certresolver=letsencrypt"
       - "traefik.http.routers.pihole.middlewares=authelia@docker"
       - "traefik.http.services.pihole.loadbalancer.server.port=80"
+      - "x-dockge.url=https://pihole.${DOMAIN}"
 
   # Watchtower - Automatic container updates
-  # Runs silently in background, no UI
+  # TEMPORARILY DISABLED: Docker API version incompatibility with Docker 29.x
+  # Watchtower versions have API compatibility issues:
+  # - v1.7.1: Uses API v1.25 (too old for Docker 29.x which requires min v1.44)
+  # - v1.7.2+/latest: Has issues with API negotiation
+  # Issue tracked for resolution in future release
+  # To enable: Uncomment service below and run: docker compose up -d watchtower
+  # 
+  # Watchtower - Automatic container updates
+  # Monitors and updates Docker containers to latest versions
+  # Runs daily at 4 AM
   watchtower:
-    image: containrrr/watchtower:1.7.1
+    image: containrrr/watchtower:latest
     container_name: watchtower
     restart: unless-stopped
     networks:
@@ -77,12 +116,12 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
+      - DOCKER_API_VERSION=1.52
       - WATCHTOWER_CLEANUP=true
       - WATCHTOWER_INCLUDE_RESTARTING=true
       - WATCHTOWER_SCHEDULE=0 0 4 * * *  # 4 AM daily
       - WATCHTOWER_NOTIFICATIONS=shoutrrr
-      - WATCHTOWER_NOTIFICATION_URL=${WATCHTOWER_NOTIFICATION_URL}
-      - DOCKER_API_VERSION=1.44
+      - WATCHTOWER_NOTIFICATION_URL=${WATCHTOWER_NOTIFICATION_URL:-}
     labels:
       - "homelab.category=infrastructure"
       - "homelab.description=Automatic Docker container updates"
@@ -91,6 +130,15 @@ services:
   # Access at: https://dozzle.${DOMAIN}
   dozzle:
     image: amir20/dozzle:latest
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+          pids: 512
+        reservations:
+          cpus: '0.25'
+          memory: 128M
     container_name: dozzle
     restart: unless-stopped
     networks:
@@ -138,6 +186,15 @@ services:
   # Access at: https://glances.${DOMAIN}
   glances:
     image: nicolargo/glances:latest-full
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+          pids: 512
+        reservations:
+          cpus: '0.25'
+          memory: 128M
     container_name: glances
     restart: unless-stopped
     networks:
@@ -146,7 +203,7 @@ services:
     pid: host
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /opt/stacks/glances/config:/glances/conf
+      - ./glances/config:/glances/conf
     environment:
       - GLANCES_OPT=-w
     labels:
@@ -159,10 +216,48 @@ services:
       - "traefik.http.routers.glances.middlewares=authelia@docker"
       - "traefik.http.services.glances.loadbalancer.server.port=61208"
 
+  # Code Server - VS Code in browser
+  # Access at: https://code.${DOMAIN}
+  code-server:
+    image: lscr.io/linuxserver/code-server:latest
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1G
+          pids: 2048
+        reservations:
+          cpus: '0.75'
+          memory: 512M
+    container_name: code-server
+    restart: unless-stopped
+    networks:
+      - homelab-network
+      - traefik-network
+    volumes:
+      - ./code-server/config:/config
+      - /opt/stacks:/opt/stacks  # Access to all stacks
+      - /mnt:/mnt:ro  # Read-only access to data
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ}
+      - PASSWORD=${CODE_SERVER_PASSWORD}
+      - SUDO_PASSWORD=${CODE_SERVER_SUDO_PASSWORD}
+    labels:
+      - "homelab.category=infrastructure"
+      - "homelab.description=VS Code in browser"
+      - "traefik.enable=true"
+      - "traefik.http.routers.code-server.rule=Host(`code.${DOMAIN}`)"
+      - "traefik.http.routers.code-server.entrypoints=websecure"
+      - "traefik.http.routers.code-server.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.code-server.middlewares=authelia@docker"
+      - "traefik.http.services.code-server.loadbalancer.server.port=8443"
+
 networks:
-  traefik-network:
-    external: true
   homelab-network:
+    external: true
+  traefik-network:
     external: true
   dockerproxy-network:
     external: true

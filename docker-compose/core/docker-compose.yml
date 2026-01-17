@@ -3,6 +3,11 @@
 # Deploy this stack FIRST before any other services
 # Place in /opt/stacks/core/docker-compose.yml
 
+# Service Access URLs:
+# - DuckDNS: No web UI (updates IP automatically)
+# - Traefik: https://traefik.${DOMAIN}
+# - Authelia: https://auth.${DOMAIN}
+
 services:
   # DuckDNS - Dynamic DNS updater
   # Updates your public IP automatically for Let's Encrypt SSL
@@ -10,6 +15,15 @@ services:
     image: lscr.io/linuxserver/duckdns:latest
     container_name: duckdns
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.10'      # Minimal CPU for DNS updates
+          memory: 64M       # Very low memory usage
+          pids: 128         # Minimal processes
+        reservations:
+          cpus: '0.05'
+          memory: 32M
     environment:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
@@ -18,7 +32,7 @@ services:
       - TOKEN=${DUCKDNS_TOKEN}            # Your DuckDNS token
       - UPDATE_IP=ipv4                    # or ipv6, or both
     volumes:
-      - /opt/stacks/core/duckdns:/config
+      - ./duckdns:/config
     labels:
       - "homelab.category=infrastructure"
       - "homelab.description=Dynamic DNS updater"
@@ -31,33 +45,30 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'      # Limit to 50% of one CPU core
+          memory: 256M      # Limit to 256MB RAM
+        reservations:
+          cpus: '0.25'      # Reserve 25% of one CPU core
+          memory: 128M      # Reserve 128MB RAM
     networks:
       - traefik-network
     ports:
       - "80:80"      # HTTP
       - "443:443"    # HTTPS
       - "8080:8080"  # Dashboard (protected with Authelia)
-    dns:
-      - 1.1.1.1
-      - 8.8.8.8
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /opt/stacks/core/traefik/traefik.yml:/traefik.yml:ro
-      - /opt/stacks/core/traefik/dynamic:/dynamic:ro
-      - /opt/stacks/core/traefik/acme.json:/acme.json
+      - ./traefik/traefik.yml:/traefik.yml:ro
+      - ./traefik/dynamic:/dynamic:ro
+      - ./traefik/acme.json:/acme.json
     environment:
       - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}  # If using Cloudflare DNS challenge
       - DUCKDNS_TOKEN=${DUCKDNS_TOKEN}        # If using DuckDNS
-      - LEGO_DISABLE_CNAME_SUPPORT=true       # Disable CNAME support to avoid authoritative NS queries
-      - LEGO_EXPERIMENTAL_DNS_TCP_SUPPORT=true # Use TCP for DNS queries
-      - LEGO_DNS_TIMEOUT=60                   # DNS timeout in seconds
-      - LEGO_DNS_RESOLVERS=1.1.1.1:53,8.8.8.8:53  # Force use of specific DNS resolvers
-      - LEGO_DISABLE_CP=true                  # Disable authoritative nameserver propagation check
-      - DUCKDNS_PROPAGATION_TIMEOUT=600       # Increase propagation timeout to 10 minutes
     labels:
-      - "dockge.managed=true"
-      - "dockge.url=https://traefik.${DOMAIN}"
       - "traefik.enable=true"
       # Dashboard
       - "traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN}`)"
@@ -72,6 +83,7 @@ services:
       - "traefik.http.routers.http-catchall.entrypoints=web"
       - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "x-dockge.url=https://traefik.${DOMAIN}"
     depends_on:
       - duckdns
 
@@ -81,11 +93,19 @@ services:
     image: authelia/authelia:4.37
     container_name: authelia
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'      # Light CPU usage for auth
+          memory: 128M      # Low memory usage
+        reservations:
+          cpus: '0.10'
+          memory: 64M
     networks:
       - traefik-network
     volumes:
-      - /opt/stacks/core/authelia/configuration.yml:/config/configuration.yml:ro
-      - /opt/stacks/core/authelia/users_database.yml:/config/users_database.yml
+      - ./authelia/configuration.yml:/config/configuration.yml:ro
+      - ./authelia/users_database.yml:/config/users_database.yml
       - authelia-data:/data
     environment:
       - TZ=${TZ}
@@ -93,8 +113,6 @@ services:
       - AUTHELIA_SESSION_SECRET=${AUTHELIA_SESSION_SECRET}
       - AUTHELIA_STORAGE_ENCRYPTION_KEY=${AUTHELIA_STORAGE_ENCRYPTION_KEY}
     labels:
-      - "dockge.managed=true"
-      - "dockge.url=https://auth.${DOMAIN}"
       - "traefik.enable=true"
       - "traefik.http.routers.authelia.rule=Host(`auth.${DOMAIN}`)"
       - "traefik.http.routers.authelia.entrypoints=websecure"
@@ -104,41 +122,9 @@ services:
       - "traefik.http.middlewares.authelia.forwardauth.address=http://authelia:9091/api/verify?rd=https://auth.${DOMAIN}"
       - "traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true"
       - "traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email"
+      - "x-dockge.url=https://auth.${DOMAIN}"
     depends_on:
       - traefik
-
-  # Gluetun - VPN client (Surfshark WireGuard)
-  # Routes download clients through VPN for security
-  gluetun:
-    image: qmcgaw/gluetun:latest
-    container_name: gluetun
-    restart: unless-stopped
-    cap_add:
-      - NET_ADMIN
-    devices:
-      - /dev/net/tun:/dev/net/tun
-    networks:
-      - homelab-network
-      - traefik-network
-    ports:
-      - "8888:8888/tcp"  # HTTP proxy
-      - "8388:8388/tcp"  # Shadowsocks
-      - "8388:8388/udp"  # Shadowsocks
-      - "8081:8080"      # qBittorrent web UI
-      - "6881:6881"      # qBittorrent
-      - "6881:6881/udp"  # qBittorrent
-    volumes:
-      - /opt/stacks/core/gluetun:/gluetun
-    environment:
-      - VPN_SERVICE_PROVIDER=surfshark
-      - VPN_TYPE=openvpn
-      - OPENVPN_USER=${SURFSHARK_USERNAME}
-      - OPENVPN_PASSWORD=${SURFSHARK_PASSWORD}
-      - SERVER_COUNTRIES=${VPN_SERVER_COUNTRIES:-Netherlands}
-      - TZ=${TZ}
-    labels:
-      - "homelab.category=infrastructure"
-      - "homelab.description=VPN client for secure downloads"
 
 volumes:
   authelia-data:
@@ -146,6 +132,4 @@ volumes:
 
 networks:
   traefik-network:
-    external: true
-  homelab-network:
     external: true

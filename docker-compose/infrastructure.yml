@@ -49,6 +49,8 @@ services:
       - "traefik.http.routers.dockge.tls=true"
       - "traefik.http.routers.dockge.middlewares=authelia@docker"
       - "traefik.http.services.dockge.loadbalancer.server.port=5001"
+      - "x-dockge.url=https://dockge.${DOMAIN}"
+      - "x-dockge.url=https://dockge.${DOMAIN}"
 
   # Pi-hole - Network-wide ad blocker and DNS server
   # Access at: https://pihole.${DOMAIN}

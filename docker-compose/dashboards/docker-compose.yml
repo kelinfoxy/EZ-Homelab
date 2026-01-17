@@ -2,11 +2,24 @@
 # Homepage and Homarr for homelab dashboards
 # Place in /opt/stacks/dashboards/docker-compose.yml
 
+# Service Access URLs:
+# - Homepage: https://home.${DOMAIN}
+# - Homarr: https://homarr.${DOMAIN}
+
 services:
   # Homepage - Application dashboard (AI-configurable via YAML)
   # Access at: https://home.${DOMAIN}
   homepage:
     image: ghcr.io/gethomepage/homepage:latest
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+          pids: 512
+        reservations:
+          cpus: '0.25'
+          memory: 128M
     container_name: homepage
     restart: unless-stopped
     networks:
@@ -14,9 +27,9 @@ services:
       - traefik-network
       - dockerproxy-network
     volumes:
-      - /opt/stacks/homepage/config:/app/config
-      - /var/run/docker.sock:/var/run/docker.sock  # For Docker integration do not mount RO
-      - /opt/stacks:/opt/stacks:ro  # To discover other stacks
+      - ./homepage:/app/config
+      - /var/run/docker.sock:/var/run/docker.sock # For Docker integration do not mount RO
+      - /opt/stacks:/opt/stacks # To discover other stacks
     environment:
       - PUID=995  # Must be set to the docker user ID
       - PGID=995  # Must be set to the docker group ID
@@ -25,8 +38,6 @@ services:
     labels:
       - "homelab.category=dashboard"
       - "homelab.description=Application dashboard (AI-configurable)"
-      - "dockge.managed=true"
-      - "dockge.url=https://home.${DOMAIN}"
       - "traefik.enable=true"
       - "traefik.http.routers.homepage.rule=Host(`home.${DOMAIN}`)"
       - "traefik.http.routers.homepage.entrypoints=websecure"
@@ -38,29 +49,38 @@ services:
   # Access at: https://homarr.${DOMAIN}
   homarr:
     image: ghcr.io/ajnart/homarr:latest
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+          pids: 512
+        reservations:
+          cpus: '0.25'
+          memory: 128M
     container_name: homarr
     restart: unless-stopped
     networks:
       - homelab-network
       - traefik-network
     volumes:
-      - /opt/stacks/homarr/configs:/app/data/configs
-      - /opt/stacks/homarr/data:/data
-      - /opt/stacks/homarr/icons:/app/public/icons
+      - ./homarr/config:/app/config/configs
+      - ./homarr/data:/data
+      - ./homarr/icons:/app/public/icons
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - TZ=${TZ}
     labels:
       - "homelab.category=dashboard"
       - "homelab.description=Modern homelab dashboard"
-      - "dockge.managed=true"
-      - "dockge.url=https://homarr.${DOMAIN}"
       - "traefik.enable=true"
       - "traefik.http.routers.homarr.rule=Host(`homarr.${DOMAIN}`)"
       - "traefik.http.routers.homarr.entrypoints=websecure"
       - "traefik.http.routers.homarr.tls=true"
       - "traefik.http.routers.homarr.middlewares=authelia@docker"
       - "traefik.http.services.homarr.loadbalancer.server.port=7575"
+      - "x-dockge.url=https://homarr.${DOMAIN}"
+      - "x-dockge.url=https://homarr.${DOMAIN}"
 
 networks:
   homelab-network:

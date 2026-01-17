@@ -42,6 +42,8 @@ services:
       - traefik.http.routers.backrest.tls.certresolver=letsencrypt
       - traefik.http.routers.backrest.middlewares=authelia@docker
       - traefik.http.services.backrest.loadbalancer.server.port=9898
+      - "x-dockge.url=https://backrest.${DOMAIN}"
+      - "x-dockge.url=https://backrest.${DOMAIN}"
   # Duplicati - Backup solution
   # Access at: https://duplicati.${DOMAIN}
   duplicati:

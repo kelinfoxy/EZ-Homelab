@@ -1,0 +1,79 @@
+# Downloaders Stack
+# VPN-routed download clients
+# Place in /opt/stacks/downloaders/docker-compose.yml
+
+# Service Access URLs:
+# - qBittorrent: https://qbit.${DOMAIN}
+
+services:
+  # Gluetun - VPN client (Surfshark)
+  # Routes download clients through VPN for security
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    networks:
+      - homelab-network
+      - traefik-network
+    ports:
+      - "8888:8888/tcp"  # HTTP proxy
+      - "8388:8388/tcp"  # Shadowsocks
+      - "8388:8388/udp"  # Shadowsocks
+      - "8081:8080"      # qBittorrent web UI
+      - "6881:6881"      # qBittorrent
+      - "6881:6881/udp"  # qBittorrent
+    volumes:
+      - ./gluetun:/gluetun
+    environment:
+      - VPN_SERVICE_PROVIDER=surfshark
+      - VPN_TYPE=openvpn
+      - OPENVPN_USER=${SURFSHARK_USERNAME}
+      - OPENVPN_PASSWORD=${SURFSHARK_PASSWORD}
+      - SERVER_COUNTRIES=${VPN_SERVER_COUNTRIES:-Netherlands}
+      - TZ=${TZ}
+    labels:
+      - "homelab.category=downloaders"
+      - "homelab.description=VPN client for secure downloads"
+      - "traefik.enable=true"
+      - "traefik.http.routers.qbittorrent.rule=Host(`qbit.${DOMAIN}`)"
+      - "traefik.http.routers.qbittorrent.entrypoints=websecure"
+      - "traefik.http.routers.qbittorrent.tls=true"
+      - "traefik.http.routers.qbittorrent.middlewares=authelia@docker"
+      - "traefik.http.services.qbittorrent.loadbalancer.server.port=8080"
+
+  # qBittorrent - Torrent client
+  # Routes through Gluetun VPN
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+          pids: 1024
+        reservations:
+          cpus: '0.50'
+          memory: 256M
+    container_name: qbittorrent
+    restart: unless-stopped
+    network_mode: "service:gluetun"  # Routes through VPN in same compose file
+    volumes:
+      - ./qbittorrent/config:/config
+      - /mnt/downloads:/downloads
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ}
+      - WEBUI_PORT=8080
+    depends_on:
+      - gluetun
+
+networks:
+  homelab-network:
+    external: true
+  traefik-network:
+    external: true

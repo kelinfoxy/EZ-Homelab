@@ -264,6 +264,8 @@ services:
       - "traefik.http.routers.bookstack.tls.certresolver=letsencrypt"
       - "traefik.http.routers.bookstack.middlewares=authelia@docker"
       - "traefik.http.services.bookstack.loadbalancer.server.port=80"
+      - "x-dockge.url=https://bookstack.${DOMAIN}"
+      - "x-dockge.url=https://bookstack.${DOMAIN}"
 
   bookstack-db:
     image: mariadb:10.11

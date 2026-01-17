@@ -55,6 +55,8 @@ services:
       - "traefik.http.routers.esphome.tls.certresolver=letsencrypt"
       - "traefik.http.routers.esphome.middlewares=authelia@docker"
       - "traefik.http.services.esphome.loadbalancer.server.port=6052"
+      - "x-dockge.url=https://esphome.${DOMAIN}"
+      - "x-dockge.url=https://esphome.${DOMAIN}"
 
   # TasmoAdmin - Tasmota device manager
   # Access at: https://tasmoadmin.${DOMAIN}
