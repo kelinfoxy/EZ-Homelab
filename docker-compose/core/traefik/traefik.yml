@@ -27,15 +27,13 @@ entryPoints:
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: kelinfoxy@gmail.com
+      email: kelinfoxy@gmail.com  # Will be replaced by deploy script
+      caServer: https://acme-staging-v02.api.letsencrypt.org/directory
       storage: /acme.json
-      # Use DNS challenge for wildcard certificate support
+      # DNS challenge - For wildcard certificates (*.yourdomain.duckdns.org)
+      # Works with DuckDNS - requires DUCKDNS_TOKEN in environment
       dnsChallenge:
         provider: duckdns
-        delayBeforeCheck: 300  # Wait 5 minutes before checking DNS propagation
-        resolvers:
-          - "1.1.1.1:53"
-          - "8.8.8.8:53"
 
 providers:
   docker:

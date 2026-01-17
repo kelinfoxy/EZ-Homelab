@@ -28,6 +28,7 @@ certificatesResolvers:
   letsencrypt:
     acme:
       email: ACME_EMAIL_PLACEHOLDER  # Will be replaced by deploy script
+      caServer: https://acme-staging-v02.api.letsencrypt.org/directory
       storage: /acme.json
       # For testing: Use staging to avoid production rate limits
       # caServer: https://acme-staging-v02.api.letsencrypt.org/directory
