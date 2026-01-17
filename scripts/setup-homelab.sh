@@ -359,6 +359,7 @@ step_7_generate_authelia_secrets() {
     # Load and validate essential environment variables
     log_info "Validating environment variables..."
     DOMAIN=$(get_env_value "DOMAIN" "")
+    echo "DEBUG: DOMAIN='$DOMAIN'"
     if is_placeholder "$DOMAIN" || [ -z "$DOMAIN" ]; then
         if [ "$AUTO_YES" = true ]; then
             log_error "DOMAIN not set in .env and running in --yes mode"
@@ -393,6 +394,7 @@ step_7_generate_authelia_secrets() {
     fi
 
 DUCKDNS_TOKEN=$(get_env_value "DUCKDNS_TOKEN" "")
+echo "DEBUG: DUCKDNS_TOKEN='$DUCKDNS_TOKEN'"
 if is_placeholder "$DUCKDNS_TOKEN" || [ -z "$DUCKDNS_TOKEN" ]; then
     if [ "$AUTO_YES" = true ]; then
         log_error "DUCKDNS_TOKEN not set in .env and running in --yes mode"
@@ -453,41 +455,28 @@ if is_placeholder "$DEFAULT_EMAIL_VALUE"; then
 fi
 
 DEFAULT_PASSWORD_VALUE=$(get_env_value "DEFAULT_PASSWORD" "YourStrongPassword123!")
-if is_placeholder "$DEFAULT_PASSWORD_VALUE" || [ "$AUTO_YES" != true ]; then
+if is_placeholder "$DEFAULT_PASSWORD_VALUE"; then
     if [ "$AUTO_YES" = true ]; then
-        if is_placeholder "$DEFAULT_PASSWORD_VALUE"; then
-            log_warning "Default password not set in .env, generating random password"
-            DEFAULT_PASSWORD_VALUE=$(openssl rand -base64 12)
-            log_info "Generated password: $DEFAULT_PASSWORD_VALUE"
-        else
-            log_info "Using default password from .env"
-        fi
+        log_warning "Default password not set in .env, generating random password"
+        DEFAULT_PASSWORD_VALUE=$(openssl rand -base64 12)
+        log_info "Generated password: $DEFAULT_PASSWORD_VALUE"
     else
-        if ! is_placeholder "$DEFAULT_PASSWORD_VALUE"; then
-            if confirm "Use existing default password from .env?"; then
-                log_info "Using existing default password from .env"
-            else
-                DEFAULT_PASSWORD_VALUE=""
-            fi
-        fi
-        if [ -z "$DEFAULT_PASSWORD_VALUE" ] || is_placeholder "$DEFAULT_PASSWORD_VALUE"; then
-            while true; do
-                read -sp "Enter default password: " DEFAULT_PASSWORD_VALUE
-                echo ""
-                read -sp "Confirm default password: " DEFAULT_PASSWORD_CONFIRM
-                echo ""
-                
-                if [ "$DEFAULT_PASSWORD_VALUE" = "$DEFAULT_PASSWORD_CONFIRM" ]; then
-                    if [ ${#DEFAULT_PASSWORD_VALUE} -lt 8 ]; then
-                        log_warning "Password should be at least 8 characters long"
-                        continue
-                    fi
-                    break
-                else
-                    log_warning "Passwords do not match, please try again"
+        while true; do
+            read -sp "Enter default password: " DEFAULT_PASSWORD_VALUE
+            echo ""
+            read -sp "Confirm default password: " DEFAULT_PASSWORD_CONFIRM
+            echo ""
+            
+            if [ "$DEFAULT_PASSWORD_VALUE" = "$DEFAULT_PASSWORD_CONFIRM" ]; then
+                if [ ${#DEFAULT_PASSWORD_VALUE} -lt 8 ]; then
+                    log_warning "Password should be at least 8 characters long"
+                    continue
                 fi
-            done
-        fi
+                break
+            else
+                log_warning "Passwords do not match, please try again"
+            fi
+        done
     fi
     escaped_default_password=$(printf '%s\n' "$DEFAULT_PASSWORD_VALUE" | sed 's/|/\\|/g' | tr -d '\n')
     sed -i "s|^DEFAULT_PASSWORD=.*|DEFAULT_PASSWORD=$escaped_default_password|" "$REPO_ENV_FILE"
@@ -572,6 +561,21 @@ fi
     sed -i "s|^AUTHELIA_ADMIN_EMAIL=.*|AUTHELIA_ADMIN_EMAIL=$escaped_email|" "$REPO_ENV_FILE"
     sed -i "s|^AUTHELIA_ADMIN_PASSWORD=.*|AUTHELIA_ADMIN_PASSWORD=$escaped_password|" "$REPO_ENV_FILE"
     log_success "Credentials saved to .env file"
+
+    # Check and generate Authelia secrets if needed
+    log_info "Checking Authelia secrets..."
+    CURRENT_JWT=$(get_env_value "AUTHELIA_JWT_SECRET" "")
+    CURRENT_SESSION=$(get_env_value "AUTHELIA_SESSION_SECRET" "")
+    CURRENT_ENCRYPTION=$(get_env_value "AUTHELIA_STORAGE_ENCRYPTION_KEY" "")
+
+    if is_placeholder "$CURRENT_JWT" || [ -z "$CURRENT_JWT" ] || \
+       is_placeholder "$CURRENT_SESSION" || [ -z "$CURRENT_SESSION" ] || \
+       is_placeholder "$CURRENT_ENCRYPTION" || [ -z "$CURRENT_ENCRYPTION" ]; then
+        log_info "Authelia secrets not found or are placeholders, generating new ones..."
+        generate_new_secrets
+    else
+        log_info "Authelia secrets already configured"
+    fi
 
     log_info "Credentials saved for deployment script"
     STEPS_COMPLETED=$((STEPS_COMPLETED + 1))
@@ -717,7 +721,7 @@ show_final_summary() {
 is_placeholder() {
     local value="$1"
     case "$value" in
-        "your-generated-key"|"your-jwt-secret-here"|"generate-with-openssl-rand-hex-64"|"YourStrongPassword123!"|"your-email@example.com"|"your-subdomain.duckdns.org"|"192.168.x.x"|"kelin-casa"|"41ef7faa-fc93-41d2-a32f-340fd2b75b2f"|"admin"|"postgres"|"your-username"|"")
+        "your-generated-key"|"your-jwt-secret-here"|"generate-with-openssl-rand-hex-64"|"YourStrongPassword123!"|"your-email@example.com"|"your-subdomain.duckdns.org"|"192.168.x.x"|"admin"|"postgres"|"your-username"|"your-duckdns-token"|"your-subdomain"|"")
             return 0  # true, it's a placeholder
             ;;
         *)
@@ -746,12 +750,16 @@ generate_secret() {
 
 # Helper function to generate new Authelia secrets
 generate_new_secrets() {
+    echo "DEBUG: Starting generate_new_secrets"
     log_info "Generating new JWT secret..."
     JWT_SECRET=$(generate_secret)
+    echo "DEBUG: JWT_SECRET generated"
     log_info "Generating new session secret..."
     SESSION_SECRET=$(generate_secret)
+    echo "DEBUG: SESSION_SECRET generated"
     log_info "Generating new storage encryption key..."
     ENCRYPTION_KEY=$(generate_secret)
+    echo "DEBUG: ENCRYPTION_KEY generated"
     
     # Update .env file
     escaped_jwt=$(printf '%s\n' "$JWT_SECRET" | sed 's/|/\\|/g')

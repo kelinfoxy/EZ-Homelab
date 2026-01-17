@@ -211,12 +211,6 @@ PYTHON_EOF
             echo ""
             log_warning "SAVE THESE CREDENTIALS!"
             
-            # Save password to file for reference
-            echo "$ADMIN_PASSWORD" > /opt/stacks/core/authelia/ADMIN_PASSWORD.txt
-            chmod 600 /opt/stacks/core/authelia/ADMIN_PASSWORD.txt
-            chown $ACTUAL_USER:$ACTUAL_USER /opt/stacks/core/authelia/ADMIN_PASSWORD.txt
-            log_info "Password also saved to: /opt/stacks/core/authelia/ADMIN_PASSWORD.txt"
-            
             # Save full credentials for later reference
             {
                 echo "Username: $ADMIN_USER"
@@ -230,6 +224,8 @@ PYTHON_EOF
             # Clean up credentials files from setup script
             rm -f /opt/stacks/.setup-temp/authelia_admin_credentials.tmp
             rm -f /opt/stacks/.setup-temp/authelia_password_hash.tmp
+            rm -f /opt/stacks/core/authelia/ADMIN_PASSWORD.txt
+            rm -f /opt/stacks/core/authelia/ADMIN_CREDENTIALS.txt
             rmdir /opt/stacks/.setup-temp 2>/dev/null || true
             log_info "Cleaned up temporary setup files"
         else
