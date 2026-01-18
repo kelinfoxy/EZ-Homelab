@@ -17,15 +17,6 @@ services:
   # Access at: http://server-ip:9090
   prometheus:
     image: prom/prometheus:v2.48.1
-    deploy:
-      resources:
-        limits:
-          cpus: '0.75'
-          memory: 512M
-          pids: 1024
-        reservations:
-          cpus: '0.25'
-          memory: 256M
     container_name: prometheus
     restart: unless-stopped
     networks:
@@ -44,6 +35,7 @@ services:
       - '--web.console.libraries=/etc/prometheus/console_libraries'
       - '--web.console.templates=/etc/prometheus/consoles'
       - '--web.enable-lifecycle'
+    user: "${PUID:-1000}:${PGID:-1000}"
     labels:
       - "homelab.category=monitoring"
       - "homelab.description=Metrics collection and time-series database"
@@ -60,15 +52,6 @@ services:
   # Default credentials: admin / admin (change on first login)
   grafana:
     image: grafana/grafana:10.2.3
-    deploy:
-      resources:
-        limits:
-          cpus: '0.50'
-          memory: 256M
-          pids: 512
-        reservations:
-          cpus: '0.25'
-          memory: 128M
     container_name: grafana
     restart: unless-stopped
     networks:
@@ -153,22 +136,11 @@ services:
       - "traefik.http.routers.cadvisor.tls.certresolver=letsencrypt"
       - "traefik.http.routers.cadvisor.middlewares=authelia@docker"
       - "traefik.http.services.cadvisor.loadbalancer.server.port=8080"
-      - "x-dockge.url=https://cadvisor.${DOMAIN}"
-      - "x-dockge.url=https://cadvisor.${DOMAIN}"
 
   # Uptime Kuma - Uptime monitoring
   # Access at: https://uptime-kuma.${DOMAIN}
   uptime-kuma:
     image: louislam/uptime-kuma:1
-    deploy:
-      resources:
-        limits:
-          cpus: '0.50'
-          memory: 256M
-          pids: 512
-        reservations:
-          cpus: '0.25'
-          memory: 128M
     container_name: uptime-kuma
     restart: unless-stopped
     networks:
@@ -193,15 +165,6 @@ services:
   # Access at: http://server-ip:3100
   loki:
     image: grafana/loki:2.9.3
-    deploy:
-      resources:
-        limits:
-          cpus: '0.75'
-          memory: 512M
-          pids: 1024
-        reservations:
-          cpus: '0.25'
-          memory: 256M
     container_name: loki
     restart: unless-stopped
     networks:
@@ -214,6 +177,7 @@ services:
       - ./config/loki:/etc/loki
       - loki-data:/loki
     command: -config.file=/etc/loki/loki-config.yml
+    user: "${PUID:-1000}:${PGID:-1000}"
     labels:
       - "homelab.category=monitoring"
       - "homelab.description=Log aggregation system"

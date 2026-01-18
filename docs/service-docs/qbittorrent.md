@@ -19,9 +19,9 @@
 **Docker Image:** [linuxserver/qbittorrent](https://hub.docker.com/r/linuxserver/qbittorrent)  
 **Default Stack:** `media.yml`  
 **Network Mode:** Via Gluetun (VPN container)  
-**Web UI:** `http://SERVER_IP:8080` (via Gluetun)  
+**Web UI:** `http://SERVER_IP:8081` (via Gluetun)  
 **Authentication:** Username/password (default: admin/adminadmin)  
-**Ports:** 8080 (WebUI via Gluetun), 6881 (incoming connections via Gluetun)
+**Ports:** 8081 (WebUI via Gluetun), 6881 (incoming connections via Gluetun)
 
 ## What is qBittorrent?
 
@@ -158,7 +158,7 @@ gluetun:
   devices:
     - /dev/net/tun
   ports:
-    - "8080:8080"   # qBittorrent WebUI
+    - "8081:8080"   # qBittorrent WebUI (host:container)
     - "6881:6881"   # qBittorrent incoming
     - "6881:6881/udp"
   environment:
@@ -181,7 +181,7 @@ qbittorrent:
     - PUID=1000
     - PGID=1000
     - TZ=America/New_York
-    - WEBUI_PORT=8080
+    - WEBUI_PORT=8081
   volumes:
     - /opt/stacks/media/qbittorrent/config:/config
     - /mnt/downloads:/downloads
@@ -191,7 +191,7 @@ qbittorrent:
 - `network_mode: "service:gluetun"` routes all traffic through VPN
 - Ports exposed on Gluetun, not qBittorrent
 - No internet access if VPN down (kill switch)
-- Access via `http://SERVER_IP:8080` (Gluetun's port)
+- Access via `http://SERVER_IP:8081` (Gluetun's port)
 
 ### Standalone Configuration (without VPN - NOT RECOMMENDED)
 
@@ -201,7 +201,7 @@ qbittorrent:
   container_name: qbittorrent
   restart: unless-stopped
   ports:
-    - "8080:8080"
+    - "8081:8080"
     - "6881:6881"
     - "6881:6881/udp"
   environment:
@@ -238,7 +238,7 @@ qbittorrent:
    ```
 
 4. **Access Web UI:**
-   - Navigate to: `http://SERVER_IP:8080`
+   - Navigate to: `http://SERVER_IP:8081`
    - Username: `admin`
    - Password: From logs above
 
@@ -542,7 +542,7 @@ docker logs qbittorrent | tail -20
 docker logs gluetun | grep -i "connected"
 
 # Test access
-curl http://localhost:8080
+curl http://localhost:8081
 ```
 
 ### Slow Download Speeds
