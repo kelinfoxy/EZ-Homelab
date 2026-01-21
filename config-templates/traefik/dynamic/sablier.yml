@@ -1,0 +1,309 @@
+http:
+  middlewares:
+    sablier-jarvis-arr:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: jarvis-arr
+          sessionDuration: 30m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Arr Apps
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-jarvis-backrest:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: jarvis-backrest
+          sessionDuration: 30m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Backrest
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-jarvis-bookstack:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: jarvis-bookstack
+          sessionDuration: 30m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Bookstack
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-jarvis-jellyfin:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: jarvis-jellyfin
+          sessionDuration: 30m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Jellyfin
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-jarvis-calibre-web:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: jarvis-calibre-web
+          sessionDuration: 30m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Calibre Web
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-jarvis-code-server:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: jarvis-code-server
+          sessionDuration: 30m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Code Server
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-jarvis-bitwarden:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: jarvis-bitwarden
+          sessionDuration: 30m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: bitwarden
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-jarvis-wordpress:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: jarvis-wordpress
+          sessionDuration: 30m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: wordpress
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-jarvis-nextcloud:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: jarvis-nextcloud
+          sessionDuration: 30m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: NextCloud
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-jarvis-mediawiki:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: jarvis-mediawiki
+          sessionDuration: 30m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: mediawiki
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-jarvis-mealie:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: jarvis-mealie
+          sessionDuration: 30m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Mealie
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-jarvis-gitea:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: jarvis-gitea
+          sessionDuration: 30m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Gitea
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-jarvis-formio:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: jarvis-formio
+          sessionDuration: 30m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: FormIO
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-jarvis-dozzle:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: jarvis-dozzle
+          sessionDuration: 30m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: dozzle
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-jarvis-duplicati:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: jarvis-duplicati
+          sessionDuration: 30m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Duplicati
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-jarvis-glances:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: jarvis-glances
+          sessionDuration: 30m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Glances
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-jarvis-homarr:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: jarvis-homarr
+          sessionDuration: 30m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Homarr
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-jarvis-komodo:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: jarvis-komodo
+          sessionDuration: 30m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Komodo
+            theme: ghost
+            show-details-by-default: true
+
+
+    sablier-jarvis-kopia:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: jarvis-kopia
+          sessionDuration: 30m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Kopia
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-jarvis-openkm:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: jarvis-openkm
+          sessionDuration: 30m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: OpenKM
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-jarvis-openwebui:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: jarvis-openwebui
+          sessionDuration: 30m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: OpenWebUI
+            theme: ghost
+            show-details-by-default: true
+            
+    sablier-jarvis-pulse:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: jarvis-pulse
+          sessionDuration: 30m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Pulse
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-jarvis-tdarr:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: jarvis-tdarr
+          sessionDuration: 30m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Tdarr
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-jarvis-unmanic:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: jarvis-unmanic
+          sessionDuration: 30m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Unmanic
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-jarvis-dokuwiki:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: jarvis-dokuwiki  
+          sessionDuration: 30m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: DokuWiki
+            theme: ghost
+            show-details-by-default: true
+
+    authelia:
+      forwardauth:
+        address: http://authelia:9091/api/verify?rd=https://auth.${DOMAIN}/
+        authResponseHeaders:
+          - X-Secret
+        trustForwardHeader: true

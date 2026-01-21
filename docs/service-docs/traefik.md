@@ -502,3 +502,16 @@ Traefik is the heart of your homelab's networking infrastructure. It:
 - Scales from simple to complex setups
 
 Understanding Traefik is crucial for managing your homelab effectively. Take time to explore the dashboard and understand how routing works - it will make troubleshooting and adding new services much easier.
+
+## Related Services
+
+- **[Authelia](authelia.md)** - SSO authentication that integrates with Traefik
+- **[Sablier](sablier.md)** - Lazy loading that works with Traefik routing
+- **[DuckDNS](duckdns.md)** - Dynamic DNS for SSL certificate validation
+- **[Gluetun](gluetun.md)** - VPN routing that can work alongside Traefik
+
+## See Also
+
+- **[Traefik Labels Guide](../docker-guidelines.md#traefik-label-patterns)** - How to configure services for Traefik
+- **[SSL Certificate Setup](../getting-started.md#notes-about-ssl-certificates-from-letsencrypt-with-duckdns)** - How SSL certificates work with Traefik
+- **[External Host Proxying](../proxying-external-hosts.md)** - Route non-Docker services through Traefik

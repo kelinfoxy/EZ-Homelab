@@ -100,7 +100,7 @@ AI will suggest `/mnt/` when data may exceed 50GB or grow continuously.
 
 ## Traefik and Authelia Integration
 
-### Every Service Needs Traefik Labels
+### Every Local (on the same server) Service Needs Traefik Labels
 
 Standard pattern for all services:
 
@@ -125,12 +125,24 @@ services:
       # Enable Let's Encrypt
       - "traefik.http.routers.myservice.tls.certresolver=letsencrypt"
       
-      # Add Authelia SSO (if needed)
+      # Add Authelia SSO (if needed) - comment out to disable SSO
       - "traefik.http.routers.myservice.middlewares=authelia@docker"
       
       # Specify port (if not default 80)
       - "traefik.http.services.myservice.loadbalancer.server.port=8080"
+      
+      # Optional: Sablier lazy loading (comment out to disable)
+      # - "sablier.enable=true"
+      # - "sablier.group=core-myservice"
+      # - "sablier.start-on-demand=true"
 ```
+
+### If Traefik is on a Remote Server, configure routes & services on the Remote Server
+
+Add a yaml file to the traefik/dynamic folder for each remote server
+
+Add a section under routers: and a section on services: for each service
+
 
 ### When to Use Authelia SSO
 
@@ -412,6 +424,46 @@ mv docker-compose/service.yml.backup docker-compose/service.yml
 
 # Restart with old configuration
 docker compose -f docker-compose/service.yml up -d
+```
+
+### Common Modifications
+
+**Toggle SSO**: Comment/uncomment the Authelia middleware label:
+```yaml
+# Enable SSO
+- "traefik.http.routers.service.middlewares=authelia@docker"
+
+# Disable SSO (comment out)
+# - "traefik.http.routers.service.middlewares=authelia@docker"
+```
+
+**Toggle Lazy Loading**: Comment/uncomment Sablier labels:
+```yaml
+# Enable lazy loading
+- "sablier.enable=true"
+- "sablier.group=core-service"
+- "sablier.start-on-demand=true"
+
+# Disable lazy loading (comment out)
+# - "sablier.enable=true"
+# - "sablier.group=core-service"
+# - "sablier.start-on-demand=true"
+```
+
+**Change Port**: Update the loadbalancer server port:
+```yaml
+- "traefik.http.services.service.loadbalancer.server.port=8080"
+```
+
+**Add VPN Routing**: Change network mode and update Gluetun ports:
+```yaml
+network_mode: "service:gluetun"
+# Add port mapping in Gluetun service
+```
+
+**Update Subdomain**: Modify the Host rule:
+```yaml
+- "traefik.http.routers.service.rule=Host(`newservice.${DOMAIN}`)"
 ```
 
 ## Naming Conventions

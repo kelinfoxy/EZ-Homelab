@@ -588,3 +588,15 @@ Authelia is your homelab's security layer. It:
 - Integrates seamlessly with Traefik
 
 Setting up Authelia properly is one of the most important security steps for your homelab. Take time to understand access control rules and test your configuration thoroughly. Always keep the `users_database.yml` and `db.sqlite3` backed up, as they contain critical authentication data.
+
+## Related Services
+
+- **[Traefik](traefik.md)** - Reverse proxy that integrates with Authelia for authentication
+- **[DuckDNS](duckdns.md)** - Dynamic DNS required for SSL certificates
+- **[Sablier](sablier.md)** - Lazy loading that can work with Authelia-protected services
+
+## See Also
+
+- **[SSO Bypass Guide](../docker-guidelines.md#when-to-use-authelia-sso)** - When to disable authentication for services
+- **[2FA Setup](../getting-started.md#set-up-2fa-with-authelia)** - Enable two-factor authentication
+- **[Access Control Rules](../docker-guidelines.md#authelia-bypass-example-jellyfin)** - Configure bypass rules for specific services

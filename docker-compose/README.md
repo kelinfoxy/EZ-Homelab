@@ -100,9 +100,39 @@ PGID=1000
 TZ=America/New_York
 USERDIR=/home/username/homelab
 DATADIR=/mnt/data
+
 ```
 
 Never commit `.env` files to git! Use `.env.example` as a template instead.
+
+## Labels
+
+### To enable Authelia SSO
+```yaml
+
+
+```
+
+### Traefik routing labels
+
+If Traekif is on the same server add these labels.
+```yaml
+
+```
+
+>If Traefik is on a seperate server, don't use traekfik labels in compose files, use an external host yaml file.
+
+
+### Sablier middleware labels
+
+Add these labels to enable ondemand functionality.
+```yaml
+    labels:
+      - sablier.enable=true
+      - sablier.group=<server>-<service name>
+      - sablier.start-on-demand=true
+      
+```
 
 ## Best Practices
 

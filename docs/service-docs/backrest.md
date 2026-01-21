@@ -1,151 +1,244 @@
-# Backrest - Backup Solution
+# Backrest - Comprehensive Backup Solution
 
-## Table of Contents
-- [Overview](#overview)
-- [What is Backrest?](#what-is-backrest)
-- [Why Use Backrest?](#why-use-backrest)
-- [Configuration in AI-Homelab](#configuration-in-ai-homelab)
-- [Official Resources](#official-resources)
-- [Docker Configuration](#docker-configuration)
+**Category:** Backup & Recovery
+
+**Description:** Backrest is a web-based UI for Restic, providing scheduled backups, retention policies, and a beautiful interface for managing backups across multiple repositories and destinations. It serves as the default backup strategy for AI-Homelab.
+
+**Docker Image:** `garethgeorge/backrest:latest`
+
+**Documentation:** [Backrest GitHub](https://github.com/garethgeorge/backrest)
 
 ## Overview
 
-**Category:** Backup & Recovery  
-**Docker Image:** [garethgeorge/backrest](https://hub.docker.com/r/garethgeorge/backrest)  
-**Default Stack:** `utilities.yml`  
-**Web UI:** `http://SERVER_IP:9898`  
-**Backend:** Restic  
-**Ports:** 9898
+### What is Backrest?
+Backrest (latest: v1.10.1) is a web-based UI for Restic, built with Go and SvelteKit. It simplifies Restic management:
+- **Web Interface**: Create repos, plans, and monitor backups.
+- **Automation**: Scheduled backups, hooks (pre/post commands).
+- **Integration**: Runs Restic under the hood.
+- **Features**: Multi-repo support, retention policies, notifications.
 
-## What is Backrest?
+### What is Restic?
+Restic (latest: v0.18.1) is a modern, open-source backup program written in Go. It provides:
+- **Deduplication**: Efficiently stores only changed data.
+- **Encryption**: All data is encrypted with AES-256.
+- **Snapshots**: Point-in-time backups with metadata.
+- **Cross-Platform**: Works on Linux, macOS, Windows.
+- **Backends**: Supports local, SFTP, S3, etc.
+- **Features**: Compression, locking, pruning, mounting snapshots.
 
-Backrest is a web UI and orchestration layer for Restic, a powerful backup tool. It provides scheduled backups, retention policies, and a beautiful interface for managing backups across multiple repositories and destinations. Think of it as a user-friendly wrapper around Restic's power.
+## Configuration
 
-### Key Features
-- **Web Interface:** Manage backups visually
-- **Multiple Repos:** Backup to different locations
-- **Schedules:** Cron-based automatic backups
-- **Retention Policies:** Keep last N backups
-- **Compression:** Automatic compression
-- **Deduplication:** Save storage space
-- **Encryption:** AES-256 encryption
-- **Destinations:** Local, S3, B2, SFTP, WebDAV
-- **Notifications:** Alerts on failure
-- **Browse & Restore:** Visual file restoration
+### Environment Variables
 
-## Why Use Backrest?
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `BACKREST_DATA` | Internal data directory | `/data` |
+| `BACKREST_CONFIG` | Configuration file path | `/config/config.json` |
+| `BACKREST_UI_CONFIG` | UI configuration JSON | `{"baseURL": "https://backrest.${DOMAIN}"}` |
 
-1. **Easy Backups:** Simple web interface
-2. **Restic Power:** Proven backup engine
-3. **Automated:** Set and forget
-4. **Multiple Destinations:** Flexibility
-5. **Encrypted:** Secure backups
-6. **Deduplicated:** Efficient storage
-7. **Free & Open Source:** No cost
+### Ports
 
-## Configuration in AI-Homelab
+- **9898** - Web UI port
 
+### Volumes
+
+- `./data:/data` - Backrest internal data and repositories
+- `./config:/config` - Configuration files
+- `./cache:/cache` - Restic cache for performance
+- `/var/lib/docker/volumes:/docker_volumes:ro` - Access to Docker volumes
+- `/opt/stacks:/opt/stacks:ro` - Access to service configurations
+- `/var/run/docker.sock:/var/run/docker.sock` - Docker API access for hooks
+
+## Usage
+
+### Accessing Backrest
+- **URL**: `https://backrest.${DOMAIN}`
+- **Authentication**: Via Authelia SSO
+- **UI Sections**: Repos, Plans, Logs
+
+### Managing Repositories
+Repositories store your backups. Create one for your main backup location.
+
+#### Create Repository
+1. Go to **Repos** → **Add Repo**
+2. **Name**: `main-backup-repo`
+3. **Storage**: Choose backend (Local, SFTP, S3, etc.)
+4. **Password**: Set strong encryption password
+5. **Initialize**: Backrest runs `restic init`
+
+### Creating Backup Plans
+Plans define what, when, and how to back up.
+
+#### Database Backup Plan (Recommended)
+```json
+{
+  "id": "database-backup",
+  "repo": "main-backup-repo",
+  "paths": [
+    "/docker_volumes/*_mysql/_data",
+    "/docker_volumes/*_postgres/_data"
+  ],
+  "schedule": {
+    "maxFrequencyDays": 1
+  },
+  "hooks": [
+    {
+      "actionCommand": {
+        "command": "for vol in $(docker volume ls -q | grep '_mysql$'); do docker ps -q --filter volume=$vol | xargs -r docker stop || true; done"
+      },
+      "conditions": ["CONDITION_SNAPSHOT_START"]
+    },
+    {
+      "actionCommand": {
+        "command": "for vol in $(docker volume ls -q | grep '_mysql$'); do docker ps -a -q --filter volume=$vol | xargs -r docker start || true; done"
+      },
+      "conditions": ["CONDITION_SNAPSHOT_END"]
+    }
+  ],
+  "retention": {
+    "policyKeepLastN": 30
+  }
+}
 ```
-/opt/stacks/utilities/backrest/data/      # Backrest config
-/opt/stacks/utilities/backrest/cache/     # Restic cache
+
+#### Service Configuration Backup Plan
+```json
+{
+  "id": "config-backup",
+  "repo": "main-backup-repo",
+  "paths": [
+    "/opt/stacks"
+  ],
+  "excludes": [
+    "**/cache",
+    "**/tmp",
+    "**/log"
+  ],
+  "schedule": {
+    "maxFrequencyDays": 1
+  },
+  "retention": {
+    "policyKeepLastN": 14
+  }
+}
 ```
 
-## Official Resources
+### Running Backups
+- **Manual**: Plans → Select plan → **Run Backup Now**
+- **Scheduled**: Runs automatically per plan schedule
+- **Monitor**: Check **Logs** tab for status and errors
 
-- **GitHub:** https://github.com/garethgeorge/backrest
-- **Restic:** https://restic.net
+### Restoring Data
+1. Go to **Repos** → Select repo → **Snapshots**
+2. Choose snapshot → **Restore**
+3. Select paths/files → Set target directory
+4. Run restore operation
 
-## Docker Configuration
+## Best Practices
+
+### Security
+- Use strong repository passwords
+- Limit Backrest UI access via Authelia
+- Store passwords securely (not in config files)
+
+### Performance
+- Schedule backups during low-usage hours
+- Use compression for large backups
+- Monitor repository size growth
+
+### Retention
+- Keep 30 daily snapshots for critical data
+- Keep 14 snapshots for configurations
+- Regularly prune old snapshots
+
+### Testing
+- Test restore procedures regularly
+- Verify backup integrity
+- Document restore processes
+
+## Integration with AI-Homelab
+
+### Homepage Dashboard
+Add Backrest to your Homepage dashboard:
 
 ```yaml
-backrest:
-  image: garethgeorge/backrest:latest
-  container_name: backrest
-  restart: unless-stopped
-  networks:
-    - traefik-network
-  ports:
-    - "9898:9898"
-  environment:
-    - BACKREST_DATA=/data
-    - BACKREST_CONFIG=/config/config.json
-    - XDG_CACHE_HOME=/cache
-  volumes:
-    - /opt/stacks/utilities/backrest/data:/data
-    - /opt/stacks/utilities/backrest/config:/config
-    - /opt/stacks/utilities/backrest/cache:/cache
-    - /opt/stacks:/backup-source:ro  # What to backup
-  labels:
-    - "traefik.enable=true"
-    - "traefik.http.routers.backrest.rule=Host(`backrest.${DOMAIN}`)"
+# In homepage/services.yaml
+- Infrastructure:
+    - Backrest:
+        icon: backup.png
+        href: https://backrest.${DOMAIN}
+        description: Backup management
+        widget:
+          type: iframe
+          url: https://backrest.${DOMAIN}
 ```
 
-## Setup
+### Monitoring
+Monitor backup success with Uptime Kuma or Grafana alerts.
 
-1. **Start Container:**
-   ```bash
-   docker compose up -d backrest
-   ```
+## Troubleshooting
 
-2. **Access UI:** `http://SERVER_IP:9898`
+### Common Issues
 
-3. **Create Repository:**
-   - Add Repository
-   - Location: Local, S3, B2, etc.
-   - Encryption password
-   - Initialize repository
+**Backup Failures**
+- Check repository access and credentials
+- Verify source paths exist and are readable
+- Review hook commands for syntax errors
 
-4. **Create Plan:**
-   - Add backup plan
-   - Source: `/backup-source` (mounted volume)
-   - Repository: Select created repo
-   - Schedule: `0 2 * * *` (2 AM daily)
-   - Retention: Keep last 7 daily, 4 weekly, 12 monthly
+**Hook Issues**
+- Ensure Docker socket is accessible
+- Check that containers can be stopped/started
+- Verify hook commands work manually
 
-5. **Run Backup:**
-   - Manual: Click "Backup Now"
-   - Or wait for schedule
+**Performance Problems**
+- Check available disk space
+- Monitor CPU/memory usage during backups
+- Consider excluding large, frequently changing files
 
-6. **Restore:**
-   - Browse backups
-   - Select snapshot
-   - Browse files
-   - Restore to location
+**Restore Issues**
+- Ensure target directory exists and is writable
+- Check file permissions
+- Verify snapshot integrity
 
-## Summary
+## Advanced Features
 
-Backrest provides web-based backup management offering:
-- Visual Restic interface
-- Scheduled automated backups
-- Multiple backup destinations
-- Retention policies
-- Encryption and deduplication
-- Easy restore
-- Free and open-source
+### Multiple Repositories
+- **Local**: For fast, local backups
+- **Remote**: SFTP/S3 for offsite storage
+- **Hybrid**: Local for speed, remote for safety
 
-**Perfect for:**
-- Homelab backups
-- Docker volume backups
-- Off-site backup management
-- Automated backup schedules
-- Visual backup management
+### Custom Hooks
+```bash
+# Pre-backup: Stop services
+docker compose -f /opt/stacks/core/docker-compose.yml stop
 
-**Key Points:**
-- Built on Restic
-- Web interface
-- Supports many backends
-- Encryption by default
-- Deduplication saves space
-- Cron-based scheduling
-- Easy restore interface
+# Post-backup: Start services
+docker compose -f /opt/stacks/core/docker-compose.yml start
+```
 
-**Remember:**
-- Mount volumes to backup
-- Set retention policies
-- Test restores regularly
-- Off-site backup recommended
-- Keep repository password safe
-- Monitor backup success
-- Schedule during low usage
+### Notifications
+Configure webhooks in Backrest settings for backup status alerts.
 
-Backrest makes Restic backups manageable!
+## Migration from Other Solutions
+
+### From Duplicati
+1. Export Duplicati configurations
+2. Create equivalent Backrest plans
+3. Test backups and restores
+4. Decommission Duplicati
+
+### From Manual Scripts
+1. Identify current backup sources and schedules
+2. Create Backrest plans with same parameters
+3. Add appropriate hooks for service management
+4. Test and validate
+
+## Related Documentation
+
+- **[Backup Strategy Guide](../Restic-BackRest-Backup-Guide.md)** - Comprehensive setup and usage guide
+- **[Docker Guidelines](../docker-guidelines.md)** - Volume management and persistence
+- **[Quick Reference](../quick-reference.md)** - Command reference and troubleshooting
+
+---
+
+**Backrest provides enterprise-grade backup capabilities with an intuitive web interface, making it the perfect default backup solution for AI-Homelab.**

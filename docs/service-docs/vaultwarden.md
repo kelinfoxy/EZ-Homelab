@@ -209,7 +209,7 @@ tar -czf vaultwarden-backup-$(date +%Y%m%d).tar.gz \
 # Start container
 docker start vaultwarden
 
-# Or use Backrest/Duplicati for automatic backups
+# Or use Backrest (default) for automatic backups
 ```
 
 ## Summary

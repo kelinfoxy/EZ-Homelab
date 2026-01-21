@@ -1,6 +1,6 @@
 # AI Homelab Management Assistant
 
-You are an AI assistant for the **AI-Homelab** project - a production-ready Docker homelab infrastructure managed through GitHub Copilot in VS Code. This system deploys 60+ services with automated SSL, SSO authentication, and VPN routing using a file-based, AI-manageable architecture.
+You are an AI assistant for the **AI-Homelab** project - a production-ready Docker homelab infrastructure managed through GitHub Copilot in VS Code. This system deploys 70+ services with automated SSL, SSO authentication, and VPN routing using a file-based, AI-manageable architecture.
 
 ## Project Architecture
 
@@ -10,6 +10,7 @@ The **core stack** (`/opt/stacks/core/`) contains essential services that must r
 - **Traefik**: Reverse proxy with automatic HTTPS termination (labels-based routing, file provider for external hosts)
 - **Authelia**: SSO authentication (auto-generated secrets, file-based user database)
 - **Gluetun**: VPN client (Surfshark WireGuard/OpenVPN) for download services
+- **Sablier**: Lazy loading service for on-demand container startup (saves resources)
 
 ### Deployment Model
 - **Two-script setup**: `setup-homelab.sh` (system prep, Docker install, secrets generation) → `deploy-homelab.sh` (automated deployment)
@@ -19,7 +20,17 @@ The **core stack** (`/opt/stacks/core/`) contains essential services that must r
 
 ### File Structure Standards
 ```
-/opt/stacks/
+docker-compose/
+├── core.yml                    # Main compose files (legacy)
+├── infrastructure.yml
+├── media.yml
+└── core/                       # New organized structure
+    ├── docker-compose.yml      # Individual stack configs
+    ├── authelia/
+    ├── duckdns/
+    └── traefik/
+
+/opt/stacks/                    # Runtime location (created by scripts)
 ├── core/                      # DuckDNS, Traefik, Authelia, Gluetun (deploy FIRST)
 ├── infrastructure/            # Dockge, Pi-hole, monitoring tools
 ├── dashboards/                # Homepage (AI-configured), Homarr
@@ -52,21 +63,40 @@ labels:
   - "traefik.http.routers.SERVICE.rule=Host(`SERVICE.${DOMAIN}`)"
   - "traefik.http.routers.SERVICE.entrypoints=websecure"
   - "traefik.http.routers.SERVICE.tls.certresolver=letsencrypt"  # Uses wildcard cert
-  - "traefik.http.routers.SERVICE.middlewares=authelia@docker"    # SSO protection
+  - "traefik.http.routers.SERVICE.middlewares=authelia@docker"    # SSO protection (comment out to disable)
   - "traefik.http.services.SERVICE.loadbalancer.server.port=PORT"  # If not default
+  - "x-dockge.url=https://SERVICE.${DOMAIN}"  # Service discovery in Dockge
+  # Optional: Sablier lazy loading (comment out to disable)
+  # - "sablier.enable=true"
+  # - "sablier.group=core-SERVICE"
+  # - "sablier.start-on-demand=true"
 ```
 
-### 3. Storage Strategy
+### 3. Resource Management
+Apply resource limits to prevent resource exhaustion:
+```yaml
+deploy:
+  resources:
+    limits:
+      cpus: '2.0'      # Max CPU cores
+      memory: 4G       # Max memory
+      pids: 1024      # Max processes
+    reservations:
+      cpus: '0.5'      # Guaranteed CPU
+      memory: 1G       # Guaranteed memory
+```
+
+### 4. Storage Strategy
 - **Configs**: Bind mount `./service/config:/config` relative to stack directory
 - **Small data**: Named volumes (databases, app data <50GB)
 - **Large data**: External mounts `/mnt/media`, `/mnt/downloads` (user must configure)
 - **Secrets**: `.env` files in stack directories (auto-copied from `~/AI-Homelab/.env`)
 
-### 4. LinuxServer.io Preference
+### 5. LinuxServer.io Preference
 - Use `lscr.io/linuxserver/*` images when available (PUID/PGID support for permissions)
 - Standard environment: `PUID=1000`, `PGID=1000`, `TZ=${TZ}`
 
-### 5. External Host Proxying
+### 6. External Host Proxying
 Proxy non-Docker services (Raspberry Pi, NAS) via Traefik file provider:
 - Create routes in `/opt/stacks/core/traefik/dynamic/external.yml`
 - Example pattern documented in `docs/proxying-external-hosts.md`
@@ -133,6 +163,14 @@ services:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
       - TZ=${TZ}
+    deploy:                              # Resource limits (recommended)
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.service-name.rule=Host(`service.${DOMAIN}`)"
@@ -140,6 +178,7 @@ services:
       - "traefik.http.routers.service-name.tls.certresolver=letsencrypt"
       - "traefik.http.routers.service-name.middlewares=authelia@docker"  # SSO enabled by default
       - "traefik.http.services.service-name.loadbalancer.server.port=8080"  # If non-standard port
+      - "x-dockge.url=https://service.${DOMAIN}"  # Service discovery
       - "homelab.category=category-name"
       - "homelab.description=Service description"
 
@@ -190,6 +229,11 @@ labels:
   - "traefik.http.routers.jellyfin.entrypoints=websecure"
   - "traefik.http.routers.jellyfin.tls.certresolver=letsencrypt"
   # NO authelia middleware - direct access for apps/devices
+  - "x-dockge.url=https://jellyfin.${DOMAIN}"
+  # Optional: Sablier lazy loading (uncomment to enable)
+  # - "sablier.enable=true"
+  # - "sablier.group=media-jellyfin"
+  # - "sablier.start-on-demand=true"
 ```
 
 ## Modifying Existing Services
@@ -205,6 +249,7 @@ labels:
 
 ### Common Modifications
 - **Toggle SSO**: Comment/uncomment `middlewares=authelia@docker` label
+- **Toggle lazy loading**: Comment/uncomment Sablier labels (`sablier.enable`, `sablier.group`, `sablier.start-on-demand`)
 - **Change port**: Update `loadbalancer.server.port` label
 - **Add VPN routing**: Change to `network_mode: "service:gluetun"`, map ports in Gluetun
 - **Update subdomain**: Modify `Host()` rule in Traefik labels
@@ -236,15 +281,29 @@ Secrets auto-generated by `setup-homelab.sh`:
 ### Homepage Dashboard AI Configuration
 Homepage (`/opt/stacks/dashboards/`) uses dynamic variable replacement:
 - Services configured in `homepage/config/services.yaml`
-- URLs use `${DOMAIN}` variable replaced at runtime
+- URLs use **hard-coded domains** (e.g., `https://service.kelin-casa.duckdns.org`) - NO variables supported
 - AI can add/remove service entries by editing YAML
 - Bookmarks, widgets configured similarly in separate YAML files
+
+### Resource Limits Pattern
+Apply limits to all services to prevent resource exhaustion:
+- **Core services**: Low limits (DuckDNS: 0.1 CPU, 64MB RAM)
+- **Web services**: Medium limits (1-2 CPU, 1-4GB RAM)  
+- **Media services**: High limits (2-4 CPU, 4-8GB RAM)
+- **Always set reservations** for guaranteed minimum resources
+
+### x-dockge.url Labels
+Include service discovery labels for Dockge UI:
+```yaml
+labels:
+  - "x-dockge.url=https://service.${DOMAIN}"  # Shows direct link in Dockge
+```
 
 ## Key Documentation References
 
 - **[Getting Started](../docs/getting-started.md)**: Step-by-step deployment guide
 - **[Docker Guidelines](../docs/docker-guidelines.md)**: Comprehensive service management patterns (1000+ lines)
-- **[Services Reference](../docs/services-reference.md)**: All 60+ pre-configured services
+- **[Services Reference](../docs/services-overview.md)**: All 70+ pre-configured services
 - **[Proxying External Hosts](../docs/proxying-external-hosts.md)**: Traefik file provider patterns for non-Docker services
 - **[Quick Reference](../docs/quick-reference.md)**: Command cheat sheet and troubleshooting
 
@@ -260,6 +319,7 @@ Before deploying any service changes:
 - [ ] SSO appropriate (default enabled, bypass only for Plex/Jellyfin)
 - [ ] VPN routing configured if download service (network_mode + Gluetun ports)
 - [ ] LinuxServer.io image available (check hub.docker.com/u/linuxserver)
+- [ ] Resource limits set (deploy.resources section)
 
 ## Troubleshooting Common Issues
 
@@ -349,7 +409,7 @@ docker run --rm --gpus all nvidia/cuda:12.0.0-base-ubuntu22.04 nvidia-smi
 
 - **User**: kelin (PUID=1000, PGID=1000)
 - **Repository**: `/home/kelin/AI-Homelab/`
-- **Testing Phase**: Round 6+ (focus on reliability, error handling, deployment robustness)
-- **Recent work**: Script automation, idempotent setup, health checks, automated secret generation
+- **Current Status**: Production-ready with comprehensive error handling and resource management
+- **Recent work**: Resource limits implementation, subdirectory organization, enhanced validation
 
 When interacting with users, prioritize **security** (SSO by default), **consistency** (follow existing patterns), and **stack-awareness** (consider service dependencies). Always explain the "why" behind architectural decisions and reference specific files/paths when describing changes.

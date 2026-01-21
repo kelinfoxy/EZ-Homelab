@@ -29,6 +29,7 @@ For detailed information about the deployment scripts, their features, and usage
 - `setup-homelab.sh` - First-run system setup and Authelia configuration
 - `deploy-homelab.sh` - Deploy all core services and prepare additional stacks
 - `reset-test-environment.sh` - Testing/development only - removes all deployed services
+- `reset-ondemand-services.sh` - Reload services for Sablier lazy loading
 
 ## Common Commands
 
@@ -182,6 +183,7 @@ docker image prune -a
 ### Core Infrastructure (core.yml)
 - **80/443**: Traefik (reverse proxy)
 - **8080**: Traefik dashboard
+- **10000**: Sablier (lazy loading service)
 
 ### Infrastructure Services (infrastructure.yml)
 - **5001**: Dockge (stack manager)
@@ -304,16 +306,17 @@ After deployment, access services at:
 Core Infrastructure:
 https://traefik.${DOMAIN}     - Traefik dashboard
 https://auth.${DOMAIN}        - Authelia login
+http://sablier.${DOMAIN}:10000 - Sablier lazy loading (internal)
 
 Infrastructure:
 https://dockge.${DOMAIN}       - Stack manager (PRIMARY)
 https://portainer.${DOMAIN}    - Docker UI (secondary)
-http://${SERVER_IP}:8082       - Pi-hole admin
+http://pihole.${DOMAIN}        - Pi-hole admin
 https://dozzle.${DOMAIN}       - Log viewer
 https://glances.${DOMAIN}      - System monitor
 
 Dashboards:
-https://home.${DOMAIN}         - Homepage dashboard
+https://homepage.${DOMAIN}         - Homepage dashboard
 https://homarr.${DOMAIN}       - Homarr dashboard
 
 Media:
@@ -322,17 +325,19 @@ https://jellyfin.${DOMAIN}     - Jellyfin (no auth)
 https://sonarr.${DOMAIN}       - TV automation
 https://radarr.${DOMAIN}       - Movie automation
 https://prowlarr.${DOMAIN}     - Indexer manager
-https://qbit.${DOMAIN}         - Torrent client
+https://torrents.${DOMAIN}         - Torrent client
 
 Productivity:
-https://nextcloud.${DOMAIN}    - File sync
-https://git.${DOMAIN}          - Git service
-https://docs.${DOMAIN}         - Documentation
+https://nextcloud.${DOMAIN}    - Cloud Storage
+https://gitea.${DOMAIN}        - Gitea
 
 Monitoring:
 https://grafana.${DOMAIN}      - Metrics dashboard
 https://prometheus.${DOMAIN}   - Metrics collection
 https://status.${DOMAIN}       - Uptime monitoring
+
+Utilities:
+https://backrest.${DOMAIN}     - Backup management (Restic)
 ```
 
 ## Troubleshooting
