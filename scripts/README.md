@@ -89,7 +89,7 @@ Automated deployment script that deploys the core infrastructure and Dockge. Run
 1. **Validate Prerequisites** - Checks for Docker, .env file, and proper configuration
 2. **Create Directories** - Sets up `/opt/stacks/core` and `/opt/stacks/infrastructure`
 3. **Create Docker Networks** - Ensures homelab-network, traefik-network, and media-network exist
-4. **Deploy Core Stack** - Deploys DuckDNS, Traefik, Authelia, and Gluetun
+4. **Deploy Core Stack** - Deploys DuckDNS, Traefik, and Authelia
 5. **Deploy Infrastructure Stack** - Deploys Dockge, Portainer, Pi-hole, and monitoring tools
 6. **Wait for Dockge** - Waits for Dockge web UI to become accessible
 7. **Open Browser** - Automatically opens Dockge in your default browser

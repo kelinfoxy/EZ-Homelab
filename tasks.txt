@@ -1,14 +1,9 @@
 Tasks
 
-.env.example
-    ✅ create new variables
-        DAFAULT_USER: admin
-        DEFAULT_PASSWORD: changeme
-        DEFAULT_EMAIL: admin@example.com
+Completed:
+- Created VPN stack and moved Gluetun & qBittorrent from downloaders stack
+- Removed downloaders stack entirely (directory and .yml file)
+- Updated all documentation and AGENT_INSTRUCTIONS.md for VPN stack structure
+- Updated resource limits template to reflect VPN stack
 
-    ✅ modify existing variables to use these 3 new variables like 
-    NEXTCLOUD_ADMIN_USER=${DEFAULT_USER}
-    except for QBITTORRENT_USER=admin should stay as is
-    the goal is ease of setup for the user
 
-✅ Then update env-configuration.md

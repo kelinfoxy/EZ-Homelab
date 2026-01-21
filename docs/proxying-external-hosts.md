@@ -14,7 +14,7 @@ Traefik can proxy services that aren't running in Docker, such as:
 
 ### Step 1: Create External Service Configuration
 
-Create a file in `/opt/stacks/traefik/dynamic/external-hosts.yml`:
+Create a file in `/opt/stacks/traefik/dynamic/` with the format 'external-host-servername.yml'
 
 ```yaml
 http:
@@ -71,7 +71,11 @@ Visit `https://ha.yourdomain.duckdns.org` - Traefik will:
 
 ## Method 2: Using Docker Labels (Dummy Container)
 
-If you prefer managing routes via Docker labels (so the AI can modify them), create a dummy container:
+If you prefer managing routes via Docker labels, create a dummy container:
+
+>This can be resource intensive with serveral services running.  
+Not recomended due to unnecessary resource/power consumption.  
+Don't try it on a Raspberry Pi
 
 ### Create a Label Container
 
@@ -108,13 +112,6 @@ cd /opt/stacks/external-proxies
 docker compose up -d
 ```
 
-## Method 3: Hybrid Approach (File + Docker Discovery)
-
-Combine both methods for maximum flexibility:
-- Use file provider for static external hosts
-- Use Docker labels for frequently changing services
-- AI can manage both!
-
 ## Common External Services to Proxy
 
 ### Home Assistant (Raspberry Pi)
@@ -132,34 +129,6 @@ router-admin:
   service: http://192.168.1.1:80
   middlewares:
     - authelia@docker  # Add SSO protection
-```
-
-### Proxmox Server
-```yaml
-proxmox:
-  rule: "Host(`proxmox.yourdomain.duckdns.org`)"
-  service: https://192.168.1.100:8006
-  middlewares:
-    - authelia@docker
-  # Note: Use https:// if backend uses HTTPS
-```
-
-### TrueNAS/FreeNAS
-```yaml
-truenas:
-  rule: "Host(`nas.yourdomain.duckdns.org`)"
-  service: http://192.168.1.200:80
-  middlewares:
-    - authelia@docker
-```
-
-### Security Camera NVR
-```yaml
-nvr:
-  rule: "Host(`cameras.yourdomain.duckdns.org`)"
-  service: http://192.168.1.10:80
-  middlewares:
-    - authelia@docker  # Definitely protect cameras!
 ```
 
 ## Advanced Configuration

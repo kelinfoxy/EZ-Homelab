@@ -6,11 +6,13 @@ This document provides a comprehensive overview of all 50+ pre-configured servic
 
 | Stacks (10) | Services (70 + 6db) | SSO | Storage | Access URLs |
 |-------|----------|-----|---------|-------------|
-| **📦 core.yaml (4)** | **Deploy First** | | | |
+| **📦 core.yaml (3)** | **Deploy First** | | | |
 | ├─ DuckDNS | Dynamic DNS updater | - | /opt/stacks/core/duckdns | No UI |
 | ├─ Traefik | Reverse proxy + SSL | ✓ | /opt/stacks/core/traefik | traefik.${DOMAIN} |
-| ├─ Authelia | SSO authentication | - | /opt/stacks/core/authelia | auth.${DOMAIN} |
-| └─ Gluetun | VPN (Surfshark) | - | /opt/stacks/core/gluetun | No UI |
+| └─ Authelia | SSO authentication | - | /opt/stacks/core/authelia | auth.${DOMAIN} |
+| **🔒 vpn.yaml (2)** | **VPN Services** | | | |
+| ├─ Gluetun | VPN (Surfshark) | - | /opt/stacks/vpn/gluetun | No UI |
+| └─ qBittorrent | Torrent (via VPN) | ✓ | /mnt/downloads | qbit.${DOMAIN} |
 | **🔧 infrastructure.yaml** (12) | | | | |
 | ├─ Dockge | Stack manager (PRIMARY) | ✓ | /opt/stacks/infrastructure | dockge.${DOMAIN} |
 | ├─ Portainer | Container management | ✓ | /opt/stacks/infrastructure | portainer.${DOMAIN} |
@@ -31,8 +33,7 @@ This document provides a comprehensive overview of all 50+ pre-configured servic
 | ├─ Jellyfin | Media server (OSS) | ✗ | /mnt/media, /mnt/transcode | jellyfin.${DOMAIN} |
 | ├─ Sonarr | TV automation | ✓ | /opt/stacks/media, /mnt/media | sonarr.${DOMAIN} |
 | ├─ Radarr | Movie automation | ✓ | /opt/stacks/media, /mnt/media | radarr.${DOMAIN} |
-| ├─ Prowlarr | Indexer manager | ✓ | /opt/stacks/media | prowlarr.${DOMAIN} |
-| └─ qBittorrent | Torrent (via VPN) | ✓ | /mnt/downloads | qbit.${DOMAIN} |
+| └─ Prowlarr | Indexer manager | ✓ | /opt/stacks/media | prowlarr.${DOMAIN} |
 | **📚 media-extended.yaml** (10) | | | | |
 | ├─ Readarr | Ebooks/Audiobooks | ✓ | /opt/stacks/media-ext, /mnt/media | readarr.${DOMAIN} |
 | ├─ Lidarr | Music manager | ✓ | /opt/stacks/media-ext, /mnt/media | lidarr.${DOMAIN} |

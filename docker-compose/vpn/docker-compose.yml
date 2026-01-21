@@ -1,6 +1,6 @@
-# Downloaders Stack
-# VPN-routed download clients
-# Place in /opt/stacks/downloaders/docker-compose.yml
+# VPN Stack
+# VPN client and VPN-routed download clients
+# Place in /opt/stacks/vpn/docker-compose.yml
 
 # Service Access URLs:
 # - qBittorrent: https://qbit.${DOMAIN}
@@ -49,6 +49,15 @@ services:
   # Routes through Gluetun VPN
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+          pids: 1024
+        reservations:
+          cpus: '0.50'
+          memory: 256M
     container_name: qbittorrent
     restart: unless-stopped
     network_mode: "service:gluetun"  # Routes through VPN in same compose file

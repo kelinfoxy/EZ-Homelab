@@ -72,11 +72,15 @@ Individual service documentation is available in [`docs/service-docs/`](docs/ser
 - **Traefik** - Reverse proxy with automatic HTTPS termination
 - **Authelia** - Single sign-on (SSO) authentication
 - **DuckDNS** - Dynamic DNS with wildcard SSL certificates
-- **Gluetun** - VPN client for secure downloads
 - **Sablier** - Lazy loading service for on-demand containers
 
+### VPN Services
+- **Gluetun** - VPN client for secure downloads
+- **qBittorrent** - Torrent client routed through VPN
+
 ### Service Categories
-- **Media** - Plex, Jellyfin, Sonarr, Radarr, qBittorrent
+- **Media** - Plex, Jellyfin, Sonarr, Radarr
+- **VPN** - qBittorrent (VPN-routed downloads)
 - **Productivity** - Nextcloud, Gitea, BookStack, OnlyOffice
 - **Monitoring** - Grafana, Prometheus, Uptime Kuma
 - **Home Automation** - Home Assistant, Node-RED, Zigbee2MQTT

@@ -139,7 +139,7 @@ calibre_web:      # Ebook manager
   template: web_service
   notes: "Light web app with database"
 
-# Downloaders Stack
+# VPN Stack
 qbittorrent:      # Torrent client
   template: downloader_service
   notes: "Network I/O heavy, moderate CPU for hashing"

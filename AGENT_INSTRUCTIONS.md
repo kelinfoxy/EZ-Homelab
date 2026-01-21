@@ -5,8 +5,7 @@ You are an AI agent specialized in managing Docker-based homelab infrastructure 
 
 ## Repository Context
 - **Repository Location**: `~/AI-Homelab/`
-- **Purpose**: Development and testing of automated homelab management via GitHub Copilot
-- **Testing Phase**: Round 6 - Focus on script reliability, error handling, and deployment robustness
+- **Purpose**: Production-ready Docker homelab infrastructure managed through GitHub Copilot in VS Code
 - **User**: `kelin` (PUID=1000, PGID=1000)
 - **Critical**: All file operations must respect user ownership - avoid permission escalation issues
 
@@ -34,6 +33,7 @@ You are an AI agent specialized in managing Docker-based homelab infrastructure 
 │   ├── setup-homelab.sh           # First-run setup
 │   └── deploy-homelab.sh          # Automated deployment
 ├── .env.example                   # Environment template
+├── .env                           # User-created environment file (not in git)
 ├── AGENT_INSTRUCTIONS.md          # This file
 └── README.md                      # Project overview
 ```
@@ -75,7 +75,7 @@ services:
   service-name:
     image: image:tag  # Always pin versions
     container_name: service-name
-    restart: unless-stopped
+    restart: unless-stopped  # Use 'no' if ondemand (Sablier) is enabled
     networks:
       - homelab-network
     ports:
@@ -115,21 +115,84 @@ networks:
 - Use **absolute paths** (`/mnt/media`) only for large shared data on separate drives
 - This allows stacks to be portable and work correctly in Dockge's `/opt/stacks/` structure
 
+## Service Creation with Traefik on a different server Template
+
+For services not running on the same server as Traefik, use this template. Does not require Traefik labels in compose file.
+
+>From Traekif's perspective the service is on a remote host
+
+**Remote Server Setup:**
+1. Deploy service on the target server using standard Docker Compose
+2. Note the target server's IP address and service port
+3. Create/update Traefik dynamic configuration file: `/opt/stacks/core/traefik/dynamic/external-host-servername.yml` on the server with Traefik
+
+**Traefik Dynamic Configuration Template:**
+```yaml
+http:
+  routers:
+    # Remote service on servername
+    remote-service:
+      rule: "Host(`remote-service.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: remote-service
+      tls:
+        certResolver: letsencrypt
+      # Optional: Add Authelia protection
+      middlewares:
+        - authelia@docker
+
+  services:
+    remote-service:
+      loadBalancer:
+        servers:
+          - url: "http://remote-server-ip:service-port"  # Replace with actual IP/port
+        passHostHeader: true
+
+  middlewares:
+    # Optional: Add headers for WebSocket support if needed
+    remote-service-headers:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Proto: "https"
+        customResponseHeaders:
+          X-Frame-Options: "SAMEORIGIN"
+```
+
+**File Naming Convention:**
+- External host files named: `external-host-servername.yml`
+- Example: `external-host-raspberry-pi.yml`, `external-host-nas.yml`
+- See `docs/proxying-external-hosts.md` for detailed examples
+
 ## Critical Deployment Order
 
+>The core stack should only be deployed on one server in the homelab  
+The dashboards stack is intended to be deployed on the same server as the core stack, for better UX
+
+Skip step 1 if the homelab already has the core stack on another server.
+
 1. **Core Stack First**: Deploy `/opt/stacks/core/docker-compose.yml`
-   - DuckDNS, Traefik, Authelia, Gluetun
+   - DuckDNS, Traefik, Authelia
    - All other services depend on this
-2. **Infrastructure**: Dockge, Portainer, monitoring
-3. **Applications**: Media services, dashboards, etc.
+2. **VPN Stack**: Deploy `/opt/stacks/vpn/docker-compose.yml`
+   - Gluetun VPN client, qBittorrent
+   - Optional but recommended for secure downloads
+3. **Infrastructure**: Dockge, docker-proxy, code-server, etc.
+4. **Applications**: Media services, dashboards, etc.
 
 ## VPN Integration Rules
+
+**All VPN-related services must be in the VPN stack** (`/opt/stacks/vpn/`), including Gluetun itself. This ensures proper network isolation and management.
 
 Use Gluetun for services requiring VPN:
 ```yaml
 services:
+  # Gluetun VPN client (must be in vpn stack)
+  gluetun:
+    # VPN configuration here
+
   download-client:
-    network_mode: "service:gluetun"
+    network_mode: "service:gluetun"  # Routes through VPN
     depends_on:
       - gluetun
     # No ports section - use Gluetun's ports
@@ -141,6 +204,8 @@ gluetun:
   ports:
     - 8080:8080  # Download client web UI
 ```
+
+**Important**: Never place VPN-dependent services in other stacks. All VPN routing must happen within the dedicated VPN stack.
 
 ## SSO Management
 
@@ -158,7 +223,7 @@ labels:
 
 ## Agent Actions Checklist
 
-### Permission Safety (CRITICAL - Established in Round 4)
+### Permission Safety (CRITICAL)
 - [ ] **NEVER** use sudo for file operations in user directories
 - [ ] Always check file ownership before modifying: `ls -la`
 - [ ] Respect existing ownership - files should be owned by `kelin:kelin`
@@ -196,8 +261,8 @@ labels:
 
 ## Common Agent Tasks
 
-### Development Workflow (Current Focus - Round 6)
-1. **Repository Testing**
+### Development Workflow
+1. **Repository Maintenance**
    - Test deployment scripts: `./scripts/setup-homelab.sh`, `./scripts/deploy-homelab.sh`
    - Verify compose file syntax across all stacks
    - Validate `.env.example` completeness
@@ -214,38 +279,111 @@ labels:
    - Document new features or configuration patterns
 
 ### Deploy New Service
+**Research Protocol:**
+1. **Check existing services**: Search `docs/services-overview.md` and compose files for similar services
+2. **Read official documentation**: Visit Docker Hub, LinuxServer.io, or official project docs
+3. **Check awesome-docker-compose**: Review https://awesome-docker-compose.com/apps for compose templates
+4. **Prefer LinuxServer.io**: Use lscr.io images when available for consistency
+5. **Check port availability**: Review `docs/ports-in-use.md` for conflicts
+6. **Determine SSO requirements**: Media services (Plex/Jellyfin) bypass SSO, admin tools require it
+7. **Check VPN needs**: Download clients need `network_mode: "service:gluetun"`
+8. **Review resource limits**: Apply CPU/memory limits following existing patterns
+
+**Deployment Steps:**
 1. Create stack directory: `/opt/stacks/stack-name/`
-2. Write docker-compose.yml with template
-3. Create `.env` file for secrets
-4. Deploy: `docker compose up -d`
-5. Verify Traefik routing
-6. Test SSO protection
+2. Write docker-compose.yml using LinuxServer.io template with Traefik labels
+3. Create `.env` file for secrets (copy from `~/AI-Homelab/.env`)
+4. **Ask user**: Enable SSO protection? (Default: Yes, unless media service like Plex/Jellyfin)
+5. **Ask user**: Enable lazy loading (Sablier)? (Default: Yes for resource conservation) - **Note**: Requires `restart: no` instead of `unless-stopped`
+6. Add service to Homepage dashboard config
+7. Deploy: `docker compose up -d`
+8. Verify Traefik routing at `https://service.${DOMAIN}`
+9. Test SSO protection (or bypass for media services)
+10. Check logs: `docker compose logs -f`
 
 ### Update Existing Service
-1. Read current configuration
-2. Make minimal necessary changes
-3. Validate dependencies still work
-4. Redeploy: `docker compose up -d service-name`
-5. Check logs for errors
+**Verification Protocol:**
+1. **Read current config**: `docker compose -f /opt/stacks/stack/docker-compose.yml config`
+2. **Check dependencies**: Identify linked services, networks, volumes
+3. **Backup current state**: Copy compose file before changes
+4. **Test in isolation**: Use `docker run` for image testing if needed
+5. **Check breaking changes**: Review changelog for new versions
+6. **Validate environment**: Ensure `.env` has required variables
+
+**Update Steps:**
+1. Read current configuration and dependencies
+2. **If modifying core services**: Verify integrity of `/opt/stacks/core/traefik/dynamic/` files and `sablier.yml`
+3. Make minimal necessary changes (version, config, ports)
+4. Validate YAML syntax: `docker compose config`
+5. Check for port conflicts with `docs/ports-in-use.md`
+6. Pull new image: `docker compose pull service-name`
+7. Redeploy: `docker compose up -d service-name`
+8. Monitor logs: `docker compose logs -f service-name`
+9. Test functionality and verify dependent services still work
+10. Update documentation if behavior changed
 
 ### Enable/Disable VPN
-1. For VPN: Add `network_mode: "service:gluetun"`
-2. Move port mapping to Gluetun service
-3. Add `depends_on: gluetun`
-4. For no VPN: Remove network_mode, add ports directly
+**Enable VPN Routing:**
+1. **Check Gluetun status**: Verify VPN stack is running with VPN configured
+2. **Move service to VPN stack**: All VPN-dependent services must be in `/opt/stacks/vpn/` with Gluetun
+3. **Modify service config**: Change from `ports:` to `network_mode: "service:gluetun"`
+4. **Move port mappings**: Add exposed ports to Gluetun service in VPN stack
+5. **Add dependency**: Include `depends_on: - gluetun`
+6. **Remove direct ports**: Delete any `ports:` section from service
+7. **Update documentation**: Note VPN routing in service docs
+8. **Test connectivity**: Verify service routes through VPN IP
+
+**Disable VPN Routing:**
+1. **Check port availability**: Review `docs/ports-in-use.md` for conflicts
+2. **Move service out of VPN stack**: Relocate to appropriate non-VPN stack
+3. **Remove network_mode**: Delete `network_mode: "service:gluetun"`
+4. **Add direct ports**: Add appropriate `ports:` mapping
+5. **Remove dependency**: Delete `depends_on: gluetun`
+6. **Remove Gluetun ports**: Clean up port mappings from Gluetun service
+7. **Test direct access**: Verify service accessible without VPN
+8. **Update documentation**: Remove VPN routing notes
 
 ### Toggle SSO
-1. Enable: Add authelia middleware label
-2. Disable: Comment out middleware label
-3. Redeploy service
-4. Verify access works as expected
+**Enable Authelia SSO (Default for Security):**
+1. **Verify Authelia running**: Check core stack status
+2. **Uncomment middleware label**: Change `# - "traefik.http.routers.service.middlewares=authelia@docker"` to active
+3. **Remove bypass rules**: Delete domain exception from `authelia/configuration.yml` if present
+4. **Test authentication**: Access service and verify login prompt
+5. **Document protection**: Note SSO requirement in service docs
+
+**Disable Authelia SSO (Media Services Only):**
+1. **Justify bypass**: Confirm service needs direct app access (Plex, Jellyfin, etc.)
+2. **Comment middleware**: Change to `# - "traefik.http.routers.service.middlewares=authelia@docker"`
+3. **Add bypass rule**: Update `authelia/configuration.yml` with domain exception
+4. **Test direct access**: Verify no authentication required
+5. **Document exception**: Explain why SSO bypassed in service docs
+6. **Monitor security**: Regular review of bypass justifications
+
+**Note**: Authelia middleware label should ALWAYS be present in compose files - comment out to disable, never remove entirely.
 
 ## Error Prevention
 
 ### Port Conflicts
-- Check existing services before assigning ports
-- Use Traefik instead of port mapping when possible
-- Document port usage in comments
+**Prevention Protocol:**
+1. **Check existing ports**: Review `docs/ports-in-use.md` before assigning new ports
+2. **Use Traefik routing**: Prefer host-based routing over direct port exposure
+3. **Standardize ports**: Follow LinuxServer.io defaults when possible
+4. **Document usage**: Add port comments in compose files
+5. **Test conflicts**: Use `netstat -tlnp | grep :PORT` to check availability
+
+**AI Usage of ports-in-use.md:**
+- Always consult `docs/ports-in-use.md` before suggesting new port assignments
+- Update the document whenever ports are changed or new services added
+- Cross-reference with service documentation links in the ports file
+- Verify port availability across all stacks before deployment
+
+**Resolution Steps:**
+1. **Identify conflict**: Check `docker ps --format "table {{.Names}}\t{{.Ports}}"` for port usage
+2. **Reassign port**: Choose unused port following service conventions
+3. **Update Traefik labels**: Modify `loadbalancer.server.port` if changed
+4. **Update documentation**: Reflect port changes in `docs/ports-in-use.md`
+5. **Test access**: Verify service accessible at new port
+6. **Update dependent services**: Check for hardcoded port references
 
 ### Permission Issues
 - Always set PUID=1000, PGID=1000
@@ -258,6 +396,19 @@ labels:
 - Ensure Traefik can reach services
 
 ## Key Configurations to Monitor
+
+### Sablier Configurations
+- Lazy loading enabled: `sablier.enable=true`
+- Proper group naming: `sablier.group=stack-service`
+- On-demand startup: `sablier.start-on-demand=true`
+- **Critical**: Set `restart: no` when ondemand is enabled (cannot use `unless-stopped`)
+- Group consistency across related services
+
+### Traefik's Dynamic Folder Configurations
+- File provider configuration in `/opt/stacks/core/traefik/dynamic/`
+- External host routing rules in `external.yml`
+- Middleware definitions and routing rules
+- Certificate resolver settings for wildcard domains
 
 ### Traefik Labels
 - Correct hostname format: `service.${DOMAIN}`
@@ -344,6 +495,7 @@ labels:
 - **Blindly escalate privileges when encountering errors**
 
 ### Always Do
+- Read documentation and service-docs files and follow established practices
 - Read existing configurations first
 - Test changes in isolation when possible
 - Document complex configurations
@@ -354,11 +506,10 @@ labels:
 - **Respect user ownership boundaries**
 - **Ask before modifying system directories**
 
-## Testing and Development Guidelines (Round 6)
+## Repository Management Guidelines
 
-### Repository Development
-- Work within `~/AI-Homelab/` for all development
-- Test scripts in isolated environment before production
+### Repository Maintenance
+- Work within `~/AI-Homelab/` for all operations
 - Validate all YAML files before committing
 - Ensure `.env.example` stays updated with new variables
 - Document breaking changes in commit messages
@@ -384,7 +535,7 @@ bash -n scripts/deploy-homelab.sh
 ls -la ~/AI-Homelab/
 ```
 
-### Deployment Testing Checklist
+### Deployment Checklist
 - [ ] Fresh system: Test `setup-homelab.sh`
 - [ ] Core stack: Deploy and verify DuckDNS, Traefik, Authelia, Gluetun
 - [ ] Infrastructure: Deploy Dockge and verify web UI access
@@ -394,7 +545,7 @@ ls -la ~/AI-Homelab/
 - [ ] VPN: Test Gluetun routing
 - [ ] Documentation: Validate all steps in docs/
 
-### Round 6 Success Criteria
+### Production Success Criteria
 - [ ] No permission-related crashes
 - [ ] All deployment scripts work on fresh Debian install
 - [ ] Documentation matches actual implementation
