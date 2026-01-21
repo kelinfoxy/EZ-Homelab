@@ -1,0 +1,366 @@
+====== Traefik ======
+
+Traefik is a modern HTTP reverse proxy and load balancer that makes deploying microservices easy. In the AI-Homelab, Traefik serves as the main entry point for all services, providing automatic HTTPS, load balancing, and routing.
+
+===== Overview =====
+
+**Purpose:** HTTP reverse proxy and load balancer
+**URL:** `https://traefik.yourdomain.duckdns.org`
+**Authentication:** Authelia SSO
+**Deployment:** Automatic (core stack)
+**Configuration:** File-based (YAML)
+
+===== Key Features =====
+
+**Automatic HTTPS:**
+  * Let's Encrypt integration
+  * Wildcard SSL certificates
+  * Automatic renewal (90 days)
+  * A+ SSL rating
+
+**Service Discovery:**
+  * Docker label-based routing
+  * Dynamic configuration reloading
+  * Zero-downtime deployments
+  * Health check integration
+
+**Load Balancing:**
+  * Round-robin distribution
+  * Weighted load balancing
+  * Session stickiness
+  * Circuit breaker protection
+
+**Security:**
+  * HTTP security headers
+  * Rate limiting
+  * IP whitelisting
+  * CORS protection
+
+===== Configuration =====
+
+**Static Configuration (traefik.yml):**
+```yaml
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+api:
+  dashboard: true
+  insecure: false
+
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+  websecure:
+    address: ":443"
+    http:
+      tls:
+        certResolver: letsencrypt
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: traefik-network
+  file:
+    directory: /dynamic
+    watch: true
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: your-email@example.com
+      storage: /acme.json
+      dnsChallenge:
+        provider: duckdns
+        delayBeforeCheck: 30
+```
+
+**Dynamic Configuration (external.yml):**
+```yaml
+http:
+  middlewares:
+    authelia:
+      forwardAuth:
+        address: "http://authelia:9091/api/verify?rd=https://auth.yourdomain.duckdns.org/"
+        trustForwardHeader: true
+        authResponseHeaders:
+          - "Remote-User"
+          - "Remote-Groups"
+          - "Remote-Name"
+          - "Remote-Email"
+
+    security-headers:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Proto: "https"
+        customResponseHeaders:
+          X-Frame-Options: "SAMEORIGIN"
+          X-Content-Type-Options: "nosniff"
+          Referrer-Policy: "strict-origin-when-cross-origin"
+          Permissions-Policy: "geolocation=(), microphone=(), camera=()"
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+```
+
+===== Docker Compose =====
+
+```yaml
+services:
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik
+    restart: unless-stopped
+    networks:
+      - traefik-network
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./dynamic:/dynamic:ro
+      - ./acme.json:/acme.json
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - DUCKDNS_TOKEN=${DUCKDNS_TOKEN}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN}`)"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.traefik.middlewares=authelia@docker"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+```
+
+===== Service Routing =====
+
+**Standard Service Labels:**
+```yaml
+labels:
+  - "traefik.enable=true"
+  - "traefik.http.routers.service.rule=Host(`service.${DOMAIN}`)"
+  - "traefik.http.routers.service.entrypoints=websecure"
+  - "traefik.http.routers.service.tls.certresolver=letsencrypt"
+  - "traefik.http.routers.service.middlewares=authelia@docker"
+  - "traefik.http.services.service.loadbalancer.server.port=8080"
+```
+
+**Router Components:**
+  * **Rule**: Host matching (e.g., `Host(`service.domain.org`)`)
+  * **EntryPoint**: HTTP/HTTPS endpoint
+  * **TLS**: Certificate resolver
+  * **Middlewares**: Authentication, security headers
+  * **Service**: Backend service definition
+
+**Advanced Routing:**
+```yaml
+# Path-based routing
+- "traefik.http.routers.api.rule=Host(`api.${DOMAIN}`) && PathPrefix(`/v1`)"
+- "traefik.http.routers.web.rule=Host(`app.${DOMAIN}`)"
+
+# Header-based routing
+- "traefik.http.routers.mobile.rule=Host(`app.${DOMAIN}`) && Headers(`User-Agent`, `*Mobile*`)"
+
+# Priority routing
+- "traefik.http.routers.specific.rule=Host(`service.${DOMAIN}`) && Path(`/api`)"
+- "traefik.http.routers.specific.priority=100"
+```
+
+===== SSL Certificate Management =====
+
+**Certificate Generation:**
+  * **Challenge**: DNS-01 (DuckDNS)
+  * **Provider**: Let's Encrypt
+  * **Type**: ECDSA P-256
+  * **Validity**: 90 days
+  * **Renewal**: Automatic (30 days before expiry)
+
+**Certificate Storage:**
+  * **File**: `/opt/stacks/core/traefik/acme.json`
+  * **Permissions**: 600 (owner read/write only)
+  * **Backup**: Include in backup strategy
+  * **Format**: JSON with encrypted private keys
+
+**Troubleshooting SSL:**
+```bash
+# Check certificate status
+echo | openssl s_client -connect yourdomain.duckdns.org:443 -servername service.yourdomain.duckdns.org 2>/dev/null | openssl x509 -noout -subject -dates
+
+# View Traefik logs
+docker logs traefik | grep certificate
+
+# Check DNS TXT record
+dig TXT _acme-challenge.yourdomain.duckdns.org
+```
+
+===== Monitoring & Logging =====
+
+**Dashboard Access:**
+  * URL: `https://traefik.yourdomain.duckdns.org`
+  * Features: Real-time routing, health status, metrics
+  * Authentication: Authelia SSO required
+
+**Log Configuration:**
+```yaml
+log:
+  level: INFO
+  format: json
+
+accessLog:
+  filePath: /var/log/traefik/access.log
+  format: json
+  filters:
+    statusCodes: ["200-299", "400-499", "500-599"]
+```
+
+**Metrics Integration:**
+  * **Prometheus**: `/metrics` endpoint
+  * **Health Checks**: Service health monitoring
+  * **Performance**: Response time tracking
+
+===== Security Features =====
+
+**Authentication Middleware:**
+  * **Authelia Integration**: SSO for protected services
+  * **Bypass Rules**: Direct access for media services
+  * **Session Management**: Secure cookie handling
+
+**Rate Limiting:**
+```yaml
+middlewares:
+  rate-limit:
+    rateLimit:
+      burst: 100
+      average: 50
+```
+
+**IP Whitelisting:**
+```yaml
+middlewares:
+  ip-whitelist:
+    ipWhiteList:
+      sourceRange:
+        - "192.168.1.0/24"
+        - "10.0.0.0/8"
+```
+
+===== Performance Optimization =====
+
+**Caching:**
+```yaml
+middlewares:
+  cache:
+    inFlightReq:
+      amount: 64
+```
+
+**Compression:**
+  * **Gzip**: Automatic text compression
+  * **Brotli**: Advanced compression (if supported)
+
+**Connection Pooling:**
+  * **Keep-Alive**: Persistent connections
+  * **Connection Reuse**: Reduced latency
+  * **Timeout Management**: Connection limits
+
+===== Troubleshooting =====
+
+**Service Not Accessible:**
+```bash
+# Check if service is running
+docker ps | grep service-name
+
+# Verify Traefik labels
+docker inspect service-name | grep traefik
+
+# Check Traefik logs
+docker logs traefik | grep service-name
+```
+
+**SSL Issues:**
+  * Verify DuckDNS token
+  * Check DNS propagation
+  * Confirm port forwarding
+  * Review certificate logs
+
+**Routing Problems:**
+  * Validate router rules
+  * Check middleware configuration
+  * Test service connectivity
+  * Review access logs
+
+**Performance Issues:**
+  * Monitor resource usage
+  * Check connection limits
+  * Review middleware stack
+  * Analyze access patterns
+
+===== External Service Proxying =====
+
+**Proxying Non-Docker Services:**
+```yaml
+# In dynamic/external.yml
+http:
+  routers:
+    external-service:
+      rule: "Host(`external.yourdomain.duckdns.org`)"
+      service: external-service
+      middlewares:
+        - authelia@docker
+  services:
+    external-service:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.100:8123"
+```
+
+**Use Cases:**
+  * Raspberry Pi Home Assistant
+  * NAS devices
+  * Legacy applications
+  * Network printers
+
+===== Best Practices =====
+
+**Configuration Management:**
+  * Use version control for config files
+  * Test changes in staging
+  * Document custom routing rules
+  * Regular backup of acme.json
+
+**Security:**
+  * Keep Traefik updated
+  * Monitor access logs
+  * Use strong authentication
+  * Regular security audits
+
+**Performance:**
+  * Implement appropriate caching
+  * Use connection pooling
+  * Monitor resource usage
+  * Optimize middleware stack
+
+**Monitoring:**
+  * Set up alerts for failures
+  * Monitor certificate expiry
+  * Track performance metrics
+  * Regular log analysis
+
+Traefik is the backbone of your homelab's networking infrastructure, providing secure, efficient, and reliable service routing.
+
+**Next:** Learn about [[services:core:authelia|Authelia]] or [[services:core:duckdns|DuckDNS]].

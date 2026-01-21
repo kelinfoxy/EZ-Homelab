@@ -1,0 +1,424 @@
+====== Jellyfin ======
+
+Jellyfin is a free, open-source media server that allows you to organize, manage, and stream your personal media collection. It provides a modern, user-friendly interface for accessing movies, TV shows, music, and photos from any device.
+
+===== Overview =====
+
+**Purpose:** Media server and streaming platform
+**URL:** https://jellyfin.yourdomain.duckdns.org
+**Authentication:** Built-in user management (no SSO)
+**Deployment:** Media stack
+**Features:** Multi-device streaming, transcoding, metadata management
+
+===== Key Features =====
+
+**Media Management:**
+  * **Library Organization**: Automatic media organization
+  * **Metadata Fetching**: Rich metadata from online sources
+  * **Poster Art**: High-quality artwork and posters
+  * **Collections**: Custom media collections and playlists
+
+**Streaming Capabilities:**
+  * **Multi-Device Support**: Stream to any device
+  * **Adaptive Streaming**: Automatic quality adjustment
+  * **Transcoding**: Real-time video transcoding
+  * **Direct Play**: Direct streaming when supported
+
+**User Management:**
+  * **Multiple Users**: Separate accounts for family members
+  * **Parental Controls**: Content restrictions and ratings
+  * **Viewing History**: Track watched content
+  * **Personal Libraries**: User-specific content access
+
+===== Configuration =====
+
+**Container Configuration:**
+```yaml
+services:
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    container_name: jellyfin
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+      - JELLYFIN_PublishedServerUrl=https://jellyfin.${DOMAIN}
+    volumes:
+      - ./jellyfin/config:/config
+      - /mnt/media/movies:/data/movies
+      - /mnt/media/tv:/data/tv
+      - /mnt/media/music:/data/music
+      - /mnt/transcode:/config/transcodes
+    devices:
+      - /dev/dri:/dev/dri  # Hardware acceleration (optional)
+    networks:
+      - traefik-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.jellyfin.rule=Host(`jellyfin.${DOMAIN}`)"
+      - "traefik.http.routers.jellyfin.entrypoints=websecure"
+      - "traefik.http.routers.jellyfin.tls.certresolver=letsencrypt"
+      # No Authelia middleware - direct access for app compatibility
+      - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
+      - "x-dockge.url=https://jellyfin.${DOMAIN}"
+```
+
+**Environment Variables:**
+```bash
+# User permissions
+PUID=1000
+PGID=1000
+
+# Timezone
+TZ=America/New_York
+
+# Public URL (for external access)
+JELLYFIN_PublishedServerUrl=https://jellyfin.yourdomain.duckdns.org
+```
+
+===== Media Library Setup =====
+
+**Directory Structure:**
+```
+/mnt/media/
+├── movies/           # Movie files
+│   ├── Movie1 (2023)/
+│   └── Movie2 (2023)/
+├── tv/              # TV show files
+│   ├── Show1/
+│   │   ├── Season 01/
+│   │   └── Season 02/
+│   └── Show2/
+├── music/           # Music files
+│   ├── Artist1/
+│   └── Artist2/
+└── photos/          # Photo collections
+```
+
+**Library Configuration:**
+  * **Movie Library**: Point to `/data/movies`
+  * **TV Library**: Point to `/data/tv`
+  * **Music Library**: Point to `/data/music`
+  * **Photo Library**: Point to `/data/photos`
+
+**Naming Conventions:**
+```
+Movies: "Movie Name (Year)/Movie Name (Year).mkv"
+TV: "Show Name/Season 01/Show Name - S01E01.mkv"
+Music: "Artist/Album/01 - Song Title.mp3"
+```
+
+===== Hardware Acceleration =====
+
+**Intel Quick Sync:**
+```yaml
+devices:
+  - /dev/dri:/dev/dri
+
+environment:
+  - JELLYFIN_FFmpeg__probesize=1G
+  - JELLYFIN_FFmpeg__analyzeduration=200M
+```
+
+**NVIDIA GPU:**
+```yaml
+deploy:
+  resources:
+    reservations:
+      devices:
+        - driver: nvidia
+          count: 1
+          capabilities: [gpu]
+
+environment:
+  - NVIDIA_VISIBLE_DEVICES=all
+  - NVIDIA_DRIVER_CAPABILITIES=all
+```
+
+**VAAPI (Software):**
+```yaml
+environment:
+  - JELLYFIN_FFmpeg__hwaccel=vaapi
+  - JELLYFIN_FFmpeg__hwaccel_device=/dev/dri/renderD128
+  - JELLYFIN_FFmpeg__hwaccel_output_format=vaapi
+```
+
+===== User Management =====
+
+**Administrator Setup:**
+  1. **First Access**: Visit Jellyfin URL
+  2. **Create Admin Account**: Set up administrator account
+  3. **Configure Libraries**: Add media libraries
+  4. **Set Preferences**: Configure server settings
+
+**User Accounts:**
+  * **User Creation**: Add family member accounts
+  * **Access Levels**: Configure library access per user
+  * **Parental Controls**: Set content ratings and restrictions
+  * **Device Limits**: Control simultaneous streams
+
+**Authentication:**
+  * **Local Users**: Username/password authentication
+  * **Easy PIN**: Simple PIN for quick access
+  * **Auto Login**: Remember login on trusted devices
+
+===== Transcoding Configuration =====
+
+**Transcoding Settings:**
+```yaml
+# Transcode location
+volumes:
+  - /mnt/transcode:/config/transcodes
+```
+
+**Quality Settings:**
+  * **Video Quality**: Adjust bitrate and resolution
+  * **Audio Quality**: Configure audio encoding
+  * **Container Format**: Choose output format
+  * **Hardware Acceleration**: Enable GPU transcoding
+
+**Performance Tuning:**
+  * **Concurrent Streams**: Limit simultaneous transcodes
+  * **Buffer Size**: Adjust transcoding buffer
+  * **Thread Count**: Configure encoding threads
+  * **Quality Presets**: Balance quality vs speed
+
+===== Metadata Management =====
+
+**Metadata Sources:**
+  * **The Movie Database (TMDb)**: Movie and TV metadata
+  * **TheTVDB**: TV show information
+  * **MusicBrainz**: Music metadata
+  * **FanArt.tv**: Artwork and posters
+
+**Metadata Refresh:**
+  * **Automatic Updates**: Regular metadata updates
+  * **Manual Refresh**: Force metadata refresh
+  * **Image Downloads**: Download posters and artwork
+  * **Language Settings**: Configure metadata language
+
+**Custom Metadata:**
+  * **Override Information**: Manually edit metadata
+  * **Custom Images**: Upload custom artwork
+  * **Collections**: Create custom collections
+  * **Tags**: Add custom tags and genres
+
+===== Client Applications =====
+
+**Official Apps:**
+  * **Android/iOS**: Mobile apps for streaming
+  * **Roku**: TV streaming device support
+  * **Fire TV**: Amazon Fire TV support
+  * **Android TV**: Android TV support
+
+**Third-Party Clients:**
+  * **Kodi**: Media center integration
+  * **Plex**: Alternative media server
+  * **Emby**: Similar media server
+  * **Infuse**: iOS/macOS media player
+
+**Web Client:**
+  * **Modern Interface**: Responsive web player
+  * **Keyboard Shortcuts**: Full keyboard navigation
+  * **Cast Support**: Chromecast and DLNA
+  * **Offline Sync**: Download for offline viewing
+
+===== Plugins & Extensions =====
+
+**Official Plugins:**
+  * **Open Subtitles**: Subtitle downloading
+  * **MusicBrainz**: Enhanced music metadata
+  * **AniList**: Anime tracking integration
+  * **Trakt**: Watch history synchronization
+
+**Community Plugins:**
+  * **Kodi Sync**: Sync with Kodi library
+  * **FanArt**: Additional artwork sources
+  * **Theme Videos**: Movie theme videos
+  * **Trailer**: Trailer playback
+
+**Plugin Installation:**
+  1. **Dashboard > Plugins**: Access plugin catalog
+  2. **Browse Repository**: Find desired plugins
+  3. **Install**: Click install button
+  4. **Configure**: Set plugin preferences
+
+===== Backup & Recovery =====
+
+**Configuration Backup:**
+```bash
+# Backup Jellyfin configuration
+docker run --rm \
+  -v jellyfin-config:/config \
+  -v $(pwd)/backup:/backup \
+  busybox tar czf /backup/jellyfin-config.tar.gz /config
+```
+
+**Database Backup:**
+```bash
+# Backup Jellyfin database
+docker exec jellyfin sqlite3 /config/data/library.db .dump > jellyfin-backup.sql
+```
+
+**Media Backup:**
+  * **File System**: Backup media files separately
+  * **Metadata**: Configuration includes metadata
+  * **User Data**: User preferences and watch history
+  * **Plugins**: Plugin configurations
+
+===== Performance Optimization =====
+
+**Resource Management:**
+```yaml
+deploy:
+  resources:
+    limits:
+      cpus: '2.0'
+      memory: 2G
+    reservations:
+      cpus: '0.5'
+      memory: 512M
+```
+
+**Optimization Tips:**
+  * **Library Scanning**: Schedule scans during off-hours
+  * **Transcoding Limits**: Limit concurrent transcodes
+  * **Cache Management**: Configure appropriate cache sizes
+  * **Network Optimization**: Use appropriate network settings
+
+===== Troubleshooting =====
+
+**Playback Issues:**
+```bash
+# Check transcoding logs
+docker logs jellyfin | grep -i ffmpeg
+
+# Verify hardware acceleration
+docker exec jellyfin vainfo  # VAAPI
+docker exec jellyfin nvidia-smi  # NVIDIA
+```
+
+**Library Scanning Problems:**
+  * **Permission Issues**: Check file permissions
+  * **Naming Problems**: Verify file naming conventions
+  * **Metadata Errors**: Check metadata provider status
+  * **Network Issues**: Verify internet connectivity
+
+**Web Interface Issues:**
+  * **Loading Problems**: Clear browser cache
+  * **SSL Errors**: Check certificate validity
+  * **CORS Issues**: Verify reverse proxy configuration
+  * **JavaScript Errors**: Check browser compatibility
+
+**Transcoding Issues:**
+  * **Hardware Acceleration**: Verify GPU access
+  * **Codec Support**: Check supported codecs
+  * **Resource Limits**: Monitor CPU/memory usage
+  * **Quality Settings**: Adjust transcoding parameters
+
+**Troubleshooting Steps:**
+  1. **Check logs**: `docker logs jellyfin`
+  2. **Verify configuration**: Check environment variables
+  3. **Test access**: Verify web interface access
+  4. **Check permissions**: Validate file permissions
+  5. **Restart service**: `docker restart jellyfin`
+
+===== Security Considerations =====
+
+**Access Control:**
+  * **User Authentication**: Strong password requirements
+  * **Network Security**: Restrict network access
+  * **HTTPS Only**: Force secure connections
+  * **Session Management**: Configure session timeouts
+
+**Media Security:**
+  * **File Permissions**: Proper file system permissions
+  * **Network Shares**: Secure network share access
+  * **Backup Security**: Encrypt backup data
+  * **Access Logging**: Monitor access patterns
+
+===== Integration with Media Stack =====
+
+**Sonarr/Radarr Integration:**
+  * **Automatic Downloads**: Integration with download clients
+  * **Library Updates**: Automatic library refreshes
+  * **Quality Profiles**: Match download quality to playback
+  * **Naming Conventions**: Consistent file naming
+
+**qBittorrent Integration:**
+  * **Download Monitoring**: Track download progress
+  * **Category Management**: Organize downloads by type
+  * **Completion Notifications**: Notify when downloads complete
+  * **File Management**: Automatic file organization
+
+**Hardware Acceleration:**
+  * **GPU Utilization**: Leverage available GPU resources
+  * **Transcoding Efficiency**: Optimize transcoding performance
+  * **Power Management**: Balance performance and power usage
+  * **Resource Monitoring**: Monitor hardware utilization
+
+===== Best Practices =====
+
+**Library Management:**
+  * **Consistent Naming**: Follow naming conventions
+  * **Quality Standards**: Maintain consistent quality
+  * **Metadata Accuracy**: Keep metadata up-to-date
+  * **Regular Maintenance**: Periodic library cleanup
+
+**Performance:**
+  * **Resource Allocation**: Appropriate CPU/memory limits
+  * **Transcoding Settings**: Balance quality and performance
+  * **Caching Strategy**: Optimize cache usage
+  * **Network Configuration**: Optimize network settings
+
+**User Experience:**
+  * **Interface Customization**: Customize user interfaces
+  * **Device Profiles**: Optimize for different devices
+  * **Subtitle Management**: Configure subtitle preferences
+  * **Audio Settings**: Configure audio preferences
+
+**Maintenance:**
+  * **Regular Updates**: Keep Jellyfin updated
+  * **Library Scans**: Regular library maintenance
+  * **Backup Routine**: Regular configuration backups
+  * **Performance Monitoring**: Monitor system performance
+
+===== Advanced Configuration =====
+
+**Custom CSS:**
+```css
+/* Custom theme modifications */
+.dashboardHeader {
+  background-color: #your-color;
+}
+
+.libraryCard {
+  border-radius: 10px;
+}
+```
+
+**API Access:**
+```bash
+# Access Jellyfin API
+curl -H "X-MediaBrowser-Token: your-api-key" \
+  https://jellyfin.yourdomain.duckdns.org/Items
+```
+
+**Webhook Integration:**
+  * **Playback Events**: Trigger actions on media events
+  * **User Actions**: Monitor user activities
+  * **System Events**: Respond to system events
+  * **External Integration**: Connect with other services
+
+Jellyfin provides a powerful, free alternative to proprietary media servers, offering comprehensive media management and streaming capabilities with excellent client support across all platforms.
+
+**Next:** Learn about [[services:media:calibre-web|Calibre-Web]] or explore [[architecture:storage|Storage Architecture]].

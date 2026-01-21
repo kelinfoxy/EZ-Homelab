@@ -1,0 +1,393 @@
+====== Calibre-Web ======
+
+Calibre-Web is a web application that provides a clean web interface for browsing, reading, and downloading eBooks stored in a Calibre database. It allows you to access your eBook library from any device with a web browser.
+
+===== Overview =====
+
+**Purpose:** Web interface for Calibre eBook library
+**URL:** https://calibre.yourdomain.duckdns.org
+**Authentication:** Built-in user management
+**Deployment:** Media stack
+**Database:** SQLite (Calibre database)
+
+===== Key Features =====
+
+**Library Management:**
+  * **Browse Books**: Browse your eBook collection
+  * **Search & Filter**: Advanced search and filtering
+  * **Categories**: Organize by author, genre, series
+  * **Metadata Display**: Rich book information display
+
+**Reading Features:**
+  * **Online Reading**: Read books directly in browser
+  * **Download Options**: Download in multiple formats
+  * **Reading Progress**: Track reading progress
+  * **Bookmarks**: Save reading positions
+
+**User Management:**
+  * **Multiple Users**: Separate accounts for users
+  * **Access Control**: Configure user permissions
+  * **Reading Statistics**: Track reading habits
+  * **Personal Shelves**: Create custom book collections
+
+===== Configuration =====
+
+**Container Configuration:**
+```yaml
+services:
+  calibre-web:
+    image: lscr.io/linuxserver/calibre-web:latest
+    container_name: calibre-web
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+      - DOCKER_MODS=linuxserver/mods:universal-calibre  # Calibre integration
+    volumes:
+      - ./calibre-web/config:/config
+      - /mnt/media/books:/books  # Calibre library location
+    networks:
+      - traefik-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.2'
+          memory: 128M
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.calibre-web.rule=Host(`calibre.${DOMAIN}`)"
+      - "traefik.http.routers.calibre-web.entrypoints=websecure"
+      - "traefik.http.routers.calibre-web.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.calibre-web.middlewares=authelia@docker"
+      - "traefik.http.services.calibre-web.loadbalancer.server.port=8083"
+      - "x-dockge.url=https://calibre.${DOMAIN}"
+```
+
+**Environment Variables:**
+```bash
+# User permissions
+PUID=1000
+PGID=1000
+
+# Timezone
+TZ=America/New_York
+
+# Calibre integration (optional)
+DOCKER_MODS=linuxserver/mods:universal-calibre
+```
+
+===== Calibre Database Setup =====
+
+**Calibre Library Structure:**
+```
+/mnt/media/books/
+├── metadata.db          # Calibre database
+├── metadata_db_prefs_backup.json
+├── books/               # Book files
+│   ├── Author Name/
+│   │   ├── Book Title (Year)/
+│   │   │   ├── book.epub
+│   │   │   ├── cover.jpg
+│   │   │   └── metadata.opf
+│   └── Another Author/
+└── covers/              # Cover images
+```
+
+**Database Connection:**
+  * **Path**: `/books` (mounted Calibre library)
+  * **Auto-Detection**: Automatically finds metadata.db
+  * **Metadata Access**: Full access to Calibre metadata
+  * **Cover Images**: Access to book covers
+
+**Initial Setup:**
+  1. **Place Calibre Library**: Mount existing Calibre library
+  2. **Database Detection**: Calibre-Web finds metadata.db
+  3. **Admin Account**: Create administrator account
+  4. **Library Scan**: Scan and index books
+
+===== User Management =====
+
+**Administrator Setup:**
+  1. **First Access**: Visit Calibre-Web URL
+  2. **Create Admin**: Set up administrator account
+  3. **Configure Library**: Point to Calibre database
+  4. **User Settings**: Configure application settings
+
+**User Accounts:**
+  * **User Creation**: Add user accounts
+  * **Permission Levels**: Admin, User, Guest
+  * **Library Access**: Control book access per user
+  * **Download Rights**: Configure download permissions
+
+**Authentication:**
+  * **Username/Password**: Standard authentication
+  * **LDAP Integration**: External user directory (optional)
+  * **Guest Access**: Allow anonymous browsing
+  * **Session Management**: Configurable session timeouts
+
+===== Library Features =====
+
+**Browse & Search:**
+  * **Book Grid/List**: Multiple viewing modes
+  * **Advanced Search**: Search by title, author, genre
+  * **Filters**: Filter by language, format, rating
+  * **Sorting**: Sort by various criteria
+
+**Book Details:**
+  * **Metadata Display**: Title, author, description
+  * **Cover Images**: High-quality book covers
+  * **File Information**: Format, size, pages
+  * **Ratings & Reviews**: User ratings and reviews
+
+**Reading Interface:**
+  * **EPUB Reader**: Built-in EPUB reader
+  * **PDF Viewer**: PDF document viewer
+  * **Progress Tracking**: Reading progress saving
+  * **Bookmarking**: Save reading positions
+
+===== Download & Formats =====
+
+**Supported Formats:**
+  * **EPUB**: Most common eBook format
+  * **PDF**: Portable document format
+  * **MOBI**: Kindle format
+  * **AZW3**: Amazon format
+  * **TXT**: Plain text
+  * **RTF**: Rich text format
+
+**Download Options:**
+  * **Direct Download**: Download original format
+  * **Format Conversion**: Convert to other formats
+  * **Bulk Download**: Download multiple books
+  * **ZIP Archives**: Download as compressed archives
+
+**Conversion Features:**
+  * **Calibre Integration**: Use Calibre for conversion
+  * **Format Support**: Convert between supported formats
+  * **Quality Settings**: Adjust conversion quality
+  * **Metadata Preservation**: Maintain book metadata
+
+===== Customization =====
+
+**Interface Themes:**
+  * **Light Theme**: Clean, bright interface
+  * **Dark Theme**: Easy on the eyes
+  * **Custom CSS**: Advanced customization
+  * **Responsive Design**: Mobile-friendly interface
+
+**Language Support:**
+  * **Multiple Languages**: 20+ supported languages
+  * **Interface Translation**: Full UI translation
+  * **Metadata Languages**: Support for various languages
+  * **RTL Support**: Right-to-left language support
+
+**Display Options:**
+  * **Books per Page**: Configure pagination
+  * **Cover Sizes**: Adjust cover image sizes
+  * **Metadata Fields**: Customize displayed fields
+  * **Grid/List Views**: Choose viewing preferences
+
+===== Advanced Features =====
+
+**Shelves & Collections:**
+  * **Custom Shelves**: Create personal book collections
+  * **Public Shelves**: Share collections with others
+  * **Smart Shelves**: Dynamic collections based on criteria
+  * **Shelf Management**: Organize and categorize shelves
+
+**Reading Statistics:**
+  * **Reading Progress**: Track reading progress
+  * **Reading Time**: Monitor reading duration
+  * **Books Read**: Track completed books
+  * **Reading Goals**: Set reading targets
+
+**Social Features:**
+  * **User Reviews**: Write and read book reviews
+  * **Ratings**: Rate books and see averages
+  * **Recommendations**: Book recommendation system
+  * **User Activity**: See what others are reading
+
+===== Integration Features =====
+
+**Calibre Integration:**
+  * **Database Sync**: Sync with Calibre desktop
+  * **Metadata Updates**: Update from Calibre
+  * **Cover Downloads**: Download covers from Calibre
+  * **Format Conversion**: Use Calibre conversion tools
+
+**External Services:**
+  * **Goodreads**: Import ratings and reviews
+  * **Google Books**: Enhanced metadata
+  * **Open Library**: Additional book information
+  * **ISBN Lookup**: Automatic ISBN resolution
+
+**API Access:**
+  * **REST API**: Programmatic access
+  * **Webhook Support**: Event notifications
+  * **Third-party Integration**: Connect with other services
+  * **Automation**: Script-based automation
+
+===== Security Considerations =====
+
+**Access Control:**
+  * **User Authentication**: Secure user authentication
+  * **Permission Levels**: Granular access control
+  * **IP Restrictions**: Limit access by IP address
+  * **Session Security**: Secure session management
+
+**Data Protection:**
+  * **File Permissions**: Proper file system permissions
+  * **Database Security**: SQLite database protection
+  * **Backup Security**: Secure backup procedures
+  * **Encryption**: Data encryption options
+
+===== Performance Optimization =====
+
+**Resource Management:**
+```yaml
+deploy:
+  resources:
+    limits:
+      cpus: '1.0'
+      memory: 512M
+    reservations:
+      cpus: '0.2'
+      memory: 128M
+```
+
+**Database Optimization:**
+  * **Index Maintenance**: Regular database maintenance
+  * **Query Optimization**: Efficient database queries
+  * **Cache Management**: Metadata and cover caching
+  * **Search Optimization**: Fast search capabilities
+
+===== Troubleshooting =====
+
+**Database Connection Issues:**
+```bash
+# Check database file permissions
+ls -la /mnt/media/books/metadata.db
+
+# Verify database integrity
+docker exec calibre-web sqlite3 /books/metadata.db ".tables"
+
+# Check Calibre-Web logs
+docker logs calibre-web
+```
+
+**Book Display Problems:**
+  * **Cover Images**: Check cover file permissions
+  * **Metadata Issues**: Verify database integrity
+  * **File Permissions**: Check book file access
+  * **Format Support**: Verify supported formats
+
+**User Authentication Issues:**
+  * **Login Problems**: Check user credentials
+  * **Permission Errors**: Verify user permissions
+  * **Session Issues**: Clear browser cookies
+  * **Password Reset**: Administrator password reset
+
+**Reading Interface Issues:**
+  * **EPUB Display**: Check EPUB file validity
+  * **PDF Viewer**: Verify PDF compatibility
+  * **Progress Saving**: Check database write permissions
+  * **Bookmark Issues**: Clear browser cache
+
+**Troubleshooting Steps:**
+  1. **Check logs**: `docker logs calibre-web`
+  2. **Verify database**: Test database connectivity
+  3. **Check permissions**: Validate file permissions
+  4. **Test access**: Verify web interface access
+  5. **Restart service**: `docker restart calibre-web`
+
+===== Backup & Recovery =====
+
+**Configuration Backup:**
+```bash
+# Backup Calibre-Web configuration
+docker run --rm \
+  -v calibre-web-config:/config \
+  -v $(pwd)/backup:/backup \
+  busybox tar czf /backup/calibre-web-config.tar.gz /config
+```
+
+**Database Backup:**
+```bash
+# Backup Calibre database
+docker run --rm \
+  -v /mnt/media/books:/books \
+  -v $(pwd)/backup:/backup \
+  busybox tar czf /backup/calibre-library.tar.gz /books
+```
+
+**Recovery Process:**
+  1. **Restore Configuration**: Restore config directory
+  2. **Restore Database**: Restore Calibre library
+  3. **Verify Integrity**: Check database and files
+  4. **Update Permissions**: Fix file permissions
+  5. **Test Access**: Verify web interface works
+
+===== Best Practices =====
+
+**Library Management:**
+  * **Consistent Naming**: Follow Calibre naming conventions
+  * **Metadata Quality**: Maintain accurate metadata
+  * **File Organization**: Proper folder structure
+  * **Regular Backups**: Frequent library backups
+
+**User Management:**
+  * **Permission Planning**: Plan user access levels
+  * **Regular Audits**: Review user permissions
+  * **Password Policies**: Enforce strong passwords
+  * **Activity Monitoring**: Monitor user activity
+
+**Performance:**
+  * **Resource Allocation**: Appropriate CPU/memory limits
+  * **Database Maintenance**: Regular database optimization
+  * **Cache Management**: Optimize caching settings
+  * **Network Optimization**: Fast network access
+
+**Maintenance:**
+  * **Regular Updates**: Keep Calibre-Web updated
+  * **Database Maintenance**: Regular database cleanup
+  * **File System Checks**: Verify file integrity
+  * **Security Updates**: Apply security patches
+
+===== Advanced Configuration =====
+
+**Reverse Proxy Configuration:**
+```nginx
+# Nginx configuration for additional features
+location /calibre {
+    proxy_pass http://calibre-web:8083;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+**LDAP Integration:**
+```python
+# LDAP configuration in config files
+LDAP_URL = "ldap://your-ldap-server"
+LDAP_USER_DN = "ou=users,dc=example,dc=com"
+LDAP_GROUP_DN = "ou=groups,dc=example,dc=com"
+```
+
+**API Usage Examples:**
+```bash
+# Get library information
+curl -u username:password https://calibre.yourdomain.duckdns.org/api/books
+
+# Search books
+curl -u username:password "https://calibre.yourdomain.duckdns.org/api/books?search=author:smith"
+```
+
+Calibre-Web provides a beautiful, user-friendly web interface for your Calibre eBook library, making it easy to browse, read, and manage your digital book collection from any device.
+
+**Next:** Learn about [[services:media:qbittorrent|qBittorrent]] or explore [[architecture:backup|Backup Architecture]].

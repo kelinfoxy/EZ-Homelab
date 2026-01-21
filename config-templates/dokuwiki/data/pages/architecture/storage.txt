@@ -1,0 +1,291 @@
+====== Storage Architecture ======
+
+The AI-Homelab implements a comprehensive storage strategy designed for performance, reliability, and scalability.
+
+===== Storage Principles =====
+
+**Data Classification:**
+  * **Configuration**: Application settings and metadata
+  * **User Data**: Files, documents, media
+  * **System Data**: Logs, caches, temporary files
+  * **Backup Data**: Archived copies and snapshots
+
+**Storage Tiers:**
+  * **Hot**: Frequently accessed data (SSD)
+  * **Warm**: Regularly accessed data (HDD)
+  * **Cold**: Archive data (external storage)
+  * **Offline**: Long-term retention (tape/offsite)
+
+**Performance Optimization:**
+  * **Caching**: In-memory data acceleration
+  * **Compression**: Storage space optimization
+  * **Deduplication**: Eliminate redundant data
+  * **Tiering**: Automatic data placement
+
+===== Directory Structure =====
+
+**System Storage (/opt/stacks/):**
+```
+/opt/stacks/
+├── core/                    # Core infrastructure
+│   ├── traefik/            # Reverse proxy config
+│   ├── authelia/           # SSO configuration
+│   ├── duckdns/            # DNS updater
+│   └── gluetun/            # VPN client
+├── infrastructure/         # Management tools
+├── media/                  # Media services
+├── productivity/           # Office applications
+├── monitoring/             # Observability stack
+└── utilities/              # Helper services
+```
+
+**Data Storage (/mnt/):**
+```
+/mnt/
+├── media/                  # Movies, TV, music
+│   ├── movies/
+│   ├── tv/
+│   └── music/
+├── downloads/              # Torrent downloads
+│   ├── complete/
+│   └── incomplete/
+├── backups/                # Backup archives
+├── nextcloud/              # Cloud storage
+├── git/                    # Git repositories
+└── surveillance/           # Camera footage
+```
+
+===== Docker Storage =====
+
+**Volume Types:**
+
+**Named Volumes (Managed):**
+```yaml
+volumes:
+  database-data:
+    driver: local
+```
+  * **Pros**: Docker managed, portable, backup-friendly
+  * **Cons**: Less direct access, filesystem overhead
+  * **Use**: Databases, application data
+
+**Bind Mounts (Direct):**
+```yaml
+volumes:
+  - ./config:/config
+  - /mnt/media:/media
+```
+  * **Pros**: Direct filesystem access, performance
+  * **Cons**: Host-dependent, permission management
+  * **Use**: Configuration, large media files
+
+**tmpfs (Memory):**
+```yaml
+tmpfs:
+  - /tmp/cache
+```
+  * **Pros**: High performance, automatic cleanup
+  * **Cons**: Volatile, memory usage
+  * **Use**: Caches, temporary files
+
+**Storage Drivers:**
+  * **overlay2**: Modern union filesystem
+  * **btrfs**: Advanced features (snapshots, compression)
+  * **zfs**: Enterprise-grade (snapshots, deduplication)
+
+===== Service Storage Patterns =====
+
+**Configuration Storage:**
+```yaml
+services:
+  service-name:
+    volumes:
+      - ./config/service-name:/config
+      - service-data:/data
+```
+  * **Config**: Bind mount in stack directory
+  * **Data**: Named volume for persistence
+  * **Permissions**: PUID/PGID for access control
+
+**Media Storage:**
+```yaml
+services:
+  jellyfin:
+    volumes:
+      - ./config/jellyfin:/config
+      - jellyfin-cache:/cache
+      - /mnt/media:/media:ro
+      - /mnt/transcode:/transcode
+```
+  * **Media**: Read-only external mount
+  * **Transcode**: Temporary processing space
+  * **Cache**: Named volume for performance
+
+**Database Storage:**
+```yaml
+services:
+  postgres:
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=homelab
+      - POSTGRES_USER=homelab
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+```
+  * **Data**: Named volume for persistence
+  * **Backups**: Volume snapshots
+  * **Performance**: Proper indexing
+
+===== Backup Storage =====
+
+**Backrest (Primary):**
+```yaml
+services:
+  backrest:
+    volumes:
+      - ./config/backrest:/config
+      - /mnt/backups:/backups
+      - /opt/stacks:/opt/stacks:ro
+      - /mnt:/mnt:ro
+```
+  * **Repository**: Local and remote storage
+  * **Encryption**: AES-256-GCM
+  * **Deduplication**: Space-efficient
+  * **Snapshots**: Point-in-time recovery
+
+**Duplicati (Alternative):**
+```yaml
+services:
+  duplicati:
+    volumes:
+      - duplicati-config:/config
+      - duplicati-source:/source:ro
+      - duplicati-backup:/backup
+```
+  * **Frontend**: Web-based interface
+  * **Destinations**: Multiple cloud providers
+  * **Encryption**: Built-in encryption
+  * **Scheduling**: Automated backups
+
+===== Performance Optimization =====
+
+**Filesystem Choice:**
+  * **ext4**: General purpose, reliable
+  * **btrfs**: Snapshots, compression, RAID
+  * **ZFS**: Advanced features, data integrity
+  * **XFS**: High performance, large files
+
+**RAID Configuration:**
+  * **RAID 1**: Mirroring (2 drives)
+  * **RAID 5**: Striping with parity (3+ drives)
+  * **RAID 10**: Mirroring + striping (4+ drives)
+  * **RAID Z**: ZFS software RAID
+
+**Caching Strategies:**
+  * **Page Cache**: OS-level caching
+  * **Application Cache**: Service-specific caching
+  * **CDN**: Content delivery networks
+  * **Reverse Proxy**: Traefik caching
+
+===== Monitoring & Maintenance =====
+
+**Storage Monitoring:**
+```bash
+# Disk usage
+df -h
+
+# Docker storage
+docker system df
+
+# Volume usage
+docker volume ls
+docker volume inspect volume-name
+```
+
+**Maintenance Tasks:**
+  * **Cleanup**: Remove unused volumes and images
+  * **Defragmentation**: Filesystem optimization
+  * **SMART Monitoring**: Drive health checks
+  * **Backup Verification**: Integrity testing
+
+**Health Checks:**
+  * **Filesystem**: fsck, scrub operations
+  * **RAID**: Array status monitoring
+  * **SMART**: Drive error monitoring
+  * **Backup**: Restoration testing
+
+===== Capacity Planning =====
+
+**Storage Requirements:**
+
+| Service | Typical Size | Growth Rate |
+|---------|-------------|-------------|
+| Nextcloud | 100GB+ | High (user files) |
+| Jellyfin | 500GB+ | High (media library) |
+| Gitea | 10GB+ | Medium (repositories) |
+| Grafana | 5GB+ | Low (metrics) |
+| Backups | 2x data size | Variable |
+
+**Scaling Strategies:**
+  * **Vertical**: Larger drives, more RAM
+  * **Horizontal**: Multiple storage servers
+  * **Cloud**: Hybrid cloud storage
+  * **Archival**: Long-term retention solutions
+
+===== Security Considerations =====
+
+**Encryption:**
+  * **At Rest**: Filesystem encryption (LUKS)
+  * **In Transit**: TLS encryption
+  * **Backups**: Encrypted archives
+  * **Keys**: Secure key management
+
+**Access Control:**
+  * **Permissions**: Proper file permissions
+  * **SELinux/AppArmor**: Mandatory access control
+  * **Network**: Isolated storage networks
+  * **Auditing**: Access logging
+
+**Data Protection:**
+  * **RAID**: Redundancy protection
+  * **Snapshots**: Point-in-time copies
+  * **Backups**: Offsite copies
+  * **Testing**: Regular recovery tests
+
+===== Disaster Recovery =====
+
+**Recovery Strategies:**
+  * **File-level**: Individual file restoration
+  * **Volume-level**: Docker volume recovery
+  * **System-level**: Complete system restore
+  * **Bare-metal**: Full server recovery
+
+**Business Continuity:**
+  * **RTO**: Recovery Time Objective
+  * **RPO**: Recovery Point Objective
+  * **Testing**: Regular DR exercises
+  * **Documentation**: Recovery procedures
+
+**High Availability:**
+  * **Replication**: Data mirroring
+  * **Clustering**: Distributed storage
+  * **Load Balancing**: Access distribution
+  * **Failover**: Automatic switching
+
+===== Migration Strategies =====
+
+**Storage Migration:**
+  * **Live Migration**: Zero-downtime moves
+  * **Offline Migration**: Scheduled maintenance
+  * **Incremental**: Phased data movement
+  * **Verification**: Data integrity checks
+
+**Technology Upgrades:**
+  * **Filesystem**: ext4 to btrfs/ZFS
+  * **RAID**: Hardware to software RAID
+  * **Storage**: Local to network storage
+  * **Cloud**: Hybrid cloud solutions
+
+This storage architecture provides reliable, performant, and scalable data management for your homelab.
+
+**Next:** Learn about [[architecture:backup|Backup Strategy]] or explore [[services:start|Service Management]].

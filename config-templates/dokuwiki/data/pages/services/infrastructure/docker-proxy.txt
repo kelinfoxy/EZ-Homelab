@@ -1,0 +1,384 @@
+====== Docker Proxy ======
+
+Docker Proxy provides secure remote access to the Docker daemon socket, enabling safe Docker API access from external tools and services. It acts as a secure proxy between Docker clients and the Docker daemon.
+
+===== Overview =====
+
+**Purpose:** Secure Docker socket proxy
+**Deployment:** Infrastructure stack
+**Access Method:** TCP socket (no web UI)
+**Security:** TLS encryption and authentication
+**Integration:** External Docker tool access
+
+===== Key Features =====
+
+**Secure Access:**
+  * **TLS Encryption**: Encrypted Docker API communication
+  * **Authentication**: Client certificate authentication
+  * **Access Control**: Granular permission control
+  * **Audit Logging**: Comprehensive access logging
+
+**Proxy Features:**
+  * **Socket Proxy**: TCP proxy for Docker socket
+  * **API Compatibility**: Full Docker API support
+  * **Connection Pooling**: Efficient connection management
+  * **Load Balancing**: Distribute requests across instances
+
+**Monitoring:**
+  * **Request Logging**: Log all Docker API requests
+  * **Performance Metrics**: Monitor proxy performance
+  * **Health Checks**: Proxy health monitoring
+  * **Error Tracking**: Track and report errors
+
+===== Configuration =====
+
+**Container Configuration:**
+```yaml
+services:
+  docker-proxy:
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: docker-proxy
+    restart: unless-stopped
+    environment:
+      - CONTAINERS=1
+      - SERVICES=1
+      - TASKS=1
+      - NODES=0
+      - SWARM=0
+      - NETWORKS=0
+      - VOLUMES=0
+      - IMAGES=0
+      - EXEC=0
+      - INFO=1
+      - VERSION=1
+      - PING=1
+      - BUILD=0
+      - COMMIT=0
+      - CONFIGS=0
+      - DISTRIBUTION=0
+      - EVENTS=1
+      - GRPC=0
+      - LOGS=1
+      - PLUGINS=0
+      - POST=0
+      - SECRETS=0
+      - SESSION=0
+      - SYSTEM=0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - 2376:2376
+    networks:
+      - traefik-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 64M
+        reservations:
+          cpus: '0.01'
+          memory: 16M
+```
+
+**Permission Levels:**
+```bash
+# Read-only access (recommended)
+CONTAINERS=1    # List containers
+SERVICES=1      # List services
+TASKS=1         # List tasks
+INFO=1          # System info
+VERSION=1       # Version info
+PING=1          # Health checks
+EVENTS=1        # Docker events
+LOGS=1          # Container logs
+
+# Write access (use carefully)
+IMAGES=1        # Pull/push images
+NETWORKS=1      # Network management
+VOLUMES=1       # Volume management
+EXEC=1          # Execute commands
+BUILD=1         # Build images
+POST=1          # Create resources
+```
+
+===== Security Configuration =====
+
+**TLS Setup:**
+```yaml
+# Generate certificates
+openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 \
+  -subj "/C=US/ST=State/L=City/O=Organization/CN=docker-proxy" \
+  -keyout docker-proxy.key -out docker-proxy.crt
+
+# Mount certificates
+volumes:
+  - ./certs/docker-proxy.crt:/certs/server.crt:ro
+  - ./certs/docker-proxy.key:/certs/server.key:ro
+```
+
+**Client Authentication:**
+```bash
+# Client certificate authentication
+environment:
+  - AUTH=1
+  - CERTS_PATH=/certs
+
+volumes:
+  - ./certs:/certs:ro
+```
+
+**Access Control:**
+  * **IP Whitelisting**: Restrict access by IP address
+  * **Certificate Validation**: Require valid client certificates
+  * **Permission Levels**: Granular API permission control
+  * **Rate Limiting**: Prevent abuse and DoS attacks
+
+===== Usage Examples =====
+
+**Docker Client Connection:**
+```bash
+# Connect using TCP
+export DOCKER_HOST=tcp://localhost:2376
+docker ps
+
+# With TLS
+export DOCKER_HOST=tcp://localhost:2376
+export DOCKER_TLS_VERIFY=1
+export DOCKER_CERT_PATH=/path/to/certs
+docker ps
+```
+
+**External Tool Integration:**
+```python
+# Python Docker client
+import docker
+
+client = docker.DockerClient(base_url='tcp://localhost:2376')
+containers = client.containers.list()
+```
+
+**CI/CD Integration:**
+```yaml
+# GitHub Actions example
+- name: Connect to Docker
+  run: |
+    echo "DOCKER_HOST=tcp://docker-proxy:2376" >> $GITHUB_ENV
+    docker ps
+```
+
+**Monitoring Integration:**
+```bash
+# Prometheus metrics
+curl http://localhost:2376/metrics
+
+# Health check
+curl http://localhost:2376/_ping
+```
+
+===== Monitoring & Troubleshooting =====
+
+**Proxy Logs:**
+```bash
+# View proxy logs
+docker logs docker-proxy
+
+# Follow logs in real-time
+docker logs -f docker-proxy
+```
+
+**Connection Testing:**
+```bash
+# Test basic connectivity
+telnet localhost 2376
+
+# Test Docker API
+curl http://localhost:2376/_ping
+
+# Test with Docker client
+DOCKER_HOST=tcp://localhost:2376 docker version
+```
+
+**Permission Issues:**
+  * **Access Denied**: Check permission environment variables
+  * **Certificate Errors**: Verify TLS certificate configuration
+  * **Network Issues**: Check firewall and network connectivity
+  * **Socket Access**: Verify Docker socket permissions
+
+**Performance Issues:**
+  * **High Latency**: Check network configuration
+  * **Connection Limits**: Monitor concurrent connections
+  * **Resource Usage**: Check CPU/memory usage
+  * **Rate Limiting**: Adjust rate limiting settings
+
+**Troubleshooting Steps:**
+  1. **Check logs**: `docker logs docker-proxy`
+  2. **Test connectivity**: Verify TCP connection
+  3. **Validate permissions**: Check environment variables
+  4. **Test Docker client**: Verify Docker API access
+  5. **Restart service**: `docker restart docker-proxy`
+
+===== Advanced Configuration =====
+
+**High Availability:**
+```yaml
+# Multiple proxy instances
+services:
+  docker-proxy-1:
+    # Configuration for instance 1
+    
+  docker-proxy-2:
+    # Configuration for instance 2
+    
+  load-balancer:
+    # Load balancer configuration
+```
+
+**Custom TLS Configuration:**
+```yaml
+environment:
+  - TLS_CERT=/certs/custom.crt
+  - TLS_KEY=/certs/custom.key
+  - TLS_CA=/certs/ca.crt
+```
+
+**Rate Limiting:**
+```yaml
+environment:
+  - RATE_LIMIT=100  # Requests per minute
+  - BURST_LIMIT=20  # Burst allowance
+```
+
+**Audit Logging:**
+```yaml
+environment:
+  - LOG_LEVEL=debug
+  - AUDIT_LOG=/logs/audit.log
+
+volumes:
+  - ./logs:/logs
+```
+
+===== Security Best Practices =====
+
+**Access Control:**
+  * **Principle of Least Privilege**: Grant minimal required permissions
+  * **Network Segmentation**: Isolate proxy network access
+  * **Certificate Management**: Regular certificate rotation
+  * **Monitoring**: Continuous access monitoring
+
+**TLS Security:**
+  * **Strong Ciphers**: Use modern TLS cipher suites
+  * **Certificate Validation**: Enable client certificate validation
+  * **Perfect Forward Secrecy**: Enable PFS cipher suites
+  * **Regular Updates**: Keep TLS libraries updated
+
+**Operational Security:**
+  * **Log Analysis**: Regular security log review
+  * **Intrusion Detection**: Monitor for suspicious activity
+  * **Backup Security**: Secure configuration backups
+  * **Incident Response**: Have security incident procedures
+
+===== Integration Patterns =====
+
+**CI/CD Pipelines:**
+```yaml
+# Jenkins pipeline
+pipeline {
+  agent any
+  stages {
+    stage('Build') {
+      steps {
+        script {
+          docker.withServer('tcp://docker-proxy:2376') {
+            docker.build('my-app')
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+**Monitoring Integration:**
+```yaml
+# Prometheus configuration
+scrape_configs:
+  - job_name: 'docker-proxy'
+    static_configs:
+      - targets: ['docker-proxy:2376']
+    metrics_path: '/metrics'
+```
+
+**Backup Integration:**
+```bash
+# Backup Docker configurations
+DOCKER_HOST=tcp://localhost:2376 docker system info > system-info.json
+DOCKER_HOST=tcp://localhost:2376 docker config ls > configs.json
+```
+
+===== Performance Optimization =====
+
+**Resource Management:**
+```yaml
+deploy:
+  resources:
+    limits:
+      cpus: '0.2'
+      memory: 64M
+    reservations:
+      cpus: '0.01'
+      memory: 16M
+```
+
+**Connection Optimization:**
+  * **Connection Pooling**: Reuse connections efficiently
+  * **Timeout Configuration**: Appropriate request timeouts
+  * **Concurrent Limits**: Control simultaneous connections
+  * **Caching**: Cache frequently accessed data
+
+===== Use Cases =====
+
+**Development Environments:**
+  * **Remote Docker Access**: Access Docker from development machines
+  * **CI/CD Integration**: Integrate with build pipelines
+  * **Testing Environments**: Isolated testing environments
+  * **Container Management**: Manage containers from external tools
+
+**Production Management:**
+  * **Monitoring Tools**: Connect monitoring tools to Docker API
+  * **Management Platforms**: Integrate with Docker management platforms
+  * **Backup Solutions**: Connect backup tools to Docker
+  * **Security Scanning**: Integrate security scanning tools
+
+**Homelab Management:**
+  * **Portainer Integration**: Connect Portainer to Docker API
+  * **External Tools**: Use Docker CLI from external machines
+  * **Automation Scripts**: Run Docker automation scripts
+  * **Monitoring Integration**: Connect monitoring stacks
+
+**Enterprise Integration:**
+  * **Centralized Management**: Connect to enterprise Docker platforms
+  * **Compliance Monitoring**: Meet compliance requirements
+  * **Audit Trails**: Maintain Docker operation audit logs
+  * **Security Integration**: Integrate with security platforms
+
+===== Backup & Recovery =====
+
+**Configuration Backup:**
+```bash
+# Backup proxy configuration
+docker run --rm \
+  -v docker-proxy-config:/config \
+  -v $(pwd)/backup:/backup \
+  busybox tar czf /backup/docker-proxy-config.tar.gz /config
+```
+
+**Certificate Management:**
+  * **Certificate Backup**: Regular certificate backups
+  * **Key Rotation**: Periodic key rotation procedures
+  * **Certificate Monitoring**: Monitor certificate expiration
+  * **Renewal Process**: Automated certificate renewal
+
+Docker Proxy provides secure, controlled access to the Docker daemon, enabling safe integration with external tools and services while maintaining security and audit capabilities.
+
+**Next:** Explore [[services:media:start|Media Services]] or return to [[services:start|Services Overview]].

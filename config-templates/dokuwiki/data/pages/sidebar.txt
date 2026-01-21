@@ -1,0 +1,84 @@
+====== Navigation ======
+
+**AI-Homelab Wiki**
+
+==== Getting Started ====
+  * [[getting_started:start|Overview]]
+  * [[getting_started:prerequisites|Prerequisites]]
+  * [[getting_started:setup|Automated Setup]]
+  * [[getting_started:deployment|Deployment]]
+  * [[getting_started:access|Access Services]]
+  * [[getting_started:security|Security Setup]]
+
+==== Architecture ====
+  * [[architecture:overview|System Overview]]
+  * [[architecture:networking|Network Architecture]]
+  * [[architecture:security|Security Model]]
+  * [[architecture:storage|Storage Strategy]]
+  * [[architecture:backup|Backup Strategy]]
+
+==== Services ====
+  * [[services:start|Service Overview]]
+  * **Core Infrastructure**
+    * [[services:core:traefik|Traefik]]
+    * [[services:core:authelia|Authelia]]
+    * [[services:core:duckdns|DuckDNS]]
+    * [[services:core:gluetun|Gluetun]]
+    * [[services:core:sablier|Sablier]]
+  * **Infrastructure**
+    * [[services:infrastructure:dockge|Dockge]]
+    * [[services:infrastructure:pihole|Pi-hole]]
+    * [[services:infrastructure:dozzle|Dozzle]]
+    * [[services:infrastructure:glances|Glances]]
+  * **Media Services**
+    * [[services:media:jellyfin|Jellyfin]]
+    * [[services:media:plex|Plex]]
+    * [[services:media:qbittorrent|qBittorrent]]
+    * [[services:media:sonarr|Sonarr]]
+    * [[services:media:radarr|Radarr]]
+  * **Productivity**
+    * [[services:productivity:nextcloud|Nextcloud]]
+    * [[services:productivity:gitea|Gitea]]
+    * [[services:productivity:bookstack|BookStack]]
+  * **Monitoring**
+    * [[services:monitoring:grafana|Grafana]]
+    * [[services:monitoring:prometheus|Prometheus]]
+    * [[services:monitoring:uptime_kuma|Uptime Kuma]]
+  * **Utilities**
+    * [[services:utilities:backrest|Backrest]]
+    * [[services:utilities:duplicati|Duplicati]]
+    * [[services:utilities:vaultwarden|Vaultwarden]]
+
+==== Backup & Recovery ====
+  * [[backup_recovery:start|Overview]]
+  * [[backup_recovery:backrest|Backrest (Default)]]
+  * [[backup_recovery:duplicati|Duplicati (Alternative)]]
+  * [[backup_recovery:strategy|Backup Strategy]]
+  * [[backup_recovery:restoration|Restoration]]
+
+==== Troubleshooting ====
+  * [[troubleshooting:start|Common Issues]]
+  * [[troubleshooting:deployment|Deployment Problems]]
+  * [[troubleshooting:services|Service Issues]]
+  * [[troubleshooting:networking|Network Problems]]
+  * [[troubleshooting:ssl|SSL Certificate Issues]]
+
+==== Development ====
+  * [[development:start|Contributing]]
+  * [[development:copilot|AI Copilot Integration]]
+  * [[development:customization|Customization]]
+  * [[development:deployment|Advanced Deployment]]
+
+==== Reference ====
+  * [[reference:start|Quick Reference]]
+  * [[reference:commands|Command Reference]]
+  * [[reference:environment|Environment Variables]]
+  * [[reference:ports|Port Reference]]
+  * [[reference:scripts|Deployment Scripts]]
+
+==== External Links ====
+  * [[https://github.com/kelinfoxy/AI-Homelab|GitHub Repository]]
+  * [[https://github.com/kelinfoxy/AI-Homelab/issues|Issue Tracker]]
+  * [[https://github.com/kelinfoxy/AI-Homelab/discussions|Discussions]]
+  * [[https://doc.traefik.io/traefik/|Traefik Documentation]]
+  * [[https://www.authelia.com/|Authelia Documentation]]

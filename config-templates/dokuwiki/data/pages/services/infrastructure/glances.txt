@@ -1,0 +1,394 @@
+====== Glances ======
+
+Glances is a cross-platform system monitoring tool that provides real-time information about your system's performance, resources, and running processes. It offers a web-based interface for monitoring system health and performance metrics.
+
+===== Overview =====
+
+**Purpose:** System and container monitoring
+**URL:** https://glances.yourdomain.duckdns.org
+**Authentication:** Authelia SSO protected
+**Deployment:** Infrastructure stack
+**Interface:** Web-based monitoring dashboard
+
+===== Key Features =====
+
+**System Monitoring:**
+  * **CPU Usage**: Real-time CPU utilization
+  * **Memory Usage**: RAM and swap monitoring
+  * **Disk I/O**: Storage read/write operations
+  * **Network I/O**: Network traffic monitoring
+
+**Container Monitoring:**
+  * **Docker Stats**: Container resource usage
+  * **Container Health**: Status and health checks
+  * **Process Monitoring**: Running processes
+  * **Service Status**: Application service monitoring
+
+**Performance Metrics:**
+  * **Load Average**: System load over time
+  * **Temperature**: CPU and system temperatures
+  * **Fan Speed**: Cooling system monitoring
+  * **Power Usage**: System power consumption
+
+===== Configuration =====
+
+**Container Configuration:**
+```yaml
+services:
+  glances:
+    image: nicolargo/glances:latest
+    container_name: glances
+    restart: unless-stopped
+    pid: host
+    environment:
+      - GLANCES_OPT=-w
+      - GLANCES_OPT_WEBserver=true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /etc/os-release:/etc/os-release:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+    networks:
+      - traefik-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.glances.rule=Host(`glances.${DOMAIN}`)"
+      - "traefik.http.routers.glances.entrypoints=websecure"
+      - "traefik.http.routers.glances.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.glances.middlewares=authelia@docker"
+      - "traefik.http.services.glances.loadbalancer.server.port=61208"
+      - "x-dockge.url=https://glances.${DOMAIN}"
+```
+
+**Command Line Options:**
+```bash
+# Web server mode
+GLANCES_OPT=-w
+
+# Additional options
+GLANCES_OPT=-w --disable-webui-password --enable-process-extended
+
+# Custom refresh interval
+GLANCES_OPT=-w --time 5
+
+# Disable specific plugins
+GLANCES_OPT=-w --disable cpu --disable mem
+```
+
+===== Interface Overview =====
+
+**Main Dashboard:**
+  * **System Overview**: CPU, memory, disk, network
+  * **Container List**: Docker container statistics
+  * **Process List**: Top running processes
+  * **Alerts Panel**: System alerts and warnings
+
+**Navigation Tabs:**
+  * **System**: Core system metrics
+  * **Docker**: Container monitoring
+  * **Processes**: Process management
+  * **Alerts**: System alerts and thresholds
+  * **Filesystem**: Disk usage and I/O
+
+**Real-time Updates:**
+  * **Auto-refresh**: Configurable update intervals
+  * **Live Charts**: Real-time performance graphs
+  * **Color Coding**: Status-based color indicators
+  * **Threshold Alerts**: Configurable warning levels
+
+===== System Monitoring =====
+
+**CPU Monitoring:**
+  * **Usage Percentage**: Overall CPU utilization
+  * **Per-Core Usage**: Individual core monitoring
+  * **Load Average**: 1, 5, 15-minute averages
+  * **CPU Frequency**: Current clock speeds
+
+**Memory Monitoring:**
+  * **RAM Usage**: Physical memory utilization
+  * **Swap Usage**: Swap file/page file usage
+  * **Memory Pressure**: System memory pressure
+  * **Cache Statistics**: Buffer and cache usage
+
+**Disk Monitoring:**
+  * **Usage Percentage**: Filesystem utilization
+  * **I/O Operations**: Read/write operations per second
+  * **Transfer Rates**: Data transfer speeds
+  * **Disk Health**: S.M.A.R.T. status (if available)
+
+**Network Monitoring:**
+  * **Interface Statistics**: Per-interface traffic
+  * **Connection Count**: Active network connections
+  * **Bandwidth Usage**: Upload/download rates
+  * **Network Errors**: Packet loss and errors
+
+===== Container Monitoring =====
+
+**Docker Integration:**
+  * **Container List**: All running containers
+  * **Resource Usage**: CPU, memory per container
+  * **Network Stats**: Container network traffic
+  * **Health Status**: Container health checks
+
+**Container Details:**
+  * **Image Information**: Base image and version
+  * **Port Mappings**: Exposed ports
+  * **Volume Mounts**: Attached volumes
+  * **Environment Variables**: Container configuration
+
+**Performance Metrics:**
+  * **CPU Shares**: CPU allocation and usage
+  * **Memory Limits**: Memory constraints and usage
+  * **Network I/O**: Container network traffic
+  * **Disk I/O**: Container storage operations
+
+===== Process Monitoring =====
+
+**Process List:**
+  * **Top Processes**: Most resource-intensive processes
+  * **Process Tree**: Parent-child process relationships
+  * **User Processes**: Per-user process listing
+  * **System Processes**: Kernel and system processes
+
+**Process Details:**
+  * **CPU Usage**: Per-process CPU consumption
+  * **Memory Usage**: RAM and virtual memory
+  * **I/O Operations**: Disk read/write activity
+  * **Network Activity**: Network connections
+
+**Process Management:**
+  * **Kill Process**: Terminate problematic processes
+  * **Change Priority**: Adjust process nice levels
+  * **Resource Limits**: Set process resource limits
+  * **Process Groups**: Group related processes
+
+===== Alert System =====
+
+**Threshold Configuration:**
+```yaml
+# Alert thresholds (environment variables)
+GLANCES_OPT=-w --alert cpu>80,mem>90,disk>85
+```
+
+**Alert Types:**
+  * **CPU Alerts**: High CPU usage warnings
+  * **Memory Alerts**: Memory pressure alerts
+  * **Disk Alerts**: Storage space warnings
+  * **Network Alerts**: Bandwidth threshold alerts
+
+**Alert Actions:**
+  * **Visual Indicators**: Color-coded alerts
+  * **Sound Alerts**: Audio notifications
+  * **Email Notifications**: SMTP alerts
+  * **Webhook Integration**: External alert systems
+
+===== Advanced Configuration =====
+
+**Custom Plugins:**
+```yaml
+# Enable additional plugins
+GLANCES_OPT=-w --enable-plugin sensors --enable-plugin gpu
+```
+
+**Export Options:**
+```yaml
+# Export to various formats
+GLANCES_OPT=-w --export csv --export-csv-file /data/stats.csv
+GLANCES_OPT=-w --export influxdb --export-influxdb-host localhost
+```
+
+**Remote Monitoring:**
+```yaml
+# Monitor remote systems
+GLANCES_OPT=-w --client localhost:61209
+```
+
+**Configuration File:**
+```yaml
+# glances.conf
+[main]
+refresh=2
+history_size=1200
+
+[cpu]
+user_careful=50
+user_warning=70
+user_critical=90
+```
+
+===== Security Considerations =====
+
+**Access Control:**
+  * **Authelia Protection**: SSO authentication required
+  * **Network Isolation**: Container network restrictions
+  * **Read-only Access**: Limited system access
+  * **Audit Logging**: Monitor access patterns
+
+**Data Protection:**
+  * **Sensitive Data**: Avoid exposing sensitive information
+  * **Encryption**: Secure data transmission
+  * **Access Logging**: Track monitoring access
+  * **Privacy Controls**: Limit exposed system information
+
+===== Performance Optimization =====
+
+**Resource Management:**
+```yaml
+deploy:
+  resources:
+    limits:
+      cpus: '0.3'
+      memory: 128M
+    reservations:
+      cpus: '0.05'
+      memory: 32M
+```
+
+**Monitoring Optimization:**
+  * **Refresh Rate**: Balance between real-time and performance
+  * **Data Retention**: Configure historical data limits
+  * **Plugin Selection**: Enable only needed monitoring plugins
+  * **Caching**: Use efficient data caching
+
+===== Troubleshooting =====
+
+**Connection Issues:**
+```bash
+# Check web interface
+curl -k https://glances.yourdomain.duckdns.org
+
+# Verify port accessibility
+netstat -tlnp | grep 61208
+
+# Check container logs
+docker logs glances
+```
+
+**Monitoring Problems:**
+  * **No Data Showing**: Check system permissions
+  * **High Resource Usage**: Adjust refresh rates
+  * **Missing Metrics**: Enable required plugins
+  * **Inaccurate Data**: Verify system compatibility
+
+**Docker Integration Issues:**
+  * **Socket Access**: Verify Docker socket permissions
+  * **Container Detection**: Check Docker API access
+  * **Permission Errors**: Adjust container privileges
+  * **Network Issues**: Check container networking
+
+**Performance Issues:**
+  * **High CPU Usage**: Reduce refresh frequency
+  * **Memory Leaks**: Monitor memory consumption
+  * **Disk I/O**: Optimize data storage
+  * **Network Latency**: Check network performance
+
+**Troubleshooting Steps:**
+  1. **Check logs**: `docker logs glances`
+  2. **Verify configuration**: Test command line options
+  3. **Test connectivity**: Check web interface access
+  4. **Monitor resources**: Track system resource usage
+  5. **Restart service**: `docker restart glances`
+
+===== Integration with Monitoring Stack =====
+
+**Prometheus Integration:**
+```yaml
+# Export metrics to Prometheus
+GLANCES_OPT=-w --export prometheus --export-prometheus-port 9091
+```
+
+**Grafana Dashboards:**
+  * **System Overview**: CPU, memory, disk, network
+  * **Container Metrics**: Docker container statistics
+  * **Process Monitoring**: Top processes and resource usage
+  * **Historical Trends**: Performance over time
+
+**Alert Manager Integration:**
+  * **Threshold Alerts**: Configurable alert rules
+  * **Notification Channels**: Email, Slack, webhook alerts
+  * **Escalation Policies**: Multi-level alert handling
+  * **Silence Management**: Alert suppression rules
+
+===== Best Practices =====
+
+**Monitoring Strategy:**
+  * **Key Metrics**: Focus on critical system metrics
+  * **Alert Thresholds**: Set appropriate warning levels
+  * **Baseline Establishment**: Understand normal system behavior
+  * **Trend Analysis**: Monitor performance trends
+
+**Alert Configuration:**
+  * **Avoid Alert Fatigue**: Set meaningful thresholds
+  * **Escalation Paths**: Define alert escalation procedures
+  * **Maintenance Windows**: Suppress alerts during maintenance
+  * **Testing**: Regularly test alert functionality
+
+**Performance:**
+  * **Resource Limits**: Appropriate CPU/memory allocation
+  * **Refresh Rates**: Balance real-time vs performance
+  * **Data Retention**: Configure appropriate history
+  * **Optimization**: Enable only needed features
+
+**Security:**
+  * **Access Control**: Limit monitoring access
+  * **Data Protection**: Secure monitoring data
+  * **Network Security**: Secure monitoring traffic
+  * **Compliance**: Meet monitoring compliance requirements
+
+===== Use Cases =====
+
+**System Administration:**
+  * **Performance Monitoring**: Track system health
+  * **Capacity Planning**: Plan for resource upgrades
+  * **Troubleshooting**: Diagnose system issues
+  * **Maintenance Planning**: Schedule maintenance windows
+
+**Container Orchestration:**
+  * **Resource Allocation**: Monitor container resources
+  * **Health Checks**: Track container health
+  * **Scaling Decisions**: Inform scaling decisions
+  * **Optimization**: Optimize container performance
+
+**Development & Testing:**
+  * **Application Monitoring**: Monitor application performance
+  * **Resource Usage**: Track development environment usage
+  * **Debugging**: Identify performance bottlenecks
+  * **Testing**: Validate system performance
+
+**Production Monitoring:**
+  * **SLA Monitoring**: Ensure service level agreements
+  * **Incident Response**: Quick issue identification
+  * **Root Cause Analysis**: Analyze system incidents
+  * **Reporting**: Generate performance reports
+
+===== Keyboard Shortcuts =====
+
+**Navigation:**
+  * **Tab**: Switch between sections
+  * **Arrow Keys**: Navigate lists and menus
+  * **Enter**: Select item or open details
+  * **Esc**: Close dialogs or return to main view
+
+**Actions:**
+  * **R**: Refresh data
+  * **S**: Sort current list
+  * **F**: Filter/search
+  * **H**: Show help
+
+**Views:**
+  * **1-9**: Switch to specific tabs
+  * **C**: Container view
+  * **P**: Process view
+  * **A**: Alerts view
+
+Glances provides comprehensive system and container monitoring with an intuitive web interface, essential for maintaining your homelab's health and performance.
+
+**Next:** Learn about [[services:infrastructure:watchtower|Watchtower]] or explore [[architecture:monitoring|Monitoring Architecture]].
