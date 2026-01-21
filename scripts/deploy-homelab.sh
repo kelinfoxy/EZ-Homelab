@@ -154,7 +154,7 @@ fi
 echo ""
 
 # Step 4: Deploy infrastructure stack (Dockge and monitoring tools)
-log_info "Step 4/5: Deploying infrastructure stack..."
+log_info "Step 4/6: Deploying infrastructure stack..."
 log_info "  - Dockge (Docker Compose Manager)"
 log_info "  - Portainer (Alternative Docker UI)"
 log_info "  - Pi-hole (DNS Ad Blocker)"
@@ -175,8 +175,34 @@ docker compose up -d
 log_success "Infrastructure stack deployed"
 echo ""
 
-# Step 5: Wait for Dockge to be ready and open browser
-log_info "Step 5/5: Waiting for Dockge web UI to be ready..."
+# Step 5: Deploy Dokuwiki
+log_info "Step 5/6: Deploying Dokuwiki wiki platform..."
+log_info "  - DokuWiki (File-based wiki with pre-configured content)"
+echo ""
+
+# Create Dokuwiki directory
+mkdir -p /opt/stacks/dokuwiki/config
+
+# Copy Dokuwiki compose file
+cp "$REPO_DIR/config-templates/dokuwiki/docker-compose.yml" /opt/stacks/dokuwiki/docker-compose.yml
+
+# Copy pre-configured Dokuwiki config, content, and keys
+cp -r "$REPO_DIR/config-templates/dokuwiki/conf" /opt/stacks/dokuwiki/config/
+cp -r "$REPO_DIR/config-templates/dokuwiki/data" /opt/stacks/dokuwiki/config/
+cp -r "$REPO_DIR/config-templates/dokuwiki/keys" /opt/stacks/dokuwiki/config/
+
+# Set proper ownership for Dokuwiki config
+sudo chown -R 1000:1000 /opt/stacks/dokuwiki/config
+
+# Deploy Dokuwiki
+cd /opt/stacks/dokuwiki
+docker compose up -d
+
+log_success "Dokuwiki deployed with pre-configured content"
+echo ""
+
+# Step 6: Wait for Dockge to be ready and open browser
+log_info "Step 6/6: Waiting for Dockge web UI to be ready..."
 
 DOCKGE_URL="https://dockge.${DOMAIN}"
 MAX_WAIT=60  # Maximum wait time in seconds
@@ -236,7 +262,8 @@ echo ""
 log_info "Access your services:"
 echo ""
 echo "  🚀 Dockge:   $DOCKGE_URL"
-echo "  🔒 Authelia: https://auth.${DOMAIN}"
+echo "  � Wiki:     https://wiki.${DOMAIN}"
+echo "  �🔒 Authelia: https://auth.${DOMAIN}"
 echo "  🔀 Traefik:  https://traefik.${DOMAIN}"
 echo ""
 log_info "Next steps:"
@@ -244,12 +271,15 @@ echo ""
 echo "  1. Log in to Dockge using your Authelia credentials"
 echo "     (configured in /opt/stacks/core/authelia/users_database.yml)"
 echo ""
-echo "  2. Deploy additional stacks through Dockge's web UI:"
+echo "  2. Access your pre-deployed Dokuwiki at https://wiki.${DOMAIN}"
+echo "     (admin/admin credentials)"
+echo ""
+echo "  3. Deploy additional stacks through Dockge's web UI:"
 echo "     - dashboards.yml (Homepage, Homarr)"
 echo "     - media.yml (Plex, Jellyfin, Sonarr, Radarr, etc.)"
 echo "     - media-extended.yml (Readarr, Lidarr, etc.)"
 echo "     - homeassistant.yml (Home Assistant and accessories)"
-echo "     - productivity.yml (Nextcloud, Gitea, wikis)"
+echo "     - productivity.yml (Nextcloud, Gitea, additional wikis)"
 echo "     - monitoring.yml (Grafana, Prometheus, etc.)"
 echo "     - utilities.yml (Backups, code editors, etc.)"
 echo ""
