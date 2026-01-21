@@ -1,17 +1,17 @@
 # Getting Started Guide
 
-Welcome to your AI-powered homelab! This guide will walk you through setting up your production-ready infrastructure with Dockge, Traefik, Authelia, and 60+ services.
+Welcome to your AI-powered homelab! This guide will walk you through setting up your production-ready infrastructure with Dockge, Traefik, Authelia, and 70+ services.
 
 ## Getting Started Checklist
 - [ ] Clone this repository to your home folder
-- [ ] Configure `.env` file with your domain and tokens
-- [ ] Run setup script (generates Authelia secrets and admin user)
+- [ ] Configure `.env` file with your domain and tokens ([see prerequisites](#prerequisites))
+- [ ] Run setup script (generates Authelia secrets and admin user) ([setup-homelab.sh](../scripts/setup-homelab.sh))
 - [ ] Log out and back in for Docker group permissions
-- [ ] Run deployment script (deploys all core, infrastructure & dashboard services)
-- [ ] Access Dockge web UI
-- [ ] Set up 2FA with Authelia
-- [ ] (optional) Deploy additional stacks as needed via Dockge
-- [ ] Configure and use VS Code with Github Copilot to manage the server
+- [ ] Run deployment script (deploys all core, infrastructure & dashboard services) ([deploy-homelab.sh](../scripts/deploy-homelab.sh))
+- [ ] Access Dockge web UI ([https://dockge.yourdomain.duckdns.org](https://dockge.yourdomain.duckdns.org))
+- [ ] Set up 2FA with Authelia ([Authelia setup guide](service-docs/authelia.md))
+- [ ] (optional) Deploy additional stacks as needed via Dockge ([services overview](services-overview.md))
+- [ ] Configure and use VS Code with Github Copilot to manage the server ([AI management](.github/copilot-instructions.md))
 
 ## Quick Setup (Recommended)
 
@@ -35,7 +35,7 @@ For most users, the automated setup script handles everything:
 3. **Clone the rep**:
    ```bash
    git clone https://github.com/kelinfoxy/AI-Homelab.git
-   cd AI-Homeb
+   cd AI-Homelab
 4. **Configure environment**:
    ```bash
    cp .env.example .env
@@ -363,7 +363,7 @@ docker compose up -d --build service-name
 ## Next Steps
 
 1. **Explore services** through Dockge
-2. **Configure backups** with Backrest/Duplicati
+2. **Set up backups** with Backrest (default Restic-based solution)
 3. **Set up monitoring** with Grafana/Prometheus
 4. **Add external services** via Traefik proxying
 5. **Use AI assistance** for custom configurations

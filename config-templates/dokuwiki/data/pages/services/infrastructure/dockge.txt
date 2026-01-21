@@ -1,0 +1,313 @@
+====== Dockge ======
+
+Dockge is the primary web-based interface for managing Docker stacks in your homelab. It provides a clean, intuitive way to deploy, monitor, and manage all your services through a web UI, making it the central hub for homelab management.
+
+===== Overview =====
+
+**Purpose:** Docker stack management interface
+**URL:** https://dockge.yourdomain.duckdns.org
+**Authentication:** Authelia SSO protected
+**Deployment:** Infrastructure stack
+**Interface:** Modern web UI with drag-and-drop
+
+===== Key Features =====
+
+**Stack Management:**
+  * **Visual Interface**: Web-based stack management
+  * **Compose File Editing**: Direct YAML editing
+  * **One-Click Deploy**: Deploy stacks with single click
+  * **Real-time Monitoring**: Live container status
+
+**Container Operations:**
+  * **Start/Stop/Restart**: Individual container control
+  * **Log Viewing**: Integrated log viewer
+  * **Resource Monitoring**: CPU/memory usage
+  * **Network Inspection**: Container networking info
+
+**File Management:**
+  * **Directory Browser**: Navigate stack directories
+  * **File Editor**: Edit configuration files
+  * **Upload/Download**: File transfer capabilities
+  * **Backup Integration**: Stack backup/restore
+
+===== Configuration =====
+
+**Container Configuration:**
+```yaml
+services:
+  dockge:
+    image: louislam/dockge:1
+    container_name: dockge
+    restart: unless-stopped
+    environment:
+      - DOCKGE_STACKS_DIR=/opt/stacks
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /opt/stacks:/opt/stacks
+      - ./dockge/data:/app/data
+    ports:
+      - 5001:5001
+    networks:
+      - traefik-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dockge.rule=Host(`dockge.${DOMAIN}`)"
+      - "traefik.http.routers.dockge.entrypoints=websecure"
+      - "traefik.http.routers.dockge.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.dockge.middlewares=authelia@docker"
+      - "traefik.http.services.dockge.loadbalancer.server.port=5001"
+      - "x-dockge.url=https://dockge.${DOMAIN}"
+```
+
+**Directory Structure:**
+```
+/opt/stacks/
+├── core/                    # Core infrastructure
+├── infrastructure/          # Management tools
+├── media/                   # Media services
+├── media-management/        # Download automation
+├── dashboards/              # Dashboard services
+├── homeassistant/           # Home automation
+├── productivity/            # Office tools
+├── monitoring/              # Observability
+├── utilities/               # Backup/utilities
+└── development/             # Dev tools
+```
+
+===== Getting Started =====
+
+**Initial Access:**
+  1. **Deploy Infrastructure Stack**: Run deploy script or manual deployment
+  2. **Access URL**: Visit https://dockge.yourdomain.duckdns.org
+  3. **Authelia Login**: Authenticate with your credentials
+  4. **First Stack**: Create your first stack
+
+**Interface Overview:**
+  * **Left Sidebar**: Stack categories and navigation
+  * **Main Panel**: Stack list with status indicators
+  * **Top Bar**: Search, settings, and actions
+  * **Stack Cards**: Individual stack management
+
+===== Stack Operations =====
+
+**Creating a New Stack:**
+  1. **Click "Compose"**: Open compose file editor
+  2. **Enter Stack Name**: Choose directory name
+  3. **Paste YAML**: Copy docker-compose.yml content
+  4. **Deploy**: Click deploy button
+  5. **Monitor**: Watch deployment progress
+
+**Managing Existing Stacks:**
+  * **Start/Stop**: Control stack lifecycle
+  * **Update**: Pull new images and restart
+  * **Edit**: Modify compose files
+  * **Logs**: View container logs
+  * **Terminal**: Access container shells
+
+**Stack Status Indicators:**
+  * **🟢 Running**: All containers healthy
+  * **🟡 Partial**: Some containers issues
+  * **🔴 Stopped**: Stack not running
+  * **🔵 Updating**: Stack being updated
+
+===== File Management =====
+
+**Directory Navigation:**
+  * **Browse Stacks**: Navigate /opt/stacks directory
+  * **File Editor**: Edit YAML, config files
+  * **Upload Files**: Drag-and-drop file uploads
+  * **Download**: Download files from containers
+
+**Configuration Editing:**
+  * **Syntax Highlighting**: YAML, JSON, text files
+  * **Save Changes**: Auto-save or manual save
+  * **Version Control**: Track file changes
+  * **Backup**: Automatic file backups
+
+===== Container Management =====
+
+**Individual Container Control:**
+  * **Start/Stop/Restart**: Container lifecycle
+  * **Logs**: Real-time log streaming
+  * **Exec**: Run commands in containers
+  * **Inspect**: View container details
+
+**Resource Monitoring:**
+  * **CPU Usage**: Real-time CPU monitoring
+  * **Memory Usage**: RAM consumption tracking
+  * **Network I/O**: Traffic monitoring
+  * **Disk Usage**: Storage utilization
+
+===== Advanced Features =====
+
+**Environment Variables:**
+```yaml
+# Global environment file
+# /opt/stacks/.env
+DOMAIN=yourdomain.duckdns.org
+PUID=1000
+PGID=1000
+TZ=America/New_York
+```
+
+**Stack Dependencies:**
+  * **Service Dependencies**: depends_on configuration
+  * **Network Dependencies**: Shared networks
+  * **Volume Dependencies**: Shared storage
+  * **Health Checks**: Service readiness
+
+**Backup & Restore:**
+  * **Stack Export**: Download compose files
+  * **Configuration Backup**: Environment files
+  * **Volume Backup**: Data persistence
+  * **Full Restore**: Complete stack recovery
+
+===== Integration with AI Assistant =====
+
+**AI-Powered Management:**
+  * **Service Creation**: AI generates compose files
+  * **Configuration Help**: AI assists with setup
+  * **Troubleshooting**: AI analyzes logs and issues
+  * **Documentation**: AI maintains service docs
+
+**Workflow Integration:**
+  * **VS Code**: Direct file editing
+  * **GitHub Copilot**: AI assistance for configurations
+  * **Automated Deployments**: Script-based stack management
+  * **Monitoring Integration**: Health check automation
+
+===== Security Considerations =====
+
+**Access Control:**
+  * **Authelia Protection**: SSO authentication required
+  * **User Permissions**: Container user mapping (PUID/PGID)
+  * **Docker Socket**: Read-only access to Docker API
+  * **Network Isolation**: Container network segmentation
+
+**Data Protection:**
+  * **Encrypted Connections**: HTTPS via Traefik
+  * **Secure Storage**: Sensitive data in environment files
+  * **Backup Security**: Encrypted backup storage
+  * **Access Logging**: User action auditing
+
+===== Performance Optimization =====
+
+**Resource Management:**
+```yaml
+deploy:
+  resources:
+    limits:
+      cpus: '0.5'
+      memory: 256M
+    reservations:
+      cpus: '0.1'
+      memory: 64M
+```
+
+**Container Optimization:**
+  * **Image Updates**: Regular security updates
+  * **Log Rotation**: Prevent disk space issues
+  * **Cache Management**: Docker layer caching
+  * **Network Efficiency**: Optimized container networking
+
+===== Troubleshooting =====
+
+**Common Issues:**
+
+**Cannot Connect to Docker:**
+```bash
+# Check Docker socket permissions
+ls -la /var/run/docker.sock
+
+# Verify Docker is running
+docker ps
+
+# Check container logs
+docker logs dockge
+```
+
+**Stack Deployment Fails:**
+  * **YAML Syntax**: Validate compose file syntax
+  * **Port Conflicts**: Check for port usage conflicts
+  * **Network Issues**: Verify network connectivity
+  * **Permission Errors**: Check file/directory permissions
+
+**Web Interface Issues:**
+  * **Traefik Routing**: Verify Traefik configuration
+  * **Authelia Access**: Check SSO authentication
+  * **SSL Certificates**: Validate certificate status
+  * **Browser Cache**: Clear browser cache
+
+**Troubleshooting Steps:**
+  1. **Check logs**: `docker logs dockge`
+  2. **Validate configuration**: Test compose file syntax
+  3. **Network connectivity**: Verify Docker network access
+  4. **Restart service**: `docker restart dockge`
+  5. **Check dependencies**: Ensure required services running
+
+===== Best Practices =====
+
+**Stack Organization:**
+  * **Logical Grouping**: Group related services
+  * **Naming Convention**: Consistent naming patterns
+  * **Documentation**: Comment complex configurations
+  * **Version Control**: Track configuration changes
+
+**Maintenance:**
+  * **Regular Updates**: Keep images updated
+  * **Backup Routine**: Regular configuration backups
+  * **Log Monitoring**: Review logs for issues
+  * **Performance Tuning**: Optimize resource usage
+
+**Security:**
+  * **Access Control**: Limit user permissions
+  * **Network Security**: Use secure networks
+  * **Data Encryption**: Encrypt sensitive data
+  * **Audit Logging**: Monitor access and changes
+
+**Workflow:**
+  * **Testing**: Test changes in development first
+  * **Documentation**: Document custom configurations
+  * **Automation**: Use scripts for repetitive tasks
+  * **Monitoring**: Monitor stack health continuously
+
+===== Integration Examples =====
+
+**Adding a New Service:**
+```yaml
+# 1. Create new stack directory
+# 2. Add docker-compose.yml
+# 3. Configure environment variables
+# 4. Deploy via Dockge UI
+# 5. Test service functionality
+```
+
+**Service Updates:**
+```yaml
+# 1. Edit compose file in Dockge
+# 2. Update image version
+# 3. Deploy changes
+# 4. Monitor startup logs
+# 5. Verify functionality
+```
+
+**Backup Strategy:**
+```yaml
+# 1. Export stack configurations
+# 2. Backup environment files
+# 3. Backup persistent volumes
+# 4. Store backups securely
+# 5. Test restore procedures
+```
+
+Dockge serves as the central nervous system of your homelab, providing intuitive management of all your Docker services through a modern web interface.
+
+**Next:** Learn about [[services:infrastructure:pihole|Pi-hole]] or explore [[getting_started:deployment|Deployment Guide]].

@@ -1,0 +1,194 @@
+====== Media Services ======
+
+The Media Services stack provides comprehensive media management, streaming, and downloading capabilities for your homelab. These services handle everything from media library organization to automated downloading and streaming.
+
+===== Overview =====
+
+**Stack Components:**
+  * **[[services:media:jellyfin|Jellyfin]]**: Media server for streaming movies, TV shows, and music
+  * **[[services:media:calibre-web|Calibre-Web]]**: Web interface for eBook library management
+  * **[[services:media:qbittorrent|qBittorrent]]**: Torrent client with VPN protection
+
+**Key Features:**
+  * **Unified Media Access**: Stream media from any device
+  * **EBook Management**: Browse and read digital books
+  * **Secure Downloading**: VPN-protected torrent downloads
+  * **Cross-Platform**: Works on all devices and platforms
+
+===== Service Details =====
+
+^ Service ^ Purpose ^ URL ^ Authentication ^ Storage ^
+| [[services:media:jellyfin|Jellyfin]] | Media streaming server | https://jellyfin.${DOMAIN} | Apps/devices | /mnt/media |
+| [[services:media:calibre-web|Calibre-Web]] | eBook web interface | https://calibre.${DOMAIN} | Built-in users | /mnt/media/books |
+| [[services:media:qbittorrent|qBittorrent]] | Torrent downloads | https://qbit.${DOMAIN} | Web UI auth | /mnt/downloads |
+
+===== Architecture =====
+
+**Storage Layout:**
+```
+/mnt/media/
+├── movies/           # Movie files
+├── tv/              # TV show files
+├── music/           # Music files
+├── books/           # Calibre eBook library
+│   ├── metadata.db
+│   └── books/
+└── photos/          # Photo collections
+
+/mnt/downloads/
+├── complete/        # Completed downloads
+├── incomplete/      # Active downloads
+└── temp/           # Temporary files
+```
+
+**Network Configuration:**
+  * **Jellyfin**: Direct access (no SSO for app compatibility)
+  * **Calibre-Web**: Authelia SSO protection
+  * **qBittorrent**: Authelia SSO + VPN routing through Gluetun
+
+===== Deployment =====
+
+**Docker Compose (media.yml):**
+```yaml
+services:
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    # ... Jellyfin configuration
+
+  calibre-web:
+    image: lscr.io/linuxserver/calibre-web:latest
+    # ... Calibre-Web configuration
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    network_mode: "service:gluetun"  # VPN routing
+    # ... qBittorrent configuration
+```
+
+**Prerequisites:**
+  * **Core Stack**: Traefik, Authelia, Gluetun must be running
+  * **Storage**: /mnt/media and /mnt/downloads mounted
+  * **VPN**: Gluetun configured with torrent-friendly provider
+  * **Permissions**: Proper PUID/PGID for file access
+
+===== Integration =====
+
+**With Media Management:**
+  * **Sonarr/Radarr**: Auto-download TV/movies
+  * **qBittorrent**: Download client for automation
+  * **Jellyfin**: Media library scanning and streaming
+  * **Prowlarr**: Indexer management
+
+**With Home Automation:**
+  * **Home Assistant**: Media control integration
+  * **Node-RED**: Custom media workflows
+  * **MotionEye**: Security camera integration
+
+**With Monitoring:**
+  * **Uptime Kuma**: Service availability monitoring
+  * **Grafana**: Performance dashboards
+  * **Prometheus**: Resource monitoring
+
+===== Security Considerations =====
+
+**Access Control:**
+  * **Jellyfin**: No SSO (device/app compatibility)
+  * **Calibre-Web**: SSO protected
+  * **qBittorrent**: SSO protected + VPN isolation
+
+**Network Security:**
+  * **VPN Routing**: qBittorrent traffic through VPN
+  * **Firewall Rules**: Restrict external access
+  * **SSL/TLS**: All services use HTTPS
+  * **Authentication**: Strong passwords required
+
+===== Performance Optimization =====
+
+**Hardware Acceleration:**
+  * **Jellyfin**: GPU transcoding support
+  * **Intel Quick Sync**: Hardware encoding/decoding
+  * **NVIDIA NVENC**: GPU-accelerated transcoding
+  * **VAAPI**: Linux video acceleration
+
+**Storage Optimization:**
+  * **SSD Storage**: Fast access for media files
+  * **RAID Arrays**: Data redundancy and performance
+  * **Network Storage**: NAS integration for large libraries
+  * **Caching**: Metadata and thumbnail caching
+
+**Resource Allocation:**
+```yaml
+# Recommended limits
+jellyfin:
+  cpus: '2.0'
+  memory: 4G
+
+calibre-web:
+  cpus: '1.0'
+  memory: 512M
+
+qbittorrent:
+  cpus: '2.0'
+  memory: 1G
+```
+
+===== Maintenance =====
+
+**Regular Tasks:**
+  * **Library Scans**: Regular media library scanning
+  * **Database Optimization**: Calibre database maintenance
+  * **Download Cleanup**: Remove completed torrents
+  * **Update Checks**: Keep services updated
+
+**Backup Strategy:**
+  * **Configuration**: Backup service configurations
+  * **Databases**: Backup Calibre and Jellyfin databases
+  * **Metadata**: Preserve media metadata
+  * **Automation**: Automated backup scripts
+
+===== Troubleshooting =====
+
+**Common Issues:**
+  * **Media Not Showing**: Check file permissions and paths
+  * **Slow Streaming**: Verify transcoding settings
+  * **Download Issues**: Check VPN connection and ports
+  * **Authentication**: Verify SSO configuration
+
+**Diagnostic Commands:**
+```bash
+# Check service status
+docker compose -f media.yml ps
+
+# View logs
+docker compose -f media.yml logs -f service-name
+
+# Test VPN connection
+docker exec gluetun curl -s ifconfig.me
+
+# Check file permissions
+ls -la /mnt/media/
+```
+
+===== Best Practices =====
+
+**Library Organization:**
+  * **Consistent Naming**: Follow media naming conventions
+  * **Folder Structure**: Logical folder hierarchy
+  * **Metadata Quality**: Accurate media information
+  * **Regular Maintenance**: Keep libraries organized
+
+**Security:**
+  * **VPN Always**: Never disable VPN for downloads
+  * **Strong Passwords**: Use strong authentication
+  * **Access Logging**: Monitor access patterns
+  * **Regular Updates**: Keep services current
+
+**Performance:**
+  * **Resource Monitoring**: Track CPU/memory usage
+  * **Storage Optimization**: Use appropriate storage types
+  * **Network Optimization**: Fast network connections
+  * **Caching**: Enable appropriate caching
+
+The Media Services stack provides a complete media entertainment solution with streaming, eBook management, and secure downloading capabilities.
+
+**Next:** Explore [[services:media-management:start|Media Management Services]] for automated downloading or return to [[services:start|Services Overview]].

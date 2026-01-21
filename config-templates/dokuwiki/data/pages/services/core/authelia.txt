@@ -1,0 +1,420 @@
+====== Authelia ======
+
+Authelia is an open-source authentication and authorization server providing two-factor authentication and single sign-on (SSO) capabilities to secure access to your homelab services.
+
+===== Overview =====
+
+**Purpose:** SSO authentication server
+**URL:** `https://auth.yourdomain.duckdns.org`
+**Authentication:** Direct login (username/password + 2FA)
+**Deployment:** Automatic (core stack)
+**Storage:** File-based user database
+
+===== Key Features =====
+
+**Authentication Methods:**
+  * **Username/Password**: Secure credential verification
+  * **TOTP (Time-based One-Time Password)**: RFC 6238 compliant
+  * **WebAuthn**: Hardware security key support
+  * **Push Notifications**: Mobile authentication
+
+**Authorization:**
+  * **Domain-based policies**: Per-service access control
+  * **Group membership**: Role-based permissions
+  * **Bypass rules**: Direct access for media services
+  * **Session management**: Secure token handling
+
+**Security:**
+  * **Argon2id hashing**: Memory-hard password hashing
+  * **JWT tokens**: Secure session management
+  * **CSRF protection**: Cross-site request forgery prevention
+  * **Brute force protection**: Rate limiting and account lockout
+
+**Integration:**
+  * **Traefik middleware**: Reverse proxy authentication
+  * **LDAP support**: External user directory integration
+  * **SAML/OIDC**: Enterprise federation protocols
+  * **API access**: RESTful authentication API
+
+===== Configuration =====
+
+**Main Configuration (configuration.yml):**
+```yaml
+---
+# Authelia configuration
+host: 0.0.0.0
+port: 9091
+
+log:
+  level: info
+  format: json
+
+jwt_secret: ${AUTHELIA_JWT_SECRET}
+session:
+  name: authelia_session
+  secret: ${AUTHELIA_SESSION_SECRET}
+  expiration: 3600  # 1 hour
+  inactivity: 300   # 5 minutes
+  domain: yourdomain.duckdns.org
+
+storage:
+  encryption_key: ${AUTHELIA_STORAGE_ENCRYPTION_KEY}
+  local:
+    path: /config/db.sqlite3
+
+access_control:
+  default_policy: deny
+  rules:
+    # Admin services require 2FA
+    - domain: "*.yourdomain.duckdns.org"
+      policy: two_factor
+      subject:
+        - "group:admins"
+    
+    # Media services bypass SSO
+    - domain: "jellyfin.yourdomain.duckdns.org"
+      policy: bypass
+    - domain: "plex.yourdomain.duckdns.org"
+      policy: bypass
+
+api:
+  disable_bearer_token: false
+
+authentication_backend:
+  file:
+    path: /config/users_database.yml
+
+notifier:
+  filesystem:
+    filename: /config/notification.txt
+```
+
+**User Database (users_database.yml):**
+```yaml
+---
+users:
+  admin:
+    displayname: Administrator
+    password: $argon2id$...
+    email: admin@yourdomain.duckdns.org
+    groups:
+      - admins
+      - dev
+```
+
+===== Docker Compose =====
+
+```yaml
+services:
+  authelia:
+    image: authelia/authelia:latest
+    container_name: authelia
+    restart: unless-stopped
+    networks:
+      - traefik-network
+    volumes:
+      - ./authelia/configuration.yml:/config/configuration.yml:ro
+      - ./authelia/users_database.yml:/config/users_database.yml
+      - ./authelia/db.sqlite3:/config/db.sqlite3
+      - ./authelia/notification.txt:/config/notification.txt
+    environment:
+      - AUTHELIA_JWT_SECRET=${AUTHELIA_JWT_SECRET}
+      - AUTHELIA_SESSION_SECRET=${AUTHELIA_SESSION_SECRET}
+      - AUTHELIA_STORAGE_ENCRYPTION_KEY=${AUTHELIA_STORAGE_ENCRYPTION_KEY}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.authelia.rule=Host(`auth.${DOMAIN}`)"
+      - "traefik.http.routers.authelia.entrypoints=websecure"
+      - "traefik.http.routers.authelia.tls.certresolver=letsencrypt"
+      # No Authelia middleware for itself
+      - "traefik.http.services.authelia.loadbalancer.server.port=9091"
+    depends_on:
+      - authelia-redis  # If using Redis
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+```
+
+===== User Management =====
+
+**Adding Users:**
+```yaml
+users:
+  newuser:
+    displayname: "New User"
+    password: "$argon2id$..."  # Generate with authelia crypto hash generate argon2
+    email: newuser@example.com
+    groups:
+      - users
+```
+
+**Password Hashing:**
+```bash
+# Generate Argon2id hash
+docker run authelia/authelia:latest authelia crypto hash generate argon2 --password 'mypassword'
+```
+
+**Group Management:**
+```yaml
+# Define groups
+groups:
+  admins:
+    - admin
+  users:
+    - user1
+    - user2
+  media:
+    - family
+```
+
+===== Access Control Policies =====
+
+**Policy Types:**
+  * **deny**: Block all access
+  * **one_factor**: Username + password only
+  * **two_factor**: Username + password + 2FA
+  * **bypass**: No authentication required
+
+**Rule Structure:**
+```yaml
+rules:
+  - domain: "*.yourdomain.duckdns.org"
+    policy: two_factor
+    subject:
+      - "user:admin"
+      - "group:admins"
+    resources:
+      - "^/api/.*"  # API endpoints
+```
+
+**Advanced Rules:**
+```yaml
+# Time-based access
+- domain: "*.yourdomain.duckdns.org"
+    policy: two_factor
+    subject: "group:admins"
+    rules:
+      - operator: present
+        operand: http_request.header.Authorization
+
+# IP-based restrictions
+- domain: "admin.yourdomain.duckdns.org"
+    policy: deny
+    networks:
+      - "192.168.1.0/24"  # Allow only local network
+```
+
+===== Two-Factor Authentication =====
+
+**TOTP Setup:**
+  1. Access Authelia dashboard
+  2. Go to **Settings** → **One-Time Password**
+  3. Install authenticator app (Google Authenticator, Authy, etc.)
+  4. Scan QR code or enter secret manually
+  5. Enter verification code to enable
+
+**WebAuthn (Hardware Keys):**
+  * **Supported**: YubiKey, Google Titan, etc.
+  * **Protocol**: FIDO2/WebAuthn
+  * **Benefits**: Phishing-resistant, no shared secrets
+
+**Backup Codes:**
+  * Generate one-time use codes
+  * Store securely (encrypted password manager)
+  * Use only for emergency access
+
+===== Integration with Traefik =====
+
+**ForwardAuth Middleware:**
+```yaml
+# In Traefik dynamic configuration
+middlewares:
+  authelia:
+    forwardAuth:
+      address: "http://authelia:9091/api/verify?rd=https://auth.yourdomain.duckdns.org/"
+      trustForwardHeader: true
+      authResponseHeaders:
+        - "Remote-User"
+        - "Remote-Groups"
+        - "Remote-Name"
+        - "Remote-Email"
+```
+
+**Service Protection:**
+```yaml
+# Add to service labels
+labels:
+  - "traefik.http.routers.service.middlewares=authelia@docker"
+```
+
+**Bypass Configuration:**
+```yaml
+# In Authelia configuration.yml
+access_control:
+  rules:
+    - domain: "jellyfin.yourdomain.duckdns.org"
+      policy: bypass
+    - domain: "plex.yourdomain.duckdns.org"
+      policy: bypass
+```
+
+===== Session Management =====
+
+**Session Configuration:**
+```yaml
+session:
+  name: authelia_session
+  secret: ${AUTHELIA_SESSION_SECRET}
+  expiration: 3600  # 1 hour
+  inactivity: 300   # 5 minutes
+  domain: yourdomain.duckdns.org
+  same_site: lax
+  secure: true
+  http_only: true
+```
+
+**Session Security:**
+  * **Secure cookies**: HTTPS only
+  * **HttpOnly**: JavaScript protection
+  * **SameSite**: CSRF protection
+  * **Expiration**: Automatic logout
+
+===== Monitoring & Logging =====
+
+**Log Configuration:**
+```yaml
+log:
+  level: info  # debug, info, warn, error
+  format: json  # json or text
+  file: /config/authelia.log
+```
+
+**Monitoring Integration:**
+  * **Prometheus metrics**: `/metrics` endpoint
+  * **Health checks**: `/api/health` endpoint
+  * **Log aggregation**: Loki integration
+  * **Alerting**: Failed authentication notifications
+
+**Audit Logging:**
+  * **Authentication events**: Login/logout tracking
+  * **Authorization decisions**: Access control logging
+  * **Security events**: Failed attempts, lockouts
+  * **Compliance**: Audit trail for security reviews
+
+===== Security Best Practices =====
+
+**Password Policies:**
+  * **Complexity**: Minimum 12 characters, mixed case, numbers, symbols
+  * **Expiration**: Regular rotation (90-180 days)
+  * **History**: Prevent password reuse
+  * **Lockout**: Account lockout after failed attempts
+
+**Session Security:**
+  * **Short sessions**: 1 hour maximum
+  * **Inactivity timeout**: 5-15 minutes
+  * **Secure cookies**: All security flags enabled
+  * **Token rotation**: Regular token refresh
+
+**Network Security:**
+  * **HTTPS only**: No HTTP access
+  * **HSTS**: HTTP Strict Transport Security
+  * **CSP**: Content Security Policy
+  * **Rate limiting**: Brute force protection
+
+===== Troubleshooting =====
+
+**Login Issues:**
+```bash
+# Check Authelia logs
+docker logs authelia
+
+# Verify configuration
+docker exec authelia authelia validate-config /config/configuration.yml
+
+# Test authentication API
+curl -k https://auth.yourdomain.duckdns.org/api/state
+```
+
+**2FA Problems:**
+  * Check system time synchronization
+  * Verify TOTP secret/code
+  * Clear browser cache
+  * Try different authenticator app
+
+**Middleware Issues:**
+```bash
+# Check Traefik logs
+docker logs traefik | grep authelia
+
+# Test middleware
+curl -H "Host: service.yourdomain.duckdns.org" http://localhost/
+```
+
+**Configuration Errors:**
+  * Validate YAML syntax
+  * Check file permissions
+  * Verify environment variables
+  * Test configuration with `authelia validate-config`
+
+===== Advanced Features =====
+
+**LDAP Integration:**
+```yaml
+authentication_backend:
+  ldap:
+    url: ldap://127.0.0.1
+    base_dn: dc=example,dc=com
+    username_attribute: uid
+    additional_users_dn: ou=users
+    users_filter: (&({username_attribute}={input})(objectClass=person))
+    groups_filter: (&(member={dn})(objectClass=groupOfNames))
+    group_name_attribute: cn
+    mail_attribute: mail
+    display_name_attribute: displayName
+```
+
+**SAML/OIDC Identity Providers:**
+```yaml
+identity_providers:
+  oidc:
+    # OIDC configuration
+  saml:
+    # SAML configuration
+```
+
+**Custom Themes:**
+```yaml
+theme: dark  # light, dark, grey, auto
+```
+
+**API Integration:**
+  * **REST API**: Programmatic authentication
+  * **Webhooks**: Event notifications
+  * **SCIM**: User provisioning
+  * **GraphQL**: Advanced queries
+
+===== Backup & Recovery =====
+
+**Configuration Backup:**
+  * **Files**: `configuration.yml`, `users_database.yml`
+  * **Database**: `db.sqlite3`
+  * **Secrets**: Environment variables
+
+**Password Recovery:**
+  * **Backup codes**: One-time use recovery
+  * **Admin reset**: Administrative password reset
+  * **Self-service**: Password reset via email
+
+**Disaster Recovery:**
+  * **Configuration restore**: YAML file recovery
+  * **Database recovery**: SQLite backup restoration
+  * **Secret rotation**: Emergency credential management
+
+Authelia provides enterprise-grade authentication and authorization for your homelab, ensuring secure access to all your services.
+
+**Next:** Learn about [[services:core:duckdns|DuckDNS]] or [[services:core:gluetun|Gluetun]].

@@ -1,0 +1,284 @@
+====== Deployment ======
+
+After setup, deploy your homelab services using Dockge or manual commands.
+
+===== Using Dockge (Recommended) =====
+
+**Access Dockge:**
+  * URL: `https://dockge.yourdomain.duckdns.org`
+  * Username: `admin` (or your custom username)
+  * Password: Your secure password from setup
+
+**Deploy Services:**
+  1. Click **"Add Stack"** button
+  2. Choose **"From Docker Compose"**
+  3. Select a compose file from the repository
+  4. Click **"Deploy"**
+  5. Monitor deployment in the **"Logs"** tab
+
+**Available Stacks:**
+  * `media.yml` - Media services (Jellyfin, qBittorrent)
+  * `media-management.yml` - Download automation (Sonarr, Radarr)
+  * `productivity.yml` - Office tools (Nextcloud, Gitea)
+  * `monitoring.yml` - Observability (Grafana, Prometheus)
+  * `homeassistant.yml` - Home automation
+  * `utilities.yml` - Backup and utilities
+
+===== Manual Deployment =====
+
+**Deploy Individual Stacks:**
+
+```bash
+# Navigate to repository
+cd ~/AI-Homelab
+
+# Deploy media services
+docker compose -f docker-compose/media.yml up -d
+
+# Deploy productivity stack
+docker compose -f docker-compose/productivity.yml up -d
+
+# Deploy monitoring
+docker compose -f docker-compose/monitoring.yml up -d
+```
+
+**Check Deployment Status:**
+
+```bash
+# View all running containers
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+# Check specific stack
+docker compose -f docker-compose/media.yml ps
+
+# View logs
+docker compose -f docker-compose/media.yml logs -f
+```
+
+===== Service Access =====
+
+After deployment, services are available at:
+
+| Category | Service | URL | Notes |
+|----------|---------|-----|-------|
+| **Media** | Jellyfin | `https://jellyfin.yourdomain.duckdns.org` | No SSO (app access) |
+| **Media** | qBittorrent | `https://qbit.yourdomain.duckdns.org` | VPN protected |
+| **Productivity** | Nextcloud | `https://nextcloud.yourdomain.duckdns.org` | File sync |
+| **Productivity** | Gitea | `https://git.yourdomain.duckdns.org` | Git service |
+| **Monitoring** | Grafana | `https://grafana.yourdomain.duckdns.org` | Dashboards |
+| **Development** | Code Server | `https://code.yourdomain.duckdns.org` | VS Code in browser |
+
+===== Post-Deployment Configuration =====
+
+==== Configure Homepage Dashboard ====
+
+1. Visit `https://home.yourdomain.duckdns.org`
+2. Click settings (gear icon)
+3. Add services to dashboard
+4. Configure widgets with API keys
+
+**Example Widgets:**
+  * System monitoring (CPU, RAM, disk)
+  * Service status checks
+  * Weather information
+  * Calendar integration
+
+==== Set Up Backups ====
+
+1. Deploy Backrest service
+2. Configure backup schedules
+3. Set up encryption
+4. Test backup restoration
+
+==== Configure Monitoring ====
+
+1. Deploy Grafana and Prometheus
+2. Import dashboards
+3. Set up alerts
+4. Configure data sources
+
+===== Deployment Order =====
+
+**Recommended Deployment Sequence:**
+
+1. **Core** (deployed automatically)
+   - DuckDNS, Traefik, Authelia, Gluetun
+
+2. **Infrastructure** (deployed automatically)
+   - Dockge, Pi-hole, Dozzle, Glances
+
+3. **Dashboards** (deployed automatically)
+   - Homepage, Homarr
+
+4. **Media Services**
+   - Jellyfin or Plex
+   - qBittorrent (VPN routing)
+   - Sonarr, Radarr, Prowlarr
+
+5. **Productivity**
+   - Nextcloud, Gitea, BookStack
+
+6. **Monitoring**
+   - Grafana, Prometheus, Uptime Kuma
+
+7. **Home Automation**
+   - Home Assistant, Node-RED
+
+===== Resource Management =====
+
+**Monitor Resource Usage:**
+
+```bash
+# Check container resources
+docker stats
+
+# View system resources
+docker run --rm -v /proc:/host/proc:ro --net=host codenvy/glances
+
+# Check disk space
+df -h /opt/stacks/
+```
+
+**Resource Limits Applied:**
+  * CPU limits prevent resource exhaustion
+  * Memory limits protect system stability
+  * Automatic cleanup of unused resources
+
+===== Troubleshooting Deployment =====
+
+==== Service Won't Start ====
+
+**Check Logs:**
+```bash
+# View service logs
+docker compose -f docker-compose/stack.yml logs service-name
+
+# Follow logs in real-time
+docker compose -f docker-compose/stack.yml logs -f service-name
+```
+
+**Common Issues:**
+  * Port conflicts
+  * Missing environment variables
+  * Network connectivity problems
+  * Insufficient resources
+
+==== SSL Certificate Issues ====
+
+**Check Certificate Status:**
+```bash
+# View Traefik logs
+docker logs traefik | grep certificate
+
+# Check certificate file
+ls -la /opt/stacks/core/traefik/acme.json
+```
+
+**Certificate Problems:**
+  * DNS propagation delay (wait 5-10 minutes)
+  * DuckDNS token incorrect
+  * Ports 80/443 not forwarded
+  * Rate limiting (Let's Encrypt limits)
+
+==== Network Issues ====
+
+**Verify Networks:**
+```bash
+# List Docker networks
+docker network ls
+
+# Inspect traefik-network
+docker network inspect traefik-network
+```
+
+**Network Troubleshooting:**
+  * Services not on correct network
+  * Firewall blocking traffic
+  * DNS resolution problems
+
+==== Permission Issues ====
+
+**Check File Permissions:**
+```bash
+# Check stack directory permissions
+ls -la /opt/stacks/stack-name/
+
+# Check Docker socket permissions
+ls -la /var/run/docker.sock
+```
+
+**Fix Permissions:**
+```bash
+# Set correct ownership
+sudo chown -R $USER:$USER /opt/stacks/stack-name/
+
+# Add user to docker group
+sudo usermod -aG docker $USER
+```
+
+===== Scaling and Customization =====
+
+==== Add Custom Services ====
+
+1. Create new compose file
+2. Add Traefik labels for routing
+3. Include Authelia middleware
+4. Deploy via Dockge
+
+==== Modify Existing Services ====
+
+1. Edit compose file
+2. Update environment variables
+3. Redeploy service
+4. Test functionality
+
+==== Remove Services ====
+
+```bash
+# Stop and remove service
+docker compose -f docker-compose/stack.yml down
+
+# Remove with volumes
+docker compose -f docker-compose/stack.yml down -v
+
+# Clean up unused resources
+docker system prune
+```
+
+===== Performance Optimization =====
+
+**Hardware Acceleration:**
+  * Enable NVIDIA GPU for transcoding
+  * Use SSD storage for databases
+  * Configure appropriate CPU/memory limits
+
+**Network Optimization:**
+  * Use wired connections when possible
+  * Configure QoS for media streaming
+  * Optimize DNS resolution
+
+**Service Optimization:**
+  * Enable lazy loading for unused services
+  * Configure appropriate resource limits
+  * Use efficient Docker images
+
+===== Backup and Recovery =====
+
+**Regular Backups:**
+  * Configuration files in `/opt/stacks/`
+  * SSL certificates in `/opt/stacks/core/traefik/`
+  * User data in service volumes
+
+**Recovery Process:**
+  * Restore configuration files
+  * Redeploy services
+  * Restore user data from backups
+
+**Disaster Recovery:**
+  * Keep backup scripts ready
+  * Document recovery procedures
+  * Test restoration regularly
+
+Ready to deploy? Use Dockge to start deploying services!
+
+**Need help?** See [[troubleshooting:services|Service Troubleshooting]] or check [[reference:commands|Command Reference]].

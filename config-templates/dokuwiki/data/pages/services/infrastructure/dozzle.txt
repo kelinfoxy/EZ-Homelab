@@ -1,0 +1,343 @@
+====== Dozzle ======
+
+Dozzle is a real-time log viewer for Docker containers, providing a web-based interface to monitor and search through container logs. It offers live log streaming, filtering capabilities, and multi-container log management.
+
+===== Overview =====
+
+**Purpose:** Real-time Docker log viewer
+**URL:** https://dozzle.yourdomain.duckdns.org
+**Authentication:** Authelia SSO protected
+**Deployment:** Infrastructure stack
+**Interface:** Modern web UI with live updates
+
+===== Key Features =====
+
+**Log Viewing:**
+  * **Real-time Streaming**: Live log updates
+  * **Multi-container**: View multiple containers simultaneously
+  * **Search & Filter**: Advanced log filtering
+  * **Color Coding**: Syntax highlighting for different log levels
+
+**Container Management:**
+  * **Container List**: All running containers
+  * **Status Indicators**: Container health status
+  * **Quick Actions**: Start/stop/restart containers
+  * **Resource Monitoring**: Basic CPU/memory stats
+
+**Search & Filtering:**
+  * **Text Search**: Search within logs
+  * **Regex Support**: Regular expression filtering
+  * **Date Filtering**: Time-based log filtering
+  * **Container Filtering**: Filter by specific containers
+
+===== Configuration =====
+
+**Container Configuration:**
+```yaml
+services:
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dozzle
+    restart: unless-stopped
+    environment:
+      - DOZZLE_USERNAME=${DOZZLE_USERNAME:-admin}
+      - DOZZLE_PASSWORD=${DOZZLE_PASSWORD}
+      - DOZZLE_LEVEL=info
+      - DOZZLE_TAILSIZE=100
+      - DOZZLE_FILTER_CONTAINERS=${DOZZLE_FILTER_CONTAINERS}
+      - DOZZLE_NO_ANALYTICS=true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - traefik-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 128M
+        reservations:
+          cpus: '0.05'
+          memory: 32M
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dozzle.rule=Host(`dozzle.${DOMAIN}`)"
+      - "traefik.http.routers.dozzle.entrypoints=websecure"
+      - "traefik.http.routers.dozzle.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.dozzle.middlewares=authelia@docker"
+      - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
+      - "x-dockge.url=https://dozzle.${DOMAIN}"
+```
+
+**Environment Variables:**
+```bash
+# Authentication (optional, Authelia handles SSO)
+DOZZLE_USERNAME=admin
+DOZZLE_PASSWORD=your-secure-password
+
+# Logging configuration
+DOZZLE_LEVEL=info  # debug, info, warn, error
+DOZZLE_TAILSIZE=100  # Lines to show initially
+
+# Container filtering (optional)
+DOZZLE_FILTER_CONTAINERS=container1,container2
+
+# Privacy
+DOZZLE_NO_ANALYTICS=true
+```
+
+===== Interface Overview =====
+
+**Main Dashboard:**
+  * **Container List**: Left sidebar with all containers
+  * **Log Viewer**: Main panel showing selected logs
+  * **Search Bar**: Top search and filter controls
+  * **Status Bar**: Connection and filter status
+
+**Container Selection:**
+  * **Single Container**: Click to view individual logs
+  * **Multiple Containers**: Hold Ctrl/Cmd to select multiple
+  * **All Containers**: View logs from all containers
+  * **Container Groups**: Filter by stack or service type
+
+**Log Display:**
+  * **Live Updates**: Real-time log streaming
+  * **Color Coding**: Different colors for log levels
+  * **Timestamps**: Show log timestamps
+  * **Line Numbers**: Reference specific log lines
+
+===== Search & Filtering =====
+
+**Text Search:**
+```bash
+# Basic search
+error warning
+
+# Case-sensitive search
+/Error|Warning/
+
+# Complex patterns
+"connection refused" OR "timeout"
+```
+
+**Advanced Filtering:**
+  * **Container Name**: Filter by specific containers
+  * **Log Level**: Filter by severity (ERROR, WARN, INFO, DEBUG)
+  * **Time Range**: Show logs from specific time periods
+  * **Regex Patterns**: Use regular expressions for complex matching
+
+**Saved Filters:**
+  * **Custom Filters**: Save frequently used search patterns
+  * **Filter Presets**: Pre-configured filter combinations
+  * **Quick Filters**: One-click common filters (errors only, etc.)
+
+===== Container Management =====
+
+**Quick Actions:**
+  * **Start/Stop**: Control container lifecycle
+  * **Restart**: Restart individual containers
+  * **Logs**: Jump to detailed logs
+  * **Exec**: Open terminal in container
+
+**Container Information:**
+  * **Status**: Running, stopped, paused
+  * **Uptime**: How long container has been running
+  * **Image**: Container image and version
+  * **Ports**: Exposed ports and mappings
+
+**Resource Monitoring:**
+  * **CPU Usage**: Real-time CPU percentage
+  * **Memory Usage**: RAM consumption
+  * **Network I/O**: Data transfer rates
+  * **Disk I/O**: Storage read/write operations
+
+===== Advanced Features =====
+
+**Log Analysis:**
+  * **Pattern Recognition**: Identify common error patterns
+  * **Anomaly Detection**: Flag unusual log patterns
+  * **Trend Analysis**: Track log volume over time
+  * **Alert Integration**: Send alerts for specific log patterns
+
+**Export & Sharing:**
+  * **Log Export**: Download logs as text files
+  * **Share Links**: Generate shareable log links
+  * **API Access**: Programmatic log access
+  * **Integration**: Connect with other monitoring tools
+
+**Customization:**
+  * **Themes**: Light/dark mode switching
+  * **Layout**: Customizable interface layout
+  * **Shortcuts**: Keyboard shortcuts for common actions
+  * **Notifications**: Browser notifications for events
+
+===== Security Considerations =====
+
+**Access Control:**
+  * **Authelia Protection**: SSO authentication required
+  * **User Permissions**: Container access restrictions
+  * **Log Privacy**: Sensitive data in logs
+  * **Network Security**: Secure Docker socket access
+
+**Data Protection:**
+  * **Log Encryption**: Secure log transmission
+  * **Access Logging**: Audit log access
+  * **Data Retention**: Log retention policies
+  * **Privacy Controls**: Filter sensitive information
+
+===== Performance Optimization =====
+
+**Resource Management:**
+```yaml
+deploy:
+  resources:
+    limits:
+      cpus: '0.3'
+      memory: 128M
+    reservations:
+      cpus: '0.05'
+      memory: 32M
+```
+
+**Log Optimization:**
+  * **Tail Size**: Limit initial log display
+  * **Buffer Management**: Efficient log buffering
+  * **Compression**: Log compression for storage
+  * **Cleanup**: Automatic old log cleanup
+
+**Container Filtering:**
+```yaml
+# Limit visible containers
+environment:
+  - DOZZLE_FILTER_CONTAINERS=traefik,authelia,dockge
+```
+
+===== Troubleshooting =====
+
+**Connection Issues:**
+```bash
+# Check Docker socket access
+ls -la /var/run/docker.sock
+
+# Verify Docker is running
+docker ps
+
+# Check container logs
+docker logs dozzle
+```
+
+**Log Display Problems:**
+  * **No Logs Showing**: Check container permissions
+  * **Logs Not Updating**: Verify real-time connection
+  * **Search Not Working**: Check search syntax
+  * **Performance Issues**: Reduce number of containers
+
+**Authentication Issues:**
+  * **Login Problems**: Verify credentials
+  * **Authelia Integration**: Check SSO configuration
+  * **Session Timeout**: Adjust session settings
+  * **Permission Denied**: Check user permissions
+
+**Web Interface Issues:**
+  * **Page Not Loading**: Check Traefik routing
+  * **SSL Errors**: Verify certificate status
+  * **JavaScript Errors**: Clear browser cache
+  * **Mobile Issues**: Check responsive design
+
+**Troubleshooting Steps:**
+  1. **Check logs**: `docker logs dozzle`
+  2. **Test connectivity**: Verify Docker socket access
+  3. **Validate configuration**: Check environment variables
+  4. **Browser testing**: Test in different browsers
+  5. **Restart service**: `docker restart dozzle`
+
+===== Integration with Monitoring =====
+
+**Prometheus Integration:**
+```yaml
+# Expose metrics for monitoring
+environment:
+  - DOZZLE_ENABLE_METRICS=true
+  - DOZZLE_METRICS_PORT=8081
+```
+
+**Grafana Dashboards:**
+  * **Log Volume**: Track log generation rates
+  * **Error Rates**: Monitor error log frequency
+  * **Container Health**: Track container status
+  * **Performance Metrics**: CPU/memory usage trends
+
+**Alert Integration:**
+  * **Error Alerts**: Alert on specific error patterns
+  * **Container Alerts**: Notify on container failures
+  * **Performance Alerts**: Alert on resource issues
+  * **Log Volume Alerts**: Alert on unusual log activity
+
+===== Best Practices =====
+
+**Log Management:**
+  * **Regular Monitoring**: Daily log review routine
+  * **Search Optimization**: Use efficient search patterns
+  * **Filter Usage**: Create useful filter presets
+  * **Export Strategy**: Regular log exports for analysis
+
+**Container Organization:**
+  * **Naming Convention**: Consistent container naming
+  * **Grouping**: Logical container grouping
+  * **Tagging**: Use labels for better organization
+  * **Documentation**: Document container purposes
+
+**Security:**
+  * **Access Control**: Limit log access to authorized users
+  * **Data Protection**: Be aware of sensitive data in logs
+  * **Network Security**: Secure Docker socket access
+  * **Audit Logging**: Track log access and searches
+
+**Performance:**
+  * **Resource Limits**: Appropriate CPU/memory limits
+  * **Container Filtering**: Limit visible containers
+  * **Log Tail Size**: Optimize initial log display
+  * **Caching**: Use browser caching for better performance
+
+===== Use Cases =====
+
+**Development & Debugging:**
+  * **Application Logs**: Monitor application behavior
+  * **Error Tracking**: Quickly identify and fix errors
+  * **Performance Monitoring**: Track application performance
+  * **Integration Testing**: Verify service interactions
+
+**Production Monitoring:**
+  * **Service Health**: Monitor service availability
+  * **Error Detection**: Catch errors before they escalate
+  * **User Issue Investigation**: Debug user-reported problems
+  * **Security Monitoring**: Watch for suspicious activity
+
+**Maintenance & Troubleshooting:**
+  * **Update Monitoring**: Watch for issues during updates
+  * **Configuration Changes**: Monitor impact of changes
+  * **Network Issues**: Debug connectivity problems
+  * **Resource Problems**: Identify resource bottlenecks
+
+===== Keyboard Shortcuts =====
+
+**Navigation:**
+  * **Ctrl/Cmd + K**: Focus search bar
+  * **Arrow Keys**: Navigate container list
+  * **Enter**: Select container
+  * **Esc**: Clear selection
+
+**Search:**
+  * **Ctrl/Cmd + F**: Start search
+  * **F3**: Find next occurrence
+  * **Shift + F3**: Find previous occurrence
+  * **Ctrl/Cmd + G**: Go to line
+
+**Actions:**
+  * **Ctrl/Cmd + R**: Refresh logs
+  * **Ctrl/Cmd + S**: Save current filter
+  * **Ctrl/Cmd + E**: Export logs
+  * **Ctrl/Cmd + T**: Open terminal
+
+Dozzle provides essential log monitoring capabilities with an intuitive interface, making it easy to track and troubleshoot your containerized services in real-time.
+
+**Next:** Learn about [[services:infrastructure:glances|Glances]] or explore [[architecture:monitoring|Monitoring Architecture]].

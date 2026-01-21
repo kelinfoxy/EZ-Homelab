@@ -1,0 +1,404 @@
+====== Gluetun ======
+
+Gluetun is a VPN client container that routes download services through VPN providers like Surfshark, NordVPN, or Mullvad. It provides network-level VPN protection for torrent clients and other download services.
+
+===== Overview =====
+
+**Purpose:** VPN client for download services
+**Supported VPNs:** Surfshark, NordVPN, Mullvad, ExpressVPN, ProtonVPN, and 20+ others
+**Network Mode:** Service-based routing
+**Deployment:** Core stack (always running)
+**Resource Usage:** Low (minimal CPU/memory)
+
+===== Key Features =====
+
+**VPN Providers:**
+  * **Surfshark**: Primary recommended provider
+  * **WireGuard/OpenVPN**: Multiple protocol support
+  * **Port Forwarding**: Automatic port forwarding
+  * **Kill Switch**: Network isolation when VPN fails
+
+**Network Routing:**
+  * **Service Mode**: `network_mode: "service:gluetun"`
+  * **Port Mapping**: VPN ports mapped to host
+  * **DNS**: VPN provider DNS servers
+  * **Firewall**: Built-in firewall rules
+
+**Security Features:**
+  * **IP Leak Protection**: Prevents IP exposure
+  * **DNS Leak Protection**: VPN DNS enforcement
+  * **Kill Switch**: Automatic connection blocking
+  * **Protocol Selection**: WireGuard/OpenVPN choice
+
+===== Configuration =====
+
+**Environment Variables:**
+```bash
+# VPN Provider (Surfshark recommended)
+VPN_SERVICE_PROVIDER=surfshark
+VPN_TYPE=wireguard
+
+# Credentials
+VPN_USERNAME=your-username
+VPN_PASSWORD=your-password
+
+# Optional: Specific server/country
+SERVER_COUNTRIES=Netherlands
+SERVER_CITIES=Amsterdam
+
+# Optional: WireGuard specific
+WIREGUARD_PRIVATE_KEY=your-private-key
+WIREGUARD_ADDRESSES=10.0.0.0/8
+```
+
+**Container Configuration:**
+```yaml
+services:
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - VPN_SERVICE_PROVIDER=${VPN_SERVICE_PROVIDER}
+      - VPN_TYPE=${VPN_TYPE}
+      - VPN_USERNAME=${VPN_USERNAME}
+      - VPN_PASSWORD=${VPN_PASSWORD}
+      - SERVER_COUNTRIES=${SERVER_COUNTRIES:-Netherlands}
+    volumes:
+      - ./gluetun/config:/config
+    ports:
+      - 8080:8080    # qBittorrent WebUI
+      - 6881:6881    # qBittorrent TCP
+      - 6881:6881/udp # qBittorrent UDP
+    networks:
+      - traefik-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+```
+
+===== How VPN Routing Works =====
+
+**Service-Based Routing:**
+```yaml
+# Download service configuration
+services:
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    network_mode: "service:gluetun"  # Routes through VPN
+    depends_on:
+      - gluetun
+    volumes:
+      - ./qbittorrent/config:/config
+      - /mnt/downloads:/downloads
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+    # No ports exposed - accessed via Gluetun
+```
+
+**Network Flow:**
+  1. **Gluetun Container**: Establishes VPN connection
+  2. **Service Mode**: Download service shares Gluetun's network stack
+  3. **VPN Routing**: All traffic from download service goes through VPN
+  4. **Port Mapping**: VPN ports mapped to Gluetun container ports
+  5. **Access**: Services access download client via Gluetun's IP/port
+
+===== VPN Provider Setup =====
+
+**Surfshark (Recommended):**
+  1. **Sign up**: https://surfshark.com
+  2. **Get credentials**: Username/password from account
+  3. **WireGuard**: Generate private key (optional, faster)
+  4. **Configure**: Use in environment variables
+
+**WireGuard Setup (Optional but Recommended):**
+```bash
+# Generate private key
+wg genkey
+
+# Or use Surfshark app to get key
+# Account -> Manual Setup -> WireGuard
+```
+
+**Other Providers:**
+```yaml
+# NordVPN
+VPN_SERVICE_PROVIDER=nordvpn
+VPN_TYPE=openvpn
+
+# Mullvad
+VPN_SERVICE_PROVIDER=mullvad
+VPN_TYPE=wireguard
+
+# ExpressVPN
+VPN_SERVICE_PROVIDER=expressvpn
+VPN_TYPE=openvpn
+```
+
+===== Port Management =====
+
+**Port Forwarding:**
+```yaml
+# Gluetun ports (map download service ports)
+ports:
+  - 8080:8080      # WebUI
+  - 6881:6881      # TCP torrent port
+  - 6881:6881/udp  # UDP torrent port
+  - 51413:51413    # Alternative torrent port
+  - 51413:51413/udp
+```
+
+**Dynamic Port Forwarding:**
+  * **Automatic**: Some providers support automatic port forwarding
+  * **Manual**: Configure specific ports in VPN provider
+  * **Testing**: Verify port forwarding with online tools
+
+**Port Forwarding Check:**
+```bash
+# Check if port is open
+curl -s "https://portchecker.co/check" --data "port=6881"
+
+# Or use online port checker
+# Visit: https://www.yougetsignal.com/tools/open-ports/
+```
+
+===== Monitoring & Troubleshooting =====
+
+**Container Logs:**
+```bash
+# View Gluetun logs
+docker logs gluetun
+
+# Follow logs in real-time
+docker logs -f gluetun
+```
+
+**VPN Status Check:**
+```bash
+# Check VPN connection
+docker exec gluetun sh -c "curl -s ifconfig.me"
+
+# Verify VPN IP (should be different from your real IP)
+docker exec gluetun sh -c "curl -s https://api.ipify.org"
+```
+
+**Kill Switch Testing:**
+```bash
+# Test kill switch (disconnect VPN)
+docker exec gluetun sh -c "iptables -P OUTPUT DROP"
+
+# Restore (reconnect VPN)
+docker restart gluetun
+```
+
+**Common Issues:**
+
+**VPN Connection Failed:**
+```bash
+# Check credentials
+docker logs gluetun | grep -i "auth\|login\|password"
+
+# Verify server selection
+docker logs gluetun | grep -i "server\|country"
+
+# Test VPN provider status
+# Visit provider status page
+```
+
+**DNS Leaks:**
+```bash
+# Check DNS servers
+docker exec gluetun sh -c "cat /etc/resolv.conf"
+
+# Test DNS leak
+# Visit: https://www.dnsleaktest.com
+```
+
+**Port Forwarding Issues:**
+  * **Provider Support**: Not all VPNs support port forwarding
+  * **Server Selection**: Choose servers that support port forwarding
+  * **Configuration**: Enable port forwarding in VPN account
+  * **Testing**: Use port checking tools
+
+**Troubleshooting Steps:**
+  1. **Check logs**: `docker logs gluetun`
+  2. **Verify credentials**: Test with VPN provider app
+  3. **Test connection**: Manual VPN connection
+  4. **Check ports**: Verify port forwarding
+  5. **Restart**: `docker restart gluetun`
+
+===== Security Considerations =====
+
+**Kill Switch Protection:**
+  * **Automatic**: Blocks all traffic if VPN disconnects
+  * **Testing**: Regularly test kill switch functionality
+  * **Monitoring**: Monitor VPN connection status
+  * **Alerts**: Set up notifications for VPN failures
+
+**IP Leak Prevention:**
+  * **WebRTC**: Disable WebRTC in browsers
+  * **IPv6**: Disable IPv6 if not needed
+  * **DNS**: Use VPN DNS servers only
+  * **Testing**: Regular leak testing
+
+**Credential Security:**
+  * **Storage**: Environment variables (not in code)
+  * **Access**: Limited to Gluetun container
+  * **Rotation**: Regular password changes
+  * **2FA**: Enable 2FA on VPN account
+
+===== Performance Optimization =====
+
+**Protocol Selection:**
+  * **WireGuard**: Faster, more secure (recommended)
+  * **OpenVPN**: More compatible, slightly slower
+  * **IKEv2**: Mobile-optimized
+
+**Server Selection:**
+  * **Location**: Choose closest servers
+  * **Load**: Select less crowded servers
+  * **Features**: Port forwarding capable servers
+  * **Testing**: Test different server locations
+
+**Resource Limits:**
+```yaml
+deploy:
+  resources:
+    limits:
+      cpus: '0.5'    # Low CPU usage
+      memory: 256M   # Minimal memory
+    reservations:
+      cpus: '0.1'
+      memory: 64M
+```
+
+===== Advanced Configuration =====
+
+**Custom VPN Configuration:**
+```yaml
+# Custom OpenVPN config
+volumes:
+  - ./gluetun/config:/config
+  - ./custom-config:/custom
+
+environment:
+  - VPN_TYPE=openvpn
+  - OPENVPN_CUSTOM_CONFIG=/custom/my-config.ovpn
+```
+
+**Multiple VPN Services:**
+```yaml
+# Separate Gluetun instances for different services
+services:
+  gluetun-us:
+    # US-based VPN
+    environment:
+      - SERVER_COUNTRIES=United States
+
+  gluetun-nl:
+    # Netherlands-based VPN
+    environment:
+      - SERVER_COUNTRIES=Netherlands
+```
+
+**Health Checks:**
+```yaml
+healthcheck:
+  test: ["CMD", "curl", "-f", "https://api.ipify.org"]
+  interval: 30s
+  timeout: 10s
+  retries: 3
+```
+
+===== Integration with Download Services =====
+
+**qBittorrent Configuration:**
+```yaml
+# In qbittorrent config
+# Network settings
+Connection Limits:
+  Global max number of upload slots: 20
+  Max number of upload slots per torrent: 5
+
+# BitTorrent settings
+Enable DHT: Yes
+Enable PeX: Yes
+Enable LSD: Yes
+
+# WebUI settings
+IP Address: 0.0.0.0
+Port: 8080
+```
+
+**Transmission Configuration:**
+```yaml
+# transmission-daemon settings.json
+{
+  "rpc-port": 9091,
+  "rpc-username": "admin",
+  "rpc-password": "password",
+  "rpc-whitelist-enabled": false,
+  "download-dir": "/downloads",
+  "incomplete-dir": "/downloads/incomplete"
+}
+```
+
+===== Backup & Recovery =====
+
+**Configuration Backup:**
+```bash
+# Backup Gluetun config
+docker run --rm \
+  -v gluetun-config:/config \
+  -v $(pwd)/backup:/backup \
+  busybox tar czf /backup/gluetun-config.tar.gz /config
+```
+
+**VPN Credential Rotation:**
+  1. **Generate new credentials** in VPN provider
+  2. **Update environment variables** in .env
+  3. **Restart Gluetun**: `docker restart gluetun`
+  4. **Verify connection**: Check logs and IP
+  5. **Test downloads**: Verify torrent functionality
+
+===== Best Practices =====
+
+**VPN Selection:**
+  * **Reliability**: Choose reputable providers
+  * **Speed**: Test connection speeds
+  * **Features**: Port forwarding, kill switch
+  * **Privacy**: No-logs policy
+  * **Cost**: Balance features vs price
+
+**Security:**
+  * **Kill Switch**: Always enabled
+  * **Regular Testing**: Monthly leak tests
+  * **Updates**: Keep Gluetun updated
+  * **Monitoring**: VPN status monitoring
+
+**Performance:**
+  * **WireGuard**: Prefer over OpenVPN
+  * **Server Location**: Closest available
+  * **Load Balancing**: Distribute across servers
+  * **Monitoring**: Track connection quality
+
+**Maintenance:**
+  * **Credential Rotation**: Regular password changes
+  * **Log Review**: Monitor connection logs
+  * **Update Checks**: Keep VPN client updated
+  * **Backup**: Regular configuration backups
+
+Gluetun provides essential VPN protection for download services, ensuring your torrenting and file sharing activities remain private and secure.
+
+**Next:** Learn about [[services:core:sablier|Sablier]] or explore [[architecture:security|Security Architecture]].

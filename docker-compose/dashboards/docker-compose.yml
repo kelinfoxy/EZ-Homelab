@@ -80,7 +80,6 @@ services:
       - "traefik.http.routers.homarr.middlewares=authelia@docker"
       - "traefik.http.services.homarr.loadbalancer.server.port=7575"
       - "x-dockge.url=https://homarr.${DOMAIN}"
-      - "x-dockge.url=https://homarr.${DOMAIN}"
 
 networks:
   homelab-network:

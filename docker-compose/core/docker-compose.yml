@@ -1,134 +1,115 @@
-# Core Infrastructure Stack
-# Essential services required for the homelab to function
-# Deploy this stack FIRST before any other services
-# Place in /opt/stacks/core/docker-compose.yml
-
-# Service Access URLs:
-# - DuckDNS: No web UI (updates IP automatically)
-# - Traefik: https://traefik.${DOMAIN}
-# - Authelia: https://auth.${DOMAIN}
+x-dockge:
+  urls:
+    - https://auth.${DOMAIN}
 
 services:
-  # DuckDNS - Dynamic DNS updater
-  # Updates your public IP automatically for Let's Encrypt SSL
+  
   duckdns:
     image: lscr.io/linuxserver/duckdns:latest
     container_name: duckdns
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: '0.10'      # Minimal CPU for DNS updates
-          memory: 64M       # Very low memory usage
-          pids: 128         # Minimal processes
-        reservations:
-          cpus: '0.05'
-          memory: 32M
     environment:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
       - TZ=${TZ}
-      - SUBDOMAINS=${DUCKDNS_SUBDOMAINS}  # Your subdomain(s), comma separated
-      - TOKEN=${DUCKDNS_TOKEN}            # Your DuckDNS token
-      - UPDATE_IP=ipv4                    # or ipv6, or both
+      - SUBDOMAINS=${DUCKDNS_SUBDOMAINS}
+      - TOKEN=${DUCKDNS_TOKEN}
     volumes:
-      - ./duckdns:/config
-    labels:
-      - "homelab.category=infrastructure"
-      - "homelab.description=Dynamic DNS updater"
-
-  # Traefik - Reverse proxy with automatic SSL
-  # Routes all traffic and manages Let's Encrypt certificates
-  traefik:
-    image: traefik:v2.11
-    container_name: traefik
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    deploy:
-      resources:
-        limits:
-          cpus: '0.50'      # Limit to 50% of one CPU core
-          memory: 256M      # Limit to 256MB RAM
-        reservations:
-          cpus: '0.25'      # Reserve 25% of one CPU core
-          memory: 128M      # Reserve 128MB RAM
+      - ./duckdns/config:/config
     networks:
       - traefik-network
-    ports:
-      - "80:80"      # HTTP
-      - "443:443"    # HTTPS
-      - "8080:8080"  # Dashboard (protected with Authelia)
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./traefik/traefik.yml:/traefik.yml:ro
-      - ./traefik/dynamic:/dynamic:ro
-      - ./traefik/acme.json:/acme.json
+  
+  traefik:
+    image: traefik:v3
+    container_name: traefik
+    restart: unless-stopped
+    command: ["--configFile=/config/traefik.yml"]
     environment:
-      - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}  # If using Cloudflare DNS challenge
-      - DUCKDNS_TOKEN=${DUCKDNS_TOKEN}        # If using DuckDNS
+      - DUCKDNS_TOKEN=${DUCKDNS_TOKEN}
+    ports:
+      - 80:80
+      - 443:443
+      - 8080:8080
+    volumes:
+      - ./traefik/config:/config
+      - ./traefik/letsencrypt:/letsencrypt
+      - ./traefik/dynamic:/dynamic
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - traefik-network
     labels:
       - "traefik.enable=true"
-      # Dashboard
       - "traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN}`)"
       - "traefik.http.routers.traefik.entrypoints=websecure"
       - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.traefik.tls.domains[0].main=${DOMAIN}"
-      - "traefik.http.routers.traefik.tls.domains[0].sans=*.${DOMAIN}"
       - "traefik.http.routers.traefik.middlewares=authelia@docker"
-      - "traefik.http.routers.traefik.service=api@internal"
-      # Global HTTP to HTTPS redirect
-      - "traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)"
-      - "traefik.http.routers.http-catchall.entrypoints=web"
-      - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+      - "homelab.category=dashboards"
+      - "homelab.description=Personal dashboard and service overview"
       - "x-dockge.url=https://traefik.${DOMAIN}"
-    depends_on:
-      - duckdns
 
-  # Authelia - SSO authentication
-  # Protects all admin services with single sign-on
   authelia:
-    image: authelia/authelia:4.37
+    image: authelia/authelia:latest
     container_name: authelia
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: '0.25'      # Light CPU usage for auth
-          memory: 128M      # Low memory usage
-        reservations:
-          cpus: '0.10'
-          memory: 64M
-    networks:
-      - traefik-network
-    volumes:
-      - ./authelia/configuration.yml:/config/configuration.yml:ro
-      - ./authelia/users_database.yml:/config/users_database.yml
-      - authelia-data:/data
     environment:
       - TZ=${TZ}
-      - AUTHELIA_JWT_SECRET=${AUTHELIA_JWT_SECRET}
-      - AUTHELIA_SESSION_SECRET=${AUTHELIA_SESSION_SECRET}
-      - AUTHELIA_STORAGE_ENCRYPTION_KEY=${AUTHELIA_STORAGE_ENCRYPTION_KEY}
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.authelia.rule=Host(`auth.${DOMAIN}`)"
-      - "traefik.http.routers.authelia.entrypoints=websecure"
-      - "traefik.http.routers.authelia.tls=true"
-      - "traefik.http.services.authelia.loadbalancer.server.port=9091"
-      # Authelia middleware for other services
-      - "traefik.http.middlewares.authelia.forwardauth.address=http://authelia:9091/api/verify?rd=https://auth.${DOMAIN}"
-      - "traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true"
-      - "traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email"
-      - "x-dockge.url=https://auth.${DOMAIN}"
+    volumes:
+      - ./authelia/config:/config
+      - ./authelia/secrets:/secrets
+    networks:
+      - traefik-network
     depends_on:
       - traefik
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.authelia.rule=Host(`auth.${DOMAIN}`)
+      - traefik.http.routers.authelia.entrypoints=websecure
+      - traefik.http.routers.authelia.tls.certresolver=letsencrypt
+      - traefik.http.routers.authelia.service=authelia
+      - traefik.http.services.authelia.loadbalancer.server.port=9091
+      - traefik.http.middlewares.authelia.forwardauth.address=http://authelia:9091/api/verify?rd=https://auth.${DOMAIN}/
+      - traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=X-Secret
+      - traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true
+      - x-dockge.url=https://auth.${DOMAIN}
 
-volumes:
-  authelia-data:
-    driver: local
+  dockerproxy:
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: dockerproxy
+    privileged: true
+    restart: unless-stopped
+    ports:
+      - 2375:2375
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - CONTAINERS=1
+      - SERVICES=1
+      - TASKS=1
+      - NETWORKS=1
+      - NODES=1
+    labels:
+      - homelab.category=infrastructure
+      - homelab.description=Docker socket proxy for security
+
+  # Sablier - Lazy loading service for Docker containers
+  sablier-service:
+    image: sablierapp/sablier:latest
+    container_name: sablier-service
+    restart: unless-stopped
+    networks:
+      - traefik-network
+    environment:
+      - SABLIER_PROVIDER=docker
+      - SABLIER_DOCKER_API_VERSION=1.53
+      - SABLIER_DOCKER_NETWORK=traefik-network
+      - SABLIER_LOG_LEVEL=debug
+      - DOCKER_HOST=tcp://192.168.4.11:2375
+    ports:
+      - 10000:10000
+    labels:
+      - homelab.category=infrastructure
+      - homelab.description=Lazy loading service for Docker containers
 
 networks:
   traefik-network:

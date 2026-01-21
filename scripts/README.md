@@ -1,9 +1,11 @@
 # AI-Homelab Setup Scripts
 
-This directory contains two scripts for automated AI-Homelab deployment:
+This directory contains scripts for automated AI-Homelab deployment and management:
 
 1. **setup-homelab.sh** - System preparation
 2. **deploy-homelab.sh** - Core infrastructure deployment
+3. **reset-test-environment.sh** - Safe test environment cleanup
+4. **reset-ondemand-services.sh** - Reload services for Sablier lazy loading
 
 ## setup-homelab.sh
 
@@ -186,3 +188,135 @@ cd /opt/stacks/infrastructure && docker compose up -d
 - Waits up to 60 seconds for Dockge to become ready
 - Automatically copies .env to stack directories
 - Safe to run multiple times (idempotent)
+
+---
+
+## reset-test-environment.sh
+
+Safe cleanup script for testing environments. Completely removes all deployed services, data, and configurations while preserving the underlying system setup. Intended for development and testing scenarios only.
+
+### What It Does
+
+1. **Stop All Stacks** - Gracefully stops dashboards, infrastructure, and core stacks
+2. **Preserve SSL Certificates** - Backs up `acme.json` to the repository folder for reuse
+3. **Remove Docker Volumes** - Deletes all homelab-related named volumes (data will be lost)
+4. **Clean Stack Directories** - Removes `/opt/stacks/core`, `/opt/stacks/infrastructure`, `/opt/stacks/dashboards`
+5. **Clear Dockge Data** - Removes Dockge's persistent data directory
+6. **Clean Temporary Files** - Removes temporary files and setup artifacts
+7. **Remove Networks** - Deletes homelab-network, traefik-network, dockerproxy-network, media-network
+8. **Prune Resources** - Runs Docker system prune to clean up unused resources
+
+### Usage
+
+```bash
+cd ~/AI-Homelab
+
+# Make the script executable (if needed)
+chmod +x scripts/reset-test-environment.sh
+
+# Run with sudo (required for system cleanup)
+sudo ./scripts/reset-test-environment.sh
+```
+
+### Safety Features
+
+- **Confirmation Required** - Must type "yes" to confirm reset
+- **Root Check** - Ensures running with sudo but not as root user
+- **Colored Output** - Clear visual feedback for each step
+- **Error Handling** - Continues with warnings if some operations fail
+- **Preserves System** - Docker, packages, user groups, and firewall settings remain intact
+
+### After Running
+
+The system will be returned to a clean state ready for re-deployment:
+
+1. Ensure `.env` file is properly configured
+2. Run: `sudo ./scripts/setup-homelab.sh` (if needed)
+3. Run: `./scripts/deploy-homelab.sh`
+
+### Requirements
+
+- Docker and Docker Compose installed
+- Root access (via sudo)
+- Existing AI-Homelab deployment
+
+### Warnings
+
+- **DATA LOSS** - All application data, databases, and configurations will be permanently deleted
+- **SSL Certificates** - Preserved in repository folder but must be manually restored if needed
+- **Production Use** - This script is for testing only - DO NOT use in production environments
+
+### Notes
+
+- Preserves Docker installation and system packages
+- Maintains user group memberships and firewall rules
+- SSL certificates are backed up to `~/AI-Homelab/acme.json`
+- Safe to run multiple times
+- Provides clear next steps after completion
+
+---
+
+## reset-ondemand-services.sh
+
+Service management script for Sablier lazy loading. Restarts stacks to reload configuration changes and stops web services so Sablier can control them on-demand, while keeping databases running.
+
+### What It Does
+
+1. **Restart Stacks** - Brings down and back up various service stacks to reload compose file changes
+2. **Stop Web Services** - Stops containers with `sablier.enable=true` label so Sablier can start them on-demand
+3. **Preserve Databases** - Leaves database containers running for data persistence
+
+### Supported Stacks
+
+The script manages the following stacks:
+- arr-stack (Sonarr, Radarr, Prowlarr)
+- backrest (backup management)
+- bitwarden (password manager)
+- bookstack (documentation)
+- code-server (VS Code server)
+- dokuwiki (wiki)
+- dozzle (log viewer)
+- duplicati (alternative backup)
+- formio (form builder)
+- gitea (git server)
+- glances (system monitor)
+- mealie (recipe manager)
+- mediawiki (wiki)
+- nextcloud (cloud storage)
+- tdarr (media processing)
+- unmanic (media optimization)
+- wordpress (blog/CMS)
+
+### Usage
+
+```bash
+cd ~/AI-Homelab
+
+# Make the script executable (if needed)
+chmod +x scripts/reset-ondemand-services.sh
+
+# Run as regular user (docker group membership required)
+./scripts/reset-ondemand-services.sh
+```
+
+### When to Use
+
+- After modifying compose files for Sablier lazy loading configuration
+- When services need to reload configuration changes
+- To ensure Sablier has control over web service startup
+- During initial setup of lazy loading for multiple services
+
+### Requirements
+
+- Docker and Docker Compose installed
+- User must be in docker group
+- Sablier must be running in core stack
+- Service stacks must be deployed
+
+### Notes
+
+- Handles different compose file naming conventions (.yml vs .yaml)
+- Stops only services with Sablier labels enabled
+- Databases remain running to preserve data
+- Safe to run multiple times
+- Provides clear feedback on operations performed

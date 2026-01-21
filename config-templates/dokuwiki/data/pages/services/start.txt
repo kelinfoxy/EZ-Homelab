@@ -1,0 +1,282 @@
+====== Services Overview ======
+
+The AI-Homelab provides 70+ pre-configured services organized into logical stacks. All services follow consistent patterns for deployment, security, and management.
+
+===== Service Categories =====
+
+| Category | Services | Description | Deployment |
+|----------|----------|-------------|------------|
+| **Core** | 4 services | Essential infrastructure | Automatic |
+| **Infrastructure** | 8 services | Management and monitoring | Automatic |
+| **Media** | 3 services | Media servers and downloaders | Manual |
+| **Media Management** | 10 services | Download automation | Manual |
+| **Productivity** | 8+6 services | Office and collaboration | Manual |
+| **Home Automation** | 7 services | Smart home integration | Manual |
+| **Monitoring** | 8 services | Observability and alerting | Manual |
+| **Utilities** | 6 services | Backup and miscellaneous | Manual |
+| **Development** | 6 services | Development tools | Manual |
+| **Alternatives** | 6+3 services | Alternative implementations | Optional |
+
+===== Core Infrastructure =====
+
+**Deployed automatically with setup scripts.**
+
+| Service | URL | Purpose | SSO | Documentation |
+|---------|-----|---------|-----|---------------|
+| **[[services:core:duckdns|DuckDNS]]** | - | Dynamic DNS updates | - | [[services:core:duckdns|Details]] |
+| **[[services:core:traefik|Traefik]]** | `https://traefik.yourdomain.duckdns.org` | Reverse proxy | ✓ | [[services:core:traefik|Details]] |
+| **[[services:core:authelia|Authelia]]** | `https://auth.yourdomain.duckdns.org` | SSO authentication | - | [[services:core:authelia|Details]] |
+| **[[services:core:gluetun|Gluetun]]** | - | VPN client | - | [[services:core:gluetun|Details]] |
+| **[[services:core:sablier|Sablier]]** | `http://sablier.yourdomain.duckdns.org:10000` | Lazy loading | - | [[services:core:sablier|Details]] |
+
+===== Infrastructure Services =====
+
+**Management and monitoring tools.**
+
+| Service | URL | Purpose | SSO | Documentation |
+|---------|-----|---------|-----|---------------|
+| **[[services:infrastructure:dockge|Dockge]]** | `https://dockge.yourdomain.duckdns.org` | Stack manager | ✓ | [[services:infrastructure:dockge|Details]] |
+| **[[services:infrastructure:pihole|Pi-hole]]** | `http://pihole.yourdomain.duckdns.org` | DNS & ad blocking | ✓ | [[services:infrastructure:pihole|Details]] |
+| **[[services:infrastructure:dozzle|Dozzle]]** | `https://dozzle.yourdomain.duckdns.org` | Log viewer | ✓ | [[services:infrastructure:dozzle|Details]] |
+| **[[services:infrastructure:glances|Glances]]** | `https://glances.yourdomain.duckdns.org` | System monitor | ✓ | [[services:infrastructure:glances|Details]] |
+| **[[services:infrastructure:watchtower|Watchtower]]** | - | Auto updates | - | [[services:infrastructure:watchtower|Details]] |
+| **[[services:infrastructure:code-server|Code Server]]** | `https://code.yourdomain.duckdns.org` | VS Code in browser | ✓ | [[services:infrastructure:code-server|Details]] |
+| **[[services:infrastructure:docker-proxy|Docker Proxy]]** | - | Secure socket access | - | [[services:infrastructure:docker-proxy|Details]] |
+
+===== Media Services =====
+
+**Media servers, eBook management, and secure downloading.**
+
+| Service | URL | Purpose | SSO | Documentation |
+|---------|-----|---------|-----|---------------|
+| **[[services:media:jellyfin|Jellyfin]]** | `https://jellyfin.yourdomain.duckdns.org` | Media streaming server | ✗ | [[services:media:jellyfin|Details]] |
+| **[[services:media:calibre-web|Calibre-Web]]** | `https://calibre.yourdomain.duckdns.org` | eBook web interface | ✓ | [[services:media:calibre-web|Details]] |
+| **[[services:media:qbittorrent|qBittorrent]]** | `https://qbit.yourdomain.duckdns.org` | Torrent client (VPN) | ✓ | [[services:media:qbittorrent|Details]] |
+
+===== Media Management =====
+
+**Download automation and organization.**
+
+| Service | URL | Purpose | SSO |
+|---------|-----|---------|-----|
+| **Sonarr** | `https://sonarr.yourdomain.duckdns.org` | TV automation | ✓ |
+| **Radarr** | `https://radarr.yourdomain.duckdns.org` | Movie automation | ✓ |
+| **Prowlarr** | `https://prowlarr.yourdomain.duckdns.org` | Indexer manager | ✓ |
+| **Readarr** | `https://readarr.yourdomain.duckdns.org` | Book automation | ✓ |
+| **Lidarr** | `https://lidarr.yourdomain.duckdns.org` | Music automation | ✓ |
+| **Lazy Librarian** | `https://lazylibrarian.yourdomain.duckdns.org` | Book manager | ✓ |
+| **Mylar3** | `https://mylar.yourdomain.duckdns.org` | Comic manager | ✓ |
+| **Jellyseerr** | `https://jellyseerr.yourdomain.duckdns.org` | Media requests | ✓ |
+| **FlareSolverr** | - | Cloudflare bypass | - |
+| **Tdarr Server** | `https://tdarr.yourdomain.duckdns.org` | Transcoding | ✓ |
+| **Tdarr Node** | - | Transcoding worker | - |
+| **Unmanic** | `https://unmanic.yourdomain.duckdns.org` | Library optimizer | ✓ |
+| **Bazarr** | `https://bazarr.yourdomain.duckdns.org` | Subtitle manager | ✓ |
+
+===== Productivity Services =====
+
+**Office, collaboration, and content management.**
+
+| Service | URL | Purpose | SSO | Database |
+|---------|-----|---------|-----|----------|
+| **Nextcloud** | `https://nextcloud.yourdomain.duckdns.org` | File sync | ✓ | MariaDB |
+| **Mealie** | `https://mealie.yourdomain.duckdns.org` | Recipe manager | ✗ | - |
+| **WordPress** | `https://blog.yourdomain.duckdns.org` | Blog platform | ✗ | MariaDB |
+| **Gitea** | `https://git.yourdomain.duckdns.org` | Git service | ✓ | PostgreSQL |
+| **DokuWiki** | `https://wiki.yourdomain.duckdns.org` | Documentation | ✓ | - |
+| **BookStack** | `https://docs.yourdomain.duckdns.org` | Documentation | ✓ | MariaDB |
+| **MediaWiki** | `https://mediawiki.yourdomain.duckdns.org` | Wiki platform | ✓ | MariaDB |
+| **Form.io** | `https://forms.yourdomain.duckdns.org` | Form builder | ✓ | MongoDB |
+
+===== Home Automation =====
+
+**Smart home integration and monitoring.**
+
+| Service | URL | Purpose | SSO |
+|---------|-----|---------|-----|
+| **Home Assistant** | `https://ha.yourdomain.duckdns.org` | Home automation | ✗ |
+| **ESPHome** | `https://esphome.yourdomain.duckdns.org` | ESP firmware | ✓ |
+| **TasmoAdmin** | `https://tasmoadmin.yourdomain.duckdns.org` | Tasmota manager | ✓ |
+| **Node-RED** | `https://nodered.yourdomain.duckdns.org` | Automation flows | ✓ |
+| **Mosquitto** | - | MQTT broker | - |
+| **Zigbee2MQTT** | `https://zigbee2mqtt.yourdomain.duckdns.org` | Zigbee bridge | ✓ |
+| **MotionEye** | `https://motioneye.yourdomain.duckdns.org` | Video surveillance | ✓ |
+
+===== Monitoring Services =====
+
+**Observability, metrics, and alerting.**
+
+| Service | URL | Purpose | SSO |
+|---------|-----|---------|-----|
+| **Prometheus** | `https://prometheus.yourdomain.duckdns.org` | Metrics collection | ✓ |
+| **Grafana** | `https://grafana.yourdomain.duckdns.org` | Dashboard platform | ✓ |
+| **Loki** | - | Log aggregation | - |
+| **Promtail** | - | Log shipping | - |
+| **Node Exporter** | - | System metrics | - |
+| **cAdvisor** | - | Container metrics | - |
+| **Uptime Kuma** | `https://status.yourdomain.duckdns.org` | Status monitoring | ✓ |
+
+===== Utility Services =====
+
+**Backup, password management, and miscellaneous.**
+
+| Service | URL | Purpose | SSO |
+|---------|-----|---------|-----|
+| **Vaultwarden** | `https://bitwarden.yourdomain.duckdns.org` | Password manager | ✗ |
+| **Backrest** | `https://backrest.yourdomain.duckdns.org` | Backup manager | ✓ |
+| **Duplicati** | `https://duplicati.yourdomain.duckdns.org` | Encrypted backups | ✓ |
+| **FreshRSS** | `https://rss.yourdomain.duckdns.org` | RSS reader | ✓ |
+| **Wallabag** | `https://wallabag.yourdomain.duckdns.org` | Read-it-later | ✓ |
+| **Authelia Redis** | - | Session storage | - |
+
+===== Development Services =====
+
+**Development tools and environments.**
+
+| Service | URL | Purpose | SSO |
+|---------|-----|---------|-----|
+| **GitLab CE** | `https://gitlab.yourdomain.duckdns.org` | DevOps platform | ✓ |
+| **PostgreSQL** | - | SQL database | - |
+| **Redis** | - | In-memory store | - |
+| **pgAdmin** | `https://pgadmin.yourdomain.duckdns.org` | Database admin | ✓ |
+| **Jupyter Lab** | `https://jupyter.yourdomain.duckdns.org` | Notebooks | ✓ |
+| **Code Server** | `https://code.yourdomain.duckdns.org` | VS Code | ✓ |
+
+===== Alternative Services =====
+
+**Alternative implementations and additional options.**
+
+| Service | URL | Purpose | SSO | Database |
+|---------|-----|---------|-----|----------|
+| **Plex** | `https://plex.yourdomain.duckdns.org` | Media server (Alt) | ✗ | - |
+| **Portainer** | `https://portainer.yourdomain.duckdns.org` | Container manager | ✓ | - |
+| **Authentik** | `https://authentik.yourdomain.duckdns.org` | SSO platform | ✓ | PostgreSQL |
+| **Authentik Worker** | - | Background tasks | - | - |
+| **Authentik DB** | - | Authentik database | - | - |
+| **Authentik Redis** | - | Caching | - | - |
+
+**Legend:** ✓ = Protected by Authelia SSO | ✗ = Bypasses SSO | - = No web interface
+
+===== Service Management =====
+
+**Deploying Services:**
+
+**Via Dockge (Recommended):**
+  1. Access `https://dockge.yourdomain.duckdns.org`
+  2. Click **"Add Stack"**
+  3. Choose **"From Docker Compose"**
+  4. Select compose file from repository
+  5. Click **"Deploy"**
+
+**Via Command Line:**
+```bash
+# Deploy media services
+docker compose -f docker-compose/media.yml up -d
+
+# Deploy productivity stack
+docker compose -f docker-compose/productivity.yml up -d
+```
+
+**Managing Services:**
+```bash
+# View service status
+docker compose -f docker-compose/stack.yml ps
+
+# View logs
+docker compose -f docker-compose/stack.yml logs -f service-name
+
+# Restart service
+docker compose -f docker-compose/stack.yml restart service-name
+
+# Stop service
+docker compose -f docker-compose/stack.yml stop service-name
+```
+
+===== SSO Configuration =====
+
+**Enabling SSO Protection:**
+```yaml
+labels:
+  - "traefik.http.routers.service.middlewares=authelia@docker"
+```
+
+**Disabling SSO (for media apps):**
+```yaml
+# Comment out the middleware line
+# - "traefik.http.routers.service.middlewares=authelia@docker"
+```
+
+**Bypass Rules in Authelia:**
+```yaml
+access_control:
+  rules:
+    - domain: jellyfin.yourdomain.duckdns.org
+      policy: bypass
+    - domain: plex.yourdomain.duckdns.org
+      policy: bypass
+```
+
+===== Resource Management =====
+
+**Default Resource Limits:**
+```yaml
+deploy:
+  resources:
+    limits:
+      cpus: '2.0'
+      memory: 4G
+    reservations:
+      cpus: '0.5'
+      memory: 1G
+```
+
+**Service Categories:**
+  * **Core**: 0.1-0.5 CPU, 64MB-256MB RAM
+  * **Web Services**: 1-2 CPU, 1-4GB RAM
+  * **Media Services**: 2-4 CPU, 4-8GB RAM
+  * **Databases**: 1-2 CPU, 2-4GB RAM
+
+===== Storage Requirements =====
+
+**Configuration Storage (/opt/stacks/):**
+  * Small configs and metadata
+  * Automatic backups
+  * Version controlled
+
+**Data Storage (/mnt/):**
+  * Large media libraries
+  * User uploaded content
+  * Database files
+
+**Backup Storage:**
+  * Configuration backups
+  * User data archives
+  * SSL certificates
+
+===== Troubleshooting =====
+
+**Service Won't Start:**
+```bash
+# Check logs
+docker compose -f docker-compose/stack.yml logs service-name
+
+# Validate configuration
+docker compose -f docker-compose/stack.yml config
+
+# Check resource usage
+docker stats
+```
+
+**Access Issues:**
+  * Verify Traefik labels
+  * Check Authelia policies
+  * Confirm DNS resolution
+  * Test SSL certificates
+
+**Performance Problems:**
+  * Monitor resource usage
+  * Check network connectivity
+  * Review service logs
+  * Adjust resource limits
+
+**Next:** Explore individual [[services:core:start|Core Services]] or learn about [[troubleshooting:start|Troubleshooting]].
