@@ -1,7 +1,5 @@
 ====== AI-Homelab Documentation Wiki ======
 
-{{:ai-homelab-logo.png?200|AI-Homelab Logo}}
-
 ===== Welcome to AI-Homelab =====
 
 **AI-Homelab** is a production-ready homelab infrastructure that deploys 70+ services through a file-based, AI-manageable architecture using Dockge for visual management.
@@ -34,8 +32,6 @@ Complete these steps to get your homelab running:
   * [ ] [[services:deployment|Deploy additional services as needed]]
 
 ===== Architecture Overview =====
-
-{{:architecture-diagram.png?400|Architecture Diagram}}
 
 **Core Components:**
   * **[[services:core:traefik|Traefik]]** - Reverse proxy with automatic SSL
