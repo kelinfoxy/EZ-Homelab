@@ -1,0 +1,53 @@
+====== Monitoring Services ======
+
+This section covers monitoring and observability tools for your homelab.
+
+===== Available Services =====
+
+**Grafana** - Dashboard and visualization platform
+  * Access: https://grafana.${DOMAIN}
+  * Description: Create dashboards for metrics, logs, and alerts
+  * Stack: monitoring.yml
+
+**Prometheus** - Metrics collection and alerting
+  * Access: https://prometheus.${DOMAIN}
+  * Description: Time-series database for monitoring metrics
+  * Stack: monitoring.yml
+
+**Node Exporter** - System metrics exporter
+  * Description: Exports hardware and OS metrics for Prometheus
+  * Stack: monitoring.yml
+
+**cAdvisor** - Container metrics
+  * Description: Provides container metrics for Prometheus
+  * Stack: monitoring.yml
+
+**Loki** - Log aggregation
+  * Access: https://loki.${DOMAIN}
+  * Description: Log aggregation system for Docker containers
+  * Stack: monitoring.yml
+
+**Promtail** - Log shipping agent
+  * Description: Ships logs from Docker containers to Loki
+  * Stack: monitoring.yml
+
+===== Quick Start =====
+
+1. Deploy the monitoring stack:
+   docker-compose -f monitoring.yml up -d
+
+2. Access Grafana at https://grafana.${DOMAIN}
+   - Default credentials: admin/admin
+   - Change password on first login
+
+3. Configure Prometheus data sources in Grafana
+
+4. Set up dashboards for your services
+
+===== Integration =====
+
+Monitoring services integrate with:
+  * **Traefik** - Automatic SSL and routing
+  * **Authelia** - SSO authentication
+  * **Docker** - Container metrics via cAdvisor
+  * **System** - Hardware metrics via Node Exporter

@@ -43,6 +43,18 @@ The AI-Homelab provides 70+ pre-configured services organized into logical stack
 | **[[services:infrastructure:code-server|Code Server]]** | `https://code.yourdomain.duckdns.org` | VS Code in browser | ✓ | [[services:infrastructure:code-server|Details]] |
 | **[[services:infrastructure:docker-proxy|Docker Proxy]]** | - | Secure socket access | - | [[services:infrastructure:docker-proxy|Details]] |
 
+===== Monitoring Services =====
+
+**Observability and alerting tools.**
+
+See [[services:monitoring:start|Monitoring Services Overview]]
+
+===== Utilities Services =====
+
+**Backup, development, and miscellaneous tools.**
+
+See [[services:utilities:start|Utilities Services Overview]]
+
 ===== Media Services =====
 
 **Media servers, eBook management, and secure downloading.**

@@ -1,0 +1,63 @@
+====== Utilities Services ======
+
+This section covers utility and development tools for your homelab.
+
+===== Available Services =====
+
+**Code Server** - VS Code in the browser
+  * Access: https://code.${DOMAIN}
+  * Description: Web-based VS Code for development and file editing
+  * Stack: utilities.yml
+
+**File Browser** - Web file manager
+  * Access: https://files.${DOMAIN}
+  * Description: Simple web interface for managing files
+  * Stack: utilities.yml
+
+**Speedtest Tracker** - Internet speed monitoring
+  * Access: https://speedtest.${DOMAIN}
+  * Description: Automated internet speed tests with history
+  * Stack: utilities.yml
+
+**SmokePing** - Network latency monitoring
+  * Access: https://smokeping.${DOMAIN}
+  * Description: Network latency and packet loss monitoring
+  * Stack: utilities.yml
+
+**NetData** - Real-time system monitoring
+  * Access: https://netdata.${DOMAIN}
+  * Description: Real-time health monitoring and performance metrics
+  * Stack: utilities.yml
+
+**Restic Rest Server** - Backup repository server
+  * Description: REST server for Restic backups
+  * Stack: utilities.yml
+
+**Duplicati** - Backup solution
+  * Access: https://backup.${DOMAIN}
+  * Description: Encrypted backup to various storage providers
+  * Stack: utilities.yml
+
+**Kopia** - Fast and secure backups
+  * Access: https://kopia.${DOMAIN}
+  * Description: Fast, secure, and efficient backup solution
+  * Stack: utilities.yml
+
+===== Quick Start =====
+
+1. Deploy the utilities stack:
+   docker-compose -f utilities.yml up -d
+
+2. Access services via their respective URLs
+
+3. Configure backup destinations and schedules
+
+4. Set up monitoring alerts if needed
+
+===== Integration =====
+
+Utilities services integrate with:
+  * **Traefik** - Automatic SSL and routing
+  * **Authelia** - SSO authentication
+  * **File systems** - Direct access to host storage
+  * **External services** - Cloud storage for backups
