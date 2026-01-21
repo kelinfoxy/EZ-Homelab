@@ -19,7 +19,7 @@
 **Docker Image:** [louislam/dockge](https://hub.docker.com/r/louislam/dockge)  
 **Default Stack:** `infrastructure.yml`  
 **Web UI:** `https://dockge.${DOMAIN}`  
-**Authentication:** Protected by Authelia (SSO)
+**Authentication:** SSO via Authelia (automatic login)
 
 ## What is Dockge?
 
@@ -110,13 +110,36 @@ Each folder is a "stack" with its compose file and volumes.
 
 ```bash
 # Dockge Configuration
-DOCKGE_PORT=5001
 DOCKGE_STACKS_DIR=/opt/stacks
+DOCKGE_ENABLE_CONSOLE=true
 
-# Optional: Agent Mode
-DOCKGE_AGENT_HOST=0.0.0.0
-DOCKGE_AGENT_PORT=5002
+# SSO Integration with Authelia
+DOCKGE_AUTH_PROXY_HEADER=Remote-User
+DOCKGE_AUTH_PROXY_AUTO_CREATE=true
+DOCKGE_AUTH_PROXY_LOGOUT_URL=https://auth.${DOMAIN}/logout
 ```
+
+### SSO Authentication
+
+Dockge integrates with Authelia for Single Sign-On (SSO) authentication:
+
+**How it works:**
+1. Traefik forwards requests to Authelia for authentication
+2. Authelia sets the `Remote-User` header with authenticated username
+3. Dockge reads this header and automatically logs in the user
+4. Users are created automatically on first login
+5. Logout redirects to Authelia's logout page
+
+**Benefits:**
+- No separate Dockge login required
+- Centralized user management through Authelia
+- Automatic user provisioning
+- Secure logout handling
+
+**Configuration:**
+- `DOCKGE_AUTH_PROXY_HEADER=Remote-User`: Header set by Authelia
+- `DOCKGE_AUTH_PROXY_AUTO_CREATE=true`: Create users automatically
+- `DOCKGE_AUTH_PROXY_LOGOUT_URL`: Redirect to Authelia logout
 
 ## Official Resources
 

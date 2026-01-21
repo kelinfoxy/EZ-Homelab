@@ -40,6 +40,10 @@ services:
     environment:
       - DOCKGE_STACKS_DIR=/opt/stacks
       - DOCKGE_ENABLE_CONSOLE=true
+      # Proxy Authentication for SSO integration with Authelia
+      - DOCKGE_AUTH_PROXY_HEADER=Remote-User
+      - DOCKGE_AUTH_PROXY_AUTO_CREATE=true
+      - DOCKGE_AUTH_PROXY_LOGOUT_URL=https://auth.${DOMAIN}/logout
     labels:
       - "homelab.category=infrastructure"
       - "homelab.description=Docker Compose stack manager (PRIMARY)"
