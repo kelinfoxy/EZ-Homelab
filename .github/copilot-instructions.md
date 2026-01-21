@@ -356,6 +356,58 @@ ls -lh /opt/stacks/core/traefik/acme.json  # Should be 600 permissions
 ```
 Verify: DuckDNS token valid, `DUCKDNS_TOKEN` in `.env`, DNS propagation (wait 2-5 min), acme.json writable by Traefik
 
+### Stuck Processes and Resource Issues
+```bash
+# Check for stuck processes
+ps aux | grep -E "(copilot|vscode|node)" | grep -v grep
+
+# Monitor system resources
+top -b -n1 | head -20
+
+# Kill stuck processes (be careful!)
+kill -9 PID  # Replace PID with actual process ID
+
+# Check Docker container resource usage
+docker stats --no-stream
+
+# Clean up stopped containers
+docker container prune -f
+```
+
+### File Permission Issues
+```bash
+# Check file ownership
+ls -la /opt/stacks/stack-name/config/
+
+# Fix permissions for Docker volumes
+sudo chown -R 1000:1000 /opt/stacks/stack-name/config/
+
+# Validate PUID/PGID in .env
+echo "PUID: $PUID, PGID: $PGID"
+id -u && id -g  # Should match PUID/PGID
+
+# Check volume mount permissions
+docker run --rm -v /opt/stacks/stack-name/config:/test busybox ls -la /test
+```
+
+### System Health Checks
+```bash
+# Check Docker daemon status
+sudo systemctl status docker
+
+# Verify network connectivity
+ping -c 3 google.com
+
+# Check DNS resolution
+nslookup yourdomain.duckdns.org
+
+# Monitor disk space
+df -h
+
+# Check system load
+uptime && cat /proc/loadavg
+```
+
 ## AI Management Capabilities
 
 You can manage this homelab by:

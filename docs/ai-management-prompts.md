@@ -4,29 +4,35 @@ This guide provides example prompts you can use with GitHub Copilot to manage yo
 
 ## Container and Stack Management
 
-### Starting Services
-- "Start the media stack"
-- "Deploy the monitoring services"
-- "Launch the productivity applications"
+### Controling Services
+- "Start/Pause/Stop/Restart the media stack"
+- "Start/Pause/Stop/Restart wordpress"
+- "Deploy the monitoring stack"
 - "Bring up the core infrastructure"
 
-### Stopping Services
-- "Stop the media stack"
-- "Shut down the monitoring services"
-- "Pause the productivity applications"
-- "Take down the core infrastructure"
 
-### Restarting Services
-- "Restart the media stack"
-- "Reload the monitoring services"
-- "Reboot the productivity applications"
-- "Refresh the core infrastructure"
+### Restarting a service vs restarting a stack
+
+Restarting a container (service) does NOT pick up changes to the compose file
+
+Restarting a stack uses docker compose down && docker compose up -d  
+This DOES load changes to the compose file
+
+Restart traefik/sablier container(s) to apply configuration changes  
+Restart the core stack to apply changes to the compose file  
+
+Homepage configuration is loaded on demand, no restart needed
 
 ### Status Checks
+
+>If your server keeps locking up, it's likely stuck background processes.  
+VS Code Copilot Chat in Agent mode sometimes leaves a stuck process running (in my experience)
+
 - "Show me the status of all containers"
 - "Check if the media services are running"
 - "List all deployed stacks"
 - "Monitor container resource usage"
+- "Check for and close any stuck proccesses hogging system resources"
 
 ## Service Configuration
 
@@ -67,6 +73,28 @@ This guide provides example prompts you can use with GitHub Copilot to manage yo
 - "Check environment variable configuration"
 - "Verify network connectivity between services"
 - "Test SSL certificate validity"
+
+### System Health Checks
+- "Check for stuck processes consuming resources"
+- "Monitor system load and identify bottlenecks"
+- "Verify file permissions for Docker volumes"
+- "Check Docker daemon status and logs"
+- "Validate network connectivity and DNS resolution"
+- "Review system resource limits and quotas"
+
+### Stuck Process Investigation
+- "Find and terminate any stuck AI assistant processes"
+- "Check for runaway Docker containers"
+- "Monitor background jobs and cleanup if needed"
+- "Review system process table for anomalies"
+- "Check VS Code extension processes that may be hanging"
+
+### File Permission Issues
+- "Fix permission problems with Docker volumes"
+- "Set correct ownership for service configuration files"
+- "Resolve access denied errors for mounted directories"
+- "Validate PUID/PGID settings match system users"
+- "Check and repair file system permissions recursively"
 
 ## Backup and Recovery
 

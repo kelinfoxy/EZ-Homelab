@@ -1,0 +1,14 @@
+Tasks
+
+.env.example
+    ✅ create new variables
+        DAFAULT_USER: admin
+        DEFAULT_PASSWORD: changeme
+        DEFAULT_EMAIL: admin@example.com
+
+    ✅ modify existing variables to use these 3 new variables like 
+    NEXTCLOUD_ADMIN_USER=${DEFAULT_USER}
+    except for QBITTORRENT_USER=admin should stay as is
+    the goal is ease of setup for the user
+
+✅ Then update env-configuration.md

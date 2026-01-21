@@ -4,7 +4,7 @@ Congratulations! Your AI-powered homelab is now running. Here's what to do next.
 
 ## Access Your Services
 
-- **Homepage**: `https://home.yourdomain.duckdns.org`
+- **Homepage**: `https://homepage.yourdomain.duckdns.org`
   - Great place to start exploring your services
   - After configuring your services, come back and add widgets with API keys (optional)
   - Or ask the AI to find the API keys and add the widgets
@@ -59,6 +59,46 @@ docker compose down -v --remove-orphans
 # Remove unused Docker resources
 docker system prune -a --volumes
 ```
+
+## Set Up Backups
+
+Your homelab includes comprehensive backup solutions. The default setup includes Backrest (Restic-based) for automated backups.
+
+### Quick Backup Setup
+
+1. **Access Backrest**: `https://backrest.yourdomain.duckdns.org`
+2. **Configure repositories**: Add local or cloud storage destinations
+3. **Set up schedules**: Configure automatic backup schedules
+4. **Add backup jobs**: Create jobs for your important data
+
+### What to Back Up
+
+- **Configuration files**: `/opt/stacks/*/config/` directories
+- **Databases**: Service-specific database volumes
+- **User data**: Nextcloud files, Git repositories, etc.
+- **Media libraries**: Movies, TV shows, music (if space allows)
+
+### Backup Commands
+
+```bash
+# Manual backup of a volume
+docker run --rm \
+  -v source-volume:/data \
+  -v /mnt/backups:/backup \
+  busybox tar czf /backup/volume-backup-$(date +%Y%m%d).tar.gz /data
+
+# List Backrest configurations
+cd /opt/stacks/utilities/backrest
+docker compose exec backrest restic snapshots
+
+# Restore from backup
+docker run --rm \
+  -v target-volume:/data \
+  -v /mnt/backups:/backup \
+  busybox tar xzf /backup/volume-backup.tar.gz -C /
+```
+
+For detailed backup configuration, see the [Restic-BackRest-Backup-Guide.md](Restic-BackRest-Backup-Guide.md).
 
 ## Troubleshooting
 

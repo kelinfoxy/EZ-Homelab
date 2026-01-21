@@ -4,7 +4,8 @@ Welcome to your AI-powered homelab! This guide will walk you through setting up 
 
 ## Getting Started Checklist
 - [ ] Clone this repository to your home folder
-- [ ] Configure `.env` file with your domain and tokens ([see prerequisites](#prerequisites))
+- [ ] Configure `.env` file with your domain and tokens ([see prerequisites](env-configuration.md))
+- [ ] Forward ports 80 and 443 from your router to your server
 - [ ] Run setup script (generates Authelia secrets and admin user) ([setup-homelab.sh](../scripts/setup-homelab.sh))
 - [ ] Log out and back in for Docker group permissions
 - [ ] Run deployment script (deploys all core, infrastructure & dashboard services) ([deploy-homelab.sh](../scripts/deploy-homelab.sh))

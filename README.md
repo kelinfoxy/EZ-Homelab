@@ -33,7 +33,7 @@ sudo ./scripts/deploy-homelab.sh
 
 **Access your homelab:**
 - **Dockge**: `https://dockge.yourdomain.duckdns.org` (primary management interface)
-- **Homepage**: `https://home.yourdomain.duckdns.org` (service dashboard)
+- **Homepage**: `https://homepage.yourdomain.duckdns.org` (service dashboard)
 - **Authelia**: `https://auth.yourdomain.duckdns.org` (SSO login)
 
 ## 📚 Documentation
