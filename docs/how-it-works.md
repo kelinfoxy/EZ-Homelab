@@ -21,35 +21,41 @@ Your central hub for accessing all services. Think of it as the "start menu" for
 - **What it does**: Shows all your deployed services with quick links
 - **AI Integration**: The AI can automatically add new services and configure widgets
 - **Customization**: Add weather, system stats, and service-specific widgets
+- **Configuration**: [docker-compose/dashboards/](docker-compose/dashboards/) | [service-docs/homepage.md](service-docs/homepage.md)
 
 ### 🐳 **Dockge** (`https://dockge.yourdomain.duckdns.org`)
 Your primary management interface for deploying and managing services.
 - **What it does**: Web-based Docker Compose manager
 - **Stacks**: Groups services into logical units (media, monitoring, productivity)
 - **One-Click Deploy**: Upload compose files and deploy instantly
+- **Configuration**: [docker-compose/infrastructure/](docker-compose/infrastructure/) | [service-docs/dockge.md](service-docs/dockge.md)
 
 ### 🔐 **Authelia** (`https://auth.yourdomain.duckdns.org`)
 Your security gatekeeper that protects sensitive services.
 - **What it does**: Single sign-on (SSO) authentication
 - **Security**: Two-factor authentication, session management
 - **Smart Bypass**: Automatically bypasses auth for media apps (Plex, Jellyfin)
+- **Configuration**: [docker-compose/core/](docker-compose/core/) | [service-docs/authelia.md](service-docs/authelia.md)
 
 ### 🌐 **Traefik** (`https://traefik.yourdomain.duckdns.org`)
 Your intelligent traffic director and SSL certificate manager.
 - **What it does**: Reverse proxy that routes web traffic to the right services
 - **SSL**: Automatically obtains and renews free HTTPS certificates
 - **Labels**: Services "advertise" themselves to Traefik via Docker labels
+- **Configuration**: [docker-compose/core/](docker-compose/core/) | [service-docs/traefik.md](service-docs/traefik.md)
 
 ### 🦆 **DuckDNS**
 Your dynamic DNS service that gives your homelab a consistent domain name.
 - **What it does**: Updates `yourdomain.duckdns.org` to point to your home IP
 - **Integration**: Works with Traefik to get wildcard SSL certificates
+- **Configuration**: [docker-compose/core/](docker-compose/core/) | [service-docs/duckdns.md](service-docs/duckdns.md)
 
 ### 🛡️ **Gluetun (VPN)**
 Your download traffic protector.
 - **What it does**: Routes torrent and download traffic through VPN
 - **Security**: Prevents ISP throttling and hides your IP for downloads
 - **Integration**: Download services connect through Gluetun's network
+- **Configuration**: [docker-compose/core/](docker-compose/core/) | [service-docs/gluetun.md](service-docs/gluetun.md)
 
 ## How Services Get Added
 
@@ -148,7 +154,7 @@ Some services start **on-demand** to save resources:
 ## Scaling & Customization
 
 ### Adding Services
-- **Pre-built**: 50+ services ready to deploy
+- **Pre-built**: [50+ services](services-overview.md) ready to deploy
 - **Custom**: AI can create configurations for any Docker service
 - **External**: Proxy services on other devices (Raspberry Pi, NAS)
 
@@ -159,25 +165,19 @@ Some services start **on-demand** to save resources:
 
 ## Troubleshooting Philosophy
 
-### Logs First
-Every service provides detailed logs. The AI can help analyze them.
-
-### Isolation Testing
-Deploy services one at a time to identify conflicts.
-
-### Configuration Validation
-AI validates Docker Compose syntax before deployment.
-
-### Rollback Ready
-Previous configurations are preserved for quick recovery.
+- **Logs First**: Every service provides detailed logs. The AI can help analyze them.
+- **Isolation Testing**: Deploy services one at a time to identify conflicts.
+- **Configuration Validation**: AI validates Docker Compose syntax before deployment.
+- **Rollback Ready**: Previous configurations are preserved for quick recovery.
 
 ## Getting Help
 
 ### Documentation Links
 - **[Automated Setup](automated-setup.md)**: Step-by-step deployment
 - **[SSL Certificates](ssl-certificates.md)**: HTTPS configuration details
-- **[Post-Setup](post-setup-next-steps.md)**: What to do after deployment
+- **[Post-Setup](post-setup.md)**: What to do after deployment
 - **[AI VS Code Setup](ai-vscode-setup.md)**: Configure AI assistance
+- **[AI Management Prompts](ai-management-prompts.md)**: Example commands for AI assistant
 - **[Services Overview](../docs/services-overview.md)**: All available services
 - **[Docker Guidelines](../docs/docker-guidelines.md)**: Technical details
 

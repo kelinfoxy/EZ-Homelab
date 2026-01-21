@@ -1,6 +1,6 @@
 # Getting Started Guide
 
-Welcome to your AI-powered homelab! This guide will walk you through setting up your production-ready infrastructure with Dockge, Traefik, Authelia, and 50+ services.
+Welcome to your AI-powered homelab! This guide will walk you through setting up your production-ready infrastructure with Dockge, Traefik, Authelia, and [50+ services](services-overview.md).
 
 ## Getting Started Checklist
 - [ ] Clone this repository to your home folder
@@ -11,7 +11,7 @@ Welcome to your AI-powered homelab! This guide will walk you through setting up 
 - [ ] Access Dockge web UI ([https://dockge.yourdomain.duckdns.org](https://dockge.yourdomain.duckdns.org))
 - [ ] Set up 2FA with Authelia ([Authelia setup guide](service-docs/authelia.md))
 - [ ] (optional) Deploy additional stacks as needed via Dockge ([services overview](services-overview.md))
-- [ ] Configure and use VS Code with Github Copilot to manage the server ([AI management](.github/copilot-instructions.md))
+- [ ] Configure and use VS Code with Github Copilot to manage the server ([AI management](.github/copilot-instructions.md) | [Example prompts](ai-management-prompts.md))
 
 ## Setup Options
 
@@ -36,7 +36,7 @@ Your homelab uses Let's Encrypt for automatic HTTPS certificates. See [SSL Certi
 
 ## What Comes Next
 
-After setup, learn what to do with your running homelab. See [Post-Setup Next Steps](post-setup-next-steps.md) for accessing services, customization, and maintenance.
+After setup, learn what to do with your running homelab. See [Post-Setup Guide](post-setup.md) for accessing services, customization, and maintenance.
 
 ## On-Demand Remote Services
 

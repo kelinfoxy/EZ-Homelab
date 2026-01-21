@@ -138,9 +138,27 @@ echo | openssl s_client -connect yourdomain.duckdns.org:443 -servername any-subd
 - HTTPS provides encryption in transit
 - Consider additional security headers in Traefik
 
-## Certificate Lifecycle
+## Port Forwarding Requirements
 
-- **Validity**: 90 days
-- **Renewal**: Automatic, 30 days before expiration
-- **Storage**: Persistent across container restarts
-- **Backup**: Include in your homelab backup strategy
+**Critical**: SSL certificates require ports 80 and 443 to be forwarded from your router to your homelab server.
+
+### Router Configuration
+1. Log into your router's admin interface (usually 192.168.1.1)
+2. Find the "Port Forwarding" or "NAT" section
+3. Create forwarding rules:
+   - **External Port**: 80 → **Internal IP**: your-server-ip **Internal Port**: 80
+   - **External Port**: 443 → **Internal IP**: your-server-ip **Internal Port**: 443
+4. Protocol: TCP for both
+5. Save changes
+
+### Why This Is Required
+- **Port 80**: Used by Let's Encrypt for domain ownership verification (HTTP-01 challenge)
+- **Port 443**: Used for all HTTPS traffic to your services
+- **Wildcard Certificates**: Enables automatic SSL for all `*.yourdomain.duckdns.org` subdomains
+
+### Testing Port Forwarding
+```bash
+# Test from external network (not your local network)
+curl -I http://yourdomain.duckdns.org
+# Should return HTTP 200 or redirect to HTTPS
+```

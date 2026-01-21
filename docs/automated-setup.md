@@ -6,6 +6,7 @@ For most users, the automated setup script handles everything from system prepar
 - **Fresh Debian/Ubuntu server** (or existing system)
 - **Root/sudo access**
 - **Internet connection**
+- **Ports 80 and 443 forwarded** from your router to your server (required for SSL certificates)
 - **VS Code with GitHub Copilot** (for AI assistance)
 
 ## Simple Setup
