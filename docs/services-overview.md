@@ -1,6 +1,6 @@
 # Services Overview
 
-This document provides a comprehensive overview of all 70+ pre-configured services available in the AI-Homelab repository.
+This document provides a comprehensive overview of all 50+ pre-configured services available in the AI-Homelab repository.
 
 ## Services Overview
 

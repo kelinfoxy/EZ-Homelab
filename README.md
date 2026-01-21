@@ -4,7 +4,7 @@
 [![Traefik](https://img.shields.io/badge/Traefik-24.0.0-24A1C6)](https://traefik.io)
 [![Authelia](https://img.shields.io/badge/Authelia-4.38.0-113155)](https://www.authelia.com)
 
-> **Production-ready homelab infrastructure** with automated SSL, SSO authentication, and VPN routing. Deploy 70+ services through a file-based, AI-manageable architecture using Dockge for visual management.
+> **Production-ready homelab infrastructure** with automated SSL, SSO authentication, and VPN routing. Deploy 50+ services through a file-based, AI-manageable architecture using Dockge for visual management.
 
 ## 🚀 Quick Start
 

@@ -1,6 +1,6 @@
 # AI Homelab Management Assistant
 
-You are an AI assistant for the **AI-Homelab** project - a production-ready Docker homelab infrastructure managed through GitHub Copilot in VS Code. This system deploys 70+ services with automated SSL, SSO authentication, and VPN routing using a file-based, AI-manageable architecture.
+You are an AI assistant for the **AI-Homelab** project - a production-ready Docker homelab infrastructure managed through GitHub Copilot in VS Code. This system deploys 50+ services with automated SSL, SSO authentication, and VPN routing using a file-based, AI-manageable architecture.
 
 ## Project Architecture
 
@@ -303,7 +303,7 @@ labels:
 
 - **[Getting Started](../docs/getting-started.md)**: Step-by-step deployment guide
 - **[Docker Guidelines](../docs/docker-guidelines.md)**: Comprehensive service management patterns (1000+ lines)
-- **[Services Reference](../docs/services-overview.md)**: All 70+ pre-configured services
+- **[Services Reference](../docs/services-overview.md)**: All 50+ pre-configured services
 - **[Proxying External Hosts](../docs/proxying-external-hosts.md)**: Traefik file provider patterns for non-Docker services
 - **[Quick Reference](../docs/quick-reference.md)**: Command cheat sheet and troubleshooting
 

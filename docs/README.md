@@ -1,6 +1,6 @@
 # AI-Homelab Documentation
 
-Welcome to the AI-Homelab documentation! This is your comprehensive guide to deploying and managing a production-ready homelab infrastructure with 70+ pre-configured services.
+Welcome to the AI-Homelab documentation! This is your comprehensive guide to deploying and managing a production-ready homelab infrastructure with 50+ pre-configured services.
 
 ## 📚 Documentation Structure
 
