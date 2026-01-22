@@ -18,13 +18,6 @@ This document tracks all ports used by services in the AI-Homelab. Update this d
 | [Pi-hole](../service-docs/pihole.md) | 53 | TCP/UDP | DNS | 53 |
 | [Docker Proxy](../service-docs/docker-proxy.md) | 127.0.0.1:2375 | TCP | Docker API proxy | 2375 |
 
-## Development Stack ([development.yml](../docker-compose/development.yml))
-
-| Service | Port | Protocol | Purpose | Internal Port |
-|---------|------|----------|---------|---------------|
-| [PostgreSQL](../service-docs/postgresql.md) | 5432 | TCP | Database | 5432 |
-| [Redis](../service-docs/redis.md) | 6379 | TCP | Cache/Database | 6379 |
-
 ## Home Assistant Stack ([homeassistant.yml](../docker-compose/homeassistant.yml))
 
 | Service | Port | Protocol | Purpose | Internal Port |
