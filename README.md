@@ -38,32 +38,32 @@ sudo ./scripts/deploy-homelab.sh
 
 ## 📚 Documentation
 
-For comprehensive documentation, see:
+For comprehensive documentation, see the [GitHub Wiki](https://github.com/kelinfoxy/EZ-Homelab/wiki):
 
-- **[Getting Started Guide](docs/getting-started.md)** - Step-by-step deployment and configuration
-- **[Docker Guidelines](docs/docker-guidelines.md)** - Service management patterns and best practices
-- **[Quick Reference](docs/quick-reference.md)** - Command cheat sheet and troubleshooting
-- **[Services Reference](docs/services-overview.md)** - All 70+ available services
-- **[Proxying External Hosts](docs/proxying-external-hosts.md)** - Connect non-Docker services (Raspberry Pi, NAS, etc.)
+- **[Getting Started Guide](https://github.com/kelinfoxy/EZ-Homelab/wiki/Getting-Started-Guide)** - Step-by-step deployment and configuration
+- **[Docker Guidelines](https://github.com/kelinfoxy/EZ-Homelab/wiki/Docker-Guidelines)** - Service management patterns and best practices
+- **[Quick Reference](https://github.com/kelinfoxy/EZ-Homelab/wiki/Quick-Reference)** - Command cheat sheet and troubleshooting
+- **[Services Reference](https://github.com/kelinfoxy/EZ-Homelab/wiki/Services-Overview)** - All 70+ available services
+- **[Proxying External Hosts](https://github.com/kelinfoxy/EZ-Homelab/wiki/Proxying-External-Hosts)** - Connect non-Docker services (Raspberry Pi, NAS, etc.)
 
 ## 🚀 Quick Navigation
 
-**New to AI-Homelab?** → [Getting Started Guide](docs/getting-started.md)
+**New to EZ-Homelab?** → [Getting Started Guide](https://github.com/kelinfoxy/EZ-Homelab/wiki/Getting-Started-Guide)
 
-**Need Help Deploying?** → [Automated Setup](docs/getting-started.md#simple-setup)
+**Need Help Deploying?** → [Automated Setup](https://github.com/kelinfoxy/EZ-Homelab/wiki/Getting-Started-Guide#automated-setup)
 
-**Want to Add Services?** → [Service Creation Guide](docs/docker-guidelines.md#service-creation-guidelines)
+**Want to Add Services?** → [Service Creation Guide](https://github.com/kelinfoxy/EZ-Homelab/wiki/Docker-Guidelines#service-creation-guidelines)
 
-**Having Issues?** → [Troubleshooting](docs/quick-reference.md#troubleshooting)
+**Having Issues?** → [Troubleshooting](https://github.com/kelinfoxy/EZ-Homelab/wiki/Quick-Reference#troubleshooting)
 
 **Managing Services?** → [Dockge Dashboard](https://dockge.yourdomain.duckdns.org)
 
 ### Service Documentation
-Individual service documentation is available in [`docs/service-docs/`](docs/service-docs/):
-- [Authelia](docs/service-docs/authelia.md) - SSO authentication
-- [Traefik](docs/service-docs/traefik.md) - Reverse proxy and SSL
-- [Dockge](docs/service-docs/dockge.md) - Stack management
-- [Homepage](docs/service-docs/homepage.md) - Service dashboard
+Individual service documentation is available in the [GitHub Wiki](https://github.com/kelinfoxy/EZ-Homelab/wiki):
+- [Authelia](https://github.com/kelinfoxy/EZ-Homelab/wiki/Authelia) - SSO authentication
+- [Traefik](https://github.com/kelinfoxy/EZ-Homelab/wiki/Traefik) - Reverse proxy and SSL
+- [Dockge](https://github.com/kelinfoxy/EZ-Homelab/wiki/Dockge) - Stack management
+- [Homepage](https://github.com/kelinfoxy/EZ-Homelab/wiki/Homepage) - Service dashboard
 - And 50+ more services...
 
 ## 🏗️ Architecture
@@ -115,8 +115,8 @@ This homelab is designed to be managed by AI agents through VS Code with GitHub 
 ## 🔧 Manual Setup
 
 If automated scripts fail, see:
-- **[Manual Setup Guide](docs/manual-setup.md)** - Step-by-step manual installation
-- **[Troubleshooting](docs/troubleshooting/)** - Common issues and solutions
+- **[Manual Setup Guide](https://github.com/kelinfoxy/EZ-Homelab/wiki/Manual-Setup)** - Step-by-step manual installation
+- **[Troubleshooting](https://github.com/kelinfoxy/EZ-Homelab/wiki/Troubleshooting)** - Common issues and solutions
 
 ## 🤝 Contributing
 
@@ -124,7 +124,9 @@ This project welcomes contributions! See individual service docs for configurati
 
 ## 📄 License
 
-This project is open source. See individual service licenses for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+Individual services may have their own licenses - please check the respective project repositories.
 
 ---
 
