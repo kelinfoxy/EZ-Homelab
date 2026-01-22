@@ -130,6 +130,13 @@ cp -r "$REPO_DIR/config-templates/authelia" /opt/stacks/core/
 # Replace domain placeholders in Authelia config
 sed -i "s/your-domain.duckdns.org/${DOMAIN}/g" /opt/stacks/core/authelia/configuration.yml
 
+if [ -f "/opt/stacks/core/.env" ]; then
+    log_warning ".env already exists in /opt/stacks/core/"
+    log_info "Creating backup: .env.backup.$(date +%Y%m%d_%H%M%S)"
+    cp /opt/stacks/core/.env /opt/stacks/core/.env.backup.$(date +%Y%m%d_%H%M%S)
+fi
+cp "$REPO_DIR/.env" /opt/stacks/core/.env
+
 # Replace secret placeholders in Authelia config
 source /opt/stacks/core/.env
 sed -i "s|\${AUTHELIA_JWT_SECRET}|${AUTHELIA_JWT_SECRET}|g" /opt/stacks/core/authelia/configuration.yml
@@ -140,13 +147,6 @@ sed -i "s|\${AUTHELIA_STORAGE_ENCRYPTION_KEY}|${AUTHELIA_STORAGE_ENCRYPTION_KEY}
 sed -i "s/admin/${AUTHELIA_ADMIN_USER}/g" /opt/stacks/core/authelia/users_database.yml
 sed -i "s/admin@example.com/${AUTHELIA_ADMIN_EMAIL}/g" /opt/stacks/core/authelia/users_database.yml
 sed -i "s|\$argon2id\$v=19\$m=65536,t=3,p=4\$CHANGEME|${AUTHELIA_ADMIN_PASSWORD}|g" /opt/stacks/core/authelia/users_database.yml
-
-if [ -f "/opt/stacks/core/.env" ]; then
-    log_warning ".env already exists in /opt/stacks/core/"
-    log_info "Creating backup: .env.backup.$(date +%Y%m%d_%H%M%S)"
-    cp /opt/stacks/core/.env /opt/stacks/core/.env.backup.$(date +%Y%m%d_%H%M%S)
-fi
-cp "$REPO_DIR/.env" /opt/stacks/core/.env
 
 # Deploy core stack
 cd /opt/stacks/core
