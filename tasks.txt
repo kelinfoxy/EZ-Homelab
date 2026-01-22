@@ -1,9 +1,3 @@
 Tasks
 
-Completed:
-- Created VPN stack and moved Gluetun & qBittorrent from downloaders stack
-- Removed downloaders stack entirely (directory and .yml file)
-- Updated all documentation and AGENT_INSTRUCTIONS.md for VPN stack structure
-- Updated resource limits template to reflect VPN stack
-
 

@@ -1,23 +1,133 @@
-# AI-Homelab Documentation
+# AI-Homelab Wiki
 
-Welcome to the AI-Homelab documentation! This is your comprehensive guide to deploying and managing a production-ready homelab infrastructure with 50+ pre-configured services.
+This directory contains the **complete wiki documentation** for the AI-Homelab project, serving as the **single source of truth** for all project information.
 
-## 📚 Documentation Structure
+## 📖 Wiki Structure
 
-### 🚀 Getting Started
-- **[Quick Start Guide](getting-started.md)** - Step-by-step setup for new users
-- **[Prerequisites & Requirements](env-configuration.md)** - What you need before starting
-- **[First Deployment](getting-started.md#setup-options)** - Automated setup process
+### Core Documentation
+- **`Home.md`** - Main wiki page with overview and navigation
+- **`_Sidebar.md`** - Wiki navigation sidebar
+- **`_Footer.md`** - Footer with quick links and project info
 
-### 🏗️ Architecture & Design
-- **[System Architecture](docker-guidelines.md#philosophy)** - High-level overview of components
-- **[Network Architecture](docker-guidelines.md#network-architecture)** - How services communicate
-- **[Security Model](docker-guidelines.md#security-best-practices)** - Authentication, SSL, and access control
-- **[Storage Strategy](docker-guidelines.md#volume-management)** - Data persistence and organization
+### Getting Started
+- **`Getting-Started-Guide.md`** - Complete setup instructions
+- **`Environment-Configuration.md`** - Required settings and tokens
+- **`Automated-Setup.md`** - One-click deployment process
+- **`Manual-Setup.md`** - Step-by-step manual installation
+- **`Post-Setup-Guide.md`** - Post-deployment configuration
 
-### 💾 Backup & Recovery
-- **[Backup Strategy](Restic-BackRest-Backup-Guide.md)** - Comprehensive Restic + Backrest guide (default strategy)
-- **[Backrest Service](service-docs/backrest.md)** - Web UI for backup management
+### Architecture & Design
+- **`System-Architecture.md`** - High-level component overview
+- **`Docker-Guidelines.md`** - Service management patterns
+- **`Ports-in-Use.md`** - Complete port mapping reference
+- **`SSL-Certificates.md`** - HTTPS and certificate management
+
+### Services & Documentation
+- **`Services-Overview.md`** - All 70+ services catalog
+- **`Service-Documentation.md`** - Individual service guides index
+- **`service-docs/`** - Individual service documentation files
+- **`Core-Infrastructure.md`** - Essential services guide
+- **`Infrastructure-Services.md`** - Management tools guide
+
+### Operations & Management
+- **`Quick-Reference.md`** - Command cheat sheet
+- **`Backup-Strategy.md`** - Restic + Backrest comprehensive guide
+- **`Proxying-External-Hosts.md`** - Connect non-Docker services
+- **`Resource-Limits-Template.md`** - Performance optimization
+- **`troubleshooting/`** - Issue resolution guides
+
+### AI & Automation
+- **`AI-Management-Guide.md`** - Using AI for homelab management
+- **`Copilot-Instructions.md`** - AI assistant configuration
+- **`AI-VS-Code-Setup.md`** - Development environment setup
+- **`AI-Management-Prompts.md`** - Sample AI interactions
+
+### Additional Resources
+- **`How-It-Works.md`** - System architecture explanation
+- **`Authelia-Customization.md`** - SSO configuration options
+- **`On-Demand-Remote-Services.md`** - Lazy loading configuration
+- **`action-reports/`** - Deployment logs and reports
+
+## 🎯 Purpose
+
+This wiki serves as the **authoritative source of truth** for the AI-Homelab project, containing:
+
+- ✅ **Complete Documentation** - All setup guides, configuration options, and troubleshooting
+- ✅ **Service Catalog** - Detailed information for all 70+ available services
+- ✅ **Architecture Guides** - System design, network configuration, and security models
+- ✅ **AI Integration** - Copilot instructions and AI management capabilities
+- ✅ **Operational Guides** - Backup strategies, monitoring, and maintenance
+- ✅ **Reference Materials** - Port mappings, resource limits, and quick references
+
+## 📋 Wiki Standards
+
+### Naming Convention
+- Use `Title-Case-With-Dashes.md` for file names
+- Match wiki link format: `[[Wiki Links]]`
+- Descriptive, searchable titles
+
+### Content Organization
+- **Headers**: Use `# ## ###` hierarchy
+- **Links**: Use `[[Wiki Links]]` for internal references
+- **Code**: Use backticks for commands and file paths
+- **Lists**: Use bullet points for features/options
+
+### Maintenance
+- **Single Source of Truth**: All information kept current
+- **Comprehensive**: No missing critical information
+- **Accurate**: Verified configurations and commands
+- **Accessible**: Clear language, logical organization
+
+## 🔄 Synchronization
+
+This wiki is automatically synchronized with the main documentation in `../docs/` and should be updated whenever:
+
+- New services are added
+- Configuration changes are made
+- Documentation is updated
+- New features are implemented
+
+## 📖 Usage
+
+### For Users
+- Start with `Home.md` for overview
+- Use `_Sidebar.md` for navigation
+- Search for specific topics or services
+- Reference individual service documentation
+
+### For Contributors
+- Update wiki when modifying documentation
+- Add new pages for new features
+- Maintain link integrity
+- Keep information current
+
+### For AI Management
+- Copilot uses this wiki as reference
+- Contains complete system knowledge
+- Provides context for AI assistance
+- Enables intelligent homelab management
+
+## 🤝 Contributing
+
+When contributing to the wiki:
+
+1. **Update Content**: Modify relevant pages with new information
+2. **Check Links**: Ensure all internal links work
+3. **Update Navigation**: Add new pages to `_Sidebar.md` if needed
+4. **Verify Accuracy**: Test commands and configurations
+5. **Maintain Standards**: Follow naming and formatting conventions
+
+## 📊 Wiki Statistics
+
+- **Total Pages**: 25+ main pages
+- **Service Docs**: 70+ individual service guides
+- **Categories**: 10 service categories
+- **Topics Covered**: Setup, configuration, troubleshooting, architecture
+- **Last Updated**: January 21, 2026
+
+---
+
+*This wiki represents the complete knowledge base for the AI-Homelab project and serves as the primary reference for all users and contributors.*
 
 ### 📦 Services & Stacks
 
