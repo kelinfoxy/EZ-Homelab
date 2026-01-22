@@ -4,14 +4,14 @@
 You are an AI agent specialized in managing Docker-based homelab infrastructure using Dockge. Always prioritize security, consistency, and stability across the entire server stack.
 
 ## Repository Context
-- **Repository Location**: `~/AI-Homelab/`
+- **Repository Location**: `~/EZ-Homelab/`
 - **Purpose**: Production-ready Docker homelab infrastructure managed through GitHub Copilot in VS Code
 - **User**: `kelin` (PUID=1000, PGID=1000)
 - **Critical**: All file operations must respect user ownership - avoid permission escalation issues
 
 ## Repository Structure
 ```
-~/AI-Homelab/
+~/EZ-Homelab/
 ├── .github/
 │   └── copilot-instructions.md      # GitHub Copilot guidelines
 ├── docker-compose/                  # Compose file templates
@@ -292,7 +292,7 @@ labels:
 **Deployment Steps:**
 1. Create stack directory: `/opt/stacks/stack-name/`
 2. Write docker-compose.yml using LinuxServer.io template with Traefik labels
-3. Create `.env` file for secrets (copy from `~/AI-Homelab/.env`)
+3. Create `.env` file for secrets (copy from `~/EZ-Homelab/.env`)
 4. **Ask user**: Enable SSO protection? (Default: Yes, unless media service like Plex/Jellyfin)
 5. **Ask user**: Enable lazy loading (Sablier)? (Default: Yes for resource conservation) - **Note**: Requires `restart: no` instead of `unless-stopped`
 6. Add service to Homepage dashboard config
@@ -441,14 +441,14 @@ labels:
    sudo chown -R kelin:kelin /opt/stacks
    
    # For repository files
-   chown -R kelin:kelin ~/AI-Homelab  # No sudo needed in home dir
+   chown -R kelin:kelin ~/EZ-Homelab  # No sudo needed in home dir
    
    # For Docker-managed directories, leave as root
    # (e.g., /opt/stacks/*/data/ created by containers)
    ```
 
 3. **Prevent Future Issues**
-   - Edit files in `~/AI-Homelab/` without sudo
+   - Edit files in `~/EZ-Homelab/` without sudo
    - Only use sudo for Docker commands
    - Don't change ownership of Docker-created volumes
 
@@ -509,7 +509,7 @@ labels:
 ## Repository Management Guidelines
 
 ### Repository Maintenance
-- Work within `~/AI-Homelab/` for all operations
+- Work within `~/EZ-Homelab/` for all operations
 - Validate all YAML files before committing
 - Ensure `.env.example` stays updated with new variables
 - Document breaking changes in commit messages
@@ -532,7 +532,7 @@ grep -v '^#' .env | grep -v '^$'
 bash -n scripts/deploy-homelab.sh
 
 # Verify file permissions
-ls -la ~/AI-Homelab/
+ls -la ~/EZ-Homelab/
 ```
 
 ### Deployment Checklist

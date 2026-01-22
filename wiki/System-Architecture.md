@@ -2,7 +2,7 @@
 
 ## Overview
 
-The AI-Homelab implements a **layered, production-ready architecture** designed for reliability, security, and ease of management. The system is built around Docker containers orchestrated through Traefik reverse proxy with Authelia SSO authentication.
+The EZ-Homelab implements a **layered, production-ready architecture** designed for reliability, security, and ease of management. The system is built around Docker containers orchestrated through Traefik reverse proxy with Authelia SSO authentication.
 
 ## Core Principles
 

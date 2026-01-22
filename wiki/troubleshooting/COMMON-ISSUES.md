@@ -142,7 +142,7 @@ nslookup yourdomain.duckdns.org
 **Solutions:**
 ```bash
 # Check credentials in .env
-cat ~/AI-Homelab/.env | grep SURFSHARK
+cat ~/EZ-Homelab/.env | grep SURFSHARK
 
 # Check Gluetun logs
 sudo docker logs gluetun
@@ -279,7 +279,7 @@ docker run --rm \
 4. **Verify configuration:**
    ```bash
    # Check .env file
-   cat ~/AI-Homelab/.env
+   cat ~/EZ-Homelab/.env
    
    # Check compose file
    cat /opt/stacks/stack-name/docker-compose.yml

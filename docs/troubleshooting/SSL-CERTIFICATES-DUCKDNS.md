@@ -185,7 +185,7 @@ Ensure wildcard domain configuration is correct (it is currently):
 ```
 **This is correct** - keep both apex and wildcard.
 
-### ~/AI-Homelab/docs/service-docs/traefik.md
+### ~/EZ-Homelab/docs/service-docs/traefik.md
 Add troubleshooting section for DuckDNS DNS challenge issues.
 
 ## Success Criteria for Next Test

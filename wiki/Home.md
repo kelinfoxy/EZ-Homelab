@@ -1,6 +1,6 @@
-# AI-Homelab Wiki
+# EZ-Homelab Wiki
 
-Welcome to the **AI-Homelab Wiki** - the comprehensive source of truth for deploying and managing a production-ready homelab infrastructure with 50+ services.
+Welcome to the **EZ-Homelab Wiki** - the comprehensive source of truth for deploying and managing a production-ready homelab infrastructure with 50+ services.
 
 [![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=flat&logo=docker&logoColor=white)](https://docker.com)
 [![Traefik](https://img.shields.io/badge/Traefik-24.0.0-24A1C6)](https://traefik.io)
@@ -8,7 +8,7 @@ Welcome to the **AI-Homelab Wiki** - the comprehensive source of truth for deplo
 
 ## 📖 Wiki Overview
 
-This wiki serves as the **single source of truth** for the AI-Homelab project, containing all documentation, guides, and reference materials needed to deploy and manage your homelab infrastructure.
+This wiki serves as the **single source of truth** for the EZ-Homelab project, containing all documentation, guides, and reference materials needed to deploy and manage your homelab infrastructure.
 
 ### 🎯 Key Features
 
@@ -20,7 +20,7 @@ This wiki serves as the **single source of truth** for the AI-Homelab project, c
 
 ### 🏗️ Architecture Overview
 
-The AI-Homelab uses a layered architecture:
+The EZ-Homelab uses a layered architecture:
 
 1. **Core Infrastructure** (Deploy First)
    - DuckDNS: Dynamic DNS with wildcard SSL
@@ -48,8 +48,8 @@ The AI-Homelab uses a layered architecture:
 
 ### Automated Deployment
 ```bash
-git clone https://github.com/kelinfoxy/AI-Homelab.git
-cd AI-Homelab
+git clone https://github.com/kelinfoxy/EZ-Homelab.git
+cd EZ-Homelab
 cp .env.example .env
 nano .env  # Configure your domain and tokens
 sudo ./scripts/setup-homelab.sh
@@ -122,7 +122,7 @@ sudo ./scripts/deploy-homelab.sh
 
 ### Repository Structure
 ```
-AI-Homelab/
+EZ-Homelab/
 ├── docs/                    # Documentation
 ├── docker-compose/          # Service definitions
 ├── config-templates/        # Configuration templates
@@ -133,8 +133,8 @@ AI-Homelab/
 
 ## 📞 Support & Community
 
-- **Issues**: [GitHub Issues](https://github.com/kelinfoxy/AI-Homelab/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/kelinfoxy/AI-Homelab/discussions)
+- **Issues**: [GitHub Issues](https://github.com/kelinfoxy/EZ-Homelab/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/kelinfoxy/EZ-Homelab/discussions)
 - **Documentation**: This wiki is the primary source of truth
 
 ## 📈 Project Status
@@ -147,5 +147,5 @@ AI-Homelab/
 
 ---
 
-*This wiki is automatically maintained and serves as the single source of truth for the AI-Homelab project. All information is kept current with the latest documentation.*</content>
+*This wiki is automatically maintained and serves as the single source of truth for the EZ-Homelab project. All information is kept current with the latest documentation.*</content>
 <parameter name="filePath">c:\Users\kelin\Documents\Apps\GitHub\AI-Homelab\wiki\Home.md

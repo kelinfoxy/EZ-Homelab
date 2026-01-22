@@ -1,12 +1,12 @@
-# AI-Homelab Wiki Footer
+# EZ-Homelab Wiki Footer
 
 ## 📖 Quick Links
 - [[Home]] | [[Getting Started Guide]] | [[Services Overview]]
 - [[Quick Reference]] | [[Troubleshooting]] | [[AI Management Guide]]
 
 ## 🆘 Need Help?
-- **Issues**: [GitHub Issues](https://github.com/kelinfoxy/AI-Homelab/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/kelinfoxy/AI-Homelab/discussions)
+- **Issues**: [GitHub Issues](https://github.com/kelinfoxy/EZ-Homelab/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/kelinfoxy/EZ-Homelab/discussions)
 - **Documentation**: This wiki is the primary source of truth
 
 ## 📊 Project Status
@@ -22,8 +22,8 @@
 - [[Code Standards]] - Development best practices
 
 ## 📜 License
-This project is licensed under the MIT License - see the [LICENSE](https://github.com/kelinfoxy/AI-Homelab/blob/main/LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/kelinfoxy/EZ-Homelab/blob/main/LICENSE) file for details.
 
 ---
-*Last updated: January 21, 2026 | AI-Homelab Wiki*</content>
+*Last updated: January 21, 2026 | EZ-Homelab Wiki*</content>
 <parameter name="filePath">c:\Users\kelin\Documents\Apps\GitHub\AI-Homelab\wiki\_Footer.md

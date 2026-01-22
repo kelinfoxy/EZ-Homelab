@@ -2,7 +2,7 @@
 
 ## Overview
 
-The AI-Homelab is designed for **AI-assisted management** using GitHub Copilot in VS Code. This guide explains how to leverage AI capabilities for deploying, configuring, and maintaining your homelab infrastructure.
+The EZ-Homelab is designed for **AI-assisted management** using GitHub Copilot in VS Code. This guide explains how to leverage AI capabilities for deploying, configuring, and maintaining your homelab infrastructure.
 
 ## AI Assistant Capabilities
 
@@ -28,14 +28,14 @@ The entire system is built with AI management in mind:
 
 ### Prerequisites
 1. **VS Code** with GitHub Copilot extension
-2. **AI-Homelab Repository** cloned locally
+2. **EZ-Homelab Repository** cloned locally
 3. **Basic Understanding** of Docker concepts
 
 ### Initial Setup
 ```bash
 # Clone the repository
-git clone https://github.com/kelinfoxy/AI-Homelab.git
-cd AI-Homelab
+git clone https://github.com/kelinfoxy/EZ-Homelab.git
+cd EZ-Homelab
 
 # AI will help with configuration
 # Ask: "Help me configure the .env file"
@@ -266,7 +266,7 @@ AI Response:
 ## Getting Help
 
 ### AI Assistant Commands
-- **General Help**: "Help me with AI-Homelab management"
+- **General Help**: "Help me with EZ-Homelab management"
 - **Specific Tasks**: "How do I deploy a new service?"
 - **Troubleshooting**: "Why isn't my service working?"
 - **Configuration**: "How do I configure Authelia?"
@@ -295,5 +295,5 @@ AI Response:
 - **Monitoring Integration**: AI-driven alerting
 - **Cost Optimization**: Resource usage analysis
 
-The AI-Homelab's AI-first design makes complex homelab management accessible to users of all skill levels while maintaining production-ready reliability and security.</content>
+The EZ-Homelab's AI-first design makes complex homelab management accessible to users of all skill levels while maintaining production-ready reliability and security.</content>
 <parameter name="filePath">c:\Users\kelin\Documents\Apps\GitHub\AI-Homelab\wiki\AI-Management-Guide.md

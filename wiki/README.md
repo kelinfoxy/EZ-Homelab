@@ -1,6 +1,6 @@
-# AI-Homelab Wiki
+# EZ-Homelab Wiki
 
-This directory contains the **complete wiki documentation** for the AI-Homelab project, serving as the **single source of truth** for all project information.
+This directory contains the **complete wiki documentation** for the EZ-Homelab project, serving as the **single source of truth** for all project information.
 
 ## 📖 Wiki Structure
 
@@ -50,7 +50,7 @@ This directory contains the **complete wiki documentation** for the AI-Homelab p
 
 ## 🎯 Purpose
 
-This wiki serves as the **authoritative source of truth** for the AI-Homelab project, containing:
+This wiki serves as the **authoritative source of truth** for the EZ-Homelab project, containing:
 
 - ✅ **Complete Documentation** - All setup guides, configuration options, and troubleshooting
 - ✅ **Service Catalog** - Detailed information for all 70+ available services
@@ -127,7 +127,7 @@ When contributing to the wiki:
 
 ---
 
-*This wiki represents the complete knowledge base for the AI-Homelab project and serves as the primary reference for all users and contributors.*
+*This wiki represents the complete knowledge base for the EZ-Homelab project and serves as the primary reference for all users and contributors.*
 
 ### 📦 Services & Stacks
 
@@ -269,7 +269,7 @@ Services that provide alternatives to the defaults:
 
 ### 📚 Additional Resources
 
-- **[GitHub Repository](https://github.com/kelinfoxy/AI-Homelab)** - Source code and issues
+- **[GitHub Repository](https://github.com/kelinfoxy/EZ-Homelab)** - Source code and issues
 - **[Docker Hub](https://hub.docker.com)** - Container images
 - **[Traefik Documentation](https://doc.traefik.io/traefik/)** - Official reverse proxy docs
 - **[Authelia Documentation](https://www.authelia.com/)** - SSO documentation
@@ -279,7 +279,7 @@ Services that provide alternatives to the defaults:
 
 ## 🎯 Quick Navigation
 
-**New to AI-Homelab?** → [Getting Started](getting-started.md)
+**New to EZ-Homelab?** → [Getting Started](getting-started.md)
 
 **Need to add a service?** → [Service Creation Guide](docker-guidelines.md#service-creation-guidelines)
 

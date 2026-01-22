@@ -174,10 +174,10 @@ Keep DuckDNS for dynamic IP updates, but use different DNS for certificates:
 
 ## Files to Update in Repository
 
-### ~/AI-Homelab/stacks/core/traefik/traefik.yml
+### ~/EZ-Homelab/stacks/core/traefik/traefik.yml
 Document both HTTP and DNS challenge configurations with clear comments.
 
-### ~/AI-Homelab/stacks/core/docker-compose.yml
+### ~/EZ-Homelab/stacks/core/docker-compose.yml
 Ensure wildcard domain configuration is correct (it is currently):
 ```yaml
 - "traefik.http.routers.traefik.tls.domains[0].main=${DOMAIN}"
@@ -185,7 +185,7 @@ Ensure wildcard domain configuration is correct (it is currently):
 ```
 **This is correct** - keep both apex and wildcard.
 
-### ~/AI-Homelab/docs/service-docs/traefik.md
+### ~/EZ-Homelab/docs/service-docs/traefik.md
 Add troubleshooting section for DuckDNS DNS challenge issues.
 
 ## Success Criteria for Next Test

@@ -1,4 +1,4 @@
-# AI Homelab
+# EZ-Homelab
 
 [![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=flat&logo=docker&logoColor=white)](https://docker.com)
 [![Traefik](https://img.shields.io/badge/Traefik-24.0.0-24A1C6)](https://traefik.io)
@@ -17,8 +17,8 @@
 ### Automated Setup
 ```bash
 # Clone repository
-git clone https://github.com/kelinfoxy/AI-Homelab.git
-cd AI-Homelab
+git clone https://github.com/kelinfoxy/EZ-Homelab.git
+cd EZ-Homelab
 
 # Configure environment
 cp .env.example .env

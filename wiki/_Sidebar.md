@@ -1,4 +1,4 @@
-# AI-Homelab Wiki Navigation
+# EZ-Homelab Wiki Navigation
 
 ## 🚀 Getting Started
 - [[Home]] - Wiki overview and navigation
@@ -43,12 +43,12 @@
 - [[Core Stack README]] - Core infrastructure details
 
 ## 📚 External Links
-- [GitHub Repository](https://github.com/kelinfoxy/AI-Homelab)
+- [GitHub Repository](https://github.com/kelinfoxy/EZ-Homelab)
 - [Docker Hub](https://hub.docker.com)
 - [Traefik Documentation](https://doc.traefik.io/traefik/)
 - [Authelia Documentation](https://www.authelia.com/)
 - [DuckDNS](https://www.duckdns.org/)
 
 ---
-*This wiki serves as the single source of truth for the AI-Homelab project.*</content>
+*This wiki serves as the single source of truth for the EZ-Homelab project.*</content>
 <parameter name="filePath">c:\Users\kelin\Documents\Apps\GitHub\AI-Homelab\wiki\_Sidebar.md

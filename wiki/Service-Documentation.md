@@ -2,7 +2,7 @@
 
 ## Overview
 
-This section contains detailed documentation for all 70+ services available in the AI-Homelab. Each service has its own documentation page with setup instructions, configuration options, and troubleshooting guides.
+This section contains detailed documentation for all 70+ services available in the EZ-Homelab. Each service has its own documentation page with setup instructions, configuration options, and troubleshooting guides.
 
 ## Service Categories
 
@@ -195,5 +195,5 @@ Use the alphabetical list above or search for the specific service.
 - **Intermediate**: Nextcloud, Gitea, BookStack
 - **Advanced**: GitLab, Home Assistant, Prometheus
 
-Each service page provides complete setup instructions and is designed to work with the AI-Homelab's file-based, AI-manageable architecture.</content>
+Each service page provides complete setup instructions and is designed to work with the EZ-Homelab's file-based, AI-manageable architecture.</content>
 <parameter name="filePath">c:\Users\kelin\Documents\Apps\GitHub\AI-Homelab\wiki\Service-Documentation.md

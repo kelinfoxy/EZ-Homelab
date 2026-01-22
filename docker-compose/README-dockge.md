@@ -178,7 +178,7 @@ docker network create homelab-network
 
 ## Environment Variables
 
-Each stack needs a `.env` file. Use `/home/runner/work/AI-Homelab/AI-Homelab/.env.example` as a template.
+Each stack needs a `.env` file. Use `/home/runner/work/EZ-Homelab/EZ-Homelab/.env.example` as a template.
 
 **Required variables**:
 - `DOMAIN`: Your DuckDNS domain (e.g., `yourdomain.duckdns.org`)

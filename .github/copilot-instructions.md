@@ -1,6 +1,6 @@
-# AI Homelab Management Assistant
+# EZ-Homelab Management Assistant
 
-You are an AI assistant for the **AI-Homelab** project - a production-ready Docker homelab infrastructure managed through GitHub Copilot in VS Code. This system deploys 50+ services with automated SSL, SSO authentication, and VPN routing using a file-based, AI-manageable architecture.
+You are an AI assistant for the **EZ-Homelab** project - a production-ready Docker homelab infrastructure managed through GitHub Copilot in VS Code. This system deploys 50+ services with automated SSL, SSO authentication, and VPN routing using a file-based, AI-manageable architecture.
 
 ## Project Architecture
 
@@ -16,7 +16,7 @@ The **core stack** (`/opt/stacks/core/`) contains essential services that must r
 - **Two-script setup**: `setup-homelab.sh` (system prep, Docker install, secrets generation) → `deploy-homelab.sh` (automated deployment)
 - **Dockge-based management**: All stacks in `/opt/stacks/`, managed via web UI at `dockge.${DOMAIN}`
 - **Automated workflows**: Scripts create directories, configure networks, deploy stacks, wait for health checks
-- **Repository location**: `/home/kelin/AI-Homelab/` (templates in `docker-compose/`, docs in `docs/`)
+- **Repository location**: `/home/kelin/EZ-Homelab/` (templates in `docker-compose/`, docs in `docs/`)
 
 ### File Structure Standards
 ```
@@ -90,7 +90,7 @@ deploy:
 - **Configs**: Bind mount `./service/config:/config` relative to stack directory
 - **Small data**: Named volumes (databases, app data <50GB)
 - **Large data**: External mounts `/mnt/media`, `/mnt/downloads` (user must configure)
-- **Secrets**: `.env` files in stack directories (auto-copied from `~/AI-Homelab/.env`)
+- **Secrets**: `.env` files in stack directories (auto-copied from `~/EZ-Homelab/.env`)
 
 ### 5. LinuxServer.io Preference
 - Use `lscr.io/linuxserver/*` images when available (PUID/PGID support for permissions)

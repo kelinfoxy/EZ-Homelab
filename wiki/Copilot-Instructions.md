@@ -90,7 +90,7 @@ deploy:
 - **Configs**: Bind mount `./service/config:/config` relative to stack directory
 - **Small data**: Named volumes (databases, app data <50GB)
 - **Large data**: External mounts `/mnt/media`, `/mnt/downloads` (user must configure)
-- **Secrets**: `.env` files in stack directories (auto-copied from `~/AI-Homelab/.env`)
+- **Secrets**: `.env` files in stack directories (auto-copied from `~/EZ-Homelab/.env`)
 
 ### 5. LinuxServer.io Preference
 - Use `lscr.io/linuxserver/*` images when available (PUID/PGID support for permissions)

@@ -1,6 +1,6 @@
 # Environment Configuration Guide
 
-This guide explains how to configure the `.env` file required for your AI-Homelab deployment.
+This guide explains how to configure the `.env` file required for your EZ-Homelab deployment.
 
 ## Prerequisites
 
