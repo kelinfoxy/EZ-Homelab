@@ -13,10 +13,10 @@ theme: dark
 
 jwt_secret: ${AUTHELIA_JWT_SECRET}
 
-default_redirection_url: https://auth.your-domain.duckdns.org
+default_redirection_url: https://auth.${DOMAIN}
 
 totp:
-  issuer: your-domain.duckdns.org
+  issuer: ${DOMAIN}
   period: 30
   skew: 1
 
@@ -36,25 +36,25 @@ access_control:
   
   rules:
     # Bypass Authelia for Jellyfin (allow app access)
-    - domain: jellyfin.your-domain.duckdns.org
+    - domain: jellyfin.${DOMAIN}
       policy: bypass
     
     # Bypass for Plex (allow app access)
-    - domain: plex.your-domain.duckdns.org
+    - domain: plex.${DOMAIN}
       policy: bypass
     
     # Bypass for Home Assistant (has its own auth)
-    - domain: ha.your-domain.duckdns.org
+    - domain: ha.${DOMAIN}
       policy: bypass
     
     # Protected: All other services require authentication
-    - domain: "*.your-domain.duckdns.org"
+    - domain: "*.${DOMAIN}"
       policy: one_factor
     
     # Two-factor for admin services (optional)
     # - domain:
-    #     - "admin.your-domain.duckdns.org"
-    #     - "portainer.your-domain.duckdns.org"
+    #     - "admin.${DOMAIN}"
+    #     - "portainer.${DOMAIN}"
     #   policy: two_factor
 
 session:
@@ -63,7 +63,12 @@ session:
   expiration: 24h      # Session expires after 24 hours
   inactivity: 24h      # Session expires after 24 hours of inactivity
   remember_me_duration: 1M
-  domain: your-domain.duckdns.org
+  domain: ${DOMAIN}
+  cookies:
+    - name: authelia_session
+      domain: ${DOMAIN}
+      secure: true
+      same_site: lax
 
 regulation:
   max_retries: 3

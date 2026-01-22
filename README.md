@@ -26,16 +26,15 @@ Plus Dockge for visual management of containers, and Homepage dashboard to easil
 git clone https://github.com/kelinfoxy/EZ-Homelab.git
 cd EZ-Homelab
 
-# Configure environment
-cp .env.example .env
-nano .env  # Add your domain and tokens
-
-# Run setup script (installs Docker, generates secrets)
-sudo ./scripts/setup-homelab.sh
-
-# Deploy all services
-sudo ./scripts/deploy-homelab.sh
+# Run the unified setup script (guided installation)
+./scripts/ez-homelab.sh
 ```
+
+**What the script does:**
+- Installs Docker and required system packages
+- Guides you through configuration (domain, admin credentials, etc.)
+- Deploys selected services based on your needs
+- Sets up all stacks for Dockge management
 
 **Access your homelab:**
 - **Dockge**: `https://dockge.yourdomain.duckdns.org` (primary management interface)

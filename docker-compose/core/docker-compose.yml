@@ -73,25 +73,6 @@ services:
       - traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true
       - x-dockge.url=https://auth.${DOMAIN}
 
-  dockerproxy:
-    image: tecnativa/docker-socket-proxy:latest
-    container_name: dockerproxy
-    privileged: true
-    restart: unless-stopped
-    ports:
-      - 2375:2375
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    environment:
-      - CONTAINERS=1
-      - SERVICES=1
-      - TASKS=1
-      - NETWORKS=1
-      - NODES=1
-    labels:
-      - homelab.category=infrastructure
-      - homelab.description=Docker socket proxy for security
-
   # Sablier - Lazy loading service for Docker containers
   sablier-service:
     image: sablierapp/sablier:latest

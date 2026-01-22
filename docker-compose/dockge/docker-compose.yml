@@ -1,0 +1,51 @@
+# Dockge Stack
+# Docker Compose Stack Manager
+# Place in /opt/dockge/docker-compose.yml
+
+# Service Access URLs:
+# - Dockge: https://dockge.${DOMAIN}
+
+services:
+  # Dockge - Docker Compose Stack Manager (PRIMARY - preferred over Portainer)
+  # Access at: https://dockge.${DOMAIN}
+  dockge:
+    image: louislam/dockge:1
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+          pids: 512
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    container_name: dockge
+    restart: unless-stopped
+    networks:
+      - homelab-network
+      - traefik-network
+    ports:
+      - "5001:5001"  # Optional: direct access
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /opt/stacks:/opt/stacks  # Dockge manages stacks in this directory
+      - ./data:/app/data
+    environment:
+      - DOCKGE_STACKS_DIR=/opt/stacks
+      - DOCKGE_ENABLE_CONSOLE=true
+    labels:
+      - "homelab.category=infrastructure"
+      - "homelab.description=Docker Compose stack manager (PRIMARY)"
+      - "traefik.enable=true"
+      - "traefik.http.routers.dockge.rule=Host(`dockge.${DOMAIN}`)"
+      - "traefik.http.routers.dockge.entrypoints=websecure"
+      - "traefik.http.routers.dockge.tls=true"
+      - "traefik.http.routers.dockge.middlewares=authelia@docker"
+      - "traefik.http.services.dockge.loadbalancer.server.port=5001"
+      - "x-dockge.url=https://dockge.${DOMAIN}"
+
+networks:
+  homelab-network:
+    external: true
+  traefik-network:
+    external: true

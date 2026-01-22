@@ -5,7 +5,6 @@
 # See /opt/stacks/traefik/, /opt/stacks/authelia/, etc.
 
 # Service Access URLs:
-# - Dockge: https://dockge.${DOMAIN}
 # - Portainer: https://portainer.${DOMAIN}
 # - Pi-hole: https://pihole.${DOMAIN}
 # - Dozzle: https://dozzle.${DOMAIN}
@@ -13,43 +12,24 @@
 # - Netdata: https://netdata.${DOMAIN}
 
 services:
-  # Dockge - Docker Compose Stack Manager (PRIMARY - preferred over Portainer)
-  # Access at: https://dockge.${DOMAIN}
-  dockge:
-    image: louislam/dockge:1
-    deploy:
-      resources:
-        limits:
-          cpus: '0.50'
-          memory: 256M
-          pids: 512
-        reservations:
-          cpus: '0.25'
-          memory: 128M
-    container_name: dockge
+  dockerproxy:
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: dockerproxy
+    privileged: true
     restart: unless-stopped
-    networks:
-      - homelab-network
-      - traefik-network
     ports:
-      - "5001:5001"  # Optional: direct access
+      - 2375:2375
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /opt/stacks:/opt/stacks  # Dockge manages stacks in this directory
-      - /opt/dockge/data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
-      - DOCKGE_STACKS_DIR=/opt/stacks
-      - DOCKGE_ENABLE_CONSOLE=true
+      - CONTAINERS=1
+      - SERVICES=1
+      - TASKS=1
+      - NETWORKS=1
+      - NODES=1
     labels:
-      - "homelab.category=infrastructure"
-      - "homelab.description=Docker Compose stack manager (PRIMARY)"
-      - "traefik.enable=true"
-      - "traefik.http.routers.dockge.rule=Host(`dockge.${DOMAIN}`)"
-      - "traefik.http.routers.dockge.entrypoints=websecure"
-      - "traefik.http.routers.dockge.tls=true"
-      - "traefik.http.routers.dockge.middlewares=authelia@docker"
-      - "traefik.http.services.dockge.loadbalancer.server.port=5001"
-      - "x-dockge.url=https://dockge.${DOMAIN}"
+      - homelab.category=infrastructure
+      - homelab.description=Docker socket proxy for security
 
   # Pi-hole - Network-wide ad blocker and DNS server
   # Access at: https://pihole.${DOMAIN}
@@ -160,28 +140,6 @@ services:
       - "traefik.http.routers.dozzle.middlewares=authelia@docker"
       - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
 
-  # Docker Proxy - Socket proxy for security
-  # Used by services that need Docker socket access
-  dockerproxy:
-    image: tecnativa/docker-socket-proxy:latest
-    container_name: dockerproxy
-    restart: unless-stopped
-    networks:
-      - dockerproxy-network
-    ports:
-      - "127.0.0.1:2375:2375"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    environment:
-      - CONTAINERS=1
-      - SERVICES=1
-      - TASKS=1
-      - NETWORKS=1
-      - NODES=1
-    labels:
-      - "homelab.category=infrastructure"
-      - "homelab.description=Docker socket proxy for security"
-
   # Glances - System monitoring
   # Access at: https://glances.${DOMAIN}
   glances:
@@ -258,6 +216,4 @@ networks:
   homelab-network:
     external: true
   traefik-network:
-    external: true
-  dockerproxy-network:
     external: true

@@ -1,6 +1,6 @@
 # Authelia Configuration
 # Copy to /opt/stacks/authelia/configuration.yml
-# IMPORTANT: Replace 'kelin-casa.duckdns.org' with your actual DuckDNS domain
+# IMPORTANT: Replace '${DOMAIN}' with your actual DuckDNS domain
 
 server:
   host: 0.0.0.0
@@ -13,10 +13,10 @@ theme: dark
 
 jwt_secret: ${AUTHELIA_JWT_SECRET}
 
-default_redirection_url: https://auth.kelin-casa.duckdns.org
+default_redirection_url: https://auth.${DOMAIN}
 
 totp:
-  issuer: kelin-casa.duckdns.org
+  issuer: ${DOMAIN}
   period: 30
   skew: 1
 
@@ -36,31 +36,31 @@ access_control:
   
   rules:
     # Bypass Authelia for Jellyfin (allow app access)
-    - domain: jellyfin.kelin-casa.duckdns.org
+    - domain: jellyfin.${DOMAIN}
       policy: bypass
     
     # Bypass for Plex (allow app access)
-    - domain: plex.kelin-casa.duckdns.org
+    - domain: plex.${DOMAIN}
       policy: bypass
     
     # Bypass for Home Assistant (has its own auth)
-    - domain: ha.kelin-casa.duckdns.org
+    - domain: ha.${DOMAIN}
       policy: bypass
     
     # Bypass for development services (they have their own auth or setup)
-    - domain: pgadmin.kelin-casa.duckdns.org
+    - domain: pgadmin.${DOMAIN}
       policy: bypass
-    - domain: gitlab.kelin-casa.duckdns.org
+    - domain: gitlab.${DOMAIN}
       policy: bypass
     
     # Protected: All other services require authentication
-    - domain: "*.kelin-casa.duckdns.org"
+    - domain: "*.${DOMAIN}"
       policy: one_factor
     
     # Two-factor for admin services (optional)
     # - domain:
-    #     - "admin.kelin-casa.duckdns.org"
-    #     - "portainer.kelin-casa.duckdns.org"
+    #     - "admin.${DOMAIN}"
+    #     - "portainer.${DOMAIN}"
     #   policy: two_factor
 
 session:
@@ -69,7 +69,7 @@ session:
   expiration: 24h      # Session expires after 24 hours
   inactivity: 24h      # Session expires after 24 hours of inactivity
   remember_me_duration: 1M
-  domain: kelin-casa.duckdns.org
+  domain: ${DOMAIN}
 
 regulation:
   max_retries: 3

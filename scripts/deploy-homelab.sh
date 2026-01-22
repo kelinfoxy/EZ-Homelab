@@ -1,6 +1,6 @@
 #!/bin/bash
-# AI-Homelab Deployment Script
-# This script deploys the core infrastructure and Dockge
+# EZ-Homelab Deployment Script
+# This script deploys homelab services with flexible options
 # Run after: 1) setup-homelab.sh and 2) editing .env file
 # Run as: ./deploy-homelab.sh
 
@@ -37,11 +37,11 @@ if [ "$EUID" -eq 0 ]; then
     exit 1
 fi
 
-# Get script directory (AI-Homelab/scripts)
+# Get script directory (EZ-Homelab/scripts)
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 REPO_DIR="$( cd "$SCRIPT_DIR/.." && pwd )"
 
-log_info "AI-Homelab Deployment Script"
+log_info "EZ-Homelab Deployment Script"
 echo ""
 
 # Check if .env file exists
@@ -82,8 +82,105 @@ fi
 log_info "Using domain: $DOMAIN"
 echo ""
 
+# Deployment options menu
+echo "=========================================="
+echo "        EZ-HOMELAB DEPLOYMENT OPTIONS"
+echo "=========================================="
+echo ""
+echo "Choose your deployment scenario:"
+echo ""
+echo "1) Full deployment (recommended for new servers)"
+echo "   - Deploy core infrastructure (Traefik, Authelia, etc.)"
+echo "   - Deploy infrastructure stack (Dockge, Pi-hole, etc.)"
+echo "   - Deploy dashboards (Homepage, Homarr)"
+echo "   - Setup all remaining stacks for Dockge"
+echo ""
+echo "2) Skip core stack (for existing homelab servers)"
+echo "   - Skip core infrastructure deployment"
+echo "   - Deploy infrastructure stack (Dockge, Pi-hole, etc.)"
+echo "   - Deploy dashboards (Homepage, Homarr)"
+echo "   - Setup all remaining stacks for Dockge"
+echo ""
+echo "3) Setup stacks only (no deployment)"
+echo "   - Setup all stacks in Dockge without deploying any"
+echo "   - Useful for preparing stacks for manual deployment"
+echo ""
+read -p "Enter your choice (1-3): " DEPLOY_CHOICE
+
+case $DEPLOY_CHOICE in
+    1)
+        DEPLOY_CORE=true
+        DEPLOY_INFRASTRUCTURE=true
+        DEPLOY_DASHBOARDS=true
+        SETUP_STACKS=true
+        log_info "Selected: Full deployment"
+        ;;
+    2)
+        DEPLOY_CORE=false
+        DEPLOY_INFRASTRUCTURE=true
+        DEPLOY_DASHBOARDS=true
+        SETUP_STACKS=true
+        log_info "Selected: Skip core stack"
+        ;;
+    3)
+        DEPLOY_CORE=false
+        DEPLOY_INFRASTRUCTURE=false
+        DEPLOY_DASHBOARDS=false
+        SETUP_STACKS=true
+        log_info "Selected: Setup stacks only"
+        ;;
+    *)
+        log_error "Invalid choice. Please run the script again."
+        exit 1
+        ;;
+esac
+
+echo ""
+
+# Function to setup stacks without deploying them
+setup_stacks_for_dockge() {
+    log_info "Setting up all stacks for Dockge..."
+    
+    # List of stacks to setup
+    STACKS=("vpn" "media" "media-management" "monitoring" "productivity" "utilities" "alternatives" "homeassistant" "nextcloud")
+    
+    for stack in "${STACKS[@]}"; do
+        STACK_DIR="/opt/stacks/$stack"
+        REPO_STACK_DIR="$REPO_DIR/docker-compose/$stack"
+        
+        if [ -d "$REPO_STACK_DIR" ]; then
+            log_info "Setting up $stack stack..."
+            
+            # Create stack directory
+            mkdir -p "$STACK_DIR"
+            
+            # Copy docker-compose.yml
+            if [ -f "$REPO_STACK_DIR/docker-compose.yml" ]; then
+                cp "$REPO_STACK_DIR/docker-compose.yml" "$STACK_DIR/"
+                cp "$REPO_DIR/.env" "$STACK_DIR/.env"
+                
+                # Copy any additional config directories
+                for config_dir in "$REPO_STACK_DIR"/*/; do
+                    if [ -d "$config_dir" ] && [ "$(basename "$config_dir")" != "." ]; then
+                        cp -r "$config_dir" "$STACK_DIR/"
+                    fi
+                done
+                
+                log_success "$stack stack prepared for Dockge"
+            else
+                log_warning "$stack stack docker-compose.yml not found, skipping..."
+            fi
+        else
+            log_warning "$stack stack directory not found in repo, skipping..."
+        fi
+    done
+    
+    log_success "All stacks prepared for Dockge deployment"
+    echo ""
+}
+
 # Step 1: Create required directories
-log_info "Step 1/5: Creating required directories..."
+log_info "Step 1: Creating required directories..."
 mkdir -p /opt/stacks/core
 mkdir -p /opt/stacks/infrastructure
 mkdir -p /opt/dockge/data
@@ -91,130 +188,145 @@ log_success "Directories created"
 echo ""
 
 # Step 2: Create Docker networks (if they don't exist)
-log_info "Step 2/5: Creating Docker networks..."
+log_info "Step 2: Creating Docker networks..."
 docker network create homelab-network 2>/dev/null && log_success "Created homelab-network" || log_info "homelab-network already exists"
 docker network create traefik-network 2>/dev/null && log_success "Created traefik-network" || log_info "traefik-network already exists"
 docker network create media-network 2>/dev/null && log_success "Created media-network" || log_info "media-network already exists"
 echo ""
 
 # Step 3: Deploy core infrastructure (DuckDNS, Traefik, Authelia, Gluetun)
-log_info "Step 3/5: Deploying core infrastructure stack..."
-log_info "  - DuckDNS (Dynamic DNS)"
-log_info "  - Traefik (Reverse Proxy with SSL)"
-log_info "  - Authelia (Single Sign-On)"
-log_info "  - Gluetun (VPN Client)"
-echo ""
+if [ "$DEPLOY_CORE" = true ]; then
+    log_info "Step 3: Deploying core infrastructure stack..."
+    log_info "  - DuckDNS (Dynamic DNS)"
+    log_info "  - Traefik (Reverse Proxy with SSL)"
+    log_info "  - Authelia (Single Sign-On)"
+    log_info "  - Gluetun (VPN Client)"
+    echo ""
 
-# Copy core stack files with overwrite checks
-if [ -f "/opt/stacks/core/docker-compose.yml" ]; then
-    log_warning "docker-compose.yml already exists in /opt/stacks/core/"
-    log_info "Creating backup: docker-compose.yml.backup.$(date +%Y%m%d_%H%M%S)"
-    cp /opt/stacks/core/docker-compose.yml /opt/stacks/core/docker-compose.yml.backup.$(date +%Y%m%d_%H%M%S)
-fi
-cp "$REPO_DIR/docker-compose/core/docker-compose.yml" /opt/stacks/core/docker-compose.yml
+    # Copy core stack files with overwrite checks
+    if [ -f "/opt/stacks/core/docker-compose.yml" ]; then
+        log_warning "docker-compose.yml already exists in /opt/stacks/core/"
+        log_info "Creating backup: docker-compose.yml.backup.$(date +%Y%m%d_%H%M%S)"
+        cp /opt/stacks/core/docker-compose.yml /opt/stacks/core/docker-compose.yml.backup.$(date +%Y%m%d_%H%M%S)
+    fi
+    cp "$REPO_DIR/docker-compose/core/docker-compose.yml" /opt/stacks/core/docker-compose.yml
 
-if [ -d "/opt/stacks/core/traefik" ]; then
-    log_warning "Traefik configuration already exists in /opt/stacks/core/"
-    log_info "Creating backup: traefik.backup.$(date +%Y%m%d_%H%M%S)"
-    mv /opt/stacks/core/traefik /opt/stacks/core/traefik.backup.$(date +%Y%m%d_%H%M%S)
-fi
-cp -r "$REPO_DIR/config-templates/traefik" /opt/stacks/core/
+    if [ -d "/opt/stacks/core/traefik" ]; then
+        log_warning "Traefik configuration already exists in /opt/stacks/core/"
+        log_info "Creating backup: traefik.backup.$(date +%Y%m%d_%H%M%S)"
+        mv /opt/stacks/core/traefik /opt/stacks/core/traefik.backup.$(date +%Y%m%d_%H%M%S)
+    fi
+    cp -r "$REPO_DIR/config-templates/traefik" /opt/stacks/core/
 
-if [ -d "/opt/stacks/core/authelia" ]; then
-    log_warning "Authelia configuration already exists in /opt/stacks/core/"
-    log_info "Creating backup: authelia.backup.$(date +%Y%m%d_%H%M%S)"
-    mv /opt/stacks/core/authelia /opt/stacks/core/authelia.backup.$(date +%Y%m%d_%H%M%S)
-fi
-cp -r "$REPO_DIR/config-templates/authelia" /opt/stacks/core/
+    if [ -d "/opt/stacks/core/authelia" ]; then
+        log_warning "Authelia configuration already exists in /opt/stacks/core/"
+        log_info "Creating backup: authelia.backup.$(date +%Y%m%d_%H%M%S)"
+        mv /opt/stacks/core/authelia /opt/stacks/core/authelia.backup.$(date +%Y%m%d_%H%M%S)
+    fi
+    cp -r "$REPO_DIR/config-templates/authelia" /opt/stacks/core/
 
-# Replace domain placeholders in Authelia config
-sed -i "s/your-domain.duckdns.org/${DOMAIN}/g" /opt/stacks/core/authelia/configuration.yml
+    # Replace domain placeholders in Authelia config
+    sed -i "s/your-domain.duckdns.org/${DOMAIN}/g" /opt/stacks/core/authelia/configuration.yml
 
-if [ -f "/opt/stacks/core/.env" ]; then
-    log_warning ".env already exists in /opt/stacks/core/"
-    log_info "Creating backup: .env.backup.$(date +%Y%m%d_%H%M%S)"
-    cp /opt/stacks/core/.env /opt/stacks/core/.env.backup.$(date +%Y%m%d_%H%M%S)
-fi
-cp "$REPO_DIR/.env" /opt/stacks/core/.env
+    if [ -f "/opt/stacks/core/.env" ]; then
+        log_warning ".env already exists in /opt/stacks/core/"
+        log_info "Creating backup: .env.backup.$(date +%Y%m%d_%H%M%S)"
+        cp /opt/stacks/core/.env /opt/stacks/core/.env.backup.$(date +%Y%m%d_%H%M%S)
+    fi
+    cp "$REPO_DIR/.env" /opt/stacks/core/.env
 
-# Replace secret placeholders in Authelia config
-source /opt/stacks/core/.env
-sed -i "s|\${AUTHELIA_JWT_SECRET}|${AUTHELIA_JWT_SECRET}|g" /opt/stacks/core/authelia/configuration.yml
-sed -i "s|\${AUTHELIA_SESSION_SECRET}|${AUTHELIA_SESSION_SECRET}|g" /opt/stacks/core/authelia/configuration.yml
-sed -i "s|\${AUTHELIA_STORAGE_ENCRYPTION_KEY}|${AUTHELIA_STORAGE_ENCRYPTION_KEY}|g" /opt/stacks/core/authelia/configuration.yml
+    # Replace secret placeholders in Authelia config
+    source /opt/stacks/core/.env
+    sed -i "s|\${AUTHELIA_JWT_SECRET}|${AUTHELIA_JWT_SECRET}|g" /opt/stacks/core/authelia/configuration.yml
+    sed -i "s|\${AUTHELIA_SESSION_SECRET}|${AUTHELIA_SESSION_SECRET}|g" /opt/stacks/core/authelia/configuration.yml
+    sed -i "s|\${AUTHELIA_STORAGE_ENCRYPTION_KEY}|${AUTHELIA_STORAGE_ENCRYPTION_KEY}|g" /opt/stacks/core/authelia/configuration.yml
 
-# Replace placeholders in Authelia users database
-sed -i "s/admin/${AUTHELIA_ADMIN_USER}/g" /opt/stacks/core/authelia/users_database.yml
-sed -i "s/admin@example.com/${AUTHELIA_ADMIN_EMAIL}/g" /opt/stacks/core/authelia/users_database.yml
-sed -i "s|\$argon2id\$v=19\$m=65536,t=3,p=4\$CHANGEME|${AUTHELIA_ADMIN_PASSWORD}|g" /opt/stacks/core/authelia/users_database.yml
+    # Replace placeholders in Authelia users database
+    sed -i "s/admin/${AUTHELIA_ADMIN_USER}/g" /opt/stacks/core/authelia/users_database.yml
+    sed -i "s/admin@example.com/${AUTHELIA_ADMIN_EMAIL}/g" /opt/stacks/core/authelia/users_database.yml
+    sed -i "s|\$argon2id\$v=19\$m=65536,t=3,p=4\$CHANGEME|${AUTHELIA_ADMIN_PASSWORD}|g" /opt/stacks/core/authelia/users_database.yml
 
-# Deploy core stack
-cd /opt/stacks/core
-docker compose up -d
+    # Deploy core stack
+    cd /opt/stacks/core
+    docker compose up -d
 
-log_success "Core infrastructure deployed"
-echo ""
+    log_success "Core infrastructure deployed"
+    echo ""
 
-# Wait for Traefik to be ready
-log_info "Waiting for Traefik to initialize..."
-sleep 10
+    # Wait for Traefik to be ready
+    log_info "Waiting for Traefik to initialize..."
+    sleep 10
 
-# Check if Traefik is healthy
-if docker ps | grep -q "traefik.*Up"; then
-    log_success "Traefik is running"
+    # Check if Traefik is healthy
+    if docker ps | grep -q "traefik.*Up"; then
+        log_success "Traefik is running"
+    else
+        log_warning "Traefik container check inconclusive, continuing..."
+    fi
+    echo ""
 else
-    log_warning "Traefik container check inconclusive, continuing..."
+    log_info "Skipping core infrastructure deployment"
+    echo ""
 fi
-echo ""
 
 # Step 4: Deploy infrastructure stack (Dockge and monitoring tools)
-log_info "Step 4/6: Deploying infrastructure stack..."
-log_info "  - Dockge (Docker Compose Manager)"
-log_info "  - Pi-hole (DNS Ad Blocker)"
-log_info "  - Watchtower (Container Updates)"
-log_info "  - Dozzle (Log Viewer)"
-log_info "  - Glances (System Monitor)"
-log_info "  - Docker Proxy (Security)"
-echo ""
+if [ "$DEPLOY_INFRASTRUCTURE" = true ]; then
+    log_info "Step 4: Deploying infrastructure stack..."
+    log_info "  - Dockge (Docker Compose Manager)"
+    log_info "  - Pi-hole (DNS Ad Blocker)"
+    log_info "  - Watchtower (Container Updates)"
+    log_info "  - Dozzle (Log Viewer)"
+    log_info "  - Glances (System Monitor)"
+    log_info "  - Docker Proxy (Security)"
+    echo ""
 
-# Copy infrastructure stack
-cp "$REPO_DIR/docker-compose/infrastructure/docker-compose.yml" /opt/stacks/infrastructure/docker-compose.yml
-cp "$REPO_DIR/.env" /opt/stacks/infrastructure/.env
+    # Copy infrastructure stack
+    cp "$REPO_DIR/docker-compose/infrastructure/docker-compose.yml" /opt/stacks/infrastructure/docker-compose.yml
+    cp "$REPO_DIR/.env" /opt/stacks/infrastructure/.env
 
-# Deploy infrastructure stack
-cd /opt/stacks/infrastructure
-docker compose up -d
+    # Deploy infrastructure stack
+    cd /opt/stacks/infrastructure
+    docker compose up -d
 
-log_success "Infrastructure stack deployed"
-echo ""
-
-# Step 5: Deploy dashboard stack
-log_info "Step 5/7: Deploying dashboard stack..."
-log_info "  - Homepage (Application Dashboard)"
-log_info "  - Homarr (Modern Dashboard)"
-echo ""
-
-# Create dashboards directory
-mkdir -p /opt/stacks/dashboards
-
-# Copy dashboards compose file
-cp "$REPO_DIR/docker-compose/dashboards/docker-compose.yml" /opt/stacks/dashboards/docker-compose.yml
-cp "$REPO_DIR/.env" /opt/stacks/dashboards/.env
-
-# Copy homepage config
-if [ -d "$REPO_DIR/docker-compose/dashboards/homepage" ]; then
-    cp -r "$REPO_DIR/docker-compose/dashboards/homepage" /opt/stacks/dashboards/
+    log_success "Infrastructure stack deployed"
+    echo ""
+else
+    log_info "Skipping infrastructure stack deployment"
+    echo ""
 fi
 
-# Deploy dashboards stack
-cd /opt/stacks/dashboards
-docker compose up -d
+# Step 5: Deploy dashboard stack
+if [ "$DEPLOY_DASHBOARDS" = true ]; then
+    log_info "Step 5: Deploying dashboard stack..."
+    log_info "  - Homepage (Application Dashboard)"
+    log_info "  - Homarr (Modern Dashboard)"
+    echo ""
 
-log_success "Dashboard stack deployed"
-echo ""
+    # Create dashboards directory
+    mkdir -p /opt/stacks/dashboards
+
+    # Copy dashboards compose file
+    cp "$REPO_DIR/docker-compose/dashboards/docker-compose.yml" /opt/stacks/dashboards/docker-compose.yml
+    cp "$REPO_DIR/.env" /opt/stacks/dashboards/.env
+
+    # Copy homepage config
+    if [ -d "$REPO_DIR/docker-compose/dashboards/homepage" ]; then
+        cp -r "$REPO_DIR/docker-compose/dashboards/homepage" /opt/stacks/dashboards/
+    fi
+
+    # Deploy dashboards stack
+    cd /opt/stacks/dashboards
+    docker compose up -d
+
+    log_success "Dashboard stack deployed"
+    echo ""
+else
+    log_info "Skipping dashboard stack deployment"
+    echo ""
+fi
 
 # Step 6: Deploy Dokuwiki
-log_info "Step 6/7: Deploying Dokuwiki wiki platform..."
+log_info "Step 6: Deploying Dokuwiki wiki platform..."
 log_info "  - DokuWiki (File-based wiki with pre-configured content)"
 echo ""
 
@@ -253,59 +365,12 @@ docker compose up -d
 log_success "Dokuwiki deployed with pre-configured content"
 echo ""
 
-# Step 6: Wait for Dockge to be ready and open browser
-log_info "Step 6/6: Waiting for Dockge web UI to be ready..."
-
-DOCKGE_URL="https://dockge.${DOMAIN}"
-MAX_WAIT=60  # Maximum wait time in seconds
-WAITED=0
-
-# Function to check if Dockge is accessible
-check_dockge() {
-    # Try to connect to Dockge (ignore SSL cert warnings for self-signed during startup)
-    curl -k -s -o /dev/null -w "%{http_code}" "$DOCKGE_URL" 2>/dev/null
-}
-
-# Wait for Dockge to respond
-while [ $WAITED -lt $MAX_WAIT ]; do
-    HTTP_CODE=$(check_dockge)
-    if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "302" ] || [ "$HTTP_CODE" = "401" ]; then
-        log_success "Dockge web UI is ready!"
-        break
-    fi
-    echo -n "."
-    sleep 2
-    WAITED=$((WAITED + 2))
-done
-
-echo ""
-echo ""
-
-if [ $WAITED -ge $MAX_WAIT ]; then
-    log_warning "Dockge did not respond within ${MAX_WAIT} seconds"
-    log_info "It may still be starting up. Check manually at: $DOCKGE_URL"
-else
-    # Try to open browser
-    log_info "Opening Dockge in your browser..."
-    
-    # Detect and use available browser
-    if command -v xdg-open &> /dev/null; then
-        xdg-open "$DOCKGE_URL" &> /dev/null &
-        log_success "Browser opened"
-    elif command -v gnome-open &> /dev/null; then
-        gnome-open "$DOCKGE_URL" &> /dev/null &
-        log_success "Browser opened"
-    elif command -v firefox &> /dev/null; then
-        firefox "$DOCKGE_URL" &> /dev/null &
-        log_success "Browser opened"
-    elif command -v google-chrome &> /dev/null; then
-        google-chrome "$DOCKGE_URL" &> /dev/null &
-        log_success "Browser opened"
-    else
-        log_warning "No browser detected. Please manually open: $DOCKGE_URL"
-    fi
+# Step 7: Setup stacks for Dockge (if requested)
+if [ "$SETUP_STACKS" = true ]; then
+    setup_stacks_for_dockge
 fi
 
+# Deployment completed
 echo ""
 echo "=========================================="
 log_success "Deployment completed successfully!"

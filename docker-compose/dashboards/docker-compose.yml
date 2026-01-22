@@ -25,7 +25,6 @@ services:
     networks:
       - homelab-network
       - traefik-network
-      - dockerproxy-network
     volumes:
       - ./homepage:/app/config
       - /var/run/docker.sock:/var/run/docker.sock # For Docker integration do not mount RO
@@ -85,6 +84,4 @@ networks:
   homelab-network:
     external: true
   traefik-network:
-    external: true
-  dockerproxy-network:
     external: true
