@@ -495,7 +495,7 @@ deploy:
 
 ### Create a new stack
 1. Create directory: `mkdir /opt/stacks/new-stack`
-2. Copy compose file: `cp docker-compose/template.yml /opt/stacks/new-stack/docker-compose.yml`
+2. Copy compose file: `cp docker-compose/core/docker-compose.yml /opt/stacks/new-stack/docker-compose.yml`
 3. Copy env: `cp .env /opt/stacks/new-stack/`
 4. Edit configuration
 5. Deploy: `cd /opt/stacks/new-stack && docker compose up -d`
@@ -542,7 +542,7 @@ nano .env
 
 # Deploy core only
 mkdir -p /opt/stacks/core
-cp docker-compose/core.yml /opt/stacks/core/docker-compose.yml
+cp docker-compose/core/docker-compose.yml /opt/stacks/core/docker-compose.yml
 cp -r config-templates/traefik /opt/stacks/core/
 cp -r config-templates/authelia /opt/stacks/core/
 cp .env /opt/stacks/core/
@@ -554,9 +554,9 @@ cd /opt/stacks/core && docker compose up -d
 # After core is running, deploy all stacks
 # Use Dockge UI at https://dockge.yourdomain.duckdns.org
 # Or deploy manually:
-docker compose -f docker-compose/infrastructure.yml up -d
-docker compose -f docker-compose/dashboards.yml up -d
-docker compose -f docker-compose/media.yml up -d
+cd /opt/stacks/infrastructure && docker compose up -d
+cd /opt/stacks/dashboards && docker compose up -d
+cd /opt/stacks/media && docker compose up -d
 # etc.
 ```
 

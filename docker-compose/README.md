@@ -1,15 +1,22 @@
 # Docker Compose Stacks
 
-This directory contains Docker Compose files for managing your homelab services. Each file is organized by functional area to maintain clarity and organization.
+This directory contains Docker Compose files for managing your homelab services. Each stack is organized in its own folder for better organization and maintainability.
 
 ## Structure
 
 ```
 docker-compose/
-├── infrastructure.yml  # Core services (reverse proxy, DNS, etc.)
-├── media.yml          # Media server services (Plex, Jellyfin, etc.)
-├── monitoring.yml     # Observability stack (Prometheus, Grafana, etc.)
-├── development.yml    # Development tools and services
+├── core/              # Core infrastructure (Traefik, Authelia, DuckDNS)
+├── infrastructure/    # Additional infrastructure (Pi-hole, Dockge, etc.)
+├── dashboards/        # Dashboard services (Homepage, Homarr)
+├── vpn/               # VPN services (Gluetun, qBittorrent)
+├── media/             # Media services (Plex, Jellyfin, etc.)
+├── monitoring/        # Observability stack (Prometheus, Grafana, etc.)
+├── alternatives/      # Alternative services (Authentik, etc.)
+├── homeassistant/     # Home Assistant stack
+├── nextcloud/         # Nextcloud stack
+├── productivity/      # Productivity tools
+├── utilities/         # Utility services
 └── README.md          # This file
 ```
 
@@ -17,31 +24,26 @@ docker-compose/
 
 ### Starting Services
 
-Start all services in a compose file:
+Start all services in a stack:
 ```bash
-docker compose -f docker-compose/infrastructure.yml up -d
+cd docker-compose/core && docker compose up -d
 ```
 
 Start a specific service:
 ```bash
-docker compose -f docker-compose/media.yml up -d plex
-```
-
-Start multiple compose files together:
-```bash
-docker compose -f docker-compose/infrastructure.yml -f docker-compose/media.yml up -d
+cd docker-compose/vpn && docker compose up -d gluetun
 ```
 
 ### Stopping Services
 
-Stop all services in a compose file:
+Stop all services in a stack:
 ```bash
-docker compose -f docker-compose/infrastructure.yml down
+cd docker-compose/core && docker compose down
 ```
 
 Stop a specific service:
 ```bash
-docker compose -f docker-compose/media.yml stop plex
+cd docker-compose/vpn && docker compose stop qbittorrent
 ```
 
 ### Viewing Status

@@ -114,7 +114,7 @@ users:
 ```bash
 # Deploy core infrastructure
 sudo mkdir -p /opt/stacks/core
-cp docker-compose/core.yml /opt/stacks/core/docker-compose.yml
+cp docker-compose/core/docker-compose.yml /opt/stacks/core/docker-compose.yml
 cp -r config-templates/traefik /opt/stacks/core/
 cp .env /opt/stacks/core/
 
@@ -129,7 +129,7 @@ docker compose up -d
 
 ```bash
 sudo mkdir -p /opt/stacks/infrastructure
-cp docker-compose/infrastructure.yml /opt/stacks/infrastructure/docker-compose.yml
+cp docker-compose/infrastructure/docker-compose.yml /opt/stacks/infrastructure/docker-compose.yml
 cp .env /opt/stacks/infrastructure/
 cd /opt/stacks/infrastructure
 docker compose up -d
@@ -139,7 +139,7 @@ docker compose up -d
 
 ```bash
 sudo mkdir -p /opt/stacks/dashboards
-cp docker-compose/dashboards.yml /opt/stacks/dashboards/docker-compose.yml
+cp docker-compose/dashboards/docker-compose.yml /opt/stacks/dashboards/docker-compose.yml
 cp -r config-templates/homepage /opt/stacks/dashboards/
 cp .env /opt/stacks/dashboards/
 

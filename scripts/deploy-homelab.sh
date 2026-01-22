@@ -111,7 +111,7 @@ if [ -f "/opt/stacks/core/docker-compose.yml" ]; then
     log_info "Creating backup: docker-compose.yml.backup.$(date +%Y%m%d_%H%M%S)"
     cp /opt/stacks/core/docker-compose.yml /opt/stacks/core/docker-compose.yml.backup.$(date +%Y%m%d_%H%M%S)
 fi
-cp "$REPO_DIR/docker-compose/core.yml" /opt/stacks/core/docker-compose.yml
+cp "$REPO_DIR/docker-compose/core/docker-compose.yml" /opt/stacks/core/docker-compose.yml
 
 if [ -d "/opt/stacks/core/traefik" ]; then
     log_warning "Traefik configuration already exists in /opt/stacks/core/"
@@ -178,7 +178,7 @@ log_info "  - Docker Proxy (Security)"
 echo ""
 
 # Copy infrastructure stack
-cp "$REPO_DIR/docker-compose/infrastructure.yml" /opt/stacks/infrastructure/docker-compose.yml
+cp "$REPO_DIR/docker-compose/infrastructure/docker-compose.yml" /opt/stacks/infrastructure/docker-compose.yml
 cp "$REPO_DIR/.env" /opt/stacks/infrastructure/.env
 
 # Deploy infrastructure stack
