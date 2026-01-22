@@ -127,6 +127,20 @@ if [ -d "/opt/stacks/core/authelia" ]; then
 fi
 cp -r "$REPO_DIR/config-templates/authelia" /opt/stacks/core/
 
+# Replace domain placeholders in Authelia config
+sed -i "s/your-domain.duckdns.org/${DOMAIN}/g" /opt/stacks/core/authelia/configuration.yml
+
+# Replace secret placeholders in Authelia config
+source /opt/stacks/core/.env
+sed -i "s|\${AUTHELIA_JWT_SECRET}|${AUTHELIA_JWT_SECRET}|g" /opt/stacks/core/authelia/configuration.yml
+sed -i "s|\${AUTHELIA_SESSION_SECRET}|${AUTHELIA_SESSION_SECRET}|g" /opt/stacks/core/authelia/configuration.yml
+sed -i "s|\${AUTHELIA_STORAGE_ENCRYPTION_KEY}|${AUTHELIA_STORAGE_ENCRYPTION_KEY}|g" /opt/stacks/core/authelia/configuration.yml
+
+# Replace placeholders in Authelia users database
+sed -i "s/admin/${AUTHELIA_ADMIN_USER}/g" /opt/stacks/core/authelia/users_database.yml
+sed -i "s/admin@example.com/${AUTHELIA_ADMIN_EMAIL}/g" /opt/stacks/core/authelia/users_database.yml
+sed -i "s|\$argon2id\$v=19\$m=65536,t=3,p=4\$CHANGEME|${AUTHELIA_ADMIN_PASSWORD}|g" /opt/stacks/core/authelia/users_database.yml
+
 if [ -f "/opt/stacks/core/.env" ]; then
     log_warning ".env already exists in /opt/stacks/core/"
     log_info "Creating backup: .env.backup.$(date +%Y%m%d_%H%M%S)"
@@ -156,7 +170,6 @@ echo ""
 # Step 4: Deploy infrastructure stack (Dockge and monitoring tools)
 log_info "Step 4/6: Deploying infrastructure stack..."
 log_info "  - Dockge (Docker Compose Manager)"
-log_info "  - Portainer (Alternative Docker UI)"
 log_info "  - Pi-hole (DNS Ad Blocker)"
 log_info "  - Watchtower (Container Updates)"
 log_info "  - Dozzle (Log Viewer)"
@@ -175,8 +188,33 @@ docker compose up -d
 log_success "Infrastructure stack deployed"
 echo ""
 
-# Step 5: Deploy Dokuwiki
-log_info "Step 5/6: Deploying Dokuwiki wiki platform..."
+# Step 5: Deploy dashboard stack
+log_info "Step 5/7: Deploying dashboard stack..."
+log_info "  - Homepage (Application Dashboard)"
+log_info "  - Homarr (Modern Dashboard)"
+echo ""
+
+# Create dashboards directory
+mkdir -p /opt/stacks/dashboards
+
+# Copy dashboards compose file
+cp "$REPO_DIR/docker-compose/dashboards/docker-compose.yml" /opt/stacks/dashboards/docker-compose.yml
+cp "$REPO_DIR/.env" /opt/stacks/dashboards/.env
+
+# Copy homepage config
+if [ -d "$REPO_DIR/docker-compose/dashboards/homepage" ]; then
+    cp -r "$REPO_DIR/docker-compose/dashboards/homepage" /opt/stacks/dashboards/
+fi
+
+# Deploy dashboards stack
+cd /opt/stacks/dashboards
+docker compose up -d
+
+log_success "Dashboard stack deployed"
+echo ""
+
+# Step 6: Deploy Dokuwiki
+log_info "Step 6/7: Deploying Dokuwiki wiki platform..."
 log_info "  - DokuWiki (File-based wiki with pre-configured content)"
 echo ""
 
@@ -187,9 +225,23 @@ mkdir -p /opt/stacks/dokuwiki/config
 cp "$REPO_DIR/config-templates/dokuwiki/docker-compose.yml" /opt/stacks/dokuwiki/docker-compose.yml
 
 # Copy pre-configured Dokuwiki config, content, and keys
-cp -r "$REPO_DIR/config-templates/dokuwiki/conf" /opt/stacks/dokuwiki/config/
-cp -r "$REPO_DIR/config-templates/dokuwiki/data" /opt/stacks/dokuwiki/config/
-cp -r "$REPO_DIR/config-templates/dokuwiki/keys" /opt/stacks/dokuwiki/config/
+if [ -d "$REPO_DIR/config-templates/dokuwiki/conf" ]; then
+    cp -r "$REPO_DIR/config-templates/dokuwiki/conf" /opt/stacks/dokuwiki/config/
+else
+    log_warning "Dokuwiki conf directory not found, skipping..."
+fi
+
+if [ -d "$REPO_DIR/config-templates/dokuwiki/data" ]; then
+    cp -r "$REPO_DIR/config-templates/dokuwiki/data" /opt/stacks/dokuwiki/config/
+else
+    log_warning "Dokuwiki data directory not found, skipping..."
+fi
+
+if [ -d "$REPO_DIR/config-templates/dokuwiki/keys" ]; then
+    cp -r "$REPO_DIR/config-templates/dokuwiki/keys" /opt/stacks/dokuwiki/config/
+else
+    log_warning "Dokuwiki keys directory not found, skipping..."
+fi
 
 # Set proper ownership for Dokuwiki config
 sudo chown -R 1000:1000 /opt/stacks/dokuwiki/config
@@ -262,8 +314,10 @@ echo ""
 log_info "Access your services:"
 echo ""
 echo "  🚀 Dockge:   $DOCKGE_URL"
-echo "  � Wiki:     https://wiki.${DOMAIN}"
-echo "  �🔒 Authelia: https://auth.${DOMAIN}"
+echo "  📊 Homepage: https://home.${DOMAIN}"
+echo "  🎯 Homarr:   https://homarr.${DOMAIN}"
+echo "  📖 Wiki:     https://wiki.${DOMAIN}"
+echo "  🔒 Authelia: https://auth.${DOMAIN}"
 echo "  🔀 Traefik:  https://traefik.${DOMAIN}"
 echo ""
 log_info "Next steps:"
@@ -271,11 +325,14 @@ echo ""
 echo "  1. Log in to Dockge using your Authelia credentials"
 echo "     (configured in /opt/stacks/core/authelia/users_database.yml)"
 echo ""
-echo "  2. Access your pre-deployed Dokuwiki at https://wiki.${DOMAIN}"
+echo "  2. Access your dashboards:"
+echo "     - Homepage: https://home.${DOMAIN} (AI-configurable dashboard)"
+echo "     - Homarr: https://homarr.${DOMAIN} (Modern dashboard)"
+echo ""
+echo "  3. Access your pre-deployed Dokuwiki at https://wiki.${DOMAIN}"
 echo "     (admin/admin credentials)"
 echo ""
-echo "  3. Deploy additional stacks through Dockge's web UI:"
-echo "     - dashboards.yml (Homepage, Homarr)"
+echo "  4. Deploy additional stacks through Dockge's web UI:"
 echo "     - media.yml (Plex, Jellyfin, Sonarr, Radarr, etc.)"
 echo "     - media-extended.yml (Readarr, Lidarr, etc.)"
 echo "     - homeassistant.yml (Home Assistant and accessories)"
@@ -283,7 +340,7 @@ echo "     - productivity.yml (Nextcloud, Gitea, additional wikis)"
 echo "     - monitoring.yml (Grafana, Prometheus, etc.)"
 echo "     - utilities.yml (Backups, code editors, etc.)"
 echo ""
-echo "  3. Configure services via the AI assistant in VS Code"
+echo "  5. Configure services via the AI assistant in VS Code"
 echo ""
 echo "=========================================="
 echo ""
