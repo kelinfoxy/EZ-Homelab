@@ -45,8 +45,15 @@ services:
       - TZ=${TZ}
       - HOMEPAGE_ALLOWED_HOSTS=home.${DOMAIN}
     labels:
+      # ==========================================
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      
+      # Service metadata
       - "homelab.category=dashboard"
       - "homelab.description=Application dashboard (AI-configurable)"
+      
+      # Traefik reverse proxy (uncomment to enable)
       - "traefik.enable=true"
       - "traefik.http.routers.homepage.rule=Host(`home.${DOMAIN}`)"
       - "traefik.http.routers.homepage.entrypoints=websecure"
@@ -83,18 +90,35 @@ services:
     environment:
       - TZ=${TZ}
     labels:
+      # ==========================================
+      # TRAEFIK & SABLIER CONFIGURATION
+      # ==========================================
+      
+      # Service metadata
       - "homelab.category=dashboard"
       - "homelab.description=Modern homelab dashboard"
-      - "sablier.enable=true"
-      - "sablier.group=${SERVER_HOSTNAME:-debian}-homarr"
-      - "sablier.start-on-demand=true"
+      
+      # Traefik reverse proxy (uncomment to enable)
       - "traefik.enable=true"
       - "traefik.http.routers.homarr.rule=Host(`homarr.${DOMAIN}`)"
       - "traefik.http.routers.homarr.entrypoints=websecure"
       - "traefik.http.routers.homarr.tls=true"
       - "traefik.http.routers.homarr.middlewares=authelia@docker"
       - "traefik.http.services.homarr.loadbalancer.server.port=7575"
-      - "x-dockge.url=https://homarr.${DOMAIN}"
+      
+      # Sablier lazy loading (enabled by default - comment out to disable)
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME:-debian}-homarr"
+      - "sablier.start-on-demand=true"
+
+# ==========================================
+# DOCKGE URL CONFIGURATION
+# ==========================================
+x-dockge:
+  urls:
+    # Proxied URLs (through Traefik)
+    - https://home.${DOMAIN}
+    - https://homarr.${DOMAIN}
 
 networks:
   homelab-network:

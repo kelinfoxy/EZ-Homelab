@@ -20,7 +20,7 @@
 services:
   # Nextcloud - File sync and collaboration
   # Access at: https://nextcloud.${DOMAIN}
-  # File storage service should always run for continuous sync
+  # Uses Sablier lazy loading - starts on-demand, stops after 5min inactivity
   nextcloud:
     image: nextcloud:28
     deploy:
@@ -33,7 +33,7 @@ services:
           cpus: '0.75'
           memory: 512M
     container_name: nextcloud
-    restart: unless-stopped
+    restart: no
     networks:
       - homelab-network
       - traefik-network
@@ -57,19 +57,32 @@ services:
     depends_on:
       - nextcloud-db
     labels:
+      # ==========================================
+      # TRAEFIK & SABLIER CONFIGURATION
+      # ==========================================
+      
+      # Service metadata
       - "homelab.category=productivity"
       - "homelab.description=File sync and collaboration"
+      
+      # Traefik reverse proxy (uncomment to enable)
       - "traefik.enable=true"
       - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.${DOMAIN}`)"
       - "traefik.http.routers.nextcloud.entrypoints=websecure"
       - "traefik.http.routers.nextcloud.tls.certresolver=letsencrypt"
       - "traefik.http.routers.nextcloud.middlewares=authelia@docker"
       - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
+      
+      # Sablier lazy loading (enabled by default - comment out to disable)
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME:-debian}-nextcloud"
+      - "sablier.start-on-demand=true"
 
   nextcloud-db:
+    restart: unless-stopped
     image: mariadb:10.11
     container_name: nextcloud-db
-    restart: unless-stopped
+    restart: no
     networks:
       - nextcloud-network
     volumes:
@@ -89,7 +102,7 @@ services:
   mealie:
     image: ghcr.io/mealie-recipes/mealie:latest
     container_name: mealie
-    restart: unless-stopped
+    restart: no
     networks:
       - homelab-network
       - traefik-network
@@ -118,7 +131,7 @@ services:
   wordpress:
     image: wordpress:latest
     container_name: wordpress
-    restart: unless-stopped
+    restart: no
     networks:
       - homelab-network
       - traefik-network
@@ -145,9 +158,10 @@ services:
       # No Authelia - public blog
 
   wordpress-db:
+    restart: unless-stopped
     image: mariadb:10.11
     container_name: wordpress-db
-    restart: unless-stopped
+    restart: no
     networks:
       - wordpress-network
     volumes:
@@ -175,7 +189,7 @@ services:
           cpus: '0.25'
           memory: 128M
     container_name: gitea
-    restart: unless-stopped
+    restart: no
     networks:
       - homelab-network
       - traefik-network
@@ -207,9 +221,10 @@ services:
       - "traefik.http.services.gitea.loadbalancer.server.port=3000"
 
   gitea-db:
+    restart: unless-stopped
     image: postgres:14-alpine
     container_name: gitea-db
-    restart: unless-stopped
+    restart: no
     networks:
       - gitea-network
     volumes:
@@ -241,24 +256,34 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ}
     labels:
+      # ==========================================
+      # TRAEFIK & SABLIER CONFIGURATION
+      # ==========================================
+      
+      # Service metadata
       - "homelab.category=productivity"
       - "homelab.description=File-based wiki"
-      - "sablier.enable=true"
-      - "sablier.group=${SERVER_HOSTNAME:-debian}-dokuwiki"
-      - "sablier.start-on-demand=true"
+      
+      # Traefik reverse proxy (uncomment to enable)
       - "traefik.enable=true"
       - "traefik.http.routers.dokuwiki.rule=Host(`dokuwiki.${DOMAIN}`)"
       - "traefik.http.routers.dokuwiki.entrypoints=websecure"
       - "traefik.http.routers.dokuwiki.tls.certresolver=letsencrypt"
       - "traefik.http.routers.dokuwiki.middlewares=authelia@docker"
       - "traefik.http.services.dokuwiki.loadbalancer.server.port=80"
+      
+      # Sablier lazy loading (enabled by default - comment out to disable)
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME:-debian}-dokuwiki"
+      - "sablier.start-on-demand=true"
 
   # BookStack - Documentation platform
   # Access at: https://docs.${DOMAIN}
+  # Uses Sablier lazy loading - starts on-demand, stops after 5min inactivity
   bookstack:
     image: lscr.io/linuxserver/bookstack:latest
     container_name: bookstack
-    restart: unless-stopped
+    restart: no
     networks:
       - homelab-network
       - traefik-network
@@ -280,21 +305,32 @@ services:
     depends_on:
       - bookstack-db
     labels:
+      # ==========================================
+      # TRAEFIK & SABLIER CONFIGURATION
+      # ==========================================
+      
+      # Service metadata
       - "homelab.category=productivity"
       - "homelab.description=Documentation and wiki platform"
+      
+      # Traefik reverse proxy (uncomment to enable)
       - "traefik.enable=true"
       - "traefik.http.routers.bookstack.rule=Host(`bookstack.${DOMAIN}`)"
       - "traefik.http.routers.bookstack.entrypoints=websecure"
       - "traefik.http.routers.bookstack.tls.certresolver=letsencrypt"
       - "traefik.http.routers.bookstack.middlewares=authelia@docker"
       - "traefik.http.services.bookstack.loadbalancer.server.port=80"
-      - "x-dockge.url=https://bookstack.${DOMAIN}"
-      - "x-dockge.url=https://bookstack.${DOMAIN}"
+      
+      # Sablier lazy loading (enabled by default - comment out to disable)
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME:-debian}-bookstack"
+      - "sablier.start-on-demand=true"
 
   bookstack-db:
+    restart: unless-stopped
     image: mariadb:10.11
     container_name: bookstack-db
-    restart: unless-stopped
+    restart: no
     networks:
       - bookstack-network
     volumes:
@@ -313,7 +349,7 @@ services:
   mediawiki:
     image: mediawiki:latest
     container_name: mediawiki
-    restart: unless-stopped
+    restart: no
     networks:
       - homelab-network
       - traefik-network
@@ -341,9 +377,10 @@ services:
       - "traefik.http.services.mediawiki.loadbalancer.server.port=80"
 
   mediawiki-db:
+    restart: unless-stopped
     image: mariadb:10.11
     container_name: mediawiki-db
-    restart: unless-stopped
+    restart: no
     networks:
       - mediawiki-network
     volumes:
@@ -363,7 +400,7 @@ services:
   jupyter:
     image: jupyter/scipy-notebook:latest
     container_name: jupyter
-    restart: unless-stopped
+    restart: no
     networks:
       - homelab-network
       - traefik-network
@@ -400,6 +437,20 @@ volumes:
   gitea-db-data:
   bookstack-db-data:
   mediawiki-db-data:
+
+# ==========================================
+# DOCKGE URL CONFIGURATION
+# ==========================================
+x-dockge:
+  urls:
+    # Proxied URLs (through Traefik)
+    - https://nextcloud.${DOMAIN}
+    - https://mealie.${DOMAIN}
+    - https://wordpress.${DOMAIN}
+    - https://gitea.${DOMAIN}
+    - https://bookstack.${DOMAIN}
+    - https://dokuwiki.${DOMAIN}
+    - https://mediawiki.${DOMAIN}
 
 networks:
   homelab-network:

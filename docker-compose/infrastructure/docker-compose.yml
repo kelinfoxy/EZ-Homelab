@@ -139,17 +139,26 @@ services:
       - DOZZLE_TAILSIZE=300
       - DOZZLE_FILTER=status=running
     labels:
+      # ==========================================
+      # TRAEFIK & SABLIER CONFIGURATION
+      # ==========================================
+      
+      # Service metadata
       - "homelab.category=infrastructure"
       - "homelab.description=Real-time Docker log viewer"
-      - "sablier.enable=true"
-      - "sablier.group=${SERVER_HOSTNAME:-debian}-dozzle"
-      - "sablier.start-on-demand=true"
+      
+      # Traefik reverse proxy (uncomment to enable)
       - "traefik.enable=true"
       - "traefik.http.routers.dozzle.rule=Host(`dozzle.${DOMAIN}`)"
       - "traefik.http.routers.dozzle.entrypoints=websecure"
       - "traefik.http.routers.dozzle.tls=true"
       - "traefik.http.routers.dozzle.middlewares=authelia@docker"
       - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
+      
+      # Sablier lazy loading (enabled by default - comment out to disable)
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME:-debian}-dozzle"
+      - "sablier.start-on-demand=true"
 
   # Glances - System monitoring
   # Access at: https://glances.${DOMAIN}
@@ -179,17 +188,26 @@ services:
     environment:
       - GLANCES_OPT=-w
     labels:
+      # ==========================================
+      # TRAEFIK & SABLIER CONFIGURATION
+      # ==========================================
+      
+      # Service metadata
       - "homelab.category=infrastructure"
       - "homelab.description=System and Docker monitoring"
-      - "sablier.enable=true"
-      - "sablier.group=${SERVER_HOSTNAME:-debian}-glances"
-      - "sablier.start-on-demand=true"
+      
+      # Traefik reverse proxy (uncomment to enable)
       - "traefik.enable=true"
       - "traefik.http.routers.glances.rule=Host(`glances.${DOMAIN}`)"
       - "traefik.http.routers.glances.entrypoints=websecure"
       - "traefik.http.routers.glances.tls=true"
       - "traefik.http.routers.glances.middlewares=authelia@docker"
       - "traefik.http.services.glances.loadbalancer.server.port=61208"
+      
+      # Sablier lazy loading (enabled by default - comment out to disable)
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME:-debian}-glances"
+      - "sablier.start-on-demand=true"
 
   # Code Server - VS Code in browser
   # Access at: https://code.${DOMAIN}
@@ -223,17 +241,41 @@ services:
       - PASSWORD=${CODE_SERVER_PASSWORD}
       - SUDO_PASSWORD=${CODE_SERVER_SUDO_PASSWORD}
     labels:
+      # ==========================================
+      # TRAEFIK & SABLIER CONFIGURATION
+      # ==========================================
+      
+      # Service metadata
       - "homelab.category=infrastructure"
       - "homelab.description=VS Code in browser"
-      - "sablier.enable=true"
-      - "sablier.group=${SERVER_HOSTNAME:-debian}-code-server"
-      - "sablier.start-on-demand=true"
+      
+      # Traefik reverse proxy (uncomment to enable)
       - "traefik.enable=true"
       - "traefik.http.routers.code-server.rule=Host(`code.${DOMAIN}`)"
       - "traefik.http.routers.code-server.entrypoints=websecure"
       - "traefik.http.routers.code-server.tls.certresolver=letsencrypt"
       - "traefik.http.routers.code-server.middlewares=authelia@docker"
       - "traefik.http.services.code-server.loadbalancer.server.port=8443"
+      
+      # Sablier lazy loading (enabled by default - comment out to disable)
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME:-debian}-code-server"
+      - "sablier.start-on-demand=true"
+
+# ==========================================
+# DOCKGE URL CONFIGURATION
+# ==========================================
+x-dockge:
+  urls:
+    # Proxied URLs (through Traefik)
+    - https://pihole.${DOMAIN}
+    - https://dozzle.${DOMAIN}
+    - https://glances.${DOMAIN}
+    - https://code.${DOMAIN}
+    
+    # Direct IP:Port URLs
+    - http://${SERVER_IP}:2375  # Docker Proxy
+    - http://${SERVER_IP}:19999  # Netdata
 
 networks:
   homelab-network:
