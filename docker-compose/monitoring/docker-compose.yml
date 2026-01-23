@@ -50,8 +50,14 @@ services:
       - '--web.console.templates=/etc/prometheus/consoles'
       - '--web.enable-lifecycle'
     labels:
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
       - "homelab.category=monitoring"
       - "homelab.description=Metrics collection and time-series database"
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.http.routers.prometheus.rule=Host(`prometheus.${DOMAIN}`)"
       - "traefik.http.routers.prometheus.entrypoints=websecure"
@@ -94,8 +100,14 @@ services:
     depends_on:
       - prometheus
     labels:
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
       - "homelab.category=monitoring"
       - "homelab.description=Metrics visualization and dashboards"
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.http.routers.grafana.rule=Host(`grafana.${DOMAIN}`)"
       - "traefik.http.routers.grafana.entrypoints=websecure"
@@ -149,8 +161,14 @@ services:
     devices:
       - /dev/kmsg
     labels:
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
       - "homelab.category=monitoring"
       - "homelab.description=Container metrics and performance monitoring"
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.http.routers.cadvisor.rule=Host(`cadvisor.${DOMAIN}`)"
       - "traefik.http.routers.cadvisor.entrypoints=websecure"
@@ -158,8 +176,6 @@ services:
       - "traefik.http.routers.cadvisor.tls.certresolver=letsencrypt"
       - "traefik.http.routers.cadvisor.middlewares=authelia@docker"
       - "traefik.http.services.cadvisor.loadbalancer.server.port=8080"
-      - "x-dockge.url=https://cadvisor.${DOMAIN}"
-      - "x-dockge.url=https://cadvisor.${DOMAIN}"
 
   # Uptime Kuma - Uptime monitoring
   # Access at: https://uptime-kuma.${DOMAIN}
@@ -180,12 +196,20 @@ services:
       - monitoring-network
       - homelab-network
       - traefik-network
+    ports:
+      - "3001:3001"
     volumes:
       - uptime-kuma-data:/app/data
       - /var/run/docker.sock:/var/run/docker.sock:ro
     labels:
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
       - "homelab.category=monitoring"
       - "homelab.description=Service uptime monitoring and alerts"
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.http.routers.uptime-kuma.rule=Host(`uptime-kuma.${DOMAIN}`)"
       - "traefik.http.routers.uptime-kuma.entrypoints=websecure"
@@ -220,8 +244,14 @@ services:
       - loki-data:/loki
     command: -config.file=/etc/loki/loki-config.yml
     labels:
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
       - "homelab.category=monitoring"
       - "homelab.description=Log aggregation system"
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.http.routers.loki.rule=Host(`loki.${DOMAIN}`)"
       - "traefik.http.routers.loki.entrypoints=websecure"

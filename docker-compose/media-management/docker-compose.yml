@@ -30,6 +30,8 @@ services:
       - media-network
       - homelab-network
       - traefik-network
+    ports:
+      - "8989:8989"
     volumes:
       - ./sonarr/config:/config
       - /mnt/media:/media
@@ -39,15 +41,20 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ:-America/New_York}
     labels:
-      - homelab.category=media
-      - homelab.description=TV show management and automation
-      # Traefik labels with Authelia
-      - traefik.enable=true
-      - traefik.http.routers.sonarr.rule=Host(`sonarr.${DOMAIN}`)
-      - traefik.http.routers.sonarr.entrypoints=websecure
-      - traefik.http.routers.sonarr.tls.certresolver=letsencrypt
-      - traefik.http.routers.sonarr.middlewares=authelia@docker
-      - traefik.http.services.sonarr.loadbalancer.server.port=8989
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
+      - "homelab.category=media"
+      - "homelab.description=TV show management and automation"
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
+      - "traefik.enable=true"
+      - "traefik.http.routers.sonarr.rule=Host(`sonarr.${DOMAIN}`)"
+      - "traefik.http.routers.sonarr.entrypoints=websecure"
+      - "traefik.http.routers.sonarr.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.sonarr.middlewares=authelia@docker"
+      - "traefik.http.services.sonarr.loadbalancer.server.port=8989"
   # Radarr - Movie automation
   # Access at: https://radarr.yourdomain.duckdns.org
   radarr:
@@ -58,6 +65,8 @@ services:
       - media-network
       - homelab-network
       - traefik-network
+    ports:
+      - "7878:7878"
     volumes:
       - ./radarr/config:/config
       - /mnt/media:/media
@@ -67,15 +76,20 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ:-America/New_York}
     labels:
-      - homelab.category=media
-      - homelab.description=Movie management and automation
-      # Traefik labels with Authelia
-      - traefik.enable=true
-      - traefik.http.routers.radarr.rule=Host(`radarr.${DOMAIN}`)
-      - traefik.http.routers.radarr.entrypoints=websecure
-      - traefik.http.routers.radarr.tls.certresolver=letsencrypt
-      - traefik.http.routers.radarr.middlewares=authelia@docker
-      - traefik.http.services.radarr.loadbalancer.server.port=7878
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
+      - "homelab.category=media"
+      - "homelab.description=Movie management and automation"
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
+      - "traefik.enable=true"
+      - "traefik.http.routers.radarr.rule=Host(`radarr.${DOMAIN}`)"
+      - "traefik.http.routers.radarr.entrypoints=websecure"
+      - "traefik.http.routers.radarr.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.radarr.middlewares=authelia@docker"
+      - "traefik.http.services.radarr.loadbalancer.server.port=7878"
   # Prowlarr - Indexer manager
   # Access at: https://prowlarr.yourdomain.duckdns.org
   prowlarr:
@@ -86,6 +100,8 @@ services:
       - media-network
       - homelab-network
       - traefik-network
+    ports:
+      - "9696:9696"
     volumes:
       - ./prowlarr/config:/config
     environment:
@@ -93,15 +109,20 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ:-America/New_York}
     labels:
-      - homelab.category=media
-      - homelab.description=Indexer manager for Sonarr/Radarr
-      # Traefik labels with Authelia
-      - traefik.enable=true
-      - traefik.http.routers.prowlarr.rule=Host(`prowlarr.${DOMAIN}`)
-      - traefik.http.routers.prowlarr.entrypoints=websecure
-      - traefik.http.routers.prowlarr.tls.certresolver=letsencrypt
-      - traefik.http.routers.prowlarr.middlewares=authelia@docker
-      - traefik.http.services.prowlarr.loadbalancer.server.port=9696
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
+      - "homelab.category=media"
+      - "homelab.description=Indexer manager for Sonarr/Radarr"
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
+      - "traefik.enable=true"
+      - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.${DOMAIN}`)"
+      - "traefik.http.routers.prowlarr.entrypoints=websecure"
+      - "traefik.http.routers.prowlarr.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.prowlarr.middlewares=authelia@docker"
+      - "traefik.http.services.prowlarr.loadbalancer.server.port=9696"
   # Readarr - Ebook and audiobook management
   # Access at: https://readarr.${DOMAIN}
   readarr:
@@ -112,6 +133,8 @@ services:
       - media-network
       - homelab-network
       - traefik-network
+    ports:
+      - "8787:8787"
     volumes:
       - ./readarr/config:/config
       - /mnt/media/books:/books
@@ -139,6 +162,8 @@ services:
       - media-network
       - homelab-network
       - traefik-network
+    ports:
+      - "8686:8686"
     volumes:
       - ./lidarr/config:/config
       - /mnt/media/music:/music
@@ -166,6 +191,8 @@ services:
       - media-network
       - homelab-network
       - traefik-network
+    ports:
+      - "5299:5299"
     volumes:
       - ./lazylibrarian/config:/config
       - /mnt/media/books:/books
@@ -194,6 +221,8 @@ services:
       - media-network
       - homelab-network
       - traefik-network
+    ports:
+      - "8090:8090"
     volumes:
       - ./mylar3/config:/config
       - /mnt/media/comics:/comics
@@ -221,6 +250,8 @@ services:
       - media-network
       - homelab-network
       - traefik-network
+    ports:
+      - "5055:5055"
     volumes:
       - ./jellyseerr/config:/app/config
     environment:
@@ -262,6 +293,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
+      - 8265:8265 # Web UI port
       - 8266:8266 # Server port
     volumes:
       - ./tdarr/server:/app/server
@@ -320,6 +352,8 @@ services:
       - media-network
       - homelab-network
       - traefik-network
+    ports:
+      - "8888:8888"
     volumes:
       - ./unmanic/config:/config
       - /mnt/media:/library

@@ -21,13 +21,16 @@ x-dockge:
 services:
   # Backrest - Backup solution for restic
   # Access at: https://backrest.${DOMAIN}
+  # Uses Sablier lazy loading - starts on-demand, stops after 5min inactivity
   backrest:
     image: garethgeorge/backrest:latest
     container_name: backrest
-    restart: unless-stopped
+    restart: no
     networks:
       - homelab-network
       - traefik-network
+    ports:
+      - "9898:9898"
     volumes:
       - ./backrest/data:/data
       - ./backrest/config:/config
@@ -39,14 +42,26 @@ services:
       - BACKREST_CONFIG=/config/config.json
       - TZ=${TZ}
     labels:
+      # ==========================================
+      # TRAEFIK & SABLIER CONFIGURATION
+      # ==========================================
+      
+      # Service metadata
       - homelab.category=utilities
       - homelab.description=Backup management with restic
+      
+      # Traefik reverse proxy (uncomment to enable)
       - traefik.enable=true
       - traefik.http.routers.backrest.rule=Host(`backrest.${DOMAIN}`)
       - traefik.http.routers.backrest.entrypoints=websecure
       - traefik.http.routers.backrest.tls.certresolver=letsencrypt
       - traefik.http.routers.backrest.middlewares=authelia@docker
       - traefik.http.services.backrest.loadbalancer.server.port=9898
+      
+      # Sablier lazy loading (uncomment to enable)
+      - sablier.enable=true
+      - sablier.group=${SERVER_HOSTNAME:-debian}-backrest
+      - sablier.start-on-demand=true
       - "x-dockge.url=https://backrest.${DOMAIN}"
       - "x-dockge.url=https://backrest.${DOMAIN}"
   # Duplicati - Backup solution
@@ -58,6 +73,8 @@ services:
     networks:
       - homelab-network
       - traefik-network
+    ports:
+      - "8200:8200"
     volumes:
       - ./duplicati/config:/config
       - /opt/stacks:/source/stacks:ro
@@ -68,14 +85,20 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ}
     labels:
-      - homelab.category=utilities
-      - homelab.description=Backup software with encryption
-      - traefik.enable=true
-      - traefik.http.routers.duplicati.rule=Host(`duplicati.${DOMAIN}`)
-      - traefik.http.routers.duplicati.entrypoints=websecure
-      - traefik.http.routers.duplicati.tls.certresolver=letsencrypt
-      - traefik.http.routers.duplicati.middlewares=authelia@docker
-      - traefik.http.services.duplicati.loadbalancer.server.port=8200
+      # TRAEFIK & SABLIER CONFIGURATION
+      # ==========================================
+      # Service metadata
+      - "homelab.category=utilities"
+      - "homelab.description=Backup software with encryption"
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
+      - "traefik.enable=true"
+      - "traefik.http.routers.duplicati.rule=Host(`duplicati.${DOMAIN}`)"
+      - "traefik.http.routers.duplicati.entrypoints=websecure"
+      - "traefik.http.routers.duplicati.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.duplicati.middlewares=authelia@docker"
+      - "traefik.http.services.duplicati.loadbalancer.server.port=8200"
   # Form.io - Form builder
   # Uncomment and configure if formio/formio image becomes available
   formio:
@@ -86,6 +109,8 @@ services:
       - homelab-network
       - traefik-network
       - formio-network
+    ports:
+      - "3001:3001"
     environment:
       - MONGO=mongodb://formio-mongo:27017/formio
       - JWT_SECRET=${FORMIO_JWT_SECRET}
@@ -93,8 +118,14 @@ services:
     depends_on:
       - formio-mongo
     labels:
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
       - "homelab.category=utilities"
       - "homelab.description=Form builder platform"
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.http.routers.formio.rule=Host(`forms.${DOMAIN}`)"
       - "traefik.http.routers.formio.entrypoints=websecure"
@@ -122,6 +153,8 @@ services:
     networks:
       - homelab-network
       - traefik-network
+    ports:
+      - "80:80"
     volumes:
       - ./vaultwarden/data:/data
     environment:
@@ -137,16 +170,22 @@ services:
       # - SMTP_USERNAME=${SMTP_USERNAME}
       # - SMTP_PASSWORD=${SMTP_PASSWORD}
     labels:
-      - homelab.category=utilities
-      - homelab.description=Self-hosted password manager (Bitwarden)
-      - traefik.enable=true
-      - traefik.http.routers.vaultwarden.rule=Host(`vault.${DOMAIN}`)
-      - traefik.http.routers.vaultwarden.entrypoints=websecure
-      - traefik.http.routers.vaultwarden.tls=true
-      - traefik.http.routers.vaultwarden.tls.certresolver=letsencrypt
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
+      - "homelab.category=utilities"
+      - "homelab.description=Self-hosted password manager (Bitwarden)"
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
+      - "traefik.enable=true"
+      - "traefik.http.routers.vaultwarden.rule=Host(`vault.${DOMAIN}`)"
+      - "traefik.http.routers.vaultwarden.entrypoints=websecure"
+      - "traefik.http.routers.vaultwarden.tls=true"
+      - "traefik.http.routers.vaultwarden.tls.certresolver=letsencrypt"
       # SSO disabled for browser extension and mobile app compatibility
       # - "traefik.http.routers.vaultwarden.middlewares=authelia@docker"
-      - traefik.http.services.vaultwarden.loadbalancer.server.port=80
+      - "traefik.http.services.vaultwarden.loadbalancer.server.port=80"
   # Authelia Redis - Session storage for Authelia
   # No web UI - backend service
 #  authelia-redis:

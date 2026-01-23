@@ -20,12 +20,17 @@ services:
     networks:
       - homelab-network
       - traefik-network
+    ports:
+      - "9000:9000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer-data:/data
     security_opt:
       - no-new-privileges:true
     labels:
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
       - "homelab.category=alternatives"
       - "homelab.description=Docker container management UI (Alternative to Dockge)"
       - "traefik.enable=true"
@@ -48,6 +53,8 @@ services:
     networks:
       - homelab-network
       - traefik-network
+    ports:
+      - "9000:9000"
     volumes:
       - /opt/stacks/authentik/media:/media
       - /opt/stacks/authentik/custom-templates:/templates
@@ -60,6 +67,9 @@ services:
       - AUTHENTIK_SECRET_KEY=${AUTHENTIK_SECRET_KEY}
       - AUTHENTIK_ERROR_REPORTING__ENABLED=false
     labels:
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
       - "homelab.category=alternatives"
       - "homelab.description=SSO/Identity provider with web UI (Alternative to Authelia)"
       - "traefik.enable=true"
@@ -94,6 +104,9 @@ services:
       - AUTHENTIK_SECRET_KEY=${AUTHENTIK_SECRET_KEY}
       - AUTHENTIK_ERROR_REPORTING__ENABLED=false
     labels:
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
       - "homelab.category=alternatives"
       - "homelab.description=Authentik background worker"
     depends_on:
@@ -115,6 +128,9 @@ services:
       - POSTGRES_PASSWORD=${AUTHENTIK_DB_PASSWORD}
       - POSTGRES_DB=${AUTHENTIK_DB_NAME:-authentik}
     labels:
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
       - "homelab.category=alternatives"
       - "homelab.description=Authentik database"
     healthcheck:
@@ -135,6 +151,9 @@ services:
       - authentik-redis-data:/data
     command: --save 60 1 --loglevel warning
     labels:
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
       - "homelab.category=alternatives"
       - "homelab.description=Authentik cache and messaging"
     healthcheck:
@@ -155,6 +174,8 @@ services:
       - media-network
       - homelab-network
       - traefik-network
+    ports:
+      - "32400:32400"
     volumes:
       - ./plex/config:/config
       - /mnt/media:/media:ro  # Large media files on separate drive
@@ -183,6 +204,9 @@ services:
     #   - NVIDIA_VISIBLE_DEVICES=all
     #   - NVIDIA_DRIVER_CAPABILITIES=compute,video,utility
     labels:
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
       - "homelab.category=alternatives"
       - "homelab.description=Alternative media streaming server to Jellyfin"
       # Traefik labels - NO Authelia for app access

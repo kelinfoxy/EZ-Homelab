@@ -8,6 +8,8 @@ services:
     restart: unless-stopped
     networks:
       - traefik-network
+    ports:
+      - "80:80"
     volumes:
       - ./config:/config
     environment:

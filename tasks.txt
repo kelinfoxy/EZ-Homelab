@@ -1,3 +1,10 @@
-Tasks
+Info
+
+I am developing the EZ-Homelab repository. The focus is on the repo not the test system.
+I'm troubleshooting the ez-homelab.sh setup process. The script works pretty well. However I noticed some of the compose files
+are missing a ports section. In order for a remote traefik & sablier install to work, the sablier.yml and traefik external host yml 
+files are configured on the remote server using the ip:port of the service. Therefore all services in all compose files must include
+port mapping if it has a webui.
+Make the changes in the repo folder, then I will run the ez-homelab.sh script and check the results.
 
 
