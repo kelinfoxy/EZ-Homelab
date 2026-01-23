@@ -137,6 +137,39 @@ esac
 
 echo ""
 
+# Function to replace environment variables in config files
+replace_env_vars() {
+    local config_dir="$1"
+    local env_file="$2"
+    
+    log_info "Processing environment variables in $config_dir..."
+    
+    # Find all files in the config directory
+    find "$config_dir" -type f \( -name "*.yml" -o -name "*.yaml" -o -name "*.conf" -o -name "*.json" \) | while read -r file; do
+        # Extract all ${VAR_NAME} patterns from the file
+        vars_found=$(grep -o '\${[^}]*}' "$file" | sed 's/\${//' | sed 's/}//' | sort | uniq)
+        
+        if [ -n "$vars_found" ]; then
+            log_info "Processing file: $(basename "$file")"
+            
+            for var in $vars_found; do
+                # Check if variable exists in .env file
+                if grep -q "^${var}=" "$env_file" 2>/dev/null; then
+                    # Get the value from .env file
+                    value=$(grep "^${var}=" "$env_file" | cut -d'=' -f2- | sed 's/^"//' | sed 's/"$//')
+                    # Escape special characters for sed
+                    escaped_value=$(printf '%s\n' "$value" | sed 's/[[\.*^$()+?{|]/\\&/g')
+                    # Replace in file
+                    sed -i "s|\${${var}}|${escaped_value}|g" "$file"
+                    log_info "  ✓ Replaced \${$var}"
+                else
+                    log_warning "  ⚠ Variable \${$var} not found in .env file - leaving as-is"
+                fi
+            done
+        fi
+    done
+}
+
 # Function to setup stacks without deploying them
 setup_stacks_for_dockge() {
     log_info "Setting up all stacks for Dockge..."
@@ -165,6 +198,9 @@ setup_stacks_for_dockge() {
                         cp -r "$config_dir" "$STACK_DIR/"
                     fi
                 done
+                
+                # Replace environment variables in the stack configuration
+                replace_env_vars "$STACK_DIR" "$STACK_DIR/.env"
                 
                 log_success "$stack stack prepared for Dockge"
             else
@@ -242,7 +278,7 @@ if [ "$DEPLOY_CORE" = true ]; then
     fi
     cp -r "$REPO_DIR/config-templates/authelia" /opt/stacks/core/
 
-    # Replace domain placeholders in Authelia config
+    # Replace domain placeholders in Authelia config (legacy hardcoded replacement)
     sed -i "s/your-domain.duckdns.org/${DOMAIN}/g" /opt/stacks/core/authelia/configuration.yml
 
     if [ -f "/opt/stacks/core/.env" ]; then
@@ -252,13 +288,11 @@ if [ "$DEPLOY_CORE" = true ]; then
     fi
     cp "$REPO_DIR/.env" /opt/stacks/core/.env
 
-    # Replace secret placeholders in Authelia config
-    source /opt/stacks/core/.env
-    sed -i "s|\${AUTHELIA_JWT_SECRET}|${AUTHELIA_JWT_SECRET}|g" /opt/stacks/core/authelia/configuration.yml
-    sed -i "s|\${AUTHELIA_SESSION_SECRET}|${AUTHELIA_SESSION_SECRET}|g" /opt/stacks/core/authelia/configuration.yml
-    sed -i "s|\${AUTHELIA_STORAGE_ENCRYPTION_KEY}|${AUTHELIA_STORAGE_ENCRYPTION_KEY}|g" /opt/stacks/core/authelia/configuration.yml
+    # Automatically replace all environment variables in config files
+    replace_env_vars "/opt/stacks/core" "/opt/stacks/core/.env"
 
-    # Replace placeholders in Authelia users database
+    # Legacy hardcoded replacements (keeping for backward compatibility)
+    # These will be overridden by the automatic replacement above if variables exist
     sed -i "s/admin/${AUTHELIA_ADMIN_USER}/g" /opt/stacks/core/authelia/users_database.yml
     sed -i "s/admin@example.com/${AUTHELIA_ADMIN_EMAIL}/g" /opt/stacks/core/authelia/users_database.yml
     sed -i "s|\$argon2id\$v=19\$m=65536,t=3,p=4\$CHANGEME|${AUTHELIA_ADMIN_PASSWORD}|g" /opt/stacks/core/authelia/users_database.yml
