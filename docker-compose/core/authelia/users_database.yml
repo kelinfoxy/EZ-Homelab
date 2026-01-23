@@ -6,7 +6,7 @@ users:
   kelin:
     displayname: "Admin User"
     password: "$argon2id$v=19$m=65536,t=3,p=4$a+3pIrywP/li9wy9J6UkMA$+3THyJiAnS/gNYnLaYtlsRCaYfgnnxsUyGZ4D3xGnUg"
-    email: kelinfoxy@gmail.com
+    email: ${DEFAULT_EMAIL}
     groups:
       - admins
       - users
