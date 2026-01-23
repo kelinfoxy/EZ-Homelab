@@ -4,6 +4,8 @@
 # NOTE: Traefik, Authelia, DuckDNS, and Gluetun have their own separate stacks
 # See /opt/stacks/traefik/, /opt/stacks/authelia/, etc.
 
+# SABLIER SESSION DURATION: Set to 5m for testing. Increase to 30m for production in config-templates/traefik/dynamic/sablier.yml
+
 # RESTART POLICY GUIDE:
 # - unless-stopped: Core infrastructure services that should always run
 # - no: Services with Sablier lazy loading (start on-demand)
@@ -111,7 +113,7 @@ services:
 
   # Dozzle - Real-time Docker log viewer
   # Access at: https://dozzle.${DOMAIN}
-  # Uses Sablier lazy loading - starts on-demand, stops after 30min inactivity
+  # Uses Sablier lazy loading - starts on-demand, stops after 5min inactivity
   dozzle:
     image: amir20/dozzle:latest
     deploy:
@@ -128,6 +130,8 @@ services:
     networks:
       - homelab-network
       - traefik-network
+    ports:
+      - "8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
@@ -166,6 +170,8 @@ services:
     networks:
       - homelab-network
       - traefik-network
+    ports:
+      - "61208:61208"
     pid: host
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -204,6 +210,8 @@ services:
     networks:
       - homelab-network
       - traefik-network
+    ports:
+      - "8443:8443"
     volumes:
       - ./code-server/config:/config
       - /opt/stacks:/opt/stacks  # Access to all stacks

@@ -1,215 +1,216 @@
+# Session duration set to 5m for testing. Increase to 30m for production.
 http:
   middlewares:
-    sablier-debian-arr:
+    sablier-${SERVER_HOSTNAME}-arr:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: debian-arr
-          sessionDuration: 30m
+          group: ${SERVER_HOSTNAME}-arr
+          sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
             displayName: Arr Apps
             theme: ghost
             show-details-by-default: true
 
-    sablier-debian-backrest:
+    sablier-${SERVER_HOSTNAME}-backrest:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: debian-backrest
-          sessionDuration: 30m
+          group: ${SERVER_HOSTNAME}-backrest
+          sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
             displayName: Backrest
             theme: ghost
             show-details-by-default: true
 
-    sablier-debian-bookstack:
+    sablier-${SERVER_HOSTNAME}-bookstack:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: debian-bookstack
-          sessionDuration: 30m
+          group: ${SERVER_HOSTNAME}-bookstack
+          sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
             displayName: Bookstack
             theme: ghost
             show-details-by-default: true
 
-    sablier-debian-jellyfin:
+    sablier-${SERVER_HOSTNAME}-jellyfin:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: debian-jellyfin
-          sessionDuration: 30m
+          group: ${SERVER_HOSTNAME}-jellyfin
+          sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
             displayName: Jellyfin
             theme: ghost
             show-details-by-default: true
 
-    sablier-debian-calibre-web:
+    sablier-${SERVER_HOSTNAME}-calibre-web:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: debian-calibre-web
-          sessionDuration: 30m
+          group: ${SERVER_HOSTNAME}-calibre-web
+          sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
             displayName: Calibre Web
             theme: ghost
             show-details-by-default: true
 
-    sablier-debian-code-server:
+    sablier-${SERVER_HOSTNAME}-code-server:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: debian-code-server
-          sessionDuration: 30m
+          group: ${SERVER_HOSTNAME}-code-server
+          sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
             displayName: Code Server
             theme: ghost
             show-details-by-default: true
 
-    sablier-debian-bitwarden:
+    sablier-${SERVER_HOSTNAME}-bitwarden:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: debian-bitwarden
-          sessionDuration: 30m
+          group: ${SERVER_HOSTNAME}-bitwarden
+          sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
             displayName: bitwarden
             theme: ghost
             show-details-by-default: true
 
-    sablier-debian-wordpress:
+    sablier-${SERVER_HOSTNAME}-wordpress:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: debian-wordpress
-          sessionDuration: 30m
+          group: ${SERVER_HOSTNAME}-wordpress
+          sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
             displayName: wordpress
             theme: ghost
             show-details-by-default: true
 
-    sablier-debian-nextcloud:
+    sablier-${SERVER_HOSTNAME}-nextcloud:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: debian-nextcloud
-          sessionDuration: 30m
+          group: ${SERVER_HOSTNAME}-nextcloud
+          sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
             displayName: NextCloud
             theme: ghost
             show-details-by-default: true
 
-    sablier-debian-mediawiki:
+    sablier-${SERVER_HOSTNAME}-mediawiki:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: debian-mediawiki
-          sessionDuration: 30m
+          group: ${SERVER_HOSTNAME}-mediawiki
+          sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
             displayName: mediawiki
             theme: ghost
             show-details-by-default: true
 
-    sablier-debian-mealie:
+    sablier-${SERVER_HOSTNAME}-mealie:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: debian-mealie
-          sessionDuration: 30m
+          group: ${SERVER_HOSTNAME}-mealie
+          sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
             displayName: Mealie
             theme: ghost
             show-details-by-default: true
 
-    sablier-debian-gitea:
+    sablier-${SERVER_HOSTNAME}-gitea:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: debian-gitea
-          sessionDuration: 30m
+          group: ${SERVER_HOSTNAME}-gitea
+          sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
             displayName: Gitea
             theme: ghost
             show-details-by-default: true
 
-    sablier-debian-formio:
+    sablier-${SERVER_HOSTNAME}-formio:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: debian-formio
-          sessionDuration: 30m
+          group: ${SERVER_HOSTNAME}-formio
+          sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
             displayName: FormIO
             theme: ghost
             show-details-by-default: true
 
-    sablier-debian-dozzle:
+    sablier-${SERVER_HOSTNAME}-dozzle:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: debian-dozzle
-          sessionDuration: 30m
+          group: ${SERVER_HOSTNAME}-dozzle
+          sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
             displayName: dozzle
             theme: ghost
             show-details-by-default: true
 
-    sablier-debian-duplicati:
+    sablier-${SERVER_HOSTNAME}-duplicati:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: debian-duplicati
-          sessionDuration: 30m
+          group: ${SERVER_HOSTNAME}-duplicati
+          sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
             displayName: Duplicati
             theme: ghost
             show-details-by-default: true
 
-    sablier-debian-glances:
+    sablier-${SERVER_HOSTNAME}-glances:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: debian-glances
-          sessionDuration: 30m
+          group: ${SERVER_HOSTNAME}-glances
+          sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
             displayName: Glances
             theme: ghost
             show-details-by-default: true
 
-    sablier-debian-homarr:
+    sablier-${SERVER_HOSTNAME}-homarr:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: debian-homarr
-          sessionDuration: 30m
+          group: ${SERVER_HOSTNAME}-homarr
+          sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
             displayName: Homarr
             theme: ghost
             show-details-by-default: true
 
-    sablier-debian-komodo:
+    sablier-${SERVER_HOSTNAME}-komodo:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: debian-komodo
-          sessionDuration: 30m
+          group: ${SERVER_HOSTNAME}-komodo
+          sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
             displayName: Komodo
@@ -217,84 +218,84 @@ http:
             show-details-by-default: true
 
 
-    sablier-debian-kopia:
+    sablier-${SERVER_HOSTNAME}-kopia:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: debian-kopia
-          sessionDuration: 30m
+          group: ${SERVER_HOSTNAME}-kopia
+          sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
             displayName: Kopia
             theme: ghost
             show-details-by-default: true
 
-    sablier-debian-openkm:
+    sablier-${SERVER_HOSTNAME}-openkm:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: debian-openkm
-          sessionDuration: 30m
+          group: ${SERVER_HOSTNAME}-openkm
+          sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
             displayName: OpenKM
             theme: ghost
             show-details-by-default: true
 
-    sablier-debian-openwebui:
+    sablier-${SERVER_HOSTNAME}-openwebui:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: debian-openwebui
-          sessionDuration: 30m
+          group: ${SERVER_HOSTNAME}-openwebui
+          sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
             displayName: OpenWebUI
             theme: ghost
             show-details-by-default: true
             
-    sablier-debian-pulse:
+    sablier-${SERVER_HOSTNAME}-pulse:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: debian-pulse
-          sessionDuration: 30m
+          group: ${SERVER_HOSTNAME}-pulse
+          sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
             displayName: Pulse
             theme: ghost
             show-details-by-default: true
 
-    sablier-debian-tdarr:
+    sablier-${SERVER_HOSTNAME}-tdarr:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: debian-tdarr
-          sessionDuration: 30m
+          group: ${SERVER_HOSTNAME}-tdarr
+          sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
             displayName: Tdarr
             theme: ghost
             show-details-by-default: true
 
-    sablier-debian-unmanic:
+    sablier-${SERVER_HOSTNAME}-unmanic:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: debian-unmanic
-          sessionDuration: 30m
+          group: ${SERVER_HOSTNAME}-unmanic
+          sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
             displayName: Unmanic
             theme: ghost
             show-details-by-default: true
 
-    sablier-debian-dokuwiki:
+    sablier-${SERVER_HOSTNAME}-dokuwiki:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: debian-dokuwiki  
-          sessionDuration: 30m
+          group: ${SERVER_HOSTNAME}-dokuwiki  
+          sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
             displayName: DokuWiki

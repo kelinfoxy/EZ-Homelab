@@ -55,6 +55,7 @@ load_env_file() {
         echo "Current configuration:"
         echo "  Domain: ${DOMAIN:-Not set}"
         echo "  Server IP: ${SERVER_IP:-Not set}"
+        echo "  Server Hostname: ${SERVER_HOSTNAME:-Not set}"
         echo "  Admin User: ${AUTHELIA_ADMIN_USER:-Not set}"
         echo "  Admin Email: ${AUTHELIA_ADMIN_EMAIL:-Not set}"
         echo "  Timezone: ${TZ:-Not set}"
@@ -79,6 +80,7 @@ save_env_file() {
     # Update values
     sed -i "s%DOMAIN=.*%DOMAIN=$DOMAIN%" "$REPO_DIR/.env"
     sed -i "s%SERVER_IP=.*%SERVER_IP=$SERVER_IP%" "$REPO_DIR/.env"
+    sed -i "s%SERVER_HOSTNAME=.*%SERVER_HOSTNAME=$SERVER_HOSTNAME%" "$REPO_DIR/.env"
     sed -i "s%TZ=.*%TZ=$TZ%" "$REPO_DIR/.env"
 
     # Authelia settings (only if deploying core)
@@ -164,6 +166,13 @@ prompt_for_values() {
         read -p "Server IP [$SERVER_IP] (press Enter to keep current): " input
         [ -n "$input" ] && SERVER_IP="$input"
     fi
+
+    # Server Hostname
+    if [ -z "$SERVER_HOSTNAME" ]; then
+        SERVER_HOSTNAME="debian"
+    fi
+    read -p "Server hostname [$SERVER_HOSTNAME] (press Enter to keep current): " input
+    [ -n "$input" ] && SERVER_HOSTNAME="$input"
 
     # Timezone
     if [ -z "$TZ" ]; then
@@ -369,6 +378,7 @@ perform_deployment() {
 
         # Replace domain placeholders in traefik dynamic configs
         find /opt/stacks/core/traefik/dynamic -name "*.yml" -exec sed -i "s/\${DOMAIN}/${DOMAIN}/g" {} \;
+        find /opt/stacks/core/traefik/dynamic -name "*.yml" -exec sed -i "s/\${SERVER_HOSTNAME}/${SERVER_HOSTNAME}/g" {} \;
 
         if [ -d "/opt/stacks/core/authelia" ]; then
             mv /opt/stacks/core/authelia /opt/stacks/core/authelia.backup.$(date +%Y%m%d_%H%M%S)

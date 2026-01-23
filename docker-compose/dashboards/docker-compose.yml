@@ -2,6 +2,8 @@
 # Homepage and Homarr for homelab dashboards
 # Place in /opt/stacks/dashboards/docker-compose.yml
 
+# SABLIER SESSION DURATION: Set to 5m for testing. Increase to 30m for production in config-templates/traefik/dynamic/sablier.yml
+
 # RESTART POLICY GUIDE:
 # - unless-stopped: Core infrastructure services that should always run
 # - no: Services with Sablier lazy loading (start on-demand)
@@ -31,6 +33,8 @@ services:
     networks:
       - homelab-network
       - traefik-network
+    ports:
+      - "3000:3000"
     volumes:
       - ./homepage:/app/config
       - /var/run/docker.sock:/var/run/docker.sock # For Docker integration do not mount RO
@@ -52,7 +56,7 @@ services:
 
   # Homarr - Modern dashboard
   # Access at: https://homarr.${DOMAIN}
-  # Uses Sablier lazy loading - starts on-demand, stops after 30min inactivity
+  # Uses Sablier lazy loading - starts on-demand, stops after 5min inactivity
   homarr:
     image: ghcr.io/ajnart/homarr:latest
     deploy:
@@ -69,6 +73,8 @@ services:
     networks:
       - homelab-network
       - traefik-network
+    ports:
+      - "7575:7575"
     volumes:
       - ./homarr/config:/app/config/configs
       - ./homarr/data:/data

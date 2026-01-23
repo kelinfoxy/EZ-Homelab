@@ -2,6 +2,8 @@
 # Default Services for media management and streaming
 # Place in /opt/stacks/media/docker-compose.yml
 
+# SABLIER SESSION DURATION: Set to 5m for testing. Increase to 30m for production in config-templates/traefik/dynamic/sablier.yml
+
 # RESTART POLICY GUIDE:
 # - unless-stopped: Core infrastructure services that should always run
 # - no: Services with Sablier lazy loading (start on-demand)
@@ -16,7 +18,7 @@ services:
   # Jellyfin - Open-source media streaming server
   # Access at: https://jellyfin.yourdomain.duckdns.org
   # NOTE: No Authelia - allows app access from Roku, Fire TV, mobile, etc.
-  # Uses Sablier lazy loading - starts on-demand, stops after 30min inactivity
+  # Uses Sablier lazy loading - starts on-demand, stops after 5min inactivity
   jellyfin:
     image: jellyfin/jellyfin:10.8.13
     deploy:
@@ -34,6 +36,8 @@ services:
       - media-network
       - homelab-network
       - traefik-network
+    ports:
+      - "8096:8096"
     volumes:
       - ./jellyfin/config:/config
       - ./jellyfin/cache:/cache
@@ -86,6 +90,8 @@ services:
       - media-network
       - homelab-network
       - traefik-network
+    ports:
+      - "8083:8083"
     volumes:
       - ./calibre-web/config:/config
       - /mnt/media/books:/books
