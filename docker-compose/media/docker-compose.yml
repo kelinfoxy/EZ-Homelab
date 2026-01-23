@@ -42,6 +42,12 @@ services:
       - PUID=${PUID:-1000}
       - PGID=${PGID:-1000}
       - TZ=${TZ:-America/New_York}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8096/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     # Uncomment for hardware transcoding
     # devices:
     #   - /dev/dri:/dev/dri
@@ -51,6 +57,7 @@ services:
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME:-debian}-jellyfin"
       - "sablier.start-on-demand=true"
+      - "sablier.theme=hacker-terminal"
       # Traefik labels - NO Authelia for app access
       - "traefik.enable=true"
       - "traefik.http.routers.jellyfin.rule=Host(`jellyfin.${DOMAIN}`)"
