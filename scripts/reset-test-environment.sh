@@ -91,22 +91,8 @@ fi
 
 echo ""
 
-# Step 3: Remove all Docker images (optional but thorough cleanup)
-log_info "Step 3/6: Removing all Docker images..."
-
-ALL_IMAGES=$(docker images -q 2>/dev/null || true)
-
-if [ -n "$ALL_IMAGES" ]; then
-    log_info "Found Docker images to remove..."
-    docker rmi -f $ALL_IMAGES 2>/dev/null && log_success "All Docker images removed" || log_warning "Some images may not have been removed"
-else
-    log_info "No Docker images found to remove"
-fi
-
-echo ""
-
-# Step 4: Remove Docker volumes
-log_info "Step 4/6: Removing all Docker volumes..."
+# Step 3: Remove Docker volumes
+log_info "Step 3/6: Removing all Docker volumes..."
 
 ALL_VOLUMES=$(docker volume ls -q 2>/dev/null || true)
 
@@ -119,8 +105,8 @@ fi
 
 echo ""
 
-# Step 5: Remove Docker networks
-log_info "Step 5/6: Removing all Docker networks..."
+# Step 4: Remove Docker networks
+log_info "Step 4/6: Removing all Docker networks..."
 
 ALL_NETWORKS=$(docker network ls -q 2>/dev/null | grep -v -E "(bridge|host|none)" || true)
 
@@ -133,8 +119,8 @@ fi
 
 echo ""
 
-# Step 6: Remove deployment directories
-log_info "Step 6/6: Removing deployment directories..."
+# Step 5: Remove deployment directories
+log_info "Step 5/6: Removing deployment directories..."
 
 if [ -d "/opt/stacks" ]; then
     rm -rf /opt/stacks
@@ -152,8 +138,8 @@ fi
 
 echo ""
 
-# Clean up temporary files
-log_info "Cleaning up temporary files..."
+# Step 6: Clean up temporary files and final cleanup
+log_info "Step 6/6: Cleaning up temporary files..."
 rm -f /tmp/authelia_admin_credentials.tmp
 rm -f /tmp/authelia_password_hash.tmp
 rm -f /tmp/nvidia*.log
@@ -161,10 +147,10 @@ log_success "Temporary files cleaned"
 
 echo ""
 
-# Final Docker system cleanup
+# Final Docker system cleanup (keeps images)
 log_info "Performing final Docker system cleanup..."
-docker system prune -f --volumes 2>&1 | grep -E "(Deleted|Total reclaimed)" || true
-log_success "Docker system cleanup complete"
+docker system prune -f 2>&1 | grep -E "(Deleted|Total reclaimed)" || true
+log_success "Docker system cleanup complete (images preserved)"
 
 echo ""
 
@@ -182,5 +168,6 @@ echo "  3. Run: sudo ./deploy-homelab.sh"
 echo ""
 log_info "Note: Docker and system packages are NOT removed"
 log_info "User groups and firewall settings are preserved"
-log_warning "WARNING: All containers, images, volumes, and deployment directories have been removed"
+log_warning "WARNING: All containers, volumes, networks, and deployment directories have been removed"
+log_info "Docker images are preserved for faster redeployment"
 echo ""
