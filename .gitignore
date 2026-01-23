@@ -71,6 +71,9 @@ yarn-error.log*
 *.pfx
 acme.json
 
+# Nextcloud application files (should be mounted via volumes)
+docker-compose/productivity/nextcloud/html/
+
 # Monitoring data (if stored locally)
 prometheus-data/
 grafana-data/
