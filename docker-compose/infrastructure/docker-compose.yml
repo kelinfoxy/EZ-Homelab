@@ -4,6 +4,11 @@
 # NOTE: Traefik, Authelia, DuckDNS, and Gluetun have their own separate stacks
 # See /opt/stacks/traefik/, /opt/stacks/authelia/, etc.
 
+# RESTART POLICY GUIDE:
+# - unless-stopped: Core infrastructure services that should always run
+# - no: Services with Sablier lazy loading (start on-demand)
+# - See individual service comments for specific reasoning
+
 # Service Access URLs:
 # - Portainer: https://portainer.${DOMAIN}
 # - Pi-hole: https://pihole.${DOMAIN}
@@ -13,6 +18,7 @@
 
 services:
   dockerproxy:
+    # Docker socket proxy for security - provides safe Docker API access, must always run
     image: tecnativa/docker-socket-proxy:latest
     container_name: dockerproxy
     privileged: true
@@ -33,6 +39,7 @@ services:
 
   # Pi-hole - Network-wide ad blocker and DNS server
   # Access at: https://pihole.${DOMAIN}
+  # DNS service must always run for network-wide ad blocking
   pihole:
     image: pihole/pihole:2024.01.0
     deploy:
@@ -77,14 +84,6 @@ services:
       - "x-dockge.url=https://pihole.${DOMAIN}"
 
   # Watchtower - Automatic container updates
-  # TEMPORARILY DISABLED: Docker API version incompatibility with Docker 29.x
-  # Watchtower versions have API compatibility issues:
-  # - v1.7.1: Uses API v1.25 (too old for Docker 29.x which requires min v1.44)
-  # - v1.7.2+/latest: Has issues with API negotiation
-  # Issue tracked for resolution in future release
-  # To enable: Uncomment service below and run: docker compose up -d watchtower
-  # 
-  # Watchtower - Automatic container updates
   # Monitors and updates Docker containers to latest versions
   # Runs daily at 4 AM
   watchtower:
@@ -108,6 +107,7 @@ services:
 
   # Dozzle - Real-time Docker log viewer
   # Access at: https://dozzle.${DOMAIN}
+  # Uses Sablier lazy loading - starts on-demand, stops after 30min inactivity
   dozzle:
     image: amir20/dozzle:latest
     deploy:
@@ -133,6 +133,9 @@ services:
     labels:
       - "homelab.category=infrastructure"
       - "homelab.description=Real-time Docker log viewer"
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME:-debian}-dozzle"
+      - "sablier.start-on-demand=true"
       - "traefik.enable=true"
       - "traefik.http.routers.dozzle.rule=Host(`dozzle.${DOMAIN}`)"
       - "traefik.http.routers.dozzle.entrypoints=websecure"
@@ -142,6 +145,7 @@ services:
 
   # Glances - System monitoring
   # Access at: https://glances.${DOMAIN}
+  # Uses Sablier lazy loading - starts on-demand, stops after 30min inactivity
   glances:
     image: nicolargo/glances:latest-full
     deploy:
@@ -167,6 +171,9 @@ services:
     labels:
       - "homelab.category=infrastructure"
       - "homelab.description=System and Docker monitoring"
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME:-debian}-glances"
+      - "sablier.start-on-demand=true"
       - "traefik.enable=true"
       - "traefik.http.routers.glances.rule=Host(`glances.${DOMAIN}`)"
       - "traefik.http.routers.glances.entrypoints=websecure"
@@ -176,6 +183,7 @@ services:
 
   # Code Server - VS Code in browser
   # Access at: https://code.${DOMAIN}
+  # Uses Sablier lazy loading - starts on-demand, stops after 30min inactivity
   code-server:
     image: lscr.io/linuxserver/code-server:latest
     deploy:
@@ -205,6 +213,9 @@ services:
     labels:
       - "homelab.category=infrastructure"
       - "homelab.description=VS Code in browser"
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME:-debian}-code-server"
+      - "sablier.start-on-demand=true"
       - "traefik.enable=true"
       - "traefik.http.routers.code-server.rule=Host(`code.${DOMAIN}`)"
       - "traefik.http.routers.code-server.entrypoints=websecure"

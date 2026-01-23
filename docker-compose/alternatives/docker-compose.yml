@@ -3,10 +3,16 @@
 # Deploy manually through Dockge if you want to use these alternatives
 # Place in /opt/stacks/alternatives/docker-compose.yml
 
+# RESTART POLICY GUIDE:
+# - unless-stopped: Core infrastructure services that should always run
+# - no: Services with Sablier lazy loading (start on-demand)
+# - See individual service comments for specific reasoning
+
 services:
   # Portainer - Docker management UI (Alternative to Dockge)
   # Access at: https://portainer.${DOMAIN}
   # NOTE: Dockge is the default Docker management UI. Deploy Portainer only if you prefer its interface
+  # Docker management interface should always run when deployed
   portainer:
     image: portainer/portainer-ce:2.19.4
     container_name: portainer
@@ -33,6 +39,7 @@ services:
   # Access at: https://authentik.${DOMAIN}
   # NOTE: Authelia is the default SSO. Deploy Authentik only if you need a web UI for user management
   # WARNING: Do not run both Authelia and Authentik at the same time
+  # SSO service should always run when deployed as alternative to Authelia
   authentik-server:
     image: ghcr.io/goauthentik/server:2024.2.0
     container_name: authentik-server
@@ -66,6 +73,7 @@ services:
       - authentik-redis
 
   # Authentik Worker - Background task processor
+  # SSO background worker should always run when Authentik is deployed
   authentik-worker:
     image: ghcr.io/goauthentik/server:2024.2.0
     container_name: authentik-worker
@@ -93,6 +101,7 @@ services:
       - authentik-redis
 
   # Authentik Database - PostgreSQL
+  # Database must always run for Authentik to function
   authentik-db:
     image: postgres:16-alpine
     container_name: authentik-db
@@ -115,6 +124,7 @@ services:
       retries: 5
 
   # Authentik Redis - Cache and message queue
+  # Cache service must always run for Authentik performance
   authentik-redis:
     image: redis:7-alpine
     container_name: authentik-redis
@@ -136,6 +146,7 @@ services:
   # Plex Media Server - Alternative to Jellyfin
   # Access at: https://plex.yourdomain.duckdns.org
   # NOTE: No Authelia - allows app access from Roku, Fire TV, mobile, etc.
+  # Media server should always run when deployed as alternative to Jellyfin
   plex:
     image: plexinc/pms-docker:1.40.0.7998-f68041501
     container_name: plex

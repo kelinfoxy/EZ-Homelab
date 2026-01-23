@@ -2,6 +2,10 @@
 # Default Services for media management and streaming
 # Place in /opt/stacks/media/docker-compose.yml
 
+# RESTART POLICY GUIDE:
+# - unless-stopped: Core infrastructure services that should always run
+# - no: Services with Sablier lazy loading (start on-demand)
+# - See individual service comments for specific reasoning
 
 # Service Access URLs:
 # - Jellyfin: https://jellyfin.${DOMAIN} (no SSO - app access)
@@ -12,6 +16,7 @@ services:
   # Jellyfin - Open-source media streaming server
   # Access at: https://jellyfin.yourdomain.duckdns.org
   # NOTE: No Authelia - allows app access from Roku, Fire TV, mobile, etc.
+  # Uses Sablier lazy loading - starts on-demand, stops after 30min inactivity
   jellyfin:
     image: jellyfin/jellyfin:10.8.13
     deploy:
@@ -43,6 +48,9 @@ services:
     labels:
       - "homelab.category=media"
       - "homelab.description=Open-source media streaming server"
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME:-debian}-jellyfin"
+      - "sablier.start-on-demand=true"
       # Traefik labels - NO Authelia for app access
       - "traefik.enable=true"
       - "traefik.http.routers.jellyfin.rule=Host(`jellyfin.${DOMAIN}`)"
@@ -50,7 +58,6 @@ services:
       - "traefik.http.routers.jellyfin.tls=true"
       - "traefik.http.routers.jellyfin.tls.certresolver=letsencrypt"
       - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
-      - "x-dockge.url=https://jellyfin.${DOMAIN}"
       - "x-dockge.url=https://jellyfin.${DOMAIN}"
 
   # Calibre-Web - Ebook reader and server

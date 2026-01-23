@@ -1,10 +1,10 @@
 http:
   middlewares:
-    sablier-jarvis-arr:
+    sablier-debian-arr:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: jarvis-arr
+          group: debian-arr
           sessionDuration: 30m
           ignoreUserAgent: curl
           dynamic:
@@ -12,11 +12,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-jarvis-backrest:
+    sablier-debian-backrest:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: jarvis-backrest
+          group: debian-backrest
           sessionDuration: 30m
           ignoreUserAgent: curl
           dynamic:
@@ -24,11 +24,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-jarvis-bookstack:
+    sablier-debian-bookstack:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: jarvis-bookstack
+          group: debian-bookstack
           sessionDuration: 30m
           ignoreUserAgent: curl
           dynamic:
@@ -36,11 +36,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-jarvis-jellyfin:
+    sablier-debian-jellyfin:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: jarvis-jellyfin
+          group: debian-jellyfin
           sessionDuration: 30m
           ignoreUserAgent: curl
           dynamic:
@@ -48,11 +48,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-jarvis-calibre-web:
+    sablier-debian-calibre-web:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: jarvis-calibre-web
+          group: debian-calibre-web
           sessionDuration: 30m
           ignoreUserAgent: curl
           dynamic:
@@ -60,11 +60,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-jarvis-code-server:
+    sablier-debian-code-server:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: jarvis-code-server
+          group: debian-code-server
           sessionDuration: 30m
           ignoreUserAgent: curl
           dynamic:
@@ -72,11 +72,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-jarvis-bitwarden:
+    sablier-debian-bitwarden:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: jarvis-bitwarden
+          group: debian-bitwarden
           sessionDuration: 30m
           ignoreUserAgent: curl
           dynamic:
@@ -84,11 +84,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-jarvis-wordpress:
+    sablier-debian-wordpress:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: jarvis-wordpress
+          group: debian-wordpress
           sessionDuration: 30m
           ignoreUserAgent: curl
           dynamic:
@@ -96,11 +96,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-jarvis-nextcloud:
+    sablier-debian-nextcloud:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: jarvis-nextcloud
+          group: debian-nextcloud
           sessionDuration: 30m
           ignoreUserAgent: curl
           dynamic:
@@ -108,11 +108,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-jarvis-mediawiki:
+    sablier-debian-mediawiki:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: jarvis-mediawiki
+          group: debian-mediawiki
           sessionDuration: 30m
           ignoreUserAgent: curl
           dynamic:
@@ -120,11 +120,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-jarvis-mealie:
+    sablier-debian-mealie:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: jarvis-mealie
+          group: debian-mealie
           sessionDuration: 30m
           ignoreUserAgent: curl
           dynamic:
@@ -132,11 +132,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-jarvis-gitea:
+    sablier-debian-gitea:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: jarvis-gitea
+          group: debian-gitea
           sessionDuration: 30m
           ignoreUserAgent: curl
           dynamic:
@@ -144,11 +144,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-jarvis-formio:
+    sablier-debian-formio:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: jarvis-formio
+          group: debian-formio
           sessionDuration: 30m
           ignoreUserAgent: curl
           dynamic:
@@ -156,11 +156,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-jarvis-dozzle:
+    sablier-debian-dozzle:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: jarvis-dozzle
+          group: debian-dozzle
           sessionDuration: 30m
           ignoreUserAgent: curl
           dynamic:
@@ -168,11 +168,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-jarvis-duplicati:
+    sablier-debian-duplicati:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: jarvis-duplicati
+          group: debian-duplicati
           sessionDuration: 30m
           ignoreUserAgent: curl
           dynamic:
@@ -180,11 +180,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-jarvis-glances:
+    sablier-debian-glances:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: jarvis-glances
+          group: debian-glances
           sessionDuration: 30m
           ignoreUserAgent: curl
           dynamic:
@@ -192,11 +192,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-jarvis-homarr:
+    sablier-debian-homarr:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: jarvis-homarr
+          group: debian-homarr
           sessionDuration: 30m
           ignoreUserAgent: curl
           dynamic:
@@ -204,11 +204,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-jarvis-komodo:
+    sablier-debian-komodo:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: jarvis-komodo
+          group: debian-komodo
           sessionDuration: 30m
           ignoreUserAgent: curl
           dynamic:
@@ -217,11 +217,11 @@ http:
             show-details-by-default: true
 
 
-    sablier-jarvis-kopia:
+    sablier-debian-kopia:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: jarvis-kopia
+          group: debian-kopia
           sessionDuration: 30m
           ignoreUserAgent: curl
           dynamic:
@@ -229,11 +229,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-jarvis-openkm:
+    sablier-debian-openkm:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: jarvis-openkm
+          group: debian-openkm
           sessionDuration: 30m
           ignoreUserAgent: curl
           dynamic:
@@ -241,11 +241,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-jarvis-openwebui:
+    sablier-debian-openwebui:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: jarvis-openwebui
+          group: debian-openwebui
           sessionDuration: 30m
           ignoreUserAgent: curl
           dynamic:
@@ -253,11 +253,11 @@ http:
             theme: ghost
             show-details-by-default: true
             
-    sablier-jarvis-pulse:
+    sablier-debian-pulse:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: jarvis-pulse
+          group: debian-pulse
           sessionDuration: 30m
           ignoreUserAgent: curl
           dynamic:
@@ -265,11 +265,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-jarvis-tdarr:
+    sablier-debian-tdarr:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: jarvis-tdarr
+          group: debian-tdarr
           sessionDuration: 30m
           ignoreUserAgent: curl
           dynamic:
@@ -277,11 +277,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-jarvis-unmanic:
+    sablier-debian-unmanic:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: jarvis-unmanic
+          group: debian-unmanic
           sessionDuration: 30m
           ignoreUserAgent: curl
           dynamic:
@@ -289,11 +289,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-jarvis-dokuwiki:
+    sablier-debian-dokuwiki:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: jarvis-dokuwiki  
+          group: debian-dokuwiki  
           sessionDuration: 30m
           ignoreUserAgent: curl
           dynamic:

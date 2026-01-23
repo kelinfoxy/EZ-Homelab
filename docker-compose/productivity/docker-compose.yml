@@ -1,6 +1,11 @@
 # Productivity and Content Management Services
 # Place in /opt/stacks/productivity/docker-compose.yml
 
+# RESTART POLICY GUIDE:
+# - unless-stopped: Core infrastructure services that should always run
+# - no: Services with Sablier lazy loading (start on-demand)
+# - See individual service comments for specific reasoning
+
 # Service Access URLs:
 # - Nextcloud: https://nextcloud.${DOMAIN}
 # - Mealie: https://mealie.${DOMAIN}
@@ -13,6 +18,7 @@
 services:
   # Nextcloud - File sync and collaboration
   # Access at: https://nextcloud.${DOMAIN}
+  # File storage service should always run for continuous sync
   nextcloud:
     image: nextcloud:28
     deploy:
@@ -208,6 +214,7 @@ services:
 
   # DokuWiki - Wiki without database
   # Access at: https://wiki.${DOMAIN}
+  # Uses Sablier lazy loading - starts on-demand, stops after 30min inactivity
   dokuwiki:
     image: lscr.io/linuxserver/dokuwiki:latest
     container_name: dokuwiki
@@ -224,6 +231,9 @@ services:
     labels:
       - "homelab.category=productivity"
       - "homelab.description=File-based wiki"
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME:-debian}-dokuwiki"
+      - "sablier.start-on-demand=true"
       - "traefik.enable=true"
       - "traefik.http.routers.dokuwiki.rule=Host(`dokuwiki.${DOMAIN}`)"
       - "traefik.http.routers.dokuwiki.entrypoints=websecure"

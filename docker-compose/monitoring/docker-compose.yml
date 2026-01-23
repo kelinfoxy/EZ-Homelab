@@ -2,6 +2,11 @@
 # Services for monitoring your homelab infrastructure
 # Place in /opt/stacks/monitoring/docker-compose.yml
 
+# RESTART POLICY GUIDE:
+# - unless-stopped: Core infrastructure services that should always run
+# - no: Services with Sablier lazy loading (start on-demand)
+# - See individual service comments for specific reasoning
+
 # Service Access URLs:
 # - Prometheus: http://server-ip:9090 (or configure Traefik)
 # - Grafana: http://server-ip:3000 (or configure Traefik)

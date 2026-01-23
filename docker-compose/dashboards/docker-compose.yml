@@ -2,6 +2,11 @@
 # Homepage and Homarr for homelab dashboards
 # Place in /opt/stacks/dashboards/docker-compose.yml
 
+# RESTART POLICY GUIDE:
+# - unless-stopped: Core infrastructure services that should always run
+# - no: Services with Sablier lazy loading (start on-demand)
+# - See individual service comments for specific reasoning
+
 # Service Access URLs:
 # - Homepage: https://home.${DOMAIN}
 # - Homarr: https://homarr.${DOMAIN}
@@ -9,6 +14,7 @@
 services:
   # Homepage - Application dashboard (AI-configurable via YAML)
   # Access at: https://home.${DOMAIN}
+  # Dashboard service should always run for quick access to service overview
   homepage:
     image: ghcr.io/gethomepage/homepage:latest
     deploy:
@@ -46,6 +52,7 @@ services:
 
   # Homarr - Modern dashboard
   # Access at: https://homarr.${DOMAIN}
+  # Uses Sablier lazy loading - starts on-demand, stops after 30min inactivity
   homarr:
     image: ghcr.io/ajnart/homarr:latest
     deploy:
@@ -72,6 +79,9 @@ services:
     labels:
       - "homelab.category=dashboard"
       - "homelab.description=Modern homelab dashboard"
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME:-debian}-homarr"
+      - "sablier.start-on-demand=true"
       - "traefik.enable=true"
       - "traefik.http.routers.homarr.rule=Host(`homarr.${DOMAIN}`)"
       - "traefik.http.routers.homarr.entrypoints=websecure"

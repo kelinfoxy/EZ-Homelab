@@ -2,12 +2,18 @@
 # Docker Compose Stack Manager
 # Place in /opt/dockge/docker-compose.yml
 
+# RESTART POLICY GUIDE:
+# - unless-stopped: Core infrastructure services that should always run
+# - no: Services with Sablier lazy loading (start on-demand)
+# - See individual service comments for specific reasoning
+
 # Service Access URLs:
 # - Dockge: https://dockge.${DOMAIN}
 
 services:
   # Dockge - Docker Compose Stack Manager (PRIMARY - preferred over Portainer)
   # Access at: https://dockge.${DOMAIN}
+  # Stack management interface should always run for container management
   dockge:
     image: louislam/dockge:1
     deploy:

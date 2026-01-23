@@ -1,6 +1,11 @@
 # Backup and Utility Services
 # Place in /opt/stacks/utilities/docker-compose.yml
 
+# RESTART POLICY GUIDE:
+# - unless-stopped: Core infrastructure services that should always run
+# - no: Services with Sablier lazy loading (start on-demand)
+# - See individual service comments for specific reasoning
+
 # Service Access URLs:
 # - Backrest: https://backrest.${DOMAIN}
 # - Duplicati: https://duplicati.${DOMAIN}

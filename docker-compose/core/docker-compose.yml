@@ -1,3 +1,16 @@
+# Core Infrastructure Services
+# These services form the foundation of the homelab and should always be running
+# Place in /opt/stacks/core/docker-compose.yml
+
+# RESTART POLICY GUIDE:
+# - unless-stopped: Core infrastructure services that should always run
+# - no: Services with Sablier lazy loading (start on-demand)
+# - See individual service comments for specific reasoning
+
+# Service Access URLs:
+# - Traefik Dashboard: https://traefik.${DOMAIN}
+# - Authelia: https://auth.${DOMAIN}
+
 x-dockge:
   urls:
     - https://auth.${DOMAIN}
@@ -5,6 +18,7 @@ x-dockge:
 services:
   
   duckdns:
+    # Dynamic DNS service - must always run to maintain domain resolution
     image: lscr.io/linuxserver/duckdns:latest
     container_name: duckdns
     restart: unless-stopped
@@ -20,6 +34,7 @@ services:
       - traefik-network
   
   traefik:
+    # Reverse proxy and SSL termination - core routing service, must always run
     image: traefik:v3
     container_name: traefik
     restart: unless-stopped
@@ -49,6 +64,7 @@ services:
       - "x-dockge.url=https://traefik.${DOMAIN}"
 
   authelia:
+    # Single sign-on authentication service - must always run for user authentication
     image: authelia/authelia:latest
     container_name: authelia
     restart: unless-stopped
@@ -74,6 +90,7 @@ services:
       - x-dockge.url=https://auth.${DOMAIN}
 
   # Sablier - Lazy loading service for Docker containers
+  # Controls startup/shutdown of lazy-loaded services, must always run
   sablier-service:
     image: sablierapp/sablier:latest
     container_name: sablier-service

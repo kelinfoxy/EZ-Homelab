@@ -218,6 +218,23 @@ if [ "$DEPLOY_CORE" = true ]; then
     fi
     cp -r "$REPO_DIR/config-templates/traefik" /opt/stacks/core/
 
+    # Detect server hostname and update configuration
+    log_info "Detecting server hostname..."
+    DETECTED_HOSTNAME=$(hostname)
+    if [ -n "$DETECTED_HOSTNAME" ] && [ "$DETECTED_HOSTNAME" != "debian" ]; then
+        log_info "Detected hostname: $DETECTED_HOSTNAME"
+        # Update SERVER_HOSTNAME in the copied .env file
+        sed -i "s/SERVER_HOSTNAME=.*/SERVER_HOSTNAME=$DETECTED_HOSTNAME/" /opt/stacks/core/.env
+        # Update SERVER_HOSTNAME in the source .env file for future deployments
+        sed -i "s/SERVER_HOSTNAME=.*/SERVER_HOSTNAME=$DETECTED_HOSTNAME/" "$REPO_DIR/.env"
+        # Update sablier.yml with detected hostname
+        sed -i "s/debian-/$DETECTED_HOSTNAME-/g" /opt/stacks/core/traefik/dynamic/sablier.yml
+        log_success "Updated configuration with detected hostname: $DETECTED_HOSTNAME"
+    else
+        log_info "Using default hostname 'debian' (hostname detection failed or returned default)"
+    fi
+    echo ""
+
     if [ -d "/opt/stacks/core/authelia" ]; then
         log_warning "Authelia configuration already exists in /opt/stacks/core/"
         log_info "Creating backup: authelia.backup.$(date +%Y%m%d_%H%M%S)"

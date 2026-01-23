@@ -2,12 +2,18 @@
 # VPN client and VPN-routed download clients
 # Place in /opt/stacks/vpn/docker-compose.yml
 
+# RESTART POLICY GUIDE:
+# - unless-stopped: Core infrastructure services that should always run
+# - no: Services with Sablier lazy loading (start on-demand)
+# - See individual service comments for specific reasoning
+
 # Service Access URLs:
 # - qBittorrent: https://qbit.${DOMAIN}
 
 services:
   # Gluetun - VPN client (Surfshark)
   # Routes download clients through VPN for security
+  # VPN service should always run to maintain secure connections
   gluetun:
     image: qmcgaw/gluetun:latest
     container_name: gluetun
