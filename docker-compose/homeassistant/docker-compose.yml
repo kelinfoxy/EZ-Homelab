@@ -98,8 +98,14 @@ services:
     environment:
       - TZ=${TZ}
     labels:
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
       - "homelab.category=iot"
       - "homelab.description=Tasmota device management"
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.http.routers.tasmoadmin.rule=Host(`tasmoadmin.${DOMAIN}`)"
       - "traefik.http.routers.tasmoadmin.entrypoints=websecure"
@@ -124,8 +130,14 @@ services:
     environment:
       - TZ=${TZ}
     labels:
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
       - "homelab.category=iot"
       - "homelab.description=Video surveillance system"
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.http.routers.motioneye.rule=Host(`motioneye.${DOMAIN}`)"
       - "traefik.http.routers.motioneye.entrypoints=websecure"
@@ -158,8 +170,14 @@ services:
     environment:
       - TZ=${TZ}
     labels:
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
       - "homelab.category=iot"
       - "homelab.description=Flow-based automation programming"
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.http.routers.nodered.rule=Host(`nodered.${DOMAIN}`)"
       - "traefik.http.routers.nodered.entrypoints=websecure"
