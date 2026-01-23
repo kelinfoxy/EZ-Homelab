@@ -106,6 +106,12 @@ services:
 
   # Sablier - Lazy loading service for Docker containers
   # Controls startup/shutdown of lazy-loaded services, must always run
+  # REQUIREMENTS FOR DOCKER API ACCESS:
+  # 1. Docker daemon must be configured to listen on TCP port 2375
+  # 2. DOCKER_HOST environment variable must point to accessible Docker API endpoint
+  # 3. Firewall must allow TCP connections to Docker API port (default 2375)
+  # 4. For production, consider using TLS for Docker API communication
+  # 5. Ensure dockerproxy service is running and accessible
   sablier-service:
     image: sablierapp/sablier:latest
     container_name: sablier-service
@@ -114,7 +120,7 @@ services:
       - traefik-network
     environment:
       - SABLIER_PROVIDER=docker
-      - SABLIER_DOCKER_API_VERSION=1.53
+      - SABLIER_DOCKER_API_VERSION=1.51
       - SABLIER_DOCKER_NETWORK=traefik-network
       - SABLIER_LOG_LEVEL=debug
       - DOCKER_HOST=tcp://192.168.4.11:2375

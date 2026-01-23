@@ -41,15 +41,24 @@ services:
       - OPENVPN_PASSWORD=${SURFSHARK_PASSWORD}
       - SERVER_COUNTRIES=${VPN_SERVER_COUNTRIES:-Netherlands}
       - TZ=${TZ}
+    # TRAEFIK CONFIGURATION
     labels:
+      # Service metadata
+      - "com.centurylinklabs.watchtower.enable=true"
       - "homelab.category=downloaders"
       - "homelab.description=VPN client for secure downloads"
       - "traefik.enable=true"
+      # Router configuration
       - "traefik.http.routers.qbittorrent.rule=Host(`qbit.${DOMAIN}`)"
       - "traefik.http.routers.qbittorrent.entrypoints=websecure"
       - "traefik.http.routers.qbittorrent.tls=true"
       - "traefik.http.routers.qbittorrent.middlewares=authelia@docker"
-      - "traefik.http.services.qbittorrent.loadbalancer.server.port=8080"
+      # Service configuration
+      - "traefik.http.services.qbittorrent.loadbalancer.server.port=8081"
+      # Sablier configuration
+      - "sablier.enable=true"
+      - "sablier.group=qbittorrent"
+      - "sablier.sessionDuration=1h"
 
   # qBittorrent - Torrent client
   # Routes through Gluetun VPN

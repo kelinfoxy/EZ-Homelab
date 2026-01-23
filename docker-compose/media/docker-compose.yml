@@ -55,23 +55,21 @@ services:
     # Uncomment for hardware transcoding
     # devices:
     #   - /dev/dri:/dev/dri
+    # TRAEFIK CONFIGURATION
     labels:
-      # TRAEFIK & SABLIER CONFIGURATION
-      # ==========================================
       # Service metadata
+      - "com.centurylinklabs.watchtower.enable=true"
       - "homelab.category=media"
       - "homelab.description=Open-source media streaming server"
-      # Traefik reverse proxy (comment/uncomment to disable/enable)
-      # If Traefik is on a remote server: these labels are NOT USED; 
-      #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
+      # Router configuration
       - "traefik.http.routers.jellyfin.rule=Host(`jellyfin.${DOMAIN}`)"
       - "traefik.http.routers.jellyfin.entrypoints=websecure"
       - "traefik.http.routers.jellyfin.tls=true"
       - "traefik.http.routers.jellyfin.tls.certresolver=letsencrypt"
-      # - "traefik.http.routers.jellyfin.middlewares=authelia@docker"  # Disabled for app access
+      # Service configuration
       - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
-      # Sablier lazy loading (enabled by default - comment out to disable)
+      # Sablier configuration
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME:-debian}-jellyfin"
       - "sablier.start-on-demand=true"
@@ -106,22 +104,21 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ:-America/New_York}
       - DOCKER_MODS=linuxserver/mods:universal-calibre
+    # TRAEFIK CONFIGURATION
     labels:
-      # TRAEFIK & SABLIER CONFIGURATION
-      # ==========================================
       # Service metadata
+      - "com.centurylinklabs.watchtower.enable=true"
       - "homelab.category=media"
       - "homelab.description=Ebook reader and library management"
-      # Traefik reverse proxy (comment/uncomment to disable/enable)
-      # If Traefik is on a remote server: these labels are NOT USED; 
-      #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
+      # Router configuration
       - "traefik.http.routers.calibre.rule=Host(`calibre.${DOMAIN}`)"
       - "traefik.http.routers.calibre.entrypoints=websecure"
       - "traefik.http.routers.calibre.tls.certresolver=letsencrypt"
       - "traefik.http.routers.calibre.middlewares=authelia@docker"
+      # Service configuration
       - "traefik.http.services.calibre.loadbalancer.server.port=8083"
-      # Sablier lazy loading (disabled by default - uncomment to enable)
+      # Sablier configuration (disabled by default)
       # - "sablier.enable=true"
       # - "sablier.group=${SERVER_HOSTNAME:-debian}-calibre-web"
       # - "sablier.start-on-demand=true"

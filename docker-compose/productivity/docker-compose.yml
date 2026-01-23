@@ -77,7 +77,6 @@ services:
       - "sablier.start-on-demand=true"
 
   nextcloud-db:
-    restart: unless-stopped
     image: mariadb:10.11
     container_name: nextcloud-db
     restart: no
@@ -176,7 +175,6 @@ services:
       - "sablier.start-on-demand=true"
 
   wordpress-db:
-    restart: unless-stopped
     image: mariadb:10.11
     container_name: wordpress-db
     restart: no
@@ -249,7 +247,6 @@ services:
       - "sablier.start-on-demand=true"
 
   gitea-db:
-    restart: unless-stopped
     image: postgres:14-alpine
     container_name: gitea-db
     restart: no
@@ -351,7 +348,6 @@ services:
       - "sablier.start-on-demand=true"
 
   bookstack-db:
-    restart: unless-stopped
     image: mariadb:10.11
     container_name: bookstack-db
     restart: no
@@ -411,7 +407,6 @@ services:
       - "sablier.start-on-demand=true"
 
   mediawiki-db:
-    restart: unless-stopped
     image: mariadb:10.11
     container_name: mediawiki-db
     restart: no
@@ -456,14 +451,20 @@ services:
     #   - NVIDIA_VISIBLE_DEVICES=all
     #   - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     labels:
-      - homelab.category=productivity
-      - homelab.description=Jupyter Lab for data science and ML
-      - traefik.enable=true
-      - traefik.http.routers.jupyter.rule=Host(`jupyter.${DOMAIN}`)
-      - traefik.http.routers.jupyter.entrypoints=websecure
-      - traefik.http.routers.jupyter.tls.certresolver=letsencrypt
-      - traefik.http.routers.jupyter.middlewares=authelia@docker
-      - traefik.http.services.jupyter.loadbalancer.server.port=8888
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
+      - "homelab.category=productivity"
+      - "homelab.description=Jupyter Lab for data science and ML"
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
+      - "traefik.enable=true"
+      - "traefik.http.routers.jupyter.rule=Host(`jupyter.${DOMAIN}`)"
+      - "traefik.http.routers.jupyter.entrypoints=websecure"
+      - "traefik.http.routers.jupyter.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.jupyter.middlewares=authelia@docker"
+      - "traefik.http.services.jupyter.loadbalancer.server.port=8888"
 
 volumes:
   nextcloud-db-data:
