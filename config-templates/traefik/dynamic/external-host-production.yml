@@ -87,7 +87,7 @@ http:
         - authelia@docker
 
     dozzle-${SERVER_HOSTNAME}:
-      rule: "Host(`dozzle.${DOMAIN}`)"
+      rule: "Host(`dozzle.${SERVER_HOSTNAME}.${DOMAIN}`)"
       entryPoints:
         - websecure
       service: dozzle-${SERVER_HOSTNAME}
