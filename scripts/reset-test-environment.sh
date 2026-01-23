@@ -46,7 +46,8 @@ echo "=========================================="
 log_warning "AI-Homelab Test Environment Reset"
 echo "=========================================="
 echo ""
-log_warning "This will safely remove all deployed services and data"
+log_warning "This will COMPLETELY remove all deployed services, containers, images, volumes, and data"
+log_warning "This includes removing /opt/stacks and /opt/dockge directories"
 log_warning "This is intended for testing - DO NOT use in production!"
 echo ""
 read -p "Are you sure you want to reset? (type 'yes' to continue): " CONFIRM
@@ -60,102 +61,111 @@ echo ""
 log_info "Starting safe cleanup process..."
 echo ""
 
-# Step 1: Stop all Docker Compose stacks gracefully
-log_info "Step 1/7: Stopping all Docker Compose stacks..."
+# Step 1: Stop all running containers
+log_info "Step 1/6: Stopping all running containers..."
 
-if [ -d "/opt/stacks/dashboards" ]; then
-    cd /opt/stacks/dashboards && docker compose down 2>/dev/null || true
-    log_success "Dashboards stack stopped"
-fi
+# Get list of running containers
+RUNNING_CONTAINERS=$(docker ps -q 2>/dev/null || true)
 
-if [ -d "/opt/stacks/infrastructure" ]; then
-    cd /opt/stacks/infrastructure && docker compose down 2>/dev/null || true
-    log_success "Infrastructure stack stopped"
-fi
-
-if [ -d "/opt/stacks/core" ]; then
-    cd /opt/stacks/core && docker compose down 2>/dev/null || true
-    log_success "Core stack stopped"
-fi
-
-# Wait for containers to fully stop
-sleep 3
-log_success "All stacks stopped gracefully"
-echo ""
-
-# Step 2: Preserve SSL certificates for test environment reuse
-log_info "Step 2/7: Preserving SSL certificates..."
-
-if [ -f "/opt/stacks/core/traefik/acme.json" ]; then
-    cp "/opt/stacks/core/traefik/acme.json" "/home/$ACTUAL_USER/AI-Homelab/acme.json" 2>/dev/null && \
-    log_success "SSL certificates preserved in repo folder" || \
-    log_warning "Could not preserve SSL certificates"
+if [ -n "$RUNNING_CONTAINERS" ]; then
+    log_info "Found running containers, stopping them..."
+    docker stop $RUNNING_CONTAINERS 2>/dev/null && log_success "All containers stopped" || log_warning "Some containers may not have stopped cleanly"
 else
-    log_info "No SSL certificates found to preserve"
+    log_info "No running containers found"
 fi
 
 echo ""
 
-# Step 3: Remove Docker volumes (data will be lost)
-log_info "Step 3/7: Removing Docker volumes..."
+# Step 2: Remove all containers
+log_info "Step 2/6: Removing all containers..."
 
-# List volumes to remove
-VOLUMES=$(docker volume ls -q | grep -E "^(core_|infrastructure_|dashboards_)" 2>/dev/null || true)
+# Get list of all containers (running and stopped)
+ALL_CONTAINERS=$(docker ps -a -q 2>/dev/null || true)
 
-if [ -n "$VOLUMES" ]; then
-    echo "$VOLUMES" | while read vol; do
-        docker volume rm "$vol" 2>/dev/null && log_success "Removed volume: $vol" || log_warning "Could not remove volume: $vol"
-    done
+if [ -n "$ALL_CONTAINERS" ]; then
+    log_info "Found containers to remove..."
+    docker rm -f $ALL_CONTAINERS 2>/dev/null && log_success "All containers removed" || log_warning "Some containers may not have been removed"
 else
-    log_info "No homelab volumes found"
+    log_info "No containers found to remove"
 fi
 
 echo ""
 
-# Step 4: Remove stack directories (configs will be regenerated)
-log_info "Step 4/7: Removing stack configuration directories..."
+# Step 3: Remove all Docker images (optional but thorough cleanup)
+log_info "Step 3/6: Removing all Docker images..."
+
+ALL_IMAGES=$(docker images -q 2>/dev/null || true)
+
+if [ -n "$ALL_IMAGES" ]; then
+    log_info "Found Docker images to remove..."
+    docker rmi -f $ALL_IMAGES 2>/dev/null && log_success "All Docker images removed" || log_warning "Some images may not have been removed"
+else
+    log_info "No Docker images found to remove"
+fi
+
+echo ""
+
+# Step 4: Remove Docker volumes
+log_info "Step 4/6: Removing all Docker volumes..."
+
+ALL_VOLUMES=$(docker volume ls -q 2>/dev/null || true)
+
+if [ -n "$ALL_VOLUMES" ]; then
+    log_info "Found Docker volumes to remove..."
+    docker volume rm -f $ALL_VOLUMES 2>/dev/null && log_success "All Docker volumes removed" || log_warning "Some volumes may not have been removed"
+else
+    log_info "No Docker volumes found to remove"
+fi
+
+echo ""
+
+# Step 5: Remove Docker networks
+log_info "Step 5/6: Removing all Docker networks..."
+
+ALL_NETWORKS=$(docker network ls -q 2>/dev/null | grep -v -E "(bridge|host|none)" || true)
+
+if [ -n "$ALL_NETWORKS" ]; then
+    log_info "Found Docker networks to remove..."
+    docker network rm $ALL_NETWORKS 2>/dev/null && log_success "All custom Docker networks removed" || log_warning "Some networks may not have been removed"
+else
+    log_info "No custom Docker networks found to remove"
+fi
+
+echo ""
+
+# Step 6: Remove deployment directories
+log_info "Step 6/6: Removing deployment directories..."
 
 if [ -d "/opt/stacks" ]; then
-    rm -rf /opt/stacks/core
-    rm -rf /opt/stacks/infrastructure  
-    rm -rf /opt/stacks/dashboards
-    log_success "Stack directories removed"
+    rm -rf /opt/stacks
+    log_success "Removed /opt/stacks directory"
 else
-    log_info "No stack directories found"
+    log_info "/opt/stacks directory not found"
 fi
 
-if [ -d "/opt/dockge/data" ]; then
-    rm -rf /opt/dockge/data/*
-    log_success "Dockge data cleared"
+if [ -d "/opt/dockge" ]; then
+    rm -rf /opt/dockge
+    log_success "Removed /opt/dockge directory"
+else
+    log_info "/opt/dockge directory not found"
 fi
 
 echo ""
 
-# Step 5: Clean up temporary files
-log_info "Step 5/7: Cleaning temporary files..."
-
+# Clean up temporary files
+log_info "Cleaning up temporary files..."
 rm -f /tmp/authelia_admin_credentials.tmp
 rm -f /tmp/authelia_password_hash.tmp
-rm -rf /opt/stacks/.setup-temp
 rm -f /tmp/nvidia*.log
 log_success "Temporary files cleaned"
-echo ""
-
-# Step 6: Remove Docker networks
-log_info "Step 6/7: Removing Docker networks..."
-
-docker network rm homelab-network 2>/dev/null && log_success "Removed homelab-network" || log_info "homelab-network not found"
-docker network rm traefik-network 2>/dev/null && log_success "Removed traefik-network" || log_info "traefik-network not found"
-docker network rm dockerproxy-network 2>/dev/null && log_success "Removed dockerproxy-network" || log_info "dockerproxy-network not found"
-docker network rm media-network 2>/dev/null && log_success "Removed media-network" || log_info "media-network not found"
 
 echo ""
 
-# Step 7: Prune unused Docker resources
-log_info "Step 7/7: Pruning unused Docker resources..."
-
+# Final Docker system cleanup
+log_info "Performing final Docker system cleanup..."
 docker system prune -f --volumes 2>&1 | grep -E "(Deleted|Total reclaimed)" || true
-log_success "Docker cleanup complete"
+log_success "Docker system cleanup complete"
+
 echo ""
 
 # Final summary
@@ -164,7 +174,7 @@ log_success "Test environment reset complete!"
 echo "=========================================="
 echo ""
 log_info "System is ready for next round of testing"
-log_info ""
+echo ""
 log_info "Next steps:"
 echo "  1. Ensure .env file is properly configured"
 echo "  2. Run: sudo ./setup-homelab.sh"
@@ -172,4 +182,5 @@ echo "  3. Run: sudo ./deploy-homelab.sh"
 echo ""
 log_info "Note: Docker and system packages are NOT removed"
 log_info "User groups and firewall settings are preserved"
+log_warning "WARNING: All containers, images, volumes, and deployment directories have been removed"
 echo ""
