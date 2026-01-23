@@ -608,12 +608,39 @@ main() {
     echo ""
 
     # Check if system setup is needed
-    if [ "$EUID" -eq 0 ] || ! command -v docker &> /dev/null; then
-        log_info "Docker not found or running as root. Performing system setup first..."
-        system_setup "$@"
-        echo ""
-        log_info "System setup complete. Please log out and back in, then run this script again."
-        exit 0
+    # Only run system setup if Docker is not installed OR if running as root and Docker setup hasn't been done
+    DOCKER_INSTALLED=false
+    if command -v docker &> /dev/null && docker --version &> /dev/null; then
+        DOCKER_INSTALLED=true
+    fi
+
+    # Check if current user is in docker group (or if we're root and will add them)
+    USER_IN_DOCKER_GROUP=false
+    if groups "$USER" 2>/dev/null | grep -q docker; then
+        USER_IN_DOCKER_GROUP=true
+    fi
+
+    if [ "$EUID" -eq 0 ]; then
+        # Running as root - check if we need to do system setup
+        if [ "$DOCKER_INSTALLED" = false ] || [ "$USER_IN_DOCKER_GROUP" = false ]; then
+            log_info "Docker not fully installed or user not in docker group. Performing system setup..."
+            system_setup "$@"
+            echo ""
+            log_info "System setup complete. Please log out and back in, then run this script again."
+            exit 0
+        else
+            log_info "Docker is already installed and user is in docker group. Skipping system setup."
+        fi
+    else
+        # Not running as root
+        if [ "$DOCKER_INSTALLED" = false ]; then
+            log_error "Docker is not installed. Please run this script with sudo to perform system setup."
+            exit 1
+        fi
+        if [ "$USER_IN_DOCKER_GROUP" = false ]; then
+            log_error "Current user is not in the docker group. Please log out and back in, or run with sudo to fix group membership."
+            exit 1
+        fi
     fi
 
     # Prompt for configuration values
