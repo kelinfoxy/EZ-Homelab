@@ -141,7 +141,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "8080:8080"
+      - "8085:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
@@ -158,14 +158,14 @@ services:
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
-      - "traefik.http.routers.dozzle.rule=Host(`dozzle.${DOMAIN}`)"
+      - "traefik.http.routers.dozzle.rule=Host(`dozzle.${SERVER_HOSTNAME}.${DOMAIN}`)"
       - "traefik.http.routers.dozzle.entrypoints=websecure"
       - "traefik.http.routers.dozzle.tls=true"
       - "traefik.http.routers.dozzle.middlewares=authelia@docker"
-      - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
+      - "traefik.http.services.dozzle.loadbalancer.server.port=8085"
       # Sablier lazy loading (enabled by default - comment out to disable)
       - "sablier.enable=true"
-      - "sablier.group=${SERVER_HOSTNAME:-debian}-dozzle"
+      - "sablier.group=${SERVER_HOSTNAME}-dozzle"
       - "sablier.start-on-demand=true"
 
   # Glances - System monitoring
@@ -205,14 +205,14 @@ services:
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
-      - "traefik.http.routers.glances.rule=Host(`glances.${DOMAIN}`)"
+      - "traefik.http.routers.glances.rule=Host(`glances.${SERVER_HOSTNAME}.${DOMAIN}`)"
       - "traefik.http.routers.glances.entrypoints=websecure"
       - "traefik.http.routers.glances.tls=true"
       - "traefik.http.routers.glances.middlewares=authelia@docker"
       - "traefik.http.services.glances.loadbalancer.server.port=61208"
       # Sablier lazy loading (enabled by default - comment out to disable)
       - "sablier.enable=true"
-      - "sablier.group=${SERVER_HOSTNAME:-debian}-glances"
+      - "sablier.group=${SERVER_HOSTNAME}-glances"
       - "sablier.start-on-demand=true"
 
   # Code Server - VS Code in browser
@@ -263,7 +263,7 @@ services:
       - "traefik.http.services.code-server.loadbalancer.server.port=8443"
       # Sablier lazy loading (enabled by default - comment out to disable)
       - "sablier.enable=true"
-      - "sablier.group=${SERVER_HOSTNAME:-debian}-code-server"
+      - "sablier.group=${SERVER_HOSTNAME}-code-server"
       - "sablier.start-on-demand=true"
 
 # ==========================================

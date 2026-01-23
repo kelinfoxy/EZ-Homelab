@@ -73,7 +73,7 @@ services:
       - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
       # Sablier lazy loading (enabled by default - comment out to disable)
       - "sablier.enable=true"
-      - "sablier.group=${SERVER_HOSTNAME:-debian}-nextcloud"
+      - "sablier.group=${SERVER_HOSTNAME}-nextcloud"
       - "sablier.start-on-demand=true"
 
   nextcloud-db:
@@ -130,7 +130,7 @@ services:
       - "traefik.http.services.mealie.loadbalancer.server.port=9000"
       # Sablier lazy loading (enabled by default - comment out to disable)
       - "sablier.enable=true"
-      - "sablier.group=${SERVER_HOSTNAME:-debian}-mealie"
+      - "sablier.group=${SERVER_HOSTNAME}-mealie"
       - "sablier.start-on-demand=true"
 
   # WordPress - Blog/website platform
@@ -171,7 +171,7 @@ services:
       - "traefik.http.services.wordpress.loadbalancer.server.port=80"
       # Sablier lazy loading (enabled by default - comment out to disable)
       - "sablier.enable=true"
-      - "sablier.group=${SERVER_HOSTNAME:-debian}-wordpress"
+      - "sablier.group=${SERVER_HOSTNAME}-wordpress"
       - "sablier.start-on-demand=true"
 
   wordpress-db:
@@ -243,7 +243,7 @@ services:
       - "traefik.http.services.gitea.loadbalancer.server.port=3000"
       # Sablier lazy loading (enabled by default - comment out to disable)
       - "sablier.enable=true"
-      - "sablier.group=${SERVER_HOSTNAME:-debian}-gitea"
+      - "sablier.group=${SERVER_HOSTNAME}-gitea"
       - "sablier.start-on-demand=true"
 
   gitea-db:
@@ -297,7 +297,7 @@ services:
       - "traefik.http.services.dokuwiki.loadbalancer.server.port=80"
       # Sablier lazy loading (enabled by default - comment out to disable)
       - "sablier.enable=true"
-      - "sablier.group=${SERVER_HOSTNAME:-debian}-dokuwiki"
+      - "sablier.group=${SERVER_HOSTNAME}-dokuwiki"
       - "sablier.start-on-demand=true"
 
   # BookStack - Documentation platform
@@ -344,7 +344,7 @@ services:
       - "traefik.http.services.bookstack.loadbalancer.server.port=80"
       # Sablier lazy loading (enabled by default - comment out to disable)
       - "sablier.enable=true"
-      - "sablier.group=${SERVER_HOSTNAME:-debian}-bookstack"
+      - "sablier.group=${SERVER_HOSTNAME}-bookstack"
       - "sablier.start-on-demand=true"
 
   bookstack-db:
@@ -403,7 +403,7 @@ services:
       - "traefik.http.services.mediawiki.loadbalancer.server.port=80"
       # Sablier lazy loading (enabled by default - comment out to disable)
       - "sablier.enable=true"
-      - "sablier.group=${SERVER_HOSTNAME:-debian}-mediawiki"
+      - "sablier.group=${SERVER_HOSTNAME}-mediawiki"
       - "sablier.start-on-demand=true"
 
   mediawiki-db:

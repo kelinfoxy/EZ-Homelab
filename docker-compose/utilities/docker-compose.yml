@@ -60,7 +60,7 @@ services:
       
       # Sablier lazy loading (uncomment to enable)
       - sablier.enable=true
-      - sablier.group=${SERVER_HOSTNAME:-debian}-backrest
+      - sablier.group=${SERVER_HOSTNAME}-backrest
       - sablier.start-on-demand=true
       - "x-dockge.url=https://backrest.${DOMAIN}"
       - "x-dockge.url=https://backrest.${DOMAIN}"

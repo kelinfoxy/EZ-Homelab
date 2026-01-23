@@ -53,7 +53,7 @@ services:
       - "traefik.http.services.homepage.loadbalancer.server.port=3000"
       # Sablier lazy loading (disabled by default - uncomment to enable)
       # - "sablier.enable=true"
-      # - "sablier.group=${SERVER_HOSTNAME:-debian}-homarr"
+      # - "sablier.group=${SERVER_HOSTNAME}-homarr"
       # - "sablier.start-on-demand=true"
 
   # Homarr - Modern dashboard
@@ -100,7 +100,7 @@ services:
       - "traefik.http.services.homarr.loadbalancer.server.port=7575"
       # Sablier lazy loading (enabled by default - comment out to disable)
       - "sablier.enable=true"
-      - "sablier.group=${SERVER_HOSTNAME:-debian}-homarr"
+      - "sablier.group=${SERVER_HOSTNAME}-homarr"
       - "sablier.start-on-demand=true"
 
 # DOCKGE URL CONFIGURATION

@@ -71,7 +71,7 @@ services:
       - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
       # Sablier configuration
       - "sablier.enable=true"
-      - "sablier.group=${SERVER_HOSTNAME:-debian}-jellyfin"
+      - "sablier.group=${SERVER_HOSTNAME}-jellyfin"
       - "sablier.start-on-demand=true"
       - "sablier.theme=hacker-terminal"
 
@@ -120,7 +120,7 @@ services:
       - "traefik.http.services.calibre.loadbalancer.server.port=8083"
       # Sablier configuration (disabled by default)
       # - "sablier.enable=true"
-      # - "sablier.group=${SERVER_HOSTNAME:-debian}-calibre-web"
+      # - "sablier.group=${SERVER_HOSTNAME}-calibre-web"
       # - "sablier.start-on-demand=true"
 
 # ==========================================
