@@ -211,7 +211,7 @@ services:
   dokuwiki:
     image: lscr.io/linuxserver/dokuwiki:latest
     container_name: dokuwiki
-    restart: unless-stopped
+    restart: no
     networks:
       - homelab-network
       - traefik-network

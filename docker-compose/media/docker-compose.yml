@@ -24,7 +24,7 @@ services:
           cpus: '1.0'
           memory: 1G
     container_name: jellyfin
-    restart: unless-stopped
+    restart: no
     networks:
       - media-network
       - homelab-network
