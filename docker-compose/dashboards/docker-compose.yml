@@ -1,22 +1,14 @@
 # Dashboard Services
 # Homepage and Homarr for homelab dashboards
-# Place in /opt/stacks/dashboards/docker-compose.yml
 
 # SABLIER SESSION DURATION: Set to 5m for testing. Increase to 30m for production in config-templates/traefik/dynamic/sablier.yml
 
-# RESTART POLICY GUIDE:
-# - unless-stopped: Core infrastructure services that should always run
-# - no: Services with Sablier lazy loading (start on-demand)
-# - See individual service comments for specific reasoning
-
 # Service Access URLs:
-# - Homepage: https://home.${DOMAIN}
+# - Homepage: https://homepage.${DOMAIN}
 # - Homarr: https://homarr.${DOMAIN}
 
 services:
-  # Homepage - Application dashboard (AI-configurable via YAML)
-  # Access at: https://home.${DOMAIN}
-  # Dashboard service should always run for quick access to service overview
+  # Homepage - Default Application Dashboard
   homepage:
     image: ghcr.io/gethomepage/homepage:latest
     deploy:
@@ -29,7 +21,7 @@ services:
           cpus: '0.25'
           memory: 128M
     container_name: homepage
-    restart: unless-stopped
+    restart: unless-stopped    # change to 'no' to enable Sablier lazy loading
     networks:
       - homelab-network
       - traefik-network
@@ -43,26 +35,28 @@ services:
       - PUID=995  # Must be set to the docker user ID
       - PGID=995  # Must be set to the docker group ID
       - TZ=${TZ}
-      - HOMEPAGE_ALLOWED_HOSTS=home.${DOMAIN}
+      - HOMEPAGE_ALLOWED_HOSTS=homepage.${DOMAIN}
     labels:
-      # ==========================================
       # TRAEFIK CONFIGURATION
       # ==========================================
-      
       # Service metadata
       - "homelab.category=dashboard"
-      - "homelab.description=Application dashboard (AI-configurable)"
-      
-      # Traefik reverse proxy (uncomment to enable)
+      - "homelab.description=Application dashboard"
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
-      - "traefik.http.routers.homepage.rule=Host(`home.${DOMAIN}`)"
+      - "traefik.http.routers.homepage.rule=Host(`homepage.${DOMAIN}`)"
       - "traefik.http.routers.homepage.entrypoints=websecure"
       - "traefik.http.routers.homepage.tls=true"
       - "traefik.http.routers.homepage.middlewares=authelia@docker"
       - "traefik.http.services.homepage.loadbalancer.server.port=3000"
+      # Sablier lazy loading (disabled by default - uncomment to enable)
+      # - "sablier.enable=true"
+      # - "sablier.group=${SERVER_HOSTNAME:-debian}-homarr"
+      # - "sablier.start-on-demand=true"
 
   # Homarr - Modern dashboard
-  # Access at: https://homarr.${DOMAIN}
   # Uses Sablier lazy loading - starts on-demand, stops after 5min inactivity
   homarr:
     image: ghcr.io/ajnart/homarr:latest
@@ -90,34 +84,30 @@ services:
     environment:
       - TZ=${TZ}
     labels:
-      # ==========================================
       # TRAEFIK & SABLIER CONFIGURATION
       # ==========================================
-      
       # Service metadata
       - "homelab.category=dashboard"
       - "homelab.description=Modern homelab dashboard"
-      
-      # Traefik reverse proxy (uncomment to enable)
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.http.routers.homarr.rule=Host(`homarr.${DOMAIN}`)"
       - "traefik.http.routers.homarr.entrypoints=websecure"
       - "traefik.http.routers.homarr.tls=true"
       - "traefik.http.routers.homarr.middlewares=authelia@docker"
       - "traefik.http.services.homarr.loadbalancer.server.port=7575"
-      
       # Sablier lazy loading (enabled by default - comment out to disable)
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME:-debian}-homarr"
       - "sablier.start-on-demand=true"
 
-# ==========================================
 # DOCKGE URL CONFIGURATION
-# ==========================================
 x-dockge:
   urls:
     # Proxied URLs (through Traefik)
-    - https://home.${DOMAIN}
+    - https://homepage.${DOMAIN}
     - https://homarr.${DOMAIN}
 
 networks:

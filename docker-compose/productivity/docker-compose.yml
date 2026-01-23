@@ -57,22 +57,20 @@ services:
     depends_on:
       - nextcloud-db
     labels:
-      # ==========================================
       # TRAEFIK & SABLIER CONFIGURATION
       # ==========================================
-      
       # Service metadata
       - "homelab.category=productivity"
       - "homelab.description=File sync and collaboration"
-      
-      # Traefik reverse proxy (uncomment to enable)
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.${DOMAIN}`)"
       - "traefik.http.routers.nextcloud.entrypoints=websecure"
       - "traefik.http.routers.nextcloud.tls.certresolver=letsencrypt"
       - "traefik.http.routers.nextcloud.middlewares=authelia@docker"
       - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
-      
       # Sablier lazy loading (enabled by default - comment out to disable)
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME:-debian}-nextcloud"
@@ -117,14 +115,24 @@ services:
       - BASE_URL=https://mealie.${DOMAIN}
       - DB_ENGINE=sqlite
     labels:
+      # TRAEFIK & SABLIER CONFIGURATION
+      # ==========================================
+      # Service metadata
       - "homelab.category=productivity"
       - "homelab.description=Recipe manager and meal planner"
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.http.routers.mealie.rule=Host(`mealie.${DOMAIN}`)"
       - "traefik.http.routers.mealie.entrypoints=websecure"
       - "traefik.http.routers.mealie.tls.certresolver=letsencrypt"
+      # - "traefik.http.routers.mealie.middlewares=authelia@docker"  # Disabled for family access
       - "traefik.http.services.mealie.loadbalancer.server.port=9000"
-      # No Authelia - family members should access easily
+      # Sablier lazy loading (enabled by default - comment out to disable)
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME:-debian}-mealie"
+      - "sablier.start-on-demand=true"
 
   # WordPress - Blog/website platform
   # Access at: https://blog.${DOMAIN}
@@ -148,14 +156,24 @@ services:
     depends_on:
       - wordpress-db
     labels:
+      # TRAEFIK & SABLIER CONFIGURATION
+      # ==========================================
+      # Service metadata
       - "homelab.category=productivity"
       - "homelab.description=Blog and website platform"
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.http.routers.wordpress.rule=Host(`wordpress.${DOMAIN}`)"
       - "traefik.http.routers.wordpress.entrypoints=websecure"
       - "traefik.http.routers.wordpress.tls.certresolver=letsencrypt"
+      # - "traefik.http.routers.wordpress.middlewares=authelia@docker"  # Disabled for public access
       - "traefik.http.services.wordpress.loadbalancer.server.port=80"
-      # No Authelia - public blog
+      # Sablier lazy loading (enabled by default - comment out to disable)
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME:-debian}-wordpress"
+      - "sablier.start-on-demand=true"
 
   wordpress-db:
     restart: unless-stopped
@@ -211,14 +229,24 @@ services:
     depends_on:
       - gitea-db
     labels:
+      # TRAEFIK & SABLIER CONFIGURATION
+      # ==========================================
+      # Service metadata
       - "homelab.category=productivity"
       - "homelab.description=Self-hosted Git service"
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.http.routers.gitea.rule=Host(`gitea.${DOMAIN}`)"
       - "traefik.http.routers.gitea.entrypoints=websecure"
       - "traefik.http.routers.gitea.tls.certresolver=letsencrypt"
       - "traefik.http.routers.gitea.middlewares=authelia@docker"
       - "traefik.http.services.gitea.loadbalancer.server.port=3000"
+      # Sablier lazy loading (enabled by default - comment out to disable)
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME:-debian}-gitea"
+      - "sablier.start-on-demand=true"
 
   gitea-db:
     restart: unless-stopped
@@ -256,22 +284,20 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ}
     labels:
-      # ==========================================
       # TRAEFIK & SABLIER CONFIGURATION
       # ==========================================
-      
       # Service metadata
       - "homelab.category=productivity"
       - "homelab.description=File-based wiki"
-      
-      # Traefik reverse proxy (uncomment to enable)
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.http.routers.dokuwiki.rule=Host(`dokuwiki.${DOMAIN}`)"
       - "traefik.http.routers.dokuwiki.entrypoints=websecure"
       - "traefik.http.routers.dokuwiki.tls.certresolver=letsencrypt"
       - "traefik.http.routers.dokuwiki.middlewares=authelia@docker"
       - "traefik.http.services.dokuwiki.loadbalancer.server.port=80"
-      
       # Sablier lazy loading (enabled by default - comment out to disable)
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME:-debian}-dokuwiki"
@@ -305,22 +331,20 @@ services:
     depends_on:
       - bookstack-db
     labels:
-      # ==========================================
       # TRAEFIK & SABLIER CONFIGURATION
       # ==========================================
-      
       # Service metadata
       - "homelab.category=productivity"
       - "homelab.description=Documentation and wiki platform"
-      
-      # Traefik reverse proxy (uncomment to enable)
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.http.routers.bookstack.rule=Host(`bookstack.${DOMAIN}`)"
       - "traefik.http.routers.bookstack.entrypoints=websecure"
       - "traefik.http.routers.bookstack.tls.certresolver=letsencrypt"
       - "traefik.http.routers.bookstack.middlewares=authelia@docker"
       - "traefik.http.services.bookstack.loadbalancer.server.port=80"
-      
       # Sablier lazy loading (enabled by default - comment out to disable)
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME:-debian}-bookstack"
@@ -367,14 +391,24 @@ services:
     depends_on:
       - mediawiki-db
     labels:
+      # TRAEFIK & SABLIER CONFIGURATION
+      # ==========================================
+      # Service metadata
       - "homelab.category=productivity"
       - "homelab.description=MediaWiki platform"
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.http.routers.mediawiki.rule=Host(`mediawiki.${DOMAIN}`)"
       - "traefik.http.routers.mediawiki.entrypoints=websecure"
       - "traefik.http.routers.mediawiki.tls.certresolver=letsencrypt"
       - "traefik.http.routers.mediawiki.middlewares=authelia@docker"
       - "traefik.http.services.mediawiki.loadbalancer.server.port=80"
+      # Sablier lazy loading (enabled by default - comment out to disable)
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME:-debian}-mediawiki"
+      - "sablier.start-on-demand=true"
 
   mediawiki-db:
     restart: unless-stopped
