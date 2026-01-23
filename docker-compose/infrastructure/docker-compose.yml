@@ -111,7 +111,7 @@ services:
 
   # Dozzle - Real-time Docker log viewer
   # Access at: https://dozzle.${DOMAIN}
-  # Runs continuously for local access
+  # Uses Sablier lazy loading - starts on-demand, stops after 30min inactivity
   dozzle:
     image: amir20/dozzle:latest
     deploy:
@@ -124,7 +124,7 @@ services:
           cpus: '0.25'
           memory: 128M
     container_name: dozzle
-    restart: unless-stopped
+    restart: no
     networks:
       - homelab-network
       - traefik-network
@@ -137,6 +137,9 @@ services:
     labels:
       - "homelab.category=infrastructure"
       - "homelab.description=Real-time Docker log viewer"
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME:-debian}-dozzle"
+      - "sablier.start-on-demand=true"
       - "traefik.enable=true"
       - "traefik.http.routers.dozzle.rule=Host(`dozzle.${DOMAIN}`)"
       - "traefik.http.routers.dozzle.entrypoints=websecure"
@@ -146,7 +149,7 @@ services:
 
   # Glances - System monitoring
   # Access at: https://glances.${DOMAIN}
-  # Runs continuously for local access
+  # Uses Sablier lazy loading - starts on-demand, stops after 30min inactivity
   glances:
     image: nicolargo/glances:latest-full
     deploy:
@@ -159,7 +162,7 @@ services:
           cpus: '0.25'
           memory: 128M
     container_name: glances
-    restart: unless-stopped
+    restart: no
     networks:
       - homelab-network
       - traefik-network
@@ -172,6 +175,9 @@ services:
     labels:
       - "homelab.category=infrastructure"
       - "homelab.description=System and Docker monitoring"
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME:-debian}-glances"
+      - "sablier.start-on-demand=true"
       - "traefik.enable=true"
       - "traefik.http.routers.glances.rule=Host(`glances.${DOMAIN}`)"
       - "traefik.http.routers.glances.entrypoints=websecure"
@@ -181,7 +187,7 @@ services:
 
   # Code Server - VS Code in browser
   # Access at: https://code.${DOMAIN}
-  # Runs continuously for local access
+  # Uses Sablier lazy loading - starts on-demand, stops after 30min inactivity
   code-server:
     image: lscr.io/linuxserver/code-server:latest
     deploy:
@@ -194,7 +200,7 @@ services:
           cpus: '0.75'
           memory: 512M
     container_name: code-server
-    restart: unless-stopped
+    restart: no
     networks:
       - homelab-network
       - traefik-network
@@ -211,6 +217,9 @@ services:
     labels:
       - "homelab.category=infrastructure"
       - "homelab.description=VS Code in browser"
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME:-debian}-code-server"
+      - "sablier.start-on-demand=true"
       - "traefik.enable=true"
       - "traefik.http.routers.code-server.rule=Host(`code.${DOMAIN}`)"
       - "traefik.http.routers.code-server.entrypoints=websecure"
