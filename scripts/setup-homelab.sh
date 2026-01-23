@@ -79,7 +79,16 @@ echo ""
 # Step 3: Install Docker
 log_info "Step 3/10: Installing Docker..."
 if command -v docker &> /dev/null && docker --version &> /dev/null; then
-    log_warning "Docker is already installed ($(docker --version))"
+    log_success "Docker is already installed ($(docker --version))"
+    # Check if Docker service is running
+    if ! systemctl is-active --quiet docker; then
+        log_warning "Docker service is not running, starting it..."
+        systemctl start docker
+        systemctl enable docker
+        log_success "Docker service started and enabled"
+    else
+        log_info "Docker service is already running"
+    fi
 else
     # Add Docker's official GPG key
     install -m 0755 -d /etc/apt/keyrings

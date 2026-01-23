@@ -230,13 +230,31 @@ system_setup() {
 
     # Step 3: Install Docker
     log_info "Step 3/10: Installing Docker..."
-    curl -fsSL https://get.docker.com | sh
-    usermod -aG docker "$ACTUAL_USER"
+    if command -v docker &> /dev/null && docker --version &> /dev/null; then
+        log_success "Docker is already installed ($(docker --version))"
+        # Check if Docker service is running
+        if ! systemctl is-active --quiet docker; then
+            log_warning "Docker service is not running, starting it..."
+            systemctl start docker
+            systemctl enable docker
+            log_success "Docker service started and enabled"
+        else
+            log_info "Docker service is already running"
+        fi
+    else
+        curl -fsSL https://get.docker.com | sh
+        usermod -aG docker "$ACTUAL_USER"
+    fi
 
     # Step 4: Install Docker Compose
     log_info "Step 4/10: Installing Docker Compose..."
-    curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-    chmod +x /usr/local/bin/docker-compose
+    if command -v docker-compose &> /dev/null && docker-compose --version &> /dev/null; then
+        log_success "Docker Compose is already installed ($(docker-compose --version))"
+    else
+        curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        chmod +x /usr/local/bin/docker-compose
+        log_success "Docker Compose installed ($(docker-compose --version))"
+    fi
 
     # Step 5: Configure UFW firewall
     log_info "Step 5/10: Configuring firewall..."
