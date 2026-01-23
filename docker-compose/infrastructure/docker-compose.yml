@@ -26,12 +26,13 @@ services:
     # 2. Firewall must allow access to port 2375 from Sablier service
     # 3. Docker daemon config should include: "hosts": ["tcp://0.0.0.0:2375", "unix:///var/run/docker.sock"]
     # 4. For security, consider restricting access to specific IP ranges or using TLS
+    # 5. dockerproxy runs for additional security but doesn't expose port 2375 (handled by Docker daemon)
     image: tecnativa/docker-socket-proxy:latest
     container_name: dockerproxy
     privileged: true
     restart: unless-stopped
-    ports:
-      - 2375:2375
+    # Note: Port 2375 is handled directly by Docker daemon for Sablier access
+    # dockerproxy provides additional security features but doesn't expose the port
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
