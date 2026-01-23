@@ -144,14 +144,20 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ}
     labels:
-      - homelab.category=media
-      - homelab.description=Ebook and audiobook management
-      - traefik.enable=true
-      - traefik.http.routers.readarr.rule=Host(`readarr.${DOMAIN}`)
-      - traefik.http.routers.readarr.entrypoints=websecure
-      - traefik.http.routers.readarr.tls.certresolver=letsencrypt
-      - traefik.http.routers.readarr.middlewares=authelia@docker
-      - traefik.http.services.readarr.loadbalancer.server.port=8787
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
+      - "homelab.category=media"
+      - "homelab.description=Ebook and audiobook management"
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
+      - "traefik.enable=true"
+      - "traefik.http.routers.readarr.rule=Host(`readarr.${DOMAIN}`)"
+      - "traefik.http.routers.readarr.entrypoints=websecure"
+      - "traefik.http.routers.readarr.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.readarr.middlewares=authelia@docker"
+      - "traefik.http.services.readarr.loadbalancer.server.port=8787"
   # Lidarr - Music collection manager
   # Access at: https://lidarr.${DOMAIN}
   lidarr:
@@ -173,14 +179,20 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ}
     labels:
-      - homelab.category=media
-      - homelab.description=Music collection manager
-      - traefik.enable=true
-      - traefik.http.routers.lidarr.rule=Host(`lidarr.${DOMAIN}`)
-      - traefik.http.routers.lidarr.entrypoints=websecure
-      - traefik.http.routers.lidarr.tls.certresolver=letsencrypt
-      - traefik.http.routers.lidarr.middlewares=authelia@docker
-      - traefik.http.services.lidarr.loadbalancer.server.port=8686
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
+      - "homelab.category=media"
+      - "homelab.description=Music collection manager"
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
+      - "traefik.enable=true"
+      - "traefik.http.routers.lidarr.rule=Host(`lidarr.${DOMAIN}`)"
+      - "traefik.http.routers.lidarr.entrypoints=websecure"
+      - "traefik.http.routers.lidarr.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.lidarr.middlewares=authelia@docker"
+      - "traefik.http.services.lidarr.loadbalancer.server.port=8686"
   # Lazy Librarian - Book manager
   # Access at: https://lazylibrarian.${DOMAIN}
   lazylibrarian:
@@ -203,14 +215,20 @@ services:
       - TZ=${TZ}
       - DOCKER_MODS=linuxserver/mods:lazylibrarian-ffmpeg
     labels:
-      - homelab.category=media
-      - homelab.description=Book download automation
-      - traefik.enable=true
-      - traefik.http.routers.lazylibrarian.rule=Host(`lazylibrarian.${DOMAIN}`)
-      - traefik.http.routers.lazylibrarian.entrypoints=websecure
-      - traefik.http.routers.lazylibrarian.tls.certresolver=letsencrypt
-      - traefik.http.routers.lazylibrarian.middlewares=authelia@docker
-      - traefik.http.services.lazylibrarian.loadbalancer.server.port=5299
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
+      - "homelab.category=media"
+      - "homelab.description=Book download automation"
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
+      - "traefik.enable=true"
+      - "traefik.http.routers.lazylibrarian.rule=Host(`lazylibrarian.${DOMAIN}`)"
+      - "traefik.http.routers.lazylibrarian.entrypoints=websecure"
+      - "traefik.http.routers.lazylibrarian.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.lazylibrarian.middlewares=authelia@docker"
+      - "traefik.http.services.lazylibrarian.loadbalancer.server.port=5299"
   # Mylar3 - Comic book manager
   # Access at: https://mylar.${DOMAIN}
   mylar3:
@@ -232,14 +250,20 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ}
     labels:
-      - homelab.category=media
-      - homelab.description=Comic book collection manager
-      - traefik.enable=true
-      - traefik.http.routers.mylar.rule=Host(`mylar.${DOMAIN}`)
-      - traefik.http.routers.mylar.entrypoints=websecure
-      - traefik.http.routers.mylar.tls.certresolver=letsencrypt
-      - traefik.http.routers.mylar.middlewares=authelia@docker
-      - traefik.http.services.mylar.loadbalancer.server.port=8090
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
+      - "homelab.category=media"
+      - "homelab.description=Comic book collection manager"
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
+      - "traefik.enable=true"
+      - "traefik.http.routers.mylar.rule=Host(`mylar.${DOMAIN}`)"
+      - "traefik.http.routers.mylar.entrypoints=websecure"
+      - "traefik.http.routers.mylar.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.mylar.middlewares=authelia@docker"
+      - "traefik.http.services.mylar.loadbalancer.server.port=8090"
   # Jellyseerr - Request management for Jellyfin/Plex
   # Access at: https://jellyseerr.${DOMAIN}
   jellyseerr:
@@ -258,16 +282,20 @@ services:
       - LOG_LEVEL=info
       - TZ=${TZ}
     labels:
-      - homelab.category=media
-      - homelab.description=Media request management
-      - traefik.enable=true
-      - traefik.http.routers.jellyseerr.rule=Host(`jellyseerr.${DOMAIN}`)
-      - traefik.http.routers.jellyseerr.entrypoints=websecure
-      - traefik.http.routers.jellyseerr.tls.certresolver=letsencrypt
-      - traefik.http.routers.jellyseerr.middlewares=authelia@docker
-      - traefik.http.services.jellyseerr.loadbalancer.server.port=5055
-      - "x-dockge.url=https://jellyseerr.${DOMAIN}"
-      - "x-dockge.url=https://jellyseerr.${DOMAIN}"
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
+      - "homelab.category=media"
+      - "homelab.description=Media request management"
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
+      - "traefik.enable=true"
+      - "traefik.http.routers.jellyseerr.rule=Host(`jellyseerr.${DOMAIN}`)"
+      - "traefik.http.routers.jellyseerr.entrypoints=websecure"
+      - "traefik.http.routers.jellyseerr.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.jellyseerr.middlewares=authelia@docker"
+      - "traefik.http.services.jellyseerr.loadbalancer.server.port=5055"
   # FlareSolverr - Cloudflare bypass for Prowlarr
   # No web UI - used by Prowlarr
   flaresolverr:
@@ -309,14 +337,20 @@ services:
       - serverPort=8266
       - webUIPort=8265
     labels:
-      - homelab.category=media
-      - homelab.description=Distributed transcoding server
-      - traefik.enable=true
-      - traefik.http.routers.tdarr.rule=Host(`tdarr.${DOMAIN}`)
-      - traefik.http.routers.tdarr.entrypoints=websecure
-      - traefik.http.routers.tdarr.tls.certresolver=letsencrypt
-      - traefik.http.routers.tdarr.middlewares=authelia@docker
-      - traefik.http.services.tdarr.loadbalancer.server.port=8265
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
+      - "homelab.category=media"
+      - "homelab.description=Distributed transcoding server"
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
+      - "traefik.enable=true"
+      - "traefik.http.routers.tdarr.rule=Host(`tdarr.${DOMAIN}`)"
+      - "traefik.http.routers.tdarr.entrypoints=websecure"
+      - "traefik.http.routers.tdarr.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.tdarr.middlewares=authelia@docker"
+      - "traefik.http.services.tdarr.loadbalancer.server.port=8265"
   # Tdarr Node - Transcoding worker
   # No web UI - controlled by server
   tdarr-node:
@@ -363,14 +397,20 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ}
     labels:
-      - homelab.category=media
-      - homelab.description=Library optimization and transcoding
-      - traefik.enable=true
-      - traefik.http.routers.unmanic.rule=Host(`unmanic.${DOMAIN}`)
-      - traefik.http.routers.unmanic.entrypoints=websecure
-      - traefik.http.routers.unmanic.tls.certresolver=letsencrypt
-      - traefik.http.routers.unmanic.middlewares=authelia@docker
-      - traefik.http.services.unmanic.loadbalancer.server.port=8888
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
+      - "homelab.category=media"
+      - "homelab.description=Library optimization and transcoding"
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # If Traefik is on a remote server: these labels are NOT USED; 
+      #   configure external yml files in /traefik/dynamic folder instead.
+      - "traefik.enable=true"
+      - "traefik.http.routers.unmanic.rule=Host(`unmanic.${DOMAIN}`)"
+      - "traefik.http.routers.unmanic.entrypoints=websecure"
+      - "traefik.http.routers.unmanic.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.unmanic.middlewares=authelia@docker"
+      - "traefik.http.services.unmanic.loadbalancer.server.port=8888"
 networks:
   media-network:
     external: true
