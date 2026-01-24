@@ -486,7 +486,7 @@ http:
     mediawiki-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:8084"
+          - url: "http://192.168.4.11:8086"
         passHostHeader: true
 
     motioneye-${SERVER_HOSTNAME}:

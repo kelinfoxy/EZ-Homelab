@@ -53,6 +53,12 @@ services:
       - TRUSTED_PROXIES=172.18.0.0/16
       - OVERWRITEPROTOCOL=https
       - OVERWRITEHOST=nextcloud.${DOMAIN}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/status.php"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     depends_on:
       - nextcloud-db
     labels:
@@ -148,6 +154,12 @@ services:
       - WORDPRESS_DB_USER=wordpress
       - WORDPRESS_DB_PASSWORD=${WORDPRESS_DB_PASSWORD}
       - WORDPRESS_DB_NAME=wordpress
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     depends_on:
       - wordpress-db
     labels:
@@ -218,6 +230,12 @@ services:
       - GITEA__database__NAME=gitea
       - GITEA__database__USER=gitea
       - GITEA__database__PASSWD=${GITEA_DB_PASSWORD}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     depends_on:
       - gitea-db
     labels:
@@ -316,6 +334,12 @@ services:
       - DB_USERNAME=bookstack
       - DB_PASSWORD=${BOOKSTACK_DB_PASSWORD}
       - APP_KEY=base64:NsYD8+8MAvtBhK8xw9p8pxQDy4x8aOQi/78M3CsseAw=
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     depends_on:
       - bookstack-db
     labels:
@@ -373,6 +397,12 @@ services:
       - MEDIAWIKI_DB_NAME=mediawiki
       - MEDIAWIKI_DB_USER=mediawiki
       - MEDIAWIKI_DB_PASSWORD=${MEDIAWIKI_DB_PASSWORD}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     depends_on:
       - mediawiki-db
     labels:

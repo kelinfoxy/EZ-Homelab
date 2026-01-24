@@ -41,6 +41,12 @@ services:
       - BACKREST_DATA=/data
       - BACKREST_CONFIG=/config/config.json
       - TZ=${TZ}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9898/api/v1/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     labels:
       # TRAEFIK CONFIGURATION
       # Service metadata
@@ -79,6 +85,12 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8200/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     labels:
       # TRAEFIK CONFIGURATION
       # Service metadata
@@ -113,6 +125,12 @@ services:
       - MONGO=mongodb://formio-mongo:27017/formio
       - JWT_SECRET=${FORMIO_JWT_SECRET}
       - DB_SECRET=${FORMIO_DB_SECRET}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     depends_on:
       - formio-mongo
     labels:
@@ -171,6 +189,12 @@ services:
       # - SMTP_SECURITY=${SMTP_SECURITY}
       # - SMTP_USERNAME=${SMTP_USERNAME}
       # - SMTP_PASSWORD=${SMTP_PASSWORD}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     labels:
       # TRAEFIK CONFIGURATION
       # ==========================================

@@ -148,6 +148,12 @@ services:
       - DOZZLE_LEVEL=info
       - DOZZLE_TAILSIZE=300
       - DOZZLE_FILTER=status=running
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     labels:
       # TRAEFIK CONFIGURATION
       # Service metadata
@@ -194,6 +200,12 @@ services:
       - ./glances/config:/glances/conf
     environment:
       - GLANCES_OPT=-w
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:61208/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     labels:
       # TRAEFIK CONFIGURATION
       # Service metadata
@@ -244,6 +256,12 @@ services:
       - TZ=${TZ}
       - PASSWORD=${CODE_SERVER_PASSWORD}
       - SUDO_PASSWORD=${CODE_SERVER_SUDO_PASSWORD}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8443/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     labels:
       # TRAEFIK CONFIGURATION
       # Service metadata
