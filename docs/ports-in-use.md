@@ -50,6 +50,7 @@ This document tracks all ports used by services in the EZ-Homelab. Update this d
 | **Productivity** | [Gitea](../service-docs/gitea.md) | 3010 | 3000 | TCP | Web UI |
 | **Productivity** | [MinIO](../service-docs/minio.md) | 9000 | 9000 | TCP | API |
 | **Productivity** | [MinIO](../service-docs/minio.md) | 9001 | 9001 | TCP | Web UI |
+| **Productivity** | [MediaWiki](../service-docs/mediawiki.md) | 8086 | 80 | TCP | Web UI |
 
 ## Port Range Reference
 

@@ -364,7 +364,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "8084:80"
+      - "8086:80"
     volumes:
       - ./mediawiki/images:/var/www/html/images
       - ./mediawiki/LocalSettings.php:/var/www/html/LocalSettings.php
@@ -388,7 +388,7 @@ services:
       - "traefik.http.routers.mediawiki.tls.certresolver=letsencrypt"
       - "traefik.http.routers.mediawiki.middlewares=authelia@docker"
       # Service configuration
-      - "traefik.http.services.mediawiki.loadbalancer.server.port=8084"
+      - "traefik.http.services.mediawiki.loadbalancer.server.port=8086"
       # Sablier configuration
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME}-mediawiki"
