@@ -57,21 +57,20 @@ services:
     depends_on:
       - nextcloud-db
     labels:
-      # TRAEFIK & SABLIER CONFIGURATION
-      # ==========================================
+      # TRAEFIK CONFIGURATION
       # Service metadata
+      - "com.centurylinklabs.watchtower.enable=true"
       - "homelab.category=productivity"
       - "homelab.description=File sync and collaboration"
-      # Traefik reverse proxy (comment/uncomment to disable/enable)
-      # If Traefik is on a remote server: these labels are NOT USED; 
-      #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
+      # Router configuration
       - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.${DOMAIN}`)"
       - "traefik.http.routers.nextcloud.entrypoints=websecure"
       - "traefik.http.routers.nextcloud.tls.certresolver=letsencrypt"
       - "traefik.http.routers.nextcloud.middlewares=authelia@docker"
+      # Service configuration
       - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
-      # Sablier lazy loading (enabled by default - comment out to disable)
+      # Sablier configuration
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME}-nextcloud"
       - "sablier.start-on-demand=true"

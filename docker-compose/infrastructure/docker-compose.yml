@@ -149,21 +149,20 @@ services:
       - DOZZLE_TAILSIZE=300
       - DOZZLE_FILTER=status=running
     labels:
-      # TRAEFIK & SABLIER CONFIGURATION
-      # ==========================================
+      # TRAEFIK CONFIGURATION
       # Service metadata
+      - "com.centurylinklabs.watchtower.enable=true"
       - "homelab.category=infrastructure"
       - "homelab.description=Real-time Docker log viewer"
-      # Traefik reverse proxy (comment/uncomment to disable/enable)
-      # If Traefik is on a remote server: these labels are NOT USED; 
-      #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
+      # Router configuration
       - "traefik.http.routers.dozzle.rule=Host(`dozzle.${SERVER_HOSTNAME}.${DOMAIN}`)"
       - "traefik.http.routers.dozzle.entrypoints=websecure"
       - "traefik.http.routers.dozzle.tls=true"
       - "traefik.http.routers.dozzle.middlewares=authelia@docker"
+      # Service configuration
       - "traefik.http.services.dozzle.loadbalancer.server.port=8085"
-      # Sablier lazy loading (enabled by default - comment out to disable)
+      # Sablier configuration
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME}-dozzle"
       - "sablier.start-on-demand=true"
@@ -196,21 +195,20 @@ services:
     environment:
       - GLANCES_OPT=-w
     labels:
-      # TRAEFIK & SABLIER CONFIGURATION
-      # ==========================================
+      # TRAEFIK CONFIGURATION
       # Service metadata
+      - "com.centurylinklabs.watchtower.enable=true"
       - "homelab.category=infrastructure"
       - "homelab.description=System and Docker monitoring"
-      # Traefik reverse proxy (comment/uncomment to disable/enable)
-      # If Traefik is on a remote server: these labels are NOT USED; 
-      #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
+      # Router configuration
       - "traefik.http.routers.glances.rule=Host(`glances.${SERVER_HOSTNAME}.${DOMAIN}`)"
       - "traefik.http.routers.glances.entrypoints=websecure"
       - "traefik.http.routers.glances.tls=true"
       - "traefik.http.routers.glances.middlewares=authelia@docker"
+      # Service configuration
       - "traefik.http.services.glances.loadbalancer.server.port=61208"
-      # Sablier lazy loading (enabled by default - comment out to disable)
+      # Sablier configuration
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME}-glances"
       - "sablier.start-on-demand=true"
@@ -247,21 +245,20 @@ services:
       - PASSWORD=${CODE_SERVER_PASSWORD}
       - SUDO_PASSWORD=${CODE_SERVER_SUDO_PASSWORD}
     labels:
-      # TRAEFIK & SABLIER CONFIGURATION
-      # ==========================================
+      # TRAEFIK CONFIGURATION
       # Service metadata
+      - "com.centurylinklabs.watchtower.enable=true"
       - "homelab.category=infrastructure"
       - "homelab.description=VS Code in browser"
-      # Traefik reverse proxy (comment/uncomment to disable/enable)
-      # If Traefik is on a remote server: these labels are NOT USED; 
-      #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
+      # Router configuration
       - "traefik.http.routers.code-server.rule=Host(`code.${DOMAIN}`)"
       - "traefik.http.routers.code-server.entrypoints=websecure"
       - "traefik.http.routers.code-server.tls.certresolver=letsencrypt"
       - "traefik.http.routers.code-server.middlewares=authelia@docker"
+      # Service configuration
       - "traefik.http.services.code-server.loadbalancer.server.port=8443"
-      # Sablier lazy loading (enabled by default - comment out to disable)
+      # Sablier configuration
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME}-code-server"
       - "sablier.start-on-demand=true"

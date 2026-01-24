@@ -84,21 +84,20 @@ services:
     environment:
       - TZ=${TZ}
     labels:
-      # TRAEFIK & SABLIER CONFIGURATION
-      # ==========================================
+      # TRAEFIK CONFIGURATION
       # Service metadata
+      - "com.centurylinklabs.watchtower.enable=true"
       - "homelab.category=dashboard"
       - "homelab.description=Modern homelab dashboard"
-      # Traefik reverse proxy (comment/uncomment to disable/enable)
-      # If Traefik is on a remote server: these labels are NOT USED; 
-      #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
+      # Router configuration
       - "traefik.http.routers.homarr.rule=Host(`homarr.${DOMAIN}`)"
       - "traefik.http.routers.homarr.entrypoints=websecure"
       - "traefik.http.routers.homarr.tls=true"
       - "traefik.http.routers.homarr.middlewares=authelia@docker"
+      # Service configuration
       - "traefik.http.services.homarr.loadbalancer.server.port=7575"
-      # Sablier lazy loading (enabled by default - comment out to disable)
+      # Sablier configuration
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME}-homarr"
       - "sablier.start-on-demand=true"

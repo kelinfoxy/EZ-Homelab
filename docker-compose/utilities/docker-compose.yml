@@ -42,26 +42,23 @@ services:
       - BACKREST_CONFIG=/config/config.json
       - TZ=${TZ}
     labels:
-      # ==========================================
-      # TRAEFIK & SABLIER CONFIGURATION
-      # ==========================================
-      
+      # TRAEFIK CONFIGURATION
       # Service metadata
-      - homelab.category=utilities
-      - homelab.description=Backup management with restic
-      
-      # Traefik reverse proxy (uncomment to enable)
-      - traefik.enable=true
-      - traefik.http.routers.backrest.rule=Host(`backrest.${DOMAIN}`)
-      - traefik.http.routers.backrest.entrypoints=websecure
-      - traefik.http.routers.backrest.tls.certresolver=letsencrypt
-      - traefik.http.routers.backrest.middlewares=authelia@docker
-      - traefik.http.services.backrest.loadbalancer.server.port=9898
-      
-      # Sablier lazy loading (uncomment to enable)
-      - sablier.enable=true
-      - sablier.group=${SERVER_HOSTNAME}-backrest
-      - sablier.start-on-demand=true
+      - "com.centurylinklabs.watchtower.enable=true"
+      - "homelab.category=utilities"
+      - "homelab.description=Backup management with restic"
+      - "traefik.enable=true"
+      # Router configuration
+      - "traefik.http.routers.backrest.rule=Host(`backrest.${DOMAIN}`)"
+      - "traefik.http.routers.backrest.entrypoints=websecure"
+      - "traefik.http.routers.backrest.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.backrest.middlewares=authelia@docker"
+      # Service configuration
+      - "traefik.http.services.backrest.loadbalancer.server.port=9898"
+      # Sablier configuration
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME}-backrest"
+      - "sablier.start-on-demand=true"
       - "x-dockge.url=https://backrest.${DOMAIN}"
       - "x-dockge.url=https://backrest.${DOMAIN}"
   # Duplicati - Backup solution
@@ -85,19 +82,18 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ}
     labels:
-      # TRAEFIK & SABLIER CONFIGURATION
-      # ==========================================
+      # TRAEFIK CONFIGURATION
       # Service metadata
+      - "com.centurylinklabs.watchtower.enable=true"
       - "homelab.category=utilities"
       - "homelab.description=Backup software with encryption"
-      # Traefik reverse proxy (comment/uncomment to disable/enable)
-      # If Traefik is on a remote server: these labels are NOT USED; 
-      #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
+      # Router configuration
       - "traefik.http.routers.duplicati.rule=Host(`duplicati.${DOMAIN}`)"
       - "traefik.http.routers.duplicati.entrypoints=websecure"
       - "traefik.http.routers.duplicati.tls.certresolver=letsencrypt"
       - "traefik.http.routers.duplicati.middlewares=authelia@docker"
+      # Service configuration
       - "traefik.http.services.duplicati.loadbalancer.server.port=8200"
   # Form.io - Form builder
   # Uncomment and configure if formio/formio image becomes available
