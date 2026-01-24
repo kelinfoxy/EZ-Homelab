@@ -179,8 +179,7 @@ services:
       - "traefik.http.routers.vaultwarden.entrypoints=websecure"
       - "traefik.http.routers.vaultwarden.tls=true"
       - "traefik.http.routers.vaultwarden.tls.certresolver=letsencrypt"
-      # SSO disabled for browser extension and mobile app compatibility
-      # - "traefik.http.routers.vaultwarden.middlewares=authelia@docker"
+      - "traefik.http.routers.vaultwarden.middlewares=authelia@docker"
       - "traefik.http.services.vaultwarden.loadbalancer.server.port=80"
   # Authelia Redis - Session storage for Authelia
   # No web UI - backend service
