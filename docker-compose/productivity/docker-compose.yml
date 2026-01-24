@@ -48,7 +48,7 @@ services:
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
       - MYSQL_PASSWORD=${NEXTCLOUD_DB_PASSWORD}
-      - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER:-admin}
+      - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER}
       - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD}
       - NEXTCLOUD_TRUSTED_DOMAINS=nextcloud.${DOMAIN}
       - TRUSTED_PROXIES=172.18.0.0/16
@@ -107,8 +107,8 @@ services:
     volumes:
       - ./mealie/data:/app/data
     environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
+      - PUID=${PUID}
+      - PGID=${PGID}
       - TZ=${TZ}
       - BASE_URL=https://mealie.${DOMAIN}
       - DB_ENGINE=sqlite
@@ -214,8 +214,8 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - USER_UID=${PUID:-1000}
-      - USER_GID=${PGID:-1000}
+      - USER_UID=${PUID}
+      - USER_GID=${PGID}
       - GITEA__database__DB_TYPE=postgres
       - GITEA__database__HOST=gitea-db:5432
       - GITEA__database__NAME=gitea
@@ -273,8 +273,8 @@ services:
     volumes:
       - ./dokuwiki/config:/config
     environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
+      - PUID=${PUID}
+      - PGID=${PGID}
       - TZ=${TZ}
     labels:
       # TRAEFIK CONFIGURATION
@@ -311,8 +311,8 @@ services:
     volumes:
       - ./bookstack/config:/config
     environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
+      - PUID=${PUID}
+      - PGID=${PGID}
       - APP_URL=https://bookstack.${DOMAIN}
       - DB_HOST=bookstack-db
       - DB_PORT=3306
@@ -434,7 +434,7 @@ services:
       - JUPYTER_ENABLE_LAB=yes
       - GRANT_SUDO=yes
     user: root
-    command: start-notebook.sh --NotebookApp.token='${JUPYTER_TOKEN:-changeme}'
+    command: start-notebook.sh --NotebookApp.token='${JUPYTER_TOKEN}'
     # Uncomment for GPU support (NVIDIA, requires nvidia-container-toolkit)
     # runtime: nvidia
     # devices:

@@ -37,9 +37,9 @@ services:
       - /mnt/media:/media
       - /mnt/downloads:/downloads # Large downloads on separate drive
     environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
-      - TZ=${TZ:-America/New_York}
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     labels:
       # TRAEFIK CONFIGURATION
       # ==========================================
@@ -76,9 +76,9 @@ services:
       - /mnt/media:/media
       - /mnt/downloads:/downloads # Large downloads on separate drive
     environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
-      - TZ=${TZ:-America/New_York}
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     labels:
       # TRAEFIK CONFIGURATION
       # ==========================================
@@ -113,9 +113,9 @@ services:
     volumes:
       - ./prowlarr/config:/config
     environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
-      - TZ=${TZ:-America/New_York}
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     labels:
       # TRAEFIK CONFIGURATION
       # ==========================================
@@ -152,8 +152,8 @@ services:
       - /mnt/media/books:/books
       - /mnt/downloads:/downloads
     environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
+      - PUID=${PUID}
+      - PGID=${PGID}
       - TZ=${TZ}
     labels:
       # TRAEFIK CONFIGURATION
@@ -191,8 +191,8 @@ services:
       - /mnt/media/music:/music
       - /mnt/downloads:/downloads
     environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
+      - PUID=${PUID}
+      - PGID=${PGID}
       - TZ=${TZ}
     labels:
       # TRAEFIK CONFIGURATION
@@ -230,8 +230,8 @@ services:
       - /mnt/media/books:/books
       - /mnt/downloads:/downloads
     environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
+      - PUID=${PUID}
+      - PGID=${PGID}
       - TZ=${TZ}
       - DOCKER_MODS=linuxserver/mods:lazylibrarian-ffmpeg
     labels:
@@ -270,8 +270,8 @@ services:
       - /mnt/media/comics:/comics
       - /mnt/downloads:/downloads
     environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
+      - PUID=${PUID}
+      - PGID=${PGID}
       - TZ=${TZ}
     labels:
       # TRAEFIK CONFIGURATION
@@ -362,8 +362,8 @@ services:
       - /mnt/media:/media
       - /mnt/tdarr-transcode:/temp # Transcode cache on separate drive
     environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
+      - PUID=${PUID}
+      - PGID=${PGID}
       - TZ=${TZ}
       - serverIP=0.0.0.0
       - serverPort=8266
@@ -401,8 +401,8 @@ services:
       - /mnt/media:/media
       - /mnt/tdarr-transcode:/temp
     environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
+      - PUID=${PUID}
+      - PGID=${PGID}
       - TZ=${TZ}
       - nodeID=MainNode
       - nodeIP=0.0.0.0
@@ -429,8 +429,8 @@ services:
       - /mnt/media:/library
       - /mnt/unmanic-cache:/tmp/unmanic # Transcode cache on separate drive
     environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
+      - PUID=${PUID}
+      - PGID=${PGID}
       - TZ=${TZ}
     labels:
       # TRAEFIK CONFIGURATION

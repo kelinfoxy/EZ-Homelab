@@ -61,8 +61,8 @@ services:
     environment:
       - AUTHENTIK_REDIS__HOST=authentik-redis
       - AUTHENTIK_POSTGRESQL__HOST=authentik-db
-      - AUTHENTIK_POSTGRESQL__USER=${AUTHENTIK_DB_USER:-authentik}
-      - AUTHENTIK_POSTGRESQL__NAME=${AUTHENTIK_DB_NAME:-authentik}
+      - AUTHENTIK_POSTGRESQL__USER=${AUTHENTIK_DB_USER}
+      - AUTHENTIK_POSTGRESQL__NAME=${AUTHENTIK_DB_NAME}
       - AUTHENTIK_POSTGRESQL__PASSWORD=${AUTHENTIK_DB_PASSWORD}
       - AUTHENTIK_SECRET_KEY=${AUTHENTIK_SECRET_KEY}
       - AUTHENTIK_ERROR_REPORTING__ENABLED=false
@@ -98,8 +98,8 @@ services:
     environment:
       - AUTHENTIK_REDIS__HOST=authentik-redis
       - AUTHENTIK_POSTGRESQL__HOST=authentik-db
-      - AUTHENTIK_POSTGRESQL__USER=${AUTHENTIK_DB_USER:-authentik}
-      - AUTHENTIK_POSTGRESQL__NAME=${AUTHENTIK_DB_NAME:-authentik}
+      - AUTHENTIK_POSTGRESQL__USER=${AUTHENTIK_DB_USER}
+      - AUTHENTIK_POSTGRESQL__NAME=${AUTHENTIK_DB_NAME}
       - AUTHENTIK_POSTGRESQL__PASSWORD=${AUTHENTIK_DB_PASSWORD}
       - AUTHENTIK_SECRET_KEY=${AUTHENTIK_SECRET_KEY}
       - AUTHENTIK_ERROR_REPORTING__ENABLED=false
@@ -124,9 +124,9 @@ services:
     volumes:
       - authentik-db-data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_USER=${AUTHENTIK_DB_USER:-authentik}
+      - POSTGRES_USER=${AUTHENTIK_DB_USER}
       - POSTGRES_PASSWORD=${AUTHENTIK_DB_PASSWORD}
-      - POSTGRES_DB=${AUTHENTIK_DB_NAME:-authentik}
+      - POSTGRES_DB=${AUTHENTIK_DB_NAME}
     labels:
       # TRAEFIK CONFIGURATION
       # ==========================================
@@ -134,7 +134,7 @@ services:
       - "homelab.category=alternatives"
       - "homelab.description=Authentik database"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${AUTHENTIK_DB_USER:-authentik}"]
+      test: ["CMD-SHELL", "pg_isready -U ${AUTHENTIK_DB_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -181,9 +181,9 @@ services:
       - /mnt/media:/media:ro  # Large media files on separate drive
       - plex-transcode:/transcode
     environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
-      - TZ=${TZ:-America/New_York}
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
       - PLEX_CLAIM=${PLEX_CLAIM}
     # Hardware transcoding support
     # Uncomment ONE of the following options:

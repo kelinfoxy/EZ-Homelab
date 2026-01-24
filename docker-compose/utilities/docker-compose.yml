@@ -78,8 +78,8 @@ services:
       - /mnt:/source/mnt:ro
       - /mnt/backups:/backups
     environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
+      - PUID=${PUID}
+      - PGID=${PGID}
       - TZ=${TZ}
     labels:
       # TRAEFIK CONFIGURATION
@@ -155,14 +155,14 @@ services:
       - ./vaultwarden/data:/data
     environment:
       - DOMAIN=https://vault.${DOMAIN}
-      - SIGNUPS_ALLOWED=${BITWARDEN_SIGNUPS_ALLOWED:-true}
-      - INVITATIONS_ALLOWED=${BITWARDEN_INVITATIONS_ALLOWED:-true}
+      - SIGNUPS_ALLOWED=${BITWARDEN_SIGNUPS_ALLOWED}
+      - INVITATIONS_ALLOWED=${BITWARDEN_INVITATIONS_ALLOWED}
       - ADMIN_TOKEN=${BITWARDEN_ADMIN_TOKEN}
       # SMTP disabled - uncomment and configure to enable email
       # - SMTP_HOST=${SMTP_HOST}
       # - SMTP_FROM=${SMTP_FROM}
-      # - SMTP_PORT=${SMTP_PORT:-587}
-      # - SMTP_SECURITY=${SMTP_SECURITY:-starttls}
+      # - SMTP_PORT=${SMTP_PORT}
+      # - SMTP_SECURITY=${SMTP_SECURITY}
       # - SMTP_USERNAME=${SMTP_USERNAME}
       # - SMTP_PASSWORD=${SMTP_PASSWORD}
     labels:

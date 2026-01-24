@@ -39,7 +39,7 @@ services:
       - VPN_TYPE=openvpn
       - OPENVPN_USER=${SURFSHARK_USERNAME}
       - OPENVPN_PASSWORD=${SURFSHARK_PASSWORD}
-      - SERVER_COUNTRIES=${VPN_SERVER_COUNTRIES:-Netherlands}
+      - SERVER_COUNTRIES=${VPN_SERVER_COUNTRIES}
       - TZ=${TZ}
     # TRAEFIK CONFIGURATION
     labels:
@@ -80,8 +80,8 @@ services:
       - ./qbittorrent/config:/config
       - /mnt/downloads:/downloads
     environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
+      - PUID=${PUID}
+      - PGID=${PGID}
       - TZ=${TZ}
       - WEBUI_PORT=8080
     depends_on:

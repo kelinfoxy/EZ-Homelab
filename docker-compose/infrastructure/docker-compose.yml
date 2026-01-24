@@ -75,8 +75,8 @@ services:
       - ./pihole/etc-pihole:/etc/pihole
       - ./pihole/etc-dnsmasq.d:/etc/dnsmasq.d
     environment:
-      - TZ=${TZ:-America/New_York}
-      - WEBPASSWORD=${PIHOLE_PASSWORD:-changeme}
+      - TZ=${TZ}
+      - WEBPASSWORD=${PIHOLE_PASSWORD}
       - FTLCONF_LOCAL_IPV4=${SERVER_IP}
     dns:
       - 127.0.0.1
@@ -116,7 +116,7 @@ services:
       - WATCHTOWER_INCLUDE_RESTARTING=true
       - WATCHTOWER_SCHEDULE=0 0 4 * * *  # 4 AM daily
       - WATCHTOWER_NOTIFICATIONS=shoutrrr
-      - WATCHTOWER_NOTIFICATION_URL=${WATCHTOWER_NOTIFICATION_URL:-}
+      - WATCHTOWER_NOTIFICATION_URL=${WATCHTOWER_NOTIFICATION_URL}
     labels:
       - "homelab.category=infrastructure"
       - "homelab.description=Automatic Docker container updates"
@@ -239,8 +239,8 @@ services:
       - /opt/stacks:/opt/stacks  # Access to all stacks
       - /mnt:/mnt:ro  # Read-only access to data
     environment:
-      - PUID=${PUID:-1000}
-      - PGID=${PGID:-1000}
+      - PUID=${PUID}
+      - PGID=${PGID}
       - TZ=${TZ}
       - PASSWORD=${CODE_SERVER_PASSWORD}
       - SUDO_PASSWORD=${CODE_SERVER_SUDO_PASSWORD}
