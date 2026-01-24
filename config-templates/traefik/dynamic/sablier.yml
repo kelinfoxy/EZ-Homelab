@@ -1,6 +1,13 @@
 # Session duration set to 5m for testing. Increase to 30m for production.
 http:
   middlewares:
+    authelia:
+      forwardauth:
+        address: http://authelia:9091/api/verify?rd=https://auth.${DOMAIN}/
+        authResponseHeaders:
+          - X-Secret
+        trustForwardHeader: true
+
     sablier-${SERVER_HOSTNAME}-arr:
       plugin:
         sablier:
@@ -25,6 +32,18 @@ http:
             theme: ghost
             show-details-by-default: true
 
+    sablier-${SERVER_HOSTNAME}-bitwarden:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-bitwarden
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: bitwarden
+            theme: ghost
+            show-details-by-default: true
+
     sablier-${SERVER_HOSTNAME}-bookstack:
       plugin:
         sablier:
@@ -34,18 +53,6 @@ http:
           ignoreUserAgent: curl
           dynamic:
             displayName: Bookstack
-            theme: ghost
-            show-details-by-default: true
-
-    sablier-${SERVER_HOSTNAME}-jellyfin:
-      plugin:
-        sablier:
-          sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-jellyfin
-          sessionDuration: 5m
-          ignoreUserAgent: curl
-          dynamic:
-            displayName: Jellyfin
             theme: ghost
             show-details-by-default: true
 
@@ -73,75 +80,39 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-bitwarden:
+    sablier-${SERVER_HOSTNAME}-dozzle:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-bitwarden
+          group: ${SERVER_HOSTNAME}-dozzle
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
-            displayName: bitwarden
+            displayName: dozzle
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-wordpress:
+    sablier-${SERVER_HOSTNAME}-dokuwiki:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-wordpress
+          group: ${SERVER_HOSTNAME}-dokuwiki
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
-            displayName: wordpress
+            displayName: DokuWiki
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-nextcloud:
+    sablier-${SERVER_HOSTNAME}-duplicati:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-nextcloud
+          group: ${SERVER_HOSTNAME}-duplicati
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
-            displayName: NextCloud
-            theme: ghost
-            show-details-by-default: true
-
-    sablier-${SERVER_HOSTNAME}-mediawiki:
-      plugin:
-        sablier:
-          sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-mediawiki
-          sessionDuration: 5m
-          ignoreUserAgent: curl
-          dynamic:
-            displayName: mediawiki
-            theme: ghost
-            show-details-by-default: true
-
-    sablier-${SERVER_HOSTNAME}-mealie:
-      plugin:
-        sablier:
-          sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-mealie
-          sessionDuration: 5m
-          ignoreUserAgent: curl
-          dynamic:
-            displayName: Mealie
-            theme: ghost
-            show-details-by-default: true
-
-    sablier-${SERVER_HOSTNAME}-gitea:
-      plugin:
-        sablier:
-          sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-gitea
-          sessionDuration: 5m
-          ignoreUserAgent: curl
-          dynamic:
-            displayName: Gitea
+            displayName: Duplicati
             theme: ghost
             show-details-by-default: true
 
@@ -157,27 +128,15 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-dozzle:
+    sablier-${SERVER_HOSTNAME}-gitea:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-dozzle
+          group: ${SERVER_HOSTNAME}-gitea
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
-            displayName: dozzle
-            theme: ghost
-            show-details-by-default: true
-
-    sablier-${SERVER_HOSTNAME}-duplicati:
-      plugin:
-        sablier:
-          sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-duplicati
-          sessionDuration: 5m
-          ignoreUserAgent: curl
-          dynamic:
-            displayName: Duplicati
+            displayName: Gitea
             theme: ghost
             show-details-by-default: true
 
@@ -205,6 +164,18 @@ http:
             theme: ghost
             show-details-by-default: true
 
+    sablier-${SERVER_HOSTNAME}-jellyfin:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-jellyfin
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Jellyfin
+            theme: ghost
+            show-details-by-default: true
+
     sablier-${SERVER_HOSTNAME}-komodo:
       plugin:
         sablier:
@@ -217,7 +188,6 @@ http:
             theme: ghost
             show-details-by-default: true
 
-
     sablier-${SERVER_HOSTNAME}-kopia:
       plugin:
         sablier:
@@ -227,6 +197,42 @@ http:
           ignoreUserAgent: curl
           dynamic:
             displayName: Kopia
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-mealie:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-mealie
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Mealie
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-mediawiki:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-mediawiki
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: mediawiki
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-nextcloud:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-nextcloud
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: NextCloud
             theme: ghost
             show-details-by-default: true
 
@@ -253,7 +259,7 @@ http:
             displayName: OpenWebUI
             theme: ghost
             show-details-by-default: true
-            
+
     sablier-${SERVER_HOSTNAME}-pulse:
       plugin:
         sablier:
@@ -290,21 +296,14 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-dokuwiki:
+    sablier-${SERVER_HOSTNAME}-wordpress:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-dokuwiki  
+          group: ${SERVER_HOSTNAME}-wordpress
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
-            displayName: DokuWiki
+            displayName: wordpress
             theme: ghost
             show-details-by-default: true
-
-    authelia:
-      forwardauth:
-        address: http://authelia:9091/api/verify?rd=https://auth.${DOMAIN}/
-        authResponseHeaders:
-          - X-Secret
-        trustForwardHeader: true

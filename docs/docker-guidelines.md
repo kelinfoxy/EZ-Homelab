@@ -102,7 +102,9 @@ AI will suggest `/mnt/` when data may exceed 50GB or grow continuously.
 
 ### Every Local (on the same server) Service Needs Traefik Labels
 
-Standard pattern for all services:
+**Default Configuration**: All services should use authelia SSO, traefik routing, and sablier lazy loading by default.
+
+Standard pattern for all services using the standardized TRAEFIK CONFIGURATION format:
 
 ```yaml
 services:
@@ -113,40 +115,224 @@ services:
       - homelab-network
       - traefik-network    # Required for Traefik
     labels:
-      # Enable Traefik
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
+      - "com.centurylinklabs.watchtower.enable=true"
+      - "homelab.category=category-name"
+      - "homelab.description=Brief service description"
+      # Traefik labels
       - "traefik.enable=true"
-      
-      # Define routing rule
+      # Router configuration
       - "traefik.http.routers.myservice.rule=Host(`myservice.${DOMAIN}`)"
-      
-      # Use websecure entrypoint (HTTPS)
       - "traefik.http.routers.myservice.entrypoints=websecure"
-      
-      # Enable Let's Encrypt
       - "traefik.http.routers.myservice.tls.certresolver=letsencrypt"
-      
-      # Add Authelia SSO (if needed) - comment out to disable SSO
       - "traefik.http.routers.myservice.middlewares=authelia@docker"
-      
-      # Specify port (if not default 80)
+      # Service configuration
       - "traefik.http.services.myservice.loadbalancer.server.port=8080"
-      
-      # Optional: Sablier lazy loading (comment out to disable)
-      # - "sablier.enable=true"
-      # - "sablier.group=core-myservice"
-      # - "sablier.start-on-demand=true"
+      # Sablier configuration
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME}-myservice"
+      - "sablier.start-on-demand=true"
 ```
+
+### Label Structure Explanation
+
+**Service Metadata Section:**
+- `com.centurylinklabs.watchtower.enable=true` - Enables automatic container updates
+- `homelab.category=category-name` - Groups services by function (media, productivity, infrastructure, etc.)
+- `homelab.description=Brief description` - Documents service purpose
+
+**Router Configuration Section:**
+- `traefik.enable=true` - Enables Traefik routing for this service
+- `rule=Host(\`myservice.${DOMAIN}\`)` - Defines the domain routing rule
+- `entrypoints=websecure` - Routes through HTTPS entrypoint
+- `tls.certresolver=letsencrypt` - Enables automatic SSL certificates
+- `middlewares=authelia@docker` - **Default: Enables SSO protection** (remove line to disable)
+
+**Service Configuration Section:**
+- `loadbalancer.server.port=8080` - Specifies internal container port (if not 80)
+
+**Sablier Configuration Section:**
+- `sablier.enable=true` - **Default: Enables lazy loading** (remove section to disable)
+- `sablier.group=${SERVER_HOSTNAME}-myservice` - Groups containers for coordinated startup
+- `sablier.start-on-demand=true` - Starts containers only when accessed
 
 ### If Traefik is on a Remote Server, configure routes & services on the Remote Server
 
-Add a yaml file to the traefik/dynamic folder for each remote server
+When Traefik runs on a separate server from your application services, you cannot use Docker labels for configuration. Instead, create YAML files in the Traefik server's `dynamic/` directory to define routes and services.
 
-Add a section under routers: and a section on services: for each service
+#### When to Use Remote Traefik Configuration
+
+Use this approach when:
+- Traefik runs on a dedicated reverse proxy server
+- Application services run on separate application servers
+- You want centralized routing configuration
+- Docker labels cannot be used (different servers)
+
+#### File Organization
+
+Create one YAML file per application server in `/opt/stacks/traefik/dynamic/`:
+
+```
+/opt/stacks/traefik/dynamic/
+├── server1.example.com.yml    # Services on server1
+├── server2.example.com.yml    # Services on server2
+├── shared-services.yml        # Common services
+└── sablier.yml               # Sablier middlewares
+```
+
+#### YAML File Structure
+
+Each server-specific YAML file should contain:
+
+```yaml
+# /opt/stacks/traefik/dynamic/server1.example.com.yml
+http:
+  routers:
+    # Router definitions for services on server1
+    sonarr:
+      rule: "Host(`sonarr.yourdomain.duckdns.org`)"
+      entrypoints:
+        - websecure
+      tls:
+        certresolver: letsencrypt
+      middlewares:
+        - authelia
+        - sablier-server1-sonarr
+      service: sonarr
+
+    radarr:
+      rule: "Host(`radarr.yourdomain.duckdns.org`)"
+      entrypoints:
+        - websecure
+      tls:
+        certresolver: letsencrypt
+      middlewares:
+        - authelia
+        - sablier-server1-radarr
+      service: radarr
+
+  services:
+    # Service definitions for services on server1
+    sonarr:
+      loadbalancer:
+        servers:
+          - url: "http://server1.example.com:8989"  # Internal IP/port of service
+        passhostheader: true
+
+    radarr:
+      loadbalancer:
+        servers:
+          - url: "http://server1.example.com:7878"  # Internal IP/port of service
+        passhostheader: true
+```
+
+#### Complete Example for a Media Server
+
+```yaml
+# /opt/stacks/traefik/dynamic/media-server.yml
+http:
+  routers:
+    jellyfin:
+      rule: "Host(`jellyfin.yourdomain.duckdns.org`)"
+      entrypoints:
+        - websecure
+      tls:
+        certresolver: letsencrypt
+      # No authelia for app access
+      middlewares:
+        - sablier-media-server-jellyfin
+      service: jellyfin
+
+    sonarr:
+      rule: "Host(`sonarr.yourdomain.duckdns.org`)"
+      entrypoints:
+        - websecure
+      tls:
+        certresolver: letsencrypt
+      middlewares:
+        - authelia
+        - sablier-media-server-sonarr
+      service: sonarr
+
+    radarr:
+      rule: "Host(`radarr.yourdomain.duckdns.org`)"
+      entrypoints:
+        - websecure
+      tls:
+        certresolver: letsencrypt
+      middlewares:
+        - authelia
+        - sablier-media-server-radarr
+      service: radarr
+
+  services:
+    jellyfin:
+      loadbalancer:
+        servers:
+          - url: "http://192.168.1.100:8096"  # Media server internal IP
+        passhostheader: true
+
+    sonarr:
+      loadbalancer:
+        servers:
+          - url: "http://192.168.1.100:8989"  # Media server internal IP
+        passhostheader: true
+
+    radarr:
+      loadbalancer:
+        servers:
+          - url: "http://192.168.1.100:7878"  # Media server internal IP
+        passhostheader: true
+```
+
+#### Key Configuration Notes
+
+**Router Configuration:**
+- `rule`: Domain matching rule (same as Docker labels)
+- `entrypoints`: Use `websecure` for HTTPS
+- `tls.certresolver`: Use `letsencrypt` for automatic SSL
+- `middlewares`: List of middlewares (authelia, sablier, custom)
+- `service`: Reference to service definition below
+
+**Service Configuration:**
+- `url`: Internal IP address and port of the actual service
+- `passhostheader: true`: Required for most web applications
+- Use internal IPs, not public domains
+
+**Middleware References:**
+- `authelia`: References the authelia middleware (defined in another file)
+- `sablier-server1-sonarr`: References sablier middleware for lazy loading
+- Custom middlewares can be added as needed
+
+#### Deployment Process
+
+1. **Create/Update YAML files** in `/opt/stacks/traefik/dynamic/`
+2. **Validate syntax**:
+   ```bash
+   docker exec traefik traefik validate --configFile=/etc/traefik/traefik.yml
+   ```
+3. **Reload configuration** (if hot-reload enabled) or restart Traefik
+4. **Test services** by accessing their domains
+5. **Monitor logs** for any routing errors
+
+#### Migration from Docker Labels
+
+When moving from Docker labels to YAML configuration:
+
+1. Copy router rules from Docker labels to YAML format
+2. Convert service ports to full URLs with internal IPs
+3. Ensure middlewares are properly referenced
+4. Remove Traefik labels from docker-compose files
+5. Test all services after migration
+
+This approach provides centralized, version-controllable routing configuration while maintaining the same security and performance benefits as Docker label-based configuration.
 
 
 ### When to Use Authelia SSO
 
-**Protect with Authelia**:
+**Protect with Authelia** (Default for all services):
 - Admin interfaces (Sonarr, Radarr, Prowlarr, etc.)
 - Infrastructure tools (Portainer, Dockge, Grafana)
 - Personal data (Nextcloud, Mealie, wikis)
@@ -259,12 +445,18 @@ docker run --rm -v mydata:/data busybox tar czf /backup/data.tar.gz /data
 - [ ] What ports are needed?
 - [ ] What data needs to persist?
 - [ ] What environment variables are required?
-- [ ] What networks should it connect to?
+- [ ] What networks should it connect to? (include `traefik-network`)
 - [ ] Are there any security considerations?
+- [ ] **Should this service be protected by Authelia SSO?** (default: yes)
+- [ ] **Should this service use lazy loading?** (default: yes)
+- [ ] **What category does this service belong to?** (media, productivity, infrastructure, etc.)
+- [ ] **What subdomain should it use?** (service-name.${DOMAIN})
 
 #### 2. Research Phase
 
 - Read the official image documentation
+- Check for a service-doc in the EZ-Homelab/docs/service-docs folder, if the new service doesn't have one, be prepared to create it at the end
+- Utilize https://awesome-docker-compose.com/apps
 - Check example configurations
 - Review resource requirements
 - Understand health check requirements
@@ -279,13 +471,14 @@ services:
   service-name:
     image: vendor/image:specific-version
     container_name: service-name
-    restart: unless-stopped
+    restart: unless-stopped    # Set to 'no' if lazyloading (Sablier) is to be enabled
 ```
 
-**Add networks:**
+**Add networks (required for Traefik):**
 ```yaml
     networks:
       - homelab-network
+      - traefik-network    # Required for Traefik routing
 ```
 
 **Add ports (if externally accessible):**
@@ -319,6 +512,102 @@ services:
       start_period: 40s
 ```
 
+**Add TRAEFIK CONFIGURATION labels (required for all web services):**
+```yaml
+    labels:
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
+      - "com.centurylinklabs.watchtower.enable=true"
+      - "homelab.category=category-name"
+      - "homelab.description=Brief service description"
+      # Traefik labels
+      - "traefik.enable=true"
+      # Router configuration
+      - "traefik.http.routers.service-name.rule=Host(`service-name.${DOMAIN}`)"
+      - "traefik.http.routers.service-name.entrypoints=websecure"
+      - "traefik.http.routers.service-name.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.service-name.middlewares=authelia@docker"
+      # Service configuration
+      - "traefik.http.services.service-name.loadbalancer.server.port=8080"
+      # Sablier configuration
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME}-service-name"
+      - "sablier.start-on-demand=true"
+```
+If Traefik & Sablier are on a remote server:
+  * Comment out the traefik labels since they won't be used, don't delete them.
+  * Notify user to add the service and middleware to the traefic external host yml file, and the sablier.yml file.
+
+**Example: Comment out Traefik labels in docker-compose.yml:**
+```yaml
+    labels:
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
+      - "com.centurylinklabs.watchtower.enable=true"
+      - "homelab.category=category-name"
+      - "homelab.description=Brief service description"
+      # Traefik labels - COMMENTED OUT for remote server
+      # - "traefik.enable=true"
+      # - "traefik.http.routers.service-name.rule=Host(`service-name.${DOMAIN}`)"
+      # - "traefik.http.routers.service-name.entrypoints=websecure"
+      # - "traefik.http.routers.service-name.tls.certresolver=letsencrypt"
+      # - "traefik.http.routers.service-name.middlewares=authelia@docker"
+      # - "traefik.http.services.service-name.loadbalancer.server.port=8080"
+      # Sablier configuration 
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME}-service-name"
+      - "sablier.start-on-demand=true"
+```
+
+**Required: Add to Traefik external host YAML file (e.g., `/opt/stacks/traefik/dynamic/remote-host-server1.yml`):**
+```yaml
+http:
+  routers:
+    service-name:
+      rule: "Host(`service-name.yourdomain.duckdns.org`)"
+      entrypoints:
+        - websecure
+      tls:
+        certresolver: letsencrypt
+      middlewares:
+        - authelia
+        - sablier-server1-service-name
+      service: service-name
+
+  services:
+    service-name:
+      loadbalancer:
+        servers:
+          - url: "http://192.168.1.100:8080"  # Internal IP of application server
+        passhostheader: true
+```
+
+**Required: Add to Sablier YAML file (e.g., `/opt/stacks/traefik/dynamic/sablier.yml`):**
+```yaml
+    sablier-server1-servicename:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: server1-servicename
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Service Name
+            theme: ghost
+            show-details-by-default: true
+```
+
+**Deployment Steps:**
+1. Comment out Traefik labels in the service's docker-compose.yml
+2. Add router and service definitions to the appropriate Traefik dynamic YAML file
+3. Add sablier middleware to the sablier.yml file
+4. Validate Traefik configuration: `docker exec traefik traefik validate --configFile=/etc/traefik/traefik.yml`
+5. Restart Traefik or wait for hot-reload
+6. Test service access through Traefik
+
+
 #### 4. Testing Phase
 
 ```bash
@@ -342,17 +631,21 @@ services:
     image: lscr.io/linuxserver/sonarr:4.0.0
     container_name: sonarr
     # Sonarr - TV Show management and automation
-    # Web UI: http://server-ip:8989
+    # Access at: https://sonarr.yourdomain.duckdns.org (via Traefik)
     # Connects to: Prowlarr (indexers), qBittorrent (downloads)
-    restart: unless-stopped
+    # Protected by: Authelia SSO, Sablier lazy loading
+    restart: no
 ```
 
 Update your main README or service-specific README with:
 - Service purpose
-- Access URLs
+- Access URLs (Traefik HTTPS URLs)
 - Default credentials (if any)
-- Configuration notes
+- Configuration notes (SSO enabled/disabled, lazy loading, etc.)
 - Backup instructions
+- Any special routing considerations (VPN, remote server, etc.)
+
+If the service doesn't already have a service doc in EZ-Homelab/docs/service-docs folder, create it using the compiled information about the service with the same format as the other service-docs
 
 ## Service Modification Guidelines
 
@@ -428,25 +721,49 @@ docker compose -f docker-compose/service.yml up -d
 
 ### Common Modifications
 
+**Add TRAEFIK CONFIGURATION to existing service:**
+```yaml
+    labels:
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
+      - "com.centurylinklabs.watchtower.enable=true"
+      - "homelab.category=category-name"
+      - "homelab.description=Brief service description"
+      # Traefik labels
+      - "traefik.enable=true"
+      # Router configuration
+      - "traefik.http.routers.service-name.rule=Host(`service-name.${DOMAIN}`)"
+      - "traefik.http.routers.service-name.entrypoints=websecure"
+      - "traefik.http.routers.service-name.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.service-name.middlewares=authelia@docker"
+      # Service configuration
+      - "traefik.http.services.service-name.loadbalancer.server.port=8080"
+      # Sablier configuration
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME}-service-name"
+      - "sablier.start-on-demand=true"
+```
+
 **Toggle SSO**: Comment/uncomment the Authelia middleware label:
 ```yaml
-# Enable SSO
+# Enable SSO (default)
 - "traefik.http.routers.service.middlewares=authelia@docker"
 
-# Disable SSO (comment out)
+# Disable SSO (remove line for media servers, public services)
 # - "traefik.http.routers.service.middlewares=authelia@docker"
 ```
 
 **Toggle Lazy Loading**: Comment/uncomment Sablier labels:
 ```yaml
-# Enable lazy loading
+# Enable lazy loading (default)
 - "sablier.enable=true"
-- "sablier.group=core-service"
+- "sablier.group=${SERVER_HOSTNAME}-service"
 - "sablier.start-on-demand=true"
 
-# Disable lazy loading (comment out)
+# Disable lazy loading (remove section for always-on services)
 # - "sablier.enable=true"
-# - "sablier.group=core-service"
+# - "sablier.group=${SERVER_HOSTNAME}-service"
 # - "sablier.start-on-demand=true"
 ```
 

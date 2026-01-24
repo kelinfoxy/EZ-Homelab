@@ -372,6 +372,8 @@ http:
         - sablier-${SERVER_HOSTNAME}-arr@file
         - authelia@docker
 
+
+# Service Definitions
   services:
     backrest-${SERVER_HOSTNAME}:
       loadBalancer:
