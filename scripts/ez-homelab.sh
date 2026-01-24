@@ -470,47 +470,6 @@ perform_deployment() {
     if [ "$SETUP_STACKS" = true ]; then
         setup_stacks_for_dockge
     fi
-
-    # Deploy Dokuwiki (always deployed as it's part of the base setup)
-    deployed_count=3  # Dockge is always deployed
-    [ "$DEPLOY_CORE" = true ] && deployed_count=$((deployed_count + 1))
-    [ "$DEPLOY_INFRASTRUCTURE" = true ] && deployed_count=$((deployed_count + 1))
-    [ "$DEPLOY_DASHBOARDS" = true ] && deployed_count=$((deployed_count + 1))
-    step_num=$((deployed_count + 1))
-    log_info "Step $step_num: Deploying Dokuwiki wiki platform..."
-    log_info "  - DokuWiki (File-based wiki with pre-configured content)"
-    echo ""
-
-    # Create Dokuwiki directory
-    mkdir -p /opt/stacks/dokuwiki/config
-
-    # Copy Dokuwiki compose file
-    cp "$REPO_DIR/config-templates/dokuwiki/docker-compose.yml" /opt/stacks/dokuwiki/docker-compose.yml
-
-    # Replace domain placeholders in Dokuwiki
-    sed -i "s/\${DOMAIN}/${DOMAIN}/g" /opt/stacks/dokuwiki/docker-compose.yml
-
-    # Copy pre-configured Dokuwiki config, content, and keys
-    if [ -d "$REPO_DIR/config-templates/dokuwiki/conf" ]; then
-        cp -r "$REPO_DIR/config-templates/dokuwiki/conf" /opt/stacks/dokuwiki/config/
-    fi
-
-    if [ -d "$REPO_DIR/config-templates/dokuwiki/data" ]; then
-        cp -r "$REPO_DIR/config-templates/dokuwiki/data" /opt/stacks/dokuwiki/config/
-    fi
-
-    if [ -d "$REPO_DIR/config-templates/dokuwiki/keys" ]; then
-        cp -r "$REPO_DIR/config-templates/dokuwiki/keys" /opt/stacks/dokuwiki/config/
-    fi
-
-    # Set proper ownership for Dokuwiki config
-    sudo chown -R 1000:1000 /opt/stacks/dokuwiki/config
-
-    # Deploy Dokuwiki
-    cd /opt/stacks/dokuwiki
-    docker compose up -d
-    log_success "Dokuwiki deployed with pre-configured content"
-    echo ""
 }
 
 # Setup stacks for Dockge function

@@ -28,7 +28,6 @@ services:
     restart: no
     networks:
       - homelab-network
-      - homelab-network
       - traefik-network
     ports:
       - "8989:8989"
@@ -66,7 +65,6 @@ services:
     container_name: radarr
     restart: no
     networks:
-      - homelab-network
       - homelab-network
       - traefik-network
     ports:
@@ -106,7 +104,6 @@ services:
     restart: no
     networks:
       - homelab-network
-      - homelab-network
       - traefik-network
     ports:
       - "9696:9696"
@@ -142,7 +139,6 @@ services:
     container_name: readarr
     restart: no
     networks:
-      - homelab-network
       - homelab-network
       - traefik-network
     ports:
@@ -182,7 +178,6 @@ services:
     restart: no
     networks:
       - homelab-network
-      - homelab-network
       - traefik-network
     ports:
       - "8686:8686"
@@ -220,7 +215,6 @@ services:
     container_name: lazylibrarian
     restart: no
     networks:
-      - homelab-network
       - homelab-network
       - traefik-network
     ports:
@@ -261,7 +255,6 @@ services:
     restart: no
     networks:
       - homelab-network
-      - homelab-network
       - traefik-network
     ports:
       - "8090:8090"
@@ -299,7 +292,6 @@ services:
     container_name: jellyseerr
     restart: no
     networks:
-      - homelab-network
       - homelab-network
       - traefik-network
     ports:
@@ -349,7 +341,6 @@ services:
     container_name: tdarr-server
     restart: no
     networks:
-      - homelab-network
       - homelab-network
       - traefik-network
     ports:
@@ -420,10 +411,9 @@ services:
     restart: no
     networks:
       - homelab-network
-      - homelab-network
       - traefik-network
     ports:
-      - "8888:8888"
+      - "8889:8888"
     volumes:
       - ./unmanic/config:/config
       - /mnt/media:/library
@@ -447,10 +437,11 @@ services:
       - "traefik.http.routers.unmanic.entrypoints=websecure"
       - "traefik.http.routers.unmanic.tls.certresolver=letsencrypt"
       - "traefik.http.routers.unmanic.middlewares=authelia@docker"
-      - "traefik.http.services.unmanic.loadbalancer.server.port=8888"
+      - "traefik.http.services.unmanic.loadbalancer.server.port=8889"
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME}-arr"
       - "sablier.start-on-demand=true"
+
 x-dockge:
   urls:
     - https://sonarr.${DOMAIN}
@@ -473,6 +464,7 @@ x-dockge:
     - http://localhost:8265
     - https://unmanic.${DOMAIN}
     - http://localhost:8888
+
 networks:
   homelab-network:
     external: true

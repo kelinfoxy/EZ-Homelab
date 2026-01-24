@@ -233,7 +233,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "8443:8443"
+      - "8079:8443"
     volumes:
       - ./code-server/config:/config
       - /opt/stacks:/opt/stacks  # Access to all stacks

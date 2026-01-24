@@ -35,7 +35,6 @@ services:
     restart: unless-stopped
     networks:
       - homelab-network
-      - homelab-network
       - traefik-network
     ports:
       - "9090:9090"
@@ -83,7 +82,6 @@ services:
     container_name: grafana
     restart: unless-stopped
     networks:
-      - homelab-network
       - homelab-network
       - traefik-network
     ports:
@@ -147,7 +145,6 @@ services:
     restart: unless-stopped
     networks:
       - homelab-network
-      - homelab-network
       - traefik-network
     ports:
       - "8082:8080"
@@ -194,7 +191,6 @@ services:
     restart: unless-stopped
     networks:
       - homelab-network
-      - homelab-network
       - traefik-network
     ports:
       - "3001:3001"
@@ -234,7 +230,6 @@ services:
     container_name: loki
     restart: unless-stopped
     networks:
-      - homelab-network
       - homelab-network
       - traefik-network
     ports:

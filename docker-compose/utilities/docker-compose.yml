@@ -59,14 +59,12 @@ services:
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME}-backrest"
       - "sablier.start-on-demand=true"
-      - "x-dockge.url=https://backrest.${DOMAIN}"
-      - "x-dockge.url=https://backrest.${DOMAIN}"
   # Duplicati - Backup solution
   # Access at: https://duplicati.${DOMAIN}
   duplicati:
     image: lscr.io/linuxserver/duplicati:2.0.7
     container_name: duplicati
-    restart: unless-stopped
+    restart: no
     networks:
       - homelab-network
       - traefik-network
@@ -95,18 +93,22 @@ services:
       - "traefik.http.routers.duplicati.middlewares=authelia@docker"
       # Service configuration
       - "traefik.http.services.duplicati.loadbalancer.server.port=8200"
+      # Sablier configuration
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME}-duplicati"
+      - "sablier.start-on-demand=true"
   # Form.io - Form builder
   # Uncomment and configure if formio/formio image becomes available
   formio:
     image: calipseo/formio:latest
     container_name: formio
-    restart: unless-stopped
+    restart: no
     networks:
       - homelab-network
       - traefik-network
-      - homelab-network
+      
     ports:
-      - "3001:3001"
+      - "3002:3001"
     environment:
       - MONGO=mongodb://formio-mongo:27017/formio
       - JWT_SECRET=${FORMIO_JWT_SECRET}
@@ -117,18 +119,22 @@ services:
       # TRAEFIK CONFIGURATION
       # ==========================================
       # Service metadata
+      - "com.centurylinklabs.watchtower.enable=true"
       - "homelab.category=utilities"
       - "homelab.description=Form builder platform"
-      # Traefik reverse proxy (comment/uncomment to disable/enable)
-      # If Traefik is on a remote server: these labels are NOT USED; 
-      #   configure external yml files in /traefik/dynamic folder instead.
+      # Traefik labels
       - "traefik.enable=true"
+      # Router configuration
       - "traefik.http.routers.formio.rule=Host(`forms.${DOMAIN}`)"
       - "traefik.http.routers.formio.entrypoints=websecure"
       - "traefik.http.routers.formio.tls.certresolver=letsencrypt"
       - "traefik.http.routers.formio.middlewares=authelia@docker"
+      # Service configuration
       - "traefik.http.services.formio.loadbalancer.server.port=3001"
-
+      # Sablier configuration
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME}-formio"
+      - "sablier.start-on-demand=true"
   formio-mongo:
     image: mongo:4.4
     container_name: formio-mongo
@@ -145,7 +151,7 @@ services:
   vaultwarden:
     image: vaultwarden/server:1.30.1
     container_name: vaultwarden
-    restart: unless-stopped
+    restart: no
     networks:
       - homelab-network
       - traefik-network
@@ -182,6 +188,10 @@ services:
       # SSO disabled for browser extension and mobile app compatibility
       # - "traefik.http.routers.vaultwarden.middlewares=authelia@docker"
       - "traefik.http.services.vaultwarden.loadbalancer.server.port=80"
+      # Sablier configuration
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME}-vaultwarden"
+      - "sablier.start-on-demand=true"
   # Authelia Redis - Session storage for Authelia
   # No web UI - backend service
 #  authelia-redis:

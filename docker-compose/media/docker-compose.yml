@@ -34,7 +34,6 @@ services:
     restart: no
     networks:
       - homelab-network
-      - homelab-network
       - traefik-network
     ports:
       - "8096:8096"
@@ -91,7 +90,6 @@ services:
     container_name: calibre-web
     restart: unless-stopped
     networks:
-      - homelab-network
       - homelab-network
       - traefik-network
     ports:
