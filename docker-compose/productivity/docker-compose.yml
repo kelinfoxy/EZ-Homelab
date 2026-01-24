@@ -39,7 +39,7 @@ services:
       - traefik-network
       - nextcloud-network
     ports:
-      - "80:80"
+      - "8099:80"
     volumes:
       - ./nextcloud/html:/var/www/html
       - /mnt/nextcloud-data:/var/www/html/data  # Large data on separate drive
@@ -69,7 +69,7 @@ services:
       - "traefik.http.routers.nextcloud.tls.certresolver=letsencrypt"
       - "traefik.http.routers.nextcloud.middlewares=authelia@docker"
       # Service configuration
-      - "traefik.http.services.nextcloud.loadbalancer.server.port=80"
+      - "traefik.http.services.nextcloud.loadbalancer.server.port=8099"
       # Sablier configuration
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME}-nextcloud"
@@ -103,7 +103,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "9000:9000"
+      - "9001:9000"
     volumes:
       - ./mealie/data:/app/data
     environment:
@@ -125,7 +125,7 @@ services:
       - "traefik.http.routers.mealie.tls.certresolver=letsencrypt"
       - "traefik.http.routers.mealie.middlewares=authelia@docker"
       # Service configuration
-      - "traefik.http.services.mealie.loadbalancer.server.port=9000"
+      - "traefik.http.services.mealie.loadbalancer.server.port=9001"
       # Sablier configuration
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME}-mealie"
@@ -142,7 +142,7 @@ services:
       - traefik-network
       - wordpress-network
     ports:
-      - "80:80"
+      - "8089:80"
     volumes:
       - ./wordpress/html:/var/www/html
     environment:
@@ -165,7 +165,7 @@ services:
       - "traefik.http.routers.wordpress.tls.certresolver=letsencrypt"
       - "traefik.http.routers.wordpress.middlewares=authelia@docker"
       # Service configuration
-      - "traefik.http.services.wordpress.loadbalancer.server.port=80"
+      - "traefik.http.services.wordpress.loadbalancer.server.port=8089"
       # Sablier configuration
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME}-wordpress"
@@ -208,7 +208,7 @@ services:
       - traefik-network
       - gitea-network
     ports:
-      - "3000:3000"
+      - "3011:3000"
     volumes:
       - ./gitea/data:/data
       - /etc/timezone:/etc/timezone:ro
@@ -236,7 +236,7 @@ services:
       - "traefik.http.routers.gitea.tls.certresolver=letsencrypt"
       - "traefik.http.routers.gitea.middlewares=authelia@docker"
       # Service configuration
-      - "traefik.http.services.gitea.loadbalancer.server.port=3000"
+      - "traefik.http.services.gitea.loadbalancer.server.port=3011"
       # Sablier configuration
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME}-gitea"
@@ -269,7 +269,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "80:80"
+      - "6876:80"
     volumes:
       - ./dokuwiki/config:/config
     environment:
@@ -289,7 +289,7 @@ services:
       - "traefik.http.routers.dokuwiki.tls.certresolver=letsencrypt"
       - "traefik.http.routers.dokuwiki.middlewares=authelia@docker"
       # Service configuration
-      - "traefik.http.services.dokuwiki.loadbalancer.server.port=80"
+      - "traefik.http.services.dokuwiki.loadbalancer.server.port=8088"
       # Sablier configuration
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME}-dokuwiki"
@@ -307,7 +307,7 @@ services:
       - traefik-network
       - bookstack-network
     ports:
-      - "80:80"
+      - "6876:80"
     volumes:
       - ./bookstack/config:/config
     environment:
@@ -335,7 +335,7 @@ services:
       - "traefik.http.routers.bookstack.tls.certresolver=letsencrypt"
       - "traefik.http.routers.bookstack.middlewares=authelia@docker"
       # Service configuration
-      - "traefik.http.services.bookstack.loadbalancer.server.port=80"
+      - "traefik.http.services.bookstack.loadbalancer.server.port=6876"
       # Sablier configuration
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME}-bookstack"
@@ -369,7 +369,7 @@ services:
       - traefik-network
       - mediawiki-network
     ports:
-      - "80:80"
+      - "8891:80"
     volumes:
       - ./mediawiki/images:/var/www/html/images
       - ./mediawiki/LocalSettings.php:/var/www/html/LocalSettings.php
@@ -393,7 +393,7 @@ services:
       - "traefik.http.routers.mediawiki.tls.certresolver=letsencrypt"
       - "traefik.http.routers.mediawiki.middlewares=authelia@docker"
       # Service configuration
-      - "traefik.http.services.mediawiki.loadbalancer.server.port=80"
+      - "traefik.http.services.mediawiki.loadbalancer.server.port=8891"
       # Sablier configuration
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME}-mediawiki"
@@ -427,7 +427,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "8888:8888"
+      - "8890:8888"
     volumes:
       - ./config/jupyter:/home/jovyan/work
     environment:
@@ -457,7 +457,7 @@ services:
       - "traefik.http.routers.jupyter.entrypoints=websecure"
       - "traefik.http.routers.jupyter.tls.certresolver=letsencrypt"
       - "traefik.http.routers.jupyter.middlewares=authelia@docker"
-      - "traefik.http.services.jupyter.loadbalancer.server.port=8888"
+      - "traefik.http.services.jupyter.loadbalancer.server.port=8890"
 
 volumes:
   nextcloud-db-data:
