@@ -34,7 +34,7 @@ services:
     container_name: prometheus
     restart: unless-stopped
     networks:
-      - monitoring-network
+      - homelab-network
       - homelab-network
       - traefik-network
     ports:
@@ -83,7 +83,7 @@ services:
     container_name: grafana
     restart: unless-stopped
     networks:
-      - monitoring-network
+      - homelab-network
       - homelab-network
       - traefik-network
     ports:
@@ -123,7 +123,7 @@ services:
     container_name: node-exporter
     restart: unless-stopped
     networks:
-      - monitoring-network
+      - homelab-network
     ports:
       - "9100:9100"
     volumes:
@@ -146,7 +146,7 @@ services:
     container_name: cadvisor
     restart: unless-stopped
     networks:
-      - monitoring-network
+      - homelab-network
       - homelab-network
       - traefik-network
     ports:
@@ -193,7 +193,7 @@ services:
     container_name: uptime-kuma
     restart: unless-stopped
     networks:
-      - monitoring-network
+      - homelab-network
       - homelab-network
       - traefik-network
     ports:
@@ -234,7 +234,7 @@ services:
     container_name: loki
     restart: unless-stopped
     networks:
-      - monitoring-network
+      - homelab-network
       - homelab-network
       - traefik-network
     ports:
@@ -267,7 +267,7 @@ services:
     container_name: promtail
     restart: unless-stopped
     networks:
-      - monitoring-network
+      - homelab-network
     volumes:
       - ./config/promtail:/etc/promtail
       - /var/log:/var/log:ro
@@ -290,8 +290,6 @@ volumes:
     driver: local
 
 networks:
-  monitoring-network:
-    driver: bridge
   homelab-network:
     external: true
   traefik-network:

@@ -104,7 +104,7 @@ services:
     networks:
       - homelab-network
       - traefik-network
-      - formio-network
+      - homelab-network
     ports:
       - "3001:3001"
     environment:
@@ -134,7 +134,7 @@ services:
     container_name: formio-mongo
     restart: unless-stopped
     networks:
-      - formio-network
+      - homelab-network
     labels:
       - "homelab.category=utilities"
       - "homelab.description=Form.io database"
@@ -179,7 +179,8 @@ services:
       - "traefik.http.routers.vaultwarden.entrypoints=websecure"
       - "traefik.http.routers.vaultwarden.tls=true"
       - "traefik.http.routers.vaultwarden.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.vaultwarden.middlewares=authelia@docker"
+      # SSO disabled for browser extension and mobile app compatibility
+      # - "traefik.http.routers.vaultwarden.middlewares=authelia@docker"
       - "traefik.http.services.vaultwarden.loadbalancer.server.port=80"
   # Authelia Redis - Session storage for Authelia
   # No web UI - backend service
@@ -204,5 +205,3 @@ networks:
     external: true
   traefik-network:
     external: true
-  formio-network:
-    driver: bridge

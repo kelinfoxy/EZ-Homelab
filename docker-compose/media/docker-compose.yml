@@ -33,7 +33,7 @@ services:
     container_name: jellyfin
     restart: no
     networks:
-      - media-network
+      - homelab-network
       - homelab-network
       - traefik-network
     ports:
@@ -91,7 +91,7 @@ services:
     container_name: calibre-web
     restart: unless-stopped
     networks:
-      - media-network
+      - homelab-network
       - homelab-network
       - traefik-network
     ports:
@@ -133,8 +133,6 @@ x-dockge:
     - https://calibre.${DOMAIN}
 
 networks:
-  media-network:
-    driver: bridge
   homelab-network:
     external: true
   traefik-network:

@@ -171,7 +171,7 @@ services:
     container_name: plex
     restart: unless-stopped
     networks:
-      - media-network
+      - homelab-network
       - homelab-network
       - traefik-network
     ports:
@@ -232,7 +232,5 @@ networks:
   homelab-network:
     external: true
   traefik-network:
-    external: true
-  media-network:
     external: true
 

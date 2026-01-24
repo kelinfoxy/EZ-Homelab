@@ -27,7 +27,7 @@ services:
     container_name: sonarr
     restart: no
     networks:
-      - media-network
+      - homelab-network
       - homelab-network
       - traefik-network
     ports:
@@ -66,7 +66,7 @@ services:
     container_name: radarr
     restart: no
     networks:
-      - media-network
+      - homelab-network
       - homelab-network
       - traefik-network
     ports:
@@ -105,7 +105,7 @@ services:
     container_name: prowlarr
     restart: no
     networks:
-      - media-network
+      - homelab-network
       - homelab-network
       - traefik-network
     ports:
@@ -142,7 +142,7 @@ services:
     container_name: readarr
     restart: no
     networks:
-      - media-network
+      - homelab-network
       - homelab-network
       - traefik-network
     ports:
@@ -181,7 +181,7 @@ services:
     container_name: lidarr
     restart: no
     networks:
-      - media-network
+      - homelab-network
       - homelab-network
       - traefik-network
     ports:
@@ -220,7 +220,7 @@ services:
     container_name: lazylibrarian
     restart: no
     networks:
-      - media-network
+      - homelab-network
       - homelab-network
       - traefik-network
     ports:
@@ -260,7 +260,7 @@ services:
     container_name: mylar3
     restart: no
     networks:
-      - media-network
+      - homelab-network
       - homelab-network
       - traefik-network
     ports:
@@ -299,7 +299,7 @@ services:
     container_name: jellyseerr
     restart: no
     networks:
-      - media-network
+      - homelab-network
       - homelab-network
       - traefik-network
     ports:
@@ -335,7 +335,7 @@ services:
     container_name: flaresolverr
     restart: unless-stopped
     networks:
-      - media-network
+      - homelab-network
     environment:
       - LOG_LEVEL=info
       - TZ=${TZ}
@@ -349,7 +349,7 @@ services:
     container_name: tdarr-server
     restart: no
     networks:
-      - media-network
+      - homelab-network
       - homelab-network
       - traefik-network
     ports:
@@ -394,7 +394,7 @@ services:
     container_name: tdarr-node
     restart: unless-stopped
     networks:
-      - media-network
+      - homelab-network
     volumes:
       - ./tdarr/configs:/app/configs
       - ./tdarr/logs:/app/logs
@@ -419,7 +419,7 @@ services:
     container_name: unmanic
     restart: no
     networks:
-      - media-network
+      - homelab-network
       - homelab-network
       - traefik-network
     ports:
@@ -474,8 +474,6 @@ x-dockge:
     - https://unmanic.${DOMAIN}
     - http://localhost:8888
 networks:
-  media-network:
-    external: true
   homelab-network:
     external: true
   traefik-network:
