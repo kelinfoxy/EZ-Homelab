@@ -65,11 +65,18 @@ labels:
   - "traefik.http.routers.SERVICE.tls.certresolver=letsencrypt"  # Uses wildcard cert
   - "traefik.http.routers.SERVICE.middlewares=authelia@docker"    # SSO protection (comment out to disable)
   - "traefik.http.services.SERVICE.loadbalancer.server.port=PORT"  # If not default
-  - "x-dockge.url=https://SERVICE.${DOMAIN}"  # Service discovery in Dockge
   # Optional: Sablier lazy loading (comment out to disable)
-  # - "sablier.enable=true"
-  # - "sablier.group=core-SERVICE"
-  # - "sablier.start-on-demand=true"
+  - "sablier.enable=true"
+  - "sablier.group=${SERVER_HOSTNAME}-SERVICE"  # Use -arr for media stacks
+  - "sablier.start-on-demand=true"
+```
+
+Add x-dockge section at the bottom of the compose file:
+```yaml
+x-dockge:
+  urls:
+    - https://SERVICE.${DOMAIN}  # HTTPS access via Traefik
+    - http://localhost:PORT  # Direct local access
 ```
 
 ### 3. Resource Management
@@ -178,9 +185,13 @@ services:
       - "traefik.http.routers.service-name.tls.certresolver=letsencrypt"
       - "traefik.http.routers.service-name.middlewares=authelia@docker"  # SSO enabled by default
       - "traefik.http.services.service-name.loadbalancer.server.port=8080"  # If non-standard port
-      - "x-dockge.url=https://service.${DOMAIN}"  # Service discovery
       - "homelab.category=category-name"
       - "homelab.description=Service description"
+
+x-dockge:
+  urls:
+    - https://service.${DOMAIN}
+    - http://localhost:8080
 
 volumes:
   service-data:
@@ -229,11 +240,15 @@ labels:
   - "traefik.http.routers.jellyfin.entrypoints=websecure"
   - "traefik.http.routers.jellyfin.tls.certresolver=letsencrypt"
   # NO authelia middleware - direct access for apps/devices
-  - "x-dockge.url=https://jellyfin.${DOMAIN}"
   # Optional: Sablier lazy loading (uncomment to enable)
   # - "sablier.enable=true"
   # - "sablier.group=media-jellyfin"
   # - "sablier.start-on-demand=true"
+
+x-dockge:
+  urls:
+    - https://jellyfin.${DOMAIN}
+    - http://localhost:8096
 ```
 
 ## Modifying Existing Services
@@ -292,11 +307,13 @@ Apply limits to all services to prevent resource exhaustion:
 - **Media services**: High limits (2-4 CPU, 4-8GB RAM)
 - **Always set reservations** for guaranteed minimum resources
 
-### x-dockge.url Labels
-Include service discovery labels for Dockge UI:
+### x-dockge Section
+Include service discovery section for Dockge UI:
 ```yaml
-labels:
-  - "x-dockge.url=https://service.${DOMAIN}"  # Shows direct link in Dockge
+x-dockge:
+  urls:
+    - https://service.${DOMAIN}  # HTTPS access via Traefik
+    - http://localhost:PORT  # Direct local access
 ```
 
 ## Key Documentation References

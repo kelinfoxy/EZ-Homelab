@@ -25,7 +25,7 @@ services:
   sonarr:
     image: linuxserver/sonarr:4.0.0
     container_name: sonarr
-    restart: unless-stopped
+    restart: no
     networks:
       - media-network
       - homelab-network
@@ -46,6 +46,7 @@ services:
       # Service metadata
       - "homelab.category=media"
       - "homelab.description=TV show management and automation"
+      - "com.centurylinklabs.watchtower.enable=true"
       # Traefik reverse proxy (comment/uncomment to disable/enable)
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
@@ -55,12 +56,15 @@ services:
       - "traefik.http.routers.sonarr.tls.certresolver=letsencrypt"
       - "traefik.http.routers.sonarr.middlewares=authelia@docker"
       - "traefik.http.services.sonarr.loadbalancer.server.port=8989"
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME}-arr"
+      - "sablier.start-on-demand=true"
   # Radarr - Movie automation
   # Access at: https://radarr.yourdomain.duckdns.org
   radarr:
     image: linuxserver/radarr:5.2.6
     container_name: radarr
-    restart: unless-stopped
+    restart: no
     networks:
       - media-network
       - homelab-network
@@ -81,6 +85,7 @@ services:
       # Service metadata
       - "homelab.category=media"
       - "homelab.description=Movie management and automation"
+      - "com.centurylinklabs.watchtower.enable=true"
       # Traefik reverse proxy (comment/uncomment to disable/enable)
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
@@ -90,12 +95,15 @@ services:
       - "traefik.http.routers.radarr.tls.certresolver=letsencrypt"
       - "traefik.http.routers.radarr.middlewares=authelia@docker"
       - "traefik.http.services.radarr.loadbalancer.server.port=7878"
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME}-arr"
+      - "sablier.start-on-demand=true"
   # Prowlarr - Indexer manager
   # Access at: https://prowlarr.yourdomain.duckdns.org
   prowlarr:
     image: linuxserver/prowlarr:1.11.4
     container_name: prowlarr
-    restart: unless-stopped
+    restart: no
     networks:
       - media-network
       - homelab-network
@@ -114,6 +122,7 @@ services:
       # Service metadata
       - "homelab.category=media"
       - "homelab.description=Indexer manager for Sonarr/Radarr"
+      - "com.centurylinklabs.watchtower.enable=true"
       # Traefik reverse proxy (comment/uncomment to disable/enable)
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
@@ -123,12 +132,15 @@ services:
       - "traefik.http.routers.prowlarr.tls.certresolver=letsencrypt"
       - "traefik.http.routers.prowlarr.middlewares=authelia@docker"
       - "traefik.http.services.prowlarr.loadbalancer.server.port=9696"
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME}-arr"
+      - "sablier.start-on-demand=true"
   # Readarr - Ebook and audiobook management
   # Access at: https://readarr.${DOMAIN}
   readarr:
     image: linuxserver/readarr:0.4.19-nightly
     container_name: readarr
-    restart: unless-stopped
+    restart: no
     networks:
       - media-network
       - homelab-network
@@ -149,6 +161,7 @@ services:
       # Service metadata
       - "homelab.category=media"
       - "homelab.description=Ebook and audiobook management"
+      - "com.centurylinklabs.watchtower.enable=true"
       # Traefik reverse proxy (comment/uncomment to disable/enable)
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
@@ -158,12 +171,15 @@ services:
       - "traefik.http.routers.readarr.tls.certresolver=letsencrypt"
       - "traefik.http.routers.readarr.middlewares=authelia@docker"
       - "traefik.http.services.readarr.loadbalancer.server.port=8787"
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME}-arr"
+      - "sablier.start-on-demand=true"
   # Lidarr - Music collection manager
   # Access at: https://lidarr.${DOMAIN}
   lidarr:
     image: linuxserver/lidarr:2.0.7
     container_name: lidarr
-    restart: unless-stopped
+    restart: no
     networks:
       - media-network
       - homelab-network
@@ -184,6 +200,7 @@ services:
       # Service metadata
       - "homelab.category=media"
       - "homelab.description=Music collection manager"
+      - "com.centurylinklabs.watchtower.enable=true"
       # Traefik reverse proxy (comment/uncomment to disable/enable)
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
@@ -193,12 +210,15 @@ services:
       - "traefik.http.routers.lidarr.tls.certresolver=letsencrypt"
       - "traefik.http.routers.lidarr.middlewares=authelia@docker"
       - "traefik.http.services.lidarr.loadbalancer.server.port=8686"
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME}-arr"
+      - "sablier.start-on-demand=true"
   # Lazy Librarian - Book manager
   # Access at: https://lazylibrarian.${DOMAIN}
   lazylibrarian:
     image: linuxserver/lazylibrarian:latest
     container_name: lazylibrarian
-    restart: unless-stopped
+    restart: no
     networks:
       - media-network
       - homelab-network
@@ -220,6 +240,7 @@ services:
       # Service metadata
       - "homelab.category=media"
       - "homelab.description=Book download automation"
+      - "com.centurylinklabs.watchtower.enable=true"
       # Traefik reverse proxy (comment/uncomment to disable/enable)
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
@@ -229,12 +250,15 @@ services:
       - "traefik.http.routers.lazylibrarian.tls.certresolver=letsencrypt"
       - "traefik.http.routers.lazylibrarian.middlewares=authelia@docker"
       - "traefik.http.services.lazylibrarian.loadbalancer.server.port=5299"
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME}-arr"
+      - "sablier.start-on-demand=true"
   # Mylar3 - Comic book manager
   # Access at: https://mylar.${DOMAIN}
   mylar3:
     image: linuxserver/mylar3:latest
     container_name: mylar3
-    restart: unless-stopped
+    restart: no
     networks:
       - media-network
       - homelab-network
@@ -255,6 +279,7 @@ services:
       # Service metadata
       - "homelab.category=media"
       - "homelab.description=Comic book collection manager"
+      - "com.centurylinklabs.watchtower.enable=true"
       # Traefik reverse proxy (comment/uncomment to disable/enable)
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
@@ -264,12 +289,15 @@ services:
       - "traefik.http.routers.mylar.tls.certresolver=letsencrypt"
       - "traefik.http.routers.mylar.middlewares=authelia@docker"
       - "traefik.http.services.mylar.loadbalancer.server.port=8090"
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME}-arr"
+      - "sablier.start-on-demand=true"
   # Jellyseerr - Request management for Jellyfin/Plex
   # Access at: https://jellyseerr.${DOMAIN}
   jellyseerr:
     image: fallenbagel/jellyseerr:latest
     container_name: jellyseerr
-    restart: unless-stopped
+    restart: no
     networks:
       - media-network
       - homelab-network
@@ -287,6 +315,7 @@ services:
       # Service metadata
       - "homelab.category=media"
       - "homelab.description=Media request management"
+      - "com.centurylinklabs.watchtower.enable=true"
       # Traefik reverse proxy (comment/uncomment to disable/enable)
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
@@ -296,6 +325,9 @@ services:
       - "traefik.http.routers.jellyseerr.tls.certresolver=letsencrypt"
       - "traefik.http.routers.jellyseerr.middlewares=authelia@docker"
       - "traefik.http.services.jellyseerr.loadbalancer.server.port=5055"
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME}-arr"
+      - "sablier.start-on-demand=true"
   # FlareSolverr - Cloudflare bypass for Prowlarr
   # No web UI - used by Prowlarr
   flaresolverr:
@@ -315,7 +347,7 @@ services:
   tdarr-server:
     image: ghcr.io/haveagitgat/tdarr:latest
     container_name: tdarr-server
-    restart: unless-stopped
+    restart: no
     networks:
       - media-network
       - homelab-network
@@ -342,6 +374,7 @@ services:
       # Service metadata
       - "homelab.category=media"
       - "homelab.description=Distributed transcoding server"
+      - "com.centurylinklabs.watchtower.enable=true"
       # Traefik reverse proxy (comment/uncomment to disable/enable)
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
@@ -351,6 +384,9 @@ services:
       - "traefik.http.routers.tdarr.tls.certresolver=letsencrypt"
       - "traefik.http.routers.tdarr.middlewares=authelia@docker"
       - "traefik.http.services.tdarr.loadbalancer.server.port=8265"
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME}-arr"
+      - "sablier.start-on-demand=true"
   # Tdarr Node - Transcoding worker
   # No web UI - controlled by server
   tdarr-node:
@@ -381,7 +417,7 @@ services:
   unmanic:
     image: josh5/unmanic:latest
     container_name: unmanic
-    restart: unless-stopped
+    restart: no
     networks:
       - media-network
       - homelab-network
@@ -402,6 +438,7 @@ services:
       # Service metadata
       - "homelab.category=media"
       - "homelab.description=Library optimization and transcoding"
+      - "com.centurylinklabs.watchtower.enable=true"
       # Traefik reverse proxy (comment/uncomment to disable/enable)
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
@@ -411,6 +448,31 @@ services:
       - "traefik.http.routers.unmanic.tls.certresolver=letsencrypt"
       - "traefik.http.routers.unmanic.middlewares=authelia@docker"
       - "traefik.http.services.unmanic.loadbalancer.server.port=8888"
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME}-arr"
+      - "sablier.start-on-demand=true"
+x-dockge:
+  urls:
+    - https://sonarr.${DOMAIN}
+    - http://localhost:8989
+    - https://radarr.${DOMAIN}
+    - http://localhost:7878
+    - https://prowlarr.${DOMAIN}
+    - http://localhost:9696
+    - https://readarr.${DOMAIN}
+    - http://localhost:8787
+    - https://lidarr.${DOMAIN}
+    - http://localhost:8686
+    - https://lazylibrarian.${DOMAIN}
+    - http://localhost:5299
+    - https://mylar.${DOMAIN}
+    - http://localhost:8090
+    - https://jellyseerr.${DOMAIN}
+    - http://localhost:5055
+    - https://tdarr.${DOMAIN}
+    - http://localhost:8265
+    - https://unmanic.${DOMAIN}
+    - http://localhost:8888
 networks:
   media-network:
     external: true

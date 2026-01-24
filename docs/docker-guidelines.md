@@ -158,6 +158,16 @@ services:
 - `sablier.group=${SERVER_HOSTNAME}-myservice` - Groups containers for coordinated startup
 - `sablier.start-on-demand=true` - Starts containers only when accessed
 
+**x-dockge Section:**
+At the bottom of the compose file, add a top-level `x-dockge` section for service discovery in Dockge:
+
+```yaml
+x-dockge:
+  urls:
+    - https://myservice.${DOMAIN}
+    - http://localhost:8080  # Direct local access
+```
+
 ### If Traefik is on a Remote Server, configure routes & services on the Remote Server
 
 When Traefik runs on a separate server from your application services, you cannot use Docker labels for configuration. Instead, create YAML files in the Traefik server's `dynamic/` directory to define routes and services.
@@ -535,6 +545,23 @@ services:
       - "sablier.group=${SERVER_HOSTNAME}-service-name"
       - "sablier.start-on-demand=true"
 ```
+
+**Add x-dockge section at the bottom of the compose file (before networks):**
+```yaml
+x-dockge:
+  urls:
+    - https://service-name.${DOMAIN}
+    - http://localhost:8080
+
+volumes:
+  service-data:
+    driver: local
+
+networks:
+  traefik-network:
+    external: true
+```
+
 If Traefik & Sablier are on a remote server:
   * Comment out the traefik labels since they won't be used, don't delete them.
   * Notify user to add the service and middleware to the traefic external host yml file, and the sablier.yml file.
