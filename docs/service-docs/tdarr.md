@@ -17,7 +17,7 @@
 
 **Category:** Media Transcoding  
 **Docker Image:** [ghcr.io/haveagitgat/tdarr](https://github.com/HaveAGitGat/Tdarr/pkgs/container/tdarr)  
-**Default Stack:** `media-extended.yml`  
+**Default Stack:** `transcoders.yml`  
 **Web UI:** `https://tdarr.${DOMAIN}` or `http://SERVER_IP:8265`  
 **Server Port:** 8266  
 **Authentication:** Built-in  

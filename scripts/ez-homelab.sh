@@ -484,7 +484,7 @@ setup_stacks_for_dockge() {
     log_info "Setting up all stacks for Dockge..."
 
     # List of stacks to setup
-    STACKS=("vpn" "media" "media-management" "monitoring" "productivity" "utilities" "alternatives" "homeassistant" "nextcloud")
+    STACKS=("vpn" "media" "media-management" "transcoders" "monitoring" "productivity" "wikis" "utilities" "alternatives" "homeassistant")
 
     for stack in "${STACKS[@]}"; do
         STACK_DIR="/opt/stacks/$stack"

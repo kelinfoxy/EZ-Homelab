@@ -6,30 +6,14 @@ This document provides a comprehensive overview of all 50+ pre-configured servic
 
 | Stacks (12) | Services (70 + 6db) | SSO | Storage | Access URLs |
 |-------|----------|-----|---------|-------------|
-| **� alternatives.yaml** (6 + 3 DBs) | | | | |
-| ├─ Dockge | Stack manager (PRIMARY) | ✓ | /opt/stacks/alternatives | dockge.${DOMAIN} |
-| ├─ Portainer | Container management | ✓ | /opt/stacks/alternatives | portainer.${DOMAIN} |
-| ├─ Authentik Server | SSO with web UI | ✓ | /opt/stacks/alternatives | authentik.${DOMAIN} |
-| │  ├─ authentik-worker | Background tasks | - | /opt/stacks/alternatives | No UI |
-| │  ├─ authentik-db | PostgreSQL | - | /opt/stacks/alternatives | No UI |
-| │  └─ authentik-redis | Cache/messaging | - | /opt/stacks/alternatives | No UI |
-| └─ Plex | Media server | ✗ | /mnt/media, /mnt/transcode | plex.${DOMAIN} |
 | **📦 core.yaml (4)** | **Deploy First** | | | |
 | ├─ DuckDNS | Dynamic DNS updater | - | /opt/stacks/core/duckdns | No UI |
 | ├─ Traefik | Reverse proxy + SSL | ✓ | /opt/stacks/core/traefik | traefik.${DOMAIN} |
 | ├─ Authelia | SSO authentication | - | /opt/stacks/core/authelia | auth.${DOMAIN} |
 | └─ Sablier | Lazy loading service | - | /opt/stacks/core/sablier | No UI |
-| **📊 dashboards.yaml** (2) | | | | |
-| ├─ Homepage | App dashboard (AI cfg) | ✓ | /opt/stacks/dashboards | home.${DOMAIN} |
-| └─ Homarr | Modern dashboard | ✓ | /opt/stacks/dashboards | homarr.${DOMAIN} |
-| **🏠 homeassistant.yaml** (7) | | | | |
-| ├─ Home Assistant | HA platform | ✗ | /opt/stacks/homeassistant | ha.${DOMAIN} |
-| ├─ ESPHome | ESP firmware mgr | ✓ | /opt/stacks/homeassistant | esphome.${DOMAIN} |
-| ├─ TasmoAdmin | Tasmota device mgr | ✓ | /opt/stacks/homeassistant | tasmoadmin.${DOMAIN} |
-| ├─ Node-RED | Automation flows | ✓ | /opt/stacks/homeassistant | nodered.${DOMAIN} |
-| ├─ Mosquitto | MQTT broker | - | /opt/stacks/homeassistant | Ports 1883, 9001 |
-| ├─ Zigbee2MQTT | Zigbee bridge | ✓ | /opt/stacks/homeassistant | zigbee2mqtt.${DOMAIN} |
-| └─ MotionEye | Video surveillance | ✓ | /opt/stacks/homeassistant, /mnt/surveillance | motioneye.${DOMAIN} |
+| **🔒 vpn.yaml (2)** | **VPN Services** | | | |
+| ├─ Gluetun | VPN (Surfshark) | - | /opt/stacks/vpn/gluetun | No UI |
+| └─ qBittorrent | Torrent (via VPN) | ✓ | /mnt/downloads | qbit.${DOMAIN} |
 | **🔧 infrastructure.yaml** (6)** | | | | |
 | ├─ Pi-hole | DNS + Ad blocking | ✓ | /opt/stacks/infrastructure | pihole.${DOMAIN} |
 | ├─ Watchtower | Auto container updates | - | /opt/stacks/infrastructure | No UI |
@@ -37,6 +21,12 @@ This document provides a comprehensive overview of all 50+ pre-configured servic
 | ├─ Glances | System monitoring | ✓ | /opt/stacks/infrastructure | glances.${DOMAIN} |
 | ├─ Code Server | VS Code in browser | ✓ | /opt/stacks/infrastructure | code.${DOMAIN} |
 | └─ Docker Proxy | Secure socket access | - | /opt/stacks/infrastructure | No UI |
+| **📊 dashboards.yaml** (2) | | | | |
+| ├─ Homepage | App dashboard (AI cfg) | ✓ | /opt/stacks/dashboards | home.${DOMAIN} |
+| └─ Homarr | Modern dashboard | ✓ | /opt/stacks/dashboards | homarr.${DOMAIN} |
+| **🎬 media.yaml** (2) | | | | |
+| ├─ Jellyfin | Media server (OSS) | ✗ | /mnt/media, /mnt/transcode | jellyfin.${DOMAIN} |
+| └─ Calibre-Web | Ebook reader | ✓ | /opt/stacks/media, /mnt/media | calibre.${DOMAIN} |
 | **📺 media-management.yaml** (9) | | | | |
 | ├─ Sonarr | TV automation | ✓ | /opt/stacks/media-management, /mnt/media | sonarr.${DOMAIN} |
 | ├─ Radarr | Movie automation | ✓ | /opt/stacks/media-management, /mnt/media | radarr.${DOMAIN} |
@@ -47,18 +37,23 @@ This document provides a comprehensive overview of all 50+ pre-configured servic
 | ├─ Mylar3 | Comic manager | ✓ | /opt/stacks/media-management, /mnt/media | mylar.${DOMAIN} |
 | ├─ Jellyseerr | Media requests | ✓ | /opt/stacks/media-management | jellyseerr.${DOMAIN} |
 | └─ FlareSolverr | Cloudflare bypass | - | /opt/stacks/media-management | No UI |
-| **🎬 media.yaml** (2) | | | | |
-| ├─ Jellyfin | Media server (OSS) | ✗ | /mnt/media, /mnt/transcode | jellyfin.${DOMAIN} |
-| └─ Calibre-Web | Ebook reader | ✓ | /opt/stacks/media, /mnt/media | calibre.${DOMAIN} |
-| **📈 monitoring.yaml** (8) | | | | |
-| ├─ Prometheus | Metrics collection | ✓ | /opt/stacks/monitoring | prometheus.${DOMAIN} |
-| ├─ Grafana | Visualization | ✓ | /opt/stacks/monitoring | grafana.${DOMAIN} |
-| ├─ Loki | Log aggregation | - | /opt/stacks/monitoring | Via Grafana |
-| ├─ Promtail | Log shipper | - | /opt/stacks/monitoring | No UI |
-| ├─ Node Exporter | Host metrics | - | /opt/stacks/monitoring | No UI |
-| ├─ cAdvisor | Container metrics | - | /opt/stacks/monitoring | Internal :8080 |
-| └─ Uptime Kuma | Uptime monitoring | ✓ | /opt/stacks/monitoring | status.${DOMAIN} |
-| **💼 productivity.yaml** (5 + 4 DBs) | | | | |
+| **🔄 transcoders.yaml** (3) | | | | |
+| ├─ Tdarr Server | Transcoding server | ✓ | /opt/stacks/transcoders, /mnt/transcode | tdarr.${DOMAIN} |
+| ├─ Tdarr Node | Transcoding worker | - | /mnt/transcode-cache | No UI |
+| └─ Unmanic | Library optimizer | ✓ | /opt/stacks/transcoders, /mnt/transcode | unmanic.${DOMAIN} |
+| **📖 wikis.yaml** (4) | | | | |
+| ├─ DokuWiki | File-based wiki | ✓ | /opt/stacks/wikis | dokuwiki.${DOMAIN} |
+| ├─ BookStack | Documentation | ✓ | /opt/stacks/wikis | docs.${DOMAIN} |
+| │  └─ bookstack-db | MariaDB | - | /opt/stacks/wikis | No UI |
+| └─ MediaWiki | Wiki platform | ✓ | /opt/stacks/wikis | mediawiki.${DOMAIN} |
+| **🏠 homeassistant.yaml** (6) | | | | |
+| ├─ Home Assistant | HA platform | ✗ | /opt/stacks/homeassistant | ha.${DOMAIN} |
+| ├─ ESPHome | ESP firmware mgr | ✓ | /opt/stacks/homeassistant | esphome.${DOMAIN} |
+| ├─ TasmoAdmin | Tasmota device mgr | ✓ | /opt/stacks/homeassistant | tasmoadmin.${DOMAIN} |
+| ├─ Node-RED | Automation flows | ✓ | /opt/stacks/homeassistant | nodered.${DOMAIN} |
+| ├─ Mosquitto | MQTT broker | - | /opt/stacks/homeassistant | Ports 1883, 9001 |
+| └─ Zigbee2MQTT | Zigbee bridge | ✓ | /opt/stacks/homeassistant | zigbee2mqtt.${DOMAIN} |
+| **💼 productivity.yaml** (8 + 6 DBs) | | | | |
 | ├─ Nextcloud | File sync platform | ✓ | /opt/stacks/productivity, /mnt/nextcloud | nextcloud.${DOMAIN} |
 | │  └─ nextcloud-db | MariaDB | - | /opt/stacks/productivity | No UI |
 | ├─ Mealie | Recipe manager | ✗ | /opt/stacks/productivity | mealie.${DOMAIN} |
@@ -67,10 +62,52 @@ This document provides a comprehensive overview of all 50+ pre-configured servic
 | ├─ Gitea | Git service | ✓ | /opt/stacks/productivity, /mnt/git | git.${DOMAIN} |
 | │  └─ gitea-db | PostgreSQL | - | /opt/stacks/productivity | No UI |
 | └─ Jupyter Lab | Notebooks | ✓ | /opt/stacks/productivity | jupyter.${DOMAIN} |
-| **🔄 transcoders.yaml** (3) | | | | |
-| ├─ Tdarr Server | Transcoding server | ✓ | /opt/stacks/transcoders, /mnt/transcode | tdarr.${DOMAIN} |
-| ├─ Tdarr Node | Transcoding worker | - | /mnt/transcode-cache | No UI |
-| └─ Unmanic | Library optimizer | ✓ | /opt/stacks/transcoders, /mnt/transcode | unmanic.${DOMAIN} |
+| **🛠️ utilities.yaml** (5) | | | | |
+| ├─ Vaultwarden | Password manager | ✗ | /opt/stacks/utilities | bitwarden.${DOMAIN} |
+| ├─ Backrest | Backup (restic) | ✓ | /opt/stacks/utilities, /mnt/backups | backrest.${DOMAIN} |
+| ├─ Duplicati | Encrypted backups | ✓ | /opt/stacks/utilities, /mnt/backups | duplicati.${DOMAIN} |
+| ├─ Form.io | Form builder | ✓ | /opt/stacks/utilities | forms.${DOMAIN} |
+| │  └─ formio-mongo | MongoDB | - | /opt/stacks/utilities | No UI |
+| └─ Authelia-Redis | Session storage | - | /opt/stacks/utilities | No UI |
+| **📈 monitoring.yaml** (8) | | | | |
+| ├─ Prometheus | Metrics collection | ✓ | /opt/stacks/monitoring | prometheus.${DOMAIN} |
+| ├─ Grafana | Visualization | ✓ | /opt/stacks/monitoring | grafana.${DOMAIN} |
+| ├─ Loki | Log aggregation | - | /opt/stacks/monitoring | Via Grafana |
+| ├─ Promtail | Log shipper | - | /opt/stacks/monitoring | No UI |
+| ├─ Node Exporter | Host metrics | - | /opt/stacks/monitoring | No UI |
+| ├─ cAdvisor | Container metrics | - | /opt/stacks/monitoring | Internal :8080 |
+| └─ Uptime Kuma | Uptime monitoring | ✓ | /opt/stacks/monitoring | status.${DOMAIN} |
+| **🔧 alternatives.yaml** (6) | | | | |
+| ├─ Dockge | Stack manager (PRIMARY) | ✓ | /opt/stacks/alternatives | dockge.${DOMAIN} |
+| ├─ Portainer | Container management | ✓ | /opt/stacks/alternatives | portainer.${DOMAIN} |
+| ├─ Authentik Server | SSO with web UI | ✓ | /opt/stacks/alternatives | authentik.${DOMAIN} |
+| │  ├─ authentik-worker | Background tasks | - | /opt/stacks/alternatives | No UI |
+| │  ├─ authentik-db | PostgreSQL | - | /opt/stacks/alternatives | No UI |
+| │  └─ authentik-redis | Cache/messaging | - | /opt/stacks/alternatives | No UI |
+| └─ Plex | Media server | ✗ | /mnt/media, /mnt/transcode | plex.${DOMAIN} |
+| **🏠 homeassistant.yaml** (7) | | | | |
+| ├─ Home Assistant | HA platform | ✗ | /opt/stacks/homeassistant | ha.${DOMAIN} |
+| ├─ ESPHome | ESP firmware mgr | ✓ | /opt/stacks/homeassistant | esphome.${DOMAIN} |
+| ├─ TasmoAdmin | Tasmota device mgr | ✓ | /opt/stacks/homeassistant | tasmoadmin.${DOMAIN} |
+| ├─ Node-RED | Automation flows | ✓ | /opt/stacks/homeassistant | nodered.${DOMAIN} |
+| ├─ Mosquitto | MQTT broker | - | /opt/stacks/homeassistant | Ports 1883, 9001 |
+| ├─ Zigbee2MQTT | Zigbee bridge | ✓ | /opt/stacks/homeassistant | zigbee2mqtt.${DOMAIN} |
+| └─ MotionEye | Video surveillance | ✓ | /opt/stacks/homeassistant, /mnt/surveillance | motioneye.${DOMAIN} |
+| **💼 productivity.yaml** (8 + 6 DBs) | | | | |
+| ├─ Nextcloud | File sync platform | ✓ | /opt/stacks/productivity, /mnt/nextcloud | nextcloud.${DOMAIN} |
+| │  └─ nextcloud-db | MariaDB | - | /opt/stacks/productivity | No UI |
+| ├─ Mealie | Recipe manager | ✗ | /opt/stacks/productivity | mealie.${DOMAIN} |
+| ├─ WordPress | Blog platform | ✗ | /opt/stacks/productivity | blog.${DOMAIN} |
+| │  └─ wordpress-db | MariaDB | - | /opt/stacks/productivity | No UI |
+| ├─ Gitea | Git service | ✓ | /opt/stacks/productivity, /mnt/git | git.${DOMAIN} |
+| │  └─ gitea-db | PostgreSQL | - | /opt/stacks/productivity | No UI |
+| ├─ DokuWiki | File-based wiki | ✓ | /opt/stacks/productivity | wiki.${DOMAIN} |
+| ├─ BookStack | Documentation | ✓ | /opt/stacks/productivity | docs.${DOMAIN} |
+| │  └─ bookstack-db | MariaDB | - | /opt/stacks/productivity | No UI |
+| ├─ MediaWiki | Wiki platform | ✓ | /opt/stacks/productivity | mediawiki.${DOMAIN} |
+| │  └─ mediawiki-db | MariaDB | - | /opt/stacks/productivity | No UI |
+| └─ Form.io | Form builder | ✓ | /opt/stacks/productivity | forms.${DOMAIN} |
+|    └─ formio-mongo | MongoDB | - | /opt/stacks/productivity | No UI |
 | **🛠️ utilities.yaml** (7) | | | | |
 | ├─ Vaultwarden | Password manager | ✗ | /opt/stacks/utilities | bitwarden.${DOMAIN} |
 | ├─ Backrest | Backup (restic) | ✓ | /opt/stacks/utilities, /mnt/backups | backrest.${DOMAIN} |
@@ -79,14 +116,21 @@ This document provides a comprehensive overview of all 50+ pre-configured servic
 | ├─ Form.io | Form platform | ✓ | /opt/stacks/utilities | forms.${DOMAIN} |
 | │  └─ formio-mongo | MongoDB | - | /opt/stacks/utilities | No UI |
 | └─ Authelia-Redis | Session storage | - | /opt/stacks/utilities | No UI |
-| **🔒 vpn.yaml (2)** | **VPN Services** | | | |
-| ├─ Gluetun | VPN (Surfshark) | - | /opt/stacks/vpn/gluetun | No UI |
-| └─ qBittorrent | Torrent (via VPN) | ✓ | /mnt/downloads | qbit.${DOMAIN} |
-| **📖 wikis.yaml** (4) | | | | |
-| ├─ DokuWiki | File-based wiki | ✓ | /opt/stacks/wikis | dokuwiki.${DOMAIN} |
-| ├─ BookStack | Documentation | ✓ | /opt/stacks/wikis | docs.${DOMAIN} |
-| │  └─ bookstack-db | MariaDB | - | /opt/stacks/wikis | No UI |
-| └─ MediaWiki | Wiki platform | ✓ | /opt/stacks/wikis | mediawiki.${DOMAIN} |
+| **📈 monitoring.yaml** (8) | | | | |
+| ├─ Prometheus | Metrics collection | ✓ | /opt/stacks/monitoring | prometheus.${DOMAIN} |
+| ├─ Grafana | Visualization | ✓ | /opt/stacks/monitoring | grafana.${DOMAIN} |
+| ├─ Loki | Log aggregation | - | /opt/stacks/monitoring | Via Grafana |
+| ├─ Promtail | Log shipper | - | /opt/stacks/monitoring | No UI |
+| ├─ Node Exporter | Host metrics | - | /opt/stacks/monitoring | No UI |
+| ├─ cAdvisor | Container metrics | - | /opt/stacks/monitoring | Internal :8080 |
+| └─ Uptime Kuma | Uptime monitoring | ✓ | /opt/stacks/monitoring | status.${DOMAIN} |
+| **👨‍💻 development.yaml** (6) | | | | |
+| ├─ GitLab CE | Git + CI/CD | ✓ | /opt/stacks/development, /mnt/git | gitlab.${DOMAIN} |
+| ├─ PostgreSQL | SQL database | - | /opt/stacks/development | Port 5432 |
+| ├─ Redis | In-memory store | - | /opt/stacks/development | Port 6379 |
+| ├─ pgAdmin | PostgreSQL UI | ✓ | /opt/stacks/development | pgadmin.${DOMAIN} |
+| ├─ Jupyter Lab | Notebooks | ✓ | /opt/stacks/development | jupyter.${DOMAIN} |
+| └─ Code Server | VS Code | ✓ | /opt/stacks/development | code.${DOMAIN} |
 
 **Legend:** ✓ = Protected by SSO | ✗ = Bypasses SSO | - = No web UI
 
@@ -118,19 +162,15 @@ This document provides a comprehensive overview of all 50+ pre-configured servic
    ```
 
 5. **Deploy Additional Stacks** (as needed)
-   - Alternatives: `/opt/stacks/alternatives/`
-   - Core: `/opt/stacks/core/` (deploy first)
-   - Dashboards: `/opt/stacks/dashboards/`
-   - Home Automation: `/opt/stacks/homeassistant/`
-   - Infrastructure: `/opt/stacks/infrastructure/`
    - Media: `/opt/stacks/media/`
    - Media Management: `/opt/stacks/media-management/`
-   - Monitoring: `/opt/stacks/monitoring/`
-   - Productivity: `/opt/stacks/productivity/`
    - Transcoders: `/opt/stacks/transcoders/`
-   - Utilities: `/opt/stacks/utilities/`
-   - VPN: `/opt/stacks/vpn/`
    - Wikis: `/opt/stacks/wikis/`
+   - Home Automation: `/opt/stacks/homeassistant/`
+   - Productivity: `/opt/stacks/productivity/`
+   - Utilities: `/opt/stacks/utilities/`
+   - Monitoring: `/opt/stacks/monitoring/`
+   - Alternatives: `/opt/stacks/alternatives/`
 
 ## Toggling SSO (Authelia) On/Off
 
@@ -192,38 +232,4 @@ docker compose -f /opt/stacks/stack-name/docker-compose.yml down
 - **Production**: Disable SSO only for services needing direct app/API access (Plex, Jellyfin)
 - **Gradual Exposure**: Comment out SSO only when ready to expose a service
 - **Quick Toggle**: AI assistant can modify these labels automatically when you ask
-
-## Storage Recommendations
-
-| Data Type | Recommended Location | Reason |
-|-----------|---------------------|--------|
-| Configuration files | `/opt/stacks/stack-name/` | Easy access, version control |
-| Small databases (< 10GB) | `/opt/stacks/stack-name/db/` | Manageable on system drive |
-| Media files (movies, TV, music) | `/mnt/media/` | Large, continuous growth |
-| Downloads | `/mnt/downloads/` | Temporary, high throughput |
-| Backups | `/mnt/backups/` | Large, separate from system |
-| Surveillance footage | `/mnt/surveillance/` | Continuous recording |
-| Large databases (> 10GB) | `/mnt/databases/` | Growth over time |
-| Transcoding cache | `/mnt/transcode-cache/` | High I/O, large temporary files |
-| Git repositories | `/mnt/git/` | Can grow large |
-| Nextcloud data | `/mnt/nextcloud/` | User files, photos |
-
-## Configuration Templates
-
-All configuration templates are available in `config-templates/`:
-- `traefik/` - Static and dynamic Traefik configuration
-- `authelia/` - Complete Authelia setup with user database
-- `homepage/` - Dashboard services, widgets, and Docker integration
-- `prometheus/` - Metrics scrape configurations
-- `loki/` - Log aggregation settings
-- `promtail/` - Log shipping configuration
-- `redis/` - Redis server configuration
-
-## Additional Resources
-
-- **Getting Started**: See [docs/getting-started.md](getting-started.md) for detailed deployment
-- **Docker Guidelines**: See [docs/docker-guidelines.md](docker-guidelines.md) for management patterns
-- **Quick Reference**: See [docs/quick-reference.md](quick-reference.md) for common commands
-- **Proxying External Hosts**: See [docs/proxying-external-hosts.md](proxying-external-hosts.md) for Raspberry Pi, NAS, etc.
-- **AI Assistant**: Use GitHub Copilot in VS Code with `.github/copilot-instructions.md` for intelligent homelab management
 

@@ -16,7 +16,7 @@
 
 **Category:** Proxy Service  
 **Docker Image:** [ghcr.io/flaresolverr/flaresolverr](https://github.com/FlareSolverr/FlareSolverr/pkgs/container/flaresolverr)  
-**Default Stack:** `media-extended.yml`  
+**Default Stack:** `media-management.yml`  
 **API Port:** 8191  
 **Authentication:** None (internal service)  
 **Used By:** Prowlarr, Jackett, NZBHydra2

@@ -13,7 +13,7 @@
 
 **Category:** Book Management  
 **Docker Image:** [linuxserver/lazylibrarian](https://hub.docker.com/r/linuxserver/lazylibrarian)  
-**Default Stack:** `media-extended.yml`  
+**Default Stack:** `media-management.yml`  
 **Web UI:** `http://SERVER_IP:5299`  
 **Alternative To:** Readarr  
 **Ports:** 5299

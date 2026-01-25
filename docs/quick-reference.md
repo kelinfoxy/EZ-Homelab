@@ -11,13 +11,15 @@ Your homelab uses separate stacks for organization:
 - **`dashboards.yml`** - Dashboard services (Homepage, Homarr) - 2 services
 
 **Available in Dockge (deploy as needed):**
-- **`media.yml`** - Media services (Plex, Jellyfin, Sonarr, Radarr, Prowlarr, qBittorrent)
-- **`media-extended.yml`** - Additional media tools (Readarr, Lidarr, Mylar, Calibre)
+- **`media.yml`** - Media services (Jellyfin, Calibre-Web)
+- **`media-management.yml`** - Media automation (Sonarr, Radarr, Prowlarr, *arr services)
+- **`transcoders.yml`** - Transcoding services (Tdarr, Unmanic)
+- **`wikis.yml`** - Wiki platforms (DokuWiki, BookStack, MediaWiki)
 - **`homeassistant.yml`** - Home automation (Home Assistant, Node-RED, Zigbee2MQTT, ESPHome)
-- **`productivity.yml`** - Productivity apps (Nextcloud, Gitea, Bookstack, Outline, Excalidraw)
+- **`productivity.yml`** - Productivity apps (Nextcloud, Gitea, Mealie, WordPress)
 - **`monitoring.yml`** - Monitoring stack (Grafana, Prometheus, Uptime Kuma, Netdata)
-- **`utilities.yml`** - Utility services (Duplicati, Code Server, FreshRSS, Wallabag)
-- **`alternatives.yml`** - Alternative tools (Portainer, Authentik)
+- **`utilities.yml`** - Utility services (Vaultwarden, Backrest, Duplicati, Form.io)
+- **`alternatives.yml`** - Alternative tools (Portainer, Authentik, Plex)
 
 > All stacks can be modified by the AI to suit your preferences.
 
@@ -205,14 +207,15 @@ docker image prune -a
 - **9696**: Prowlarr
 - **8081**: qBittorrent
 
-### Extended Media (media-extended.yml)
+### Media Management (media-management.yml)
 - **8787**: Readarr
 - **8686**: Lidarr
 - **5299**: Lazy Librarian
 - **8090**: Mylar3
-- **8083**: Calibre-Web
 - **5055**: Jellyseerr
 - **9697**: FlareSolverr
+
+### Transcoders (transcoders.yml)
 - **7889**: Tdarr Server
 - **8265**: Unmanic
 

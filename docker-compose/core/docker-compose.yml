@@ -7,14 +7,6 @@
 # - no: Services with Sablier lazy loading (start on-demand)
 # - See individual service comments for specific reasoning
 
-# Service Access URLs:
-# - Traefik Dashboard: https://traefik.${DOMAIN}
-# - Authelia: https://auth.${DOMAIN}
-
-x-dockge:
-  urls:
-    - https://auth.${DOMAIN}
-
 services:
   
   duckdns:
@@ -134,3 +126,10 @@ services:
 networks:
   traefik-network:
     external: true
+
+x-dockge:
+  urls:
+    - https://auth.${DOMAIN}
+    - https://{$SERVER_IP}:9091
+    - https://traefik.${DOMAIN}
+    - https://{$SERVER_IP}:8080

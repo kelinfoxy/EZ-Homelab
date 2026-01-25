@@ -16,7 +16,7 @@
 
 **Category:** Media Optimization  
 **Docker Image:** [josh5/unmanic](https://hub.docker.com/r/josh5/unmanic)  
-**Default Stack:** `media-extended.yml`  
+**Default Stack:** `transcoders.yml`  
 **Web UI:** `https://unmanic.${DOMAIN}` or `http://SERVER_IP:8888`  
 **Authentication:** Optional  
 **Ports:** 8888

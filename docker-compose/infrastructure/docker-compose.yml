@@ -1,8 +1,6 @@
 # Infrastructure Services
 # Core services that other services depend on
 # Place in /opt/stacks/infrastructure/docker-compose.yml
-# NOTE: Traefik, Authelia, DuckDNS, and Gluetun have their own separate stacks
-# See /opt/stacks/traefik/, /opt/stacks/authelia/, etc.
 
 # SABLIER SESSION DURATION: Set to 5m for testing. Increase to 30m for production in config-templates/traefik/dynamic/sablier.yml
 
@@ -10,13 +8,6 @@
 # - unless-stopped: Core infrastructure services that should always run
 # - no: Services with Sablier lazy loading (start on-demand)
 # - See individual service comments for specific reasoning
-
-# Service Access URLs:
-# - Portainer: https://portainer.${DOMAIN}
-# - Pi-hole: https://pihole.${DOMAIN}
-# - Dozzle: https://dozzle.${DOMAIN}
-# - Glances: https://glances.${DOMAIN}
-# - Netdata: https://netdata.${DOMAIN}
 
 services:
   dockerproxy:
@@ -281,18 +272,16 @@ services:
       - "sablier.group=${SERVER_HOSTNAME}-code-server"
       - "sablier.start-on-demand=true"
 
-# ==========================================
-# DOCKGE URL CONFIGURATION
-# ==========================================
 x-dockge:
   urls:
-    # Proxied URLs (through Traefik)
     - https://pihole.${DOMAIN}
+    - https://${SERVER_IP}:53
     - https://dozzle.${DOMAIN}
+    - https://${SERVER_IP}:8085
     - https://glances.${DOMAIN}
+    - https://${SERVER_IP}:61208
     - https://code.${DOMAIN}
-    
-    # Direct IP:Port URLs
+    - https://${SERVER_IP}:8079
     - http://${SERVER_IP}:2375  # Docker Proxy
     - http://${SERVER_IP}:19999  # Netdata
 

@@ -512,7 +512,7 @@ services:
       - TZ=${TIMEZONE}
 ```
 
-**Add health checks (if applicable):**
+**Add health checks (if compatable):**
 ```yaml
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
@@ -551,7 +551,7 @@ services:
 x-dockge:
   urls:
     - https://service-name.${DOMAIN}
-    - http://localhost:8080
+    - http://${SERVER_IP}$:8080
 
 volumes:
   service-data:
@@ -559,6 +559,8 @@ volumes:
 
 networks:
   traefik-network:
+    external: true
+  homelab-network:
     external: true
 ```
 
@@ -658,8 +660,6 @@ services:
     image: lscr.io/linuxserver/sonarr:4.0.0
     container_name: sonarr
     # Sonarr - TV Show management and automation
-    # Access at: https://sonarr.yourdomain.duckdns.org (via Traefik)
-    # Connects to: Prowlarr (indexers), qBittorrent (downloads)
     # Protected by: Authelia SSO, Sablier lazy loading
     restart: no
 ```

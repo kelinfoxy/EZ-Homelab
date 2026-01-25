@@ -6,18 +6,6 @@
 # - no: Services with Sablier lazy loading (start on-demand)
 # - See individual service comments for specific reasoning
 
-# Service Access URLs:
-# - Backrest: https://backrest.${DOMAIN}
-# - Duplicati: https://duplicati.${DOMAIN}
-# - Form.io: https://forms.${DOMAIN}
-# - Vaultwarden (Bitwarden): https://vault.${DOMAIN}
-
-x-dockge:
-  urls:
-    - https://backrest.${DOMAIN}
-    - https://duplicati.${DOMAIN}
-    - https://forms.${DOMAIN}
-    - https://vault.${DOMAIN}
 services:
   # Backrest - Backup solution for restic
   # Access at: https://backrest.${DOMAIN}
@@ -65,6 +53,7 @@ services:
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME}-backrest"
       - "sablier.start-on-demand=true"
+  
   # Duplicati - Backup solution
   # Access at: https://duplicati.${DOMAIN}
   duplicati:
@@ -109,6 +98,7 @@ services:
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME}-duplicati"
       - "sablier.start-on-demand=true"
+  
   # Form.io - Form builder
   # Uncomment and configure if formio/formio image becomes available
   formio:
@@ -118,7 +108,6 @@ services:
     networks:
       - homelab-network
       - traefik-network
-      
     ports:
       - "3002:3001"
     environment:
@@ -153,6 +142,7 @@ services:
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME}-formio"
       - "sablier.start-on-demand=true"
+  
   formio-mongo:
     image: mongo:4.4
     container_name: formio-mongo
@@ -166,6 +156,7 @@ services:
   # Bitwarden (Vaultwarden) - Password manager
   # Access at: https://vault.${DOMAIN}
   # Note: SSO disabled for browser extension and mobile app compatibility
+  
   vaultwarden:
     image: vaultwarden/server:1.30.1
     container_name: vaultwarden
@@ -216,6 +207,7 @@ services:
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME}-vaultwarden"
       - "sablier.start-on-demand=true"
+
   # Authelia Redis - Session storage for Authelia
   # No web UI - backend service
 #  authelia-redis:
@@ -230,12 +222,25 @@ services:
 #    labels:
 #      - homelab.category=utilities
 #      - homelab.description=Session storage for Authelia
+
 volumes:
   backrest-cache: null
   formio-mongo-data: null
   authelia-redis-data: null
+
 networks:
   homelab-network:
     external: true
   traefik-network:
     external: true
+
+x-dockge:
+  urls:
+    - https://backrest.${DOMAIN}
+    - https://{$SERVER_IP}:9898
+    - https://duplicati.${DOMAIN}
+    - https://{$SERVER_IP}:8200
+    - https://forms.${DOMAIN}
+    - https://{$SERVER_IP}:3002
+    - https://vault.${DOMAIN}
+    - https://{$SERVER_IP}:8091

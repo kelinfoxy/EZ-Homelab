@@ -28,7 +28,7 @@ services:
       - PGID=${PGID}
       - TZ=${TZ}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8989/"]
+      test: ["CMD", "curl", "-f", "http://${SERVER_IP}:8989/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -73,7 +73,7 @@ services:
       - PGID=${PGID}
       - TZ=${TZ}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7878/"]
+      test: ["CMD", "curl", "-f", "http://${SERVER_IP}:7878/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -116,7 +116,7 @@ services:
       - PGID=${PGID}
       - TZ=${TZ}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9696/"]
+      test: ["CMD", "curl", "-f", "http://${SERVER_IP}:9696/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -315,7 +315,7 @@ services:
       - LOG_LEVEL=info
       - TZ=${TZ}
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5055/"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://${SERVER_IP}:5055/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -358,141 +358,24 @@ services:
       - "sablier.group=${SERVER_HOSTNAME}-arr"
       - "sablier.start-on-demand=true"
   
-  # Tdarr Server - Distributed transcoding server
-  # Access at: https://tdarr.${DOMAIN}
-  tdarr-server:
-    image: ghcr.io/haveagitgat/tdarr:latest
-    container_name: tdarr-server
-    restart: no
-    networks:
-      - homelab-network
-      - traefik-network
-    ports:
-      - 8265:8265 # Web UI port
-      - 8266:8266 # Server port
-    volumes:
-      - ./tdarr/server:/app/server
-      - ./tdarr/configs:/app/configs
-      - ./tdarr/logs:/app/logs
-      - /mnt/media:/media
-      - /mnt/tdarr-transcode:/temp # Transcode cache on separate drive
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
-      - serverIP=0.0.0.0
-      - serverPort=8266
-      - webUIPort=8265
-    labels:
-      # TRAEFIK CONFIGURATION
-      # ==========================================
-      # Service metadata
-      - "homelab.category=media"
-      - "homelab.description=Distributed transcoding server"
-      - "com.centurylinklabs.watchtower.enable=true"
-      # Traefik reverse proxy (comment/uncomment to disable/enable)
-      # If Traefik is on a remote server: these labels are NOT USED; 
-      #   configure external yml files in /traefik/dynamic folder instead.
-      - "traefik.enable=true"
-      - "traefik.http.routers.tdarr.rule=Host(`tdarr.${DOMAIN}`)"
-      - "traefik.http.routers.tdarr.entrypoints=websecure"
-      - "traefik.http.routers.tdarr.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.tdarr.middlewares=authelia@docker"
-      - "traefik.http.services.tdarr.loadbalancer.server.port=8265"
-      - "sablier.enable=true"
-      - "sablier.group=${SERVER_HOSTNAME}-tdarr"
-      - "sablier.start-on-demand=true"
-
-  # Tdarr Node - Transcoding worker
-  # No web UI - controlled by server
-  tdarr-node:
-    image: ghcr.io/haveagitgat/tdarr_node:latest
-    container_name: tdarr-node
-    restart: unless-stopped
-    networks:
-      - homelab-network
-    volumes:
-      - ./tdarr/configs:/app/configs
-      - ./tdarr/logs:/app/logs
-      - /mnt/media:/media
-      - /mnt/tdarr-transcode:/temp
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
-      - nodeID=MainNode
-      - nodeIP=0.0.0.0
-      - nodePort=8267
-      - serverIP=tdarr-server
-      - serverPort=8266
-    labels:
-      - homelab.category=media
-      - homelab.description=Tdarr transcoding worker node
-      - "sablier.enable=true"
-      - "sablier.group=${SERVER_HOSTNAME}-tdarr"
-      - "sablier.start-on-demand=true"
-
-  # Unmanic - Another transcoding option
-  # Access at: https://unmanic.${DOMAIN}
-  unmanic:
-    image: josh5/unmanic:latest
-    container_name: unmanic
-    restart: no
-    networks:
-      - homelab-network
-      - traefik-network
-    ports:
-      - "8889:8888"
-    volumes:
-      - ./unmanic/config:/config
-      - /mnt/media:/library
-      - /mnt/unmanic-cache:/tmp/unmanic # Transcode cache on separate drive
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
-    labels:
-      # TRAEFIK CONFIGURATION
-      # ==========================================
-      # Service metadata
-      - "homelab.category=media"
-      - "homelab.description=Library optimization and transcoding"
-      - "com.centurylinklabs.watchtower.enable=true"
-      # Traefik reverse proxy (comment/uncomment to disable/enable)
-      # If Traefik is on a remote server: these labels are NOT USED; 
-      #   configure external yml files in /traefik/dynamic folder instead.
-      - "traefik.enable=true"
-      - "traefik.http.routers.unmanic.rule=Host(`unmanic.${DOMAIN}`)"
-      - "traefik.http.routers.unmanic.entrypoints=websecure"
-      - "traefik.http.routers.unmanic.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.unmanic.middlewares=authelia@docker"
-      - "traefik.http.services.unmanic.loadbalancer.server.port=8889"
-      - "sablier.enable=true"
-      - "sablier.group=${SERVER_HOSTNAME}-unmanic"
-      - "sablier.start-on-demand=true"
-
 x-dockge:
   urls:
     - https://sonarr.${DOMAIN}
-    - http://localhost:8989
+    - http://${SERVER_IP}:8989
     - https://radarr.${DOMAIN}
-    - http://localhost:7878
+    - http://${SERVER_IP}:7878
     - https://prowlarr.${DOMAIN}
-    - http://localhost:9696
+    - http://${SERVER_IP}:9696
     - https://readarr.${DOMAIN}
-    - http://localhost:8787
+    - http://${SERVER_IP}:8787
     - https://lidarr.${DOMAIN}
-    - http://localhost:8686
+    - http://${SERVER_IP}:8686
     - https://lazylibrarian.${DOMAIN}
-    - http://localhost:5299
+    - http://${SERVER_IP}:5299
     - https://mylar.${DOMAIN}
-    - http://localhost:8090
+    - http://${SERVER_IP}:8090
     - https://jellyseerr.${DOMAIN}
-    - http://localhost:5055
-    - https://tdarr.${DOMAIN}
-    - http://localhost:8265
-    - https://unmanic.${DOMAIN}
-    - http://localhost:8888
+    - http://${SERVER_IP}:5055
 
 networks:
   homelab-network:

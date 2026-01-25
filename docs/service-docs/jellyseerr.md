@@ -17,7 +17,7 @@
 
 **Category:** Media Request Management  
 **Docker Image:** [fallenbagel/jellyseerr](https://hub.docker.com/r/fallenbagel/jellyseerr)  
-**Default Stack:** `media-extended.yml`  
+**Default Stack:** `media-management.yml`  
 **Web UI:** `https://jellyseerr.${DOMAIN}` or `http://SERVER_IP:5055`  
 **Authentication:** Via Jellyfin (SSO)  
 **Ports:** 5055

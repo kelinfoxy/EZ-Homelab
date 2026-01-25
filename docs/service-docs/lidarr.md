@@ -17,7 +17,7 @@
 
 **Category:** Media Management & Automation  
 **Docker Image:** [linuxserver/lidarr](https://hub.docker.com/r/linuxserver/lidarr)  
-**Default Stack:** `media-extended.yml`  
+**Default Stack:** `media-management.yml`  
 **Web UI:** `https://lidarr.${DOMAIN}` or `http://SERVER_IP:8686`  
 **Authentication:** Optional (configurable)  
 **Ports:** 8686

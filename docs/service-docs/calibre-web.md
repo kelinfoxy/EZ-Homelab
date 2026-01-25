@@ -14,7 +14,7 @@
 
 **Category:** Ebook Management  
 **Docker Image:** [linuxserver/calibre-web](https://hub.docker.com/r/linuxserver/calibre-web)  
-**Default Stack:** `media-extended.yml`  
+**Default Stack:** `media.yml`  
 **Web UI:** `https://calibre-web.${DOMAIN}` or `http://SERVER_IP:8083`  
 **Default Login:** admin/admin123  
 **Ports:** 8083

@@ -98,7 +98,7 @@ Each folder is a "stack" with its compose file and volumes.
 ├── infrastructure/    # Management and monitoring
 ├── dashboards/        # Homepage, Homarr
 ├── media/             # Plex, Sonarr, Radarr, etc.
-├── media-extended/    # Additional media services
+├── media-management/    # Media automation services
 ├── homeassistant/     # Home automation
 ├── productivity/      # Nextcloud, Gitea, etc.
 ├── utilities/         # Vaultwarden, backups
