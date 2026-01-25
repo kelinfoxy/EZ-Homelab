@@ -33,7 +33,7 @@ With VS Code connected to your server, you can now use GitHub Copilot to guide y
 ### Initial Server Setup
 - **Clone repository**: Ask Copilot "Help me clone the AI-Homelab repository"
 - **Configure environment**: "Guide me through setting up the .env file"
-- **Run setup scripts**: "Walk me through running the setup-homelab.sh script"
+- **Run setup scripts**: "Walk me through running the ez-homelab.sh script"
 - **Deploy services**: "Help me run the deployment script"
 
 ### AI-Assisted Configuration

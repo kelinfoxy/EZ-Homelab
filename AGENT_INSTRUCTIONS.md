@@ -30,8 +30,9 @@ You are an AI agent specialized in managing Docker-based homelab infrastructure 
 │   ├── proxying-external-hosts.md
 │   └── troubleshooting/
 ├── scripts/                        # Automation scripts
-│   ├── setup-homelab.sh           # First-run setup
-│   └── deploy-homelab.sh          # Automated deployment
+│   ├── ez-homelab.sh              # Unified setup and deployment
+│   ├── reset-test-environment.sh  # Safe test environment cleanup
+│   └── reset-ondemand-services.sh # Reload services for Sablier lazy loading
 ├── .env.example                   # Environment template
 ├── .env                           # User-created environment file (not in git)
 ├── AGENT_INSTRUCTIONS.md          # This file
@@ -263,7 +264,7 @@ labels:
 
 ### Development Workflow
 1. **Repository Maintenance**
-   - Test deployment scripts: `./scripts/setup-homelab.sh`, `./scripts/deploy-homelab.sh`
+   - Test deployment script: `./scripts/ez-homelab.sh`
    - Verify compose file syntax across all stacks
    - Validate `.env.example` completeness
    - Check documentation accuracy
@@ -529,14 +530,14 @@ docker compose -f docker-compose/core.yml config
 grep -v '^#' .env | grep -v '^$'
 
 # Test script syntax
-bash -n scripts/deploy-homelab.sh
+bash -n scripts/ez-homelab.sh
 
 # Verify file permissions
 ls -la ~/EZ-Homelab/
 ```
 
 ### Deployment Checklist
-- [ ] Fresh system: Test `setup-homelab.sh`
+- [ ] Fresh system: Test `ez-homelab.sh`
 - [ ] Core stack: Deploy and verify DuckDNS, Traefik, Authelia, Gluetun
 - [ ] Infrastructure: Deploy Dockge and verify web UI access
 - [ ] Additional stacks: Test individual stack deployment

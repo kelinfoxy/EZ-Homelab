@@ -649,9 +649,7 @@ main() {
         echo "  🚀 Dockge:   https://dockge.${DOMAIN}"
         [ "$DEPLOY_CORE" = true ] && echo "  🔒 Authelia: https://auth.${DOMAIN}"
         [ "$DEPLOY_CORE" = true ] && echo "  🔀 Traefik:  https://traefik.${DOMAIN}"
-        echo "  📊 Homepage: https://home.${DOMAIN}"
-        echo "  🎯 Homarr:   https://homarr.${DOMAIN}"
-        echo "  📖 Wiki:     https://wiki.${DOMAIN}"
+        echo "  📊 Homepage: https://homepage.${DOMAIN}"
         echo ""
     fi
 

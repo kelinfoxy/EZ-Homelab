@@ -205,12 +205,12 @@ docker network create network-name
 
 ## Switching to Automated
 
-If manual setup works, you can switch to the automated scripts for future updates:
+If manual setup works, you can switch to the unified automated script for future updates:
 
 ```bash
-# Just run the deploy script
-cd ~/AI-Homelab
-sudo ./scripts/deploy-homelab.sh
+# Just run the unified setup script
+cd ~/EZ-Homelab
+./scripts/ez-homelab.sh
 ```
 
-The deploy script is idempotent - it won't break existing configurations.
+The unified script is idempotent - it won't break existing configurations.

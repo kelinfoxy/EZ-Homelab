@@ -26,8 +26,7 @@ Your homelab uses separate stacks for organization:
 For detailed information about the deployment scripts, their features, and usage, see [scripts/README.md](../scripts/README.md).
 
 **Quick summary:**
-- `setup-homelab.sh` - First-run system setup and Authelia configuration
-- `deploy-homelab.sh` - Deploy all core services and prepare additional stacks
+- `ez-homelab.sh` - Unified setup and deployment script (system prep, secrets generation, service deployment)
 - `reset-test-environment.sh` - Testing/development only - removes all deployed services
 - `reset-ondemand-services.sh` - Reload services for Sablier lazy loading
 
@@ -530,15 +529,10 @@ deploy:
 ### Minimal setup
 ```bash
 # Clone and configure
-git clone https://github.com/kelinfoxy/AI-Homelab.git
-cd AI-Homelab
-sudo ./scripts/setup-homelab.sh
-cp .env.example .env
-nano .env
-
-# Deploy core only
-mkdir -p /opt/stacks/core
-cp docker-compose/core/docker-compose.yml /opt/stacks/core/docker-compose.yml
+git clone https://github.com/kelinfoxy/EZ-Homelab.git
+cd EZ-Homelab
+./scripts/ez-homelab.sh
+```
 cp -r config-templates/traefik /opt/stacks/core/
 cp -r config-templates/authelia /opt/stacks/core/
 cp .env /opt/stacks/core/

@@ -95,8 +95,8 @@ docker compose up -d
 
 **Solution:**
 ```bash
-# Re-run deployment script (safe - won't affect running services)
-sudo ./scripts/deploy-homelab.sh
+# Re-run unified setup script (safe - won't affect running services)
+./scripts/ez-homelab.sh
 
 # Or manually fix:
 cd /opt/stacks/dashboards/homepage
@@ -181,8 +181,8 @@ sudo systemctl stop systemd-resolved
 # Check what exists
 ls -la /opt/stacks/
 
-# Re-run deployment to copy stacks
-sudo ./scripts/deploy-homelab.sh
+# Re-run unified setup script to copy stacks
+./scripts/ez-homelab.sh
 ```
 
 ## Performance Issues
@@ -233,9 +233,8 @@ sudo docker logs authelia
 # Use the safe reset script
 sudo ./scripts/reset-test-environment.sh
 
-# Then re-run setup and deploy
-sudo ./scripts/setup-homelab.sh
-sudo ./scripts/deploy-homelab.sh
+# Then re-run unified setup script
+./scripts/ez-homelab.sh
 ```
 
 ### Partial Reset (Single Stack)
