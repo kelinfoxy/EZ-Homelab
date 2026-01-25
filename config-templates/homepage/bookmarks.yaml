@@ -1,29 +1,493 @@
 ---
-# Homepage Bookmarks
+# Homepage Bookmarks - Comprehensive EZ-Homelab Resources
 
-- Documentation:
-    - GitHub Repository:
+- EZ-Homelab Project:
+    - EZ-Homelab GitHub:
         - icon: github.png
-          href: https://github.com/kelinfoxy/AI-Homelab
-          description: AI-Homelab Repository
-          
-    - Homepage Docs:
+          href: https://github.com/kelinfoxy/EZ-Homelab
+          description: EZ-Homelab Repository & Documentation
+    - EZ-Homelab Wiki:
+        - icon: si-readthedocs
+          href: https://github.com/kelinfoxy/EZ-Homelab/wiki
+          description: Comprehensive Documentation Wiki
+    - Homepage Dashboard:
         - icon: homepage.png
           href: https://gethomepage.dev
-          description: Homepage Documentation
+          description: Homepage Dashboard Documentation
 
-- Useful Links:
+- Infrastructure & Core Services:
+    - Traefik:
+        - icon: si-traefikproxy
+          href: https://traefik.io
+          description: Traefik Reverse Proxy
+        - icon: github.png
+          href: https://github.com/traefik/traefik
+          description: Traefik GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/_/traefik
+          description: Traefik Docker Image
+    - Authelia:
+        - icon: si-authelia
+          href: https://www.authelia.com
+          description: Authelia SSO Authentication
+        - icon: github.png
+          href: https://github.com/authelia/authelia
+          description: Authelia GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/authelia/authelia
+          description: Authelia Docker Image
     - DuckDNS:
-        - icon: duckdns.png
+        - icon: si-duckduckgo
           href: https://www.duckdns.org
           description: Dynamic DNS Service
-          
+    - Docker:
+        - icon: docker.png
+          href: https://www.docker.com
+          description: Docker Official Website
+        - icon: docker.png
+          href: https://hub.docker.com
+          description: Docker Hub Registry
+        - icon: si-docker
+          href: https://docs.docker.com
+          description: Docker Documentation
+    - Portainer:
+        - icon: si-portainer
+          href: https://www.portainer.io
+          description: Portainer Container Management
+        - icon: github.png
+          href: https://github.com/portainer/portainer
+          description: Portainer GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/portainer/portainer-ce
+          description: Portainer Docker Image
+    - Pi-hole:
+        - icon: si-raspberrypi
+          href: https://pi-hole.net
+          description: Pi-hole Network-wide Ad Blocking
+        - icon: github.png
+          href: https://github.com/pi-hole/pi-hole
+          description: Pi-hole GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/pihole/pihole
+          description: Pi-hole Docker Image
+    - LinuxServer.io:
+        - icon: si-linux
+          href: https://www.linuxserver.io
+          description: LinuxServer.io Container Images
+        - icon: github.png
+          href: https://github.com/linuxserver
+          description: LinuxServer GitHub Organization
+
+- Media Services:
+    - Plex:
+        - icon: si-plex
+          href: https://www.plex.tv
+          description: Plex Media Server
+        - icon: github.png
+          href: https://github.com/plexinc/pms-docker
+          description: Plex Docker GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/plexinc/pms-docker
+          description: Plex Docker Image
+    - Jellyfin:
+        - icon: si-jellyfin
+          href: https://jellyfin.org
+          description: Jellyfin Media Server (Open Source)
+        - icon: github.png
+          href: https://github.com/jellyfin/jellyfin
+          description: Jellyfin GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/jellyfin/jellyfin
+          description: Jellyfin Docker Image
+    - Sonarr:
+        - icon: si-sonarr
+          href: https://sonarr.tv
+          description: Sonarr TV Show Manager
+        - icon: github.png
+          href: https://github.com/Sonarr/Sonarr
+          description: Sonarr GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/linuxserver/sonarr
+          description: Sonarr Docker Image
+    - Radarr:
+        - icon: si-radarr
+          href: https://radarr.video
+          description: Radarr Movie Manager
+        - icon: github.png
+          href: https://github.com/Radarr/Radarr
+          description: Radarr GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/linuxserver/radarr
+          description: Radarr Docker Image
+    - Prowlarr:
+        - icon: si-prowlarr
+          href: https://prowlarr.com
+          description: Prowlarr Indexer Manager
+        - icon: github.png
+          href: https://github.com/Prowlarr/Prowlarr
+          description: Prowlarr GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/linuxserver/prowlarr
+          description: Prowlarr Docker Image
+    - qBittorrent:
+        - icon: si-qbittorrent
+          href: https://www.qbittorrent.org
+          description: qBittorrent Torrent Client
+        - icon: github.png
+          href: https://github.com/qbittorrent/qBittorrent
+          description: qBittorrent GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/linuxserver/qbittorrent
+          description: qBittorrent Docker Image
+    - Readarr:
+        - icon: si-readarr
+          href: https://readarr.com
+          description: Readarr Book Manager
+        - icon: github.png
+          href: https://github.com/Readarr/Readarr
+          description: Readarr GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/linuxserver/readarr
+          description: Readarr Docker Image
+    - Lidarr:
+        - icon: si-lidarr
+          href: https://lidarr.audio
+          description: Lidarr Music Manager
+        - icon: github.png
+          href: https://github.com/Lidarr/Lidarr
+          description: Lidarr GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/linuxserver/lidarr
+          description: Lidarr Docker Image
+    - Jellyseerr:
+        - icon: si-jellyseerr
+          href: https://jellyseerr.dev
+          description: Jellyseerr Media Requests
+        - icon: github.png
+          href: https://github.com/Fallenbagel/jellyseerr
+          description: Jellyseerr GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/fallenbagel/jellyseerr
+          description: Jellyseerr Docker Image
+    - Tdarr:
+        - icon: si-tdarr
+          href: https://tdarr.io
+          description: Tdarr Media Transcoding
+        - icon: github.png
+          href: https://github.com/HaveAGitGat/Tdarr
+          description: Tdarr GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/haveagitgat/tdarr
+          description: Tdarr Docker Image
+    - Unmanic:
+        - icon: si-unmanic
+          href: https://docs.unmanic.app
+          description: Unmanic Media Optimizer
+        - icon: github.png
+          href: https://github.com/Unmanic/unmanic
+          description: Unmanic GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/josh5/unmanic
+          description: Unmanic Docker Image
+    - Calibre-Web:
+        - icon: si-calibre
+          href: https://github.com/janeczku/calibre-web
+          description: Calibre-Web Ebook Reader
+        - icon: github.png
+          href: https://github.com/janeczku/calibre-web
+          description: Calibre-Web GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/linuxserver/calibre-web
+          description: Calibre-Web Docker Image
+
+- Productivity & Collaboration:
+    - Nextcloud:
+        - icon: si-nextcloud
+          href: https://nextcloud.com
+          description: Nextcloud File Sync & Collaboration
+        - icon: github.png
+          href: https://github.com/nextcloud/server
+          description: Nextcloud GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/linuxserver/nextcloud
+          description: Nextcloud Docker Image
+    - Gitea:
+        - icon: si-gitea
+          href: https://gitea.io
+          description: Gitea Git Service
+        - icon: github.png
+          href: https://github.com/go-gitea/gitea
+          description: Gitea GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/gitea/gitea
+          description: Gitea Docker Image
+    - BookStack:
+        - icon: si-bookstack
+          href: https://www.bookstackapp.com
+          description: BookStack Documentation Platform
+        - icon: github.png
+          href: https://github.com/BookStackApp/BookStack
+          description: BookStack GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/linuxserver/bookstack
+          description: BookStack Docker Image
+    - DokuWiki:
+        - icon: si-dokuwiki
+          href: https://www.dokuwiki.org
+          description: DokuWiki File-based Wiki
+        - icon: github.png
+          href: https://github.com/dokuwiki/dokuwiki
+          description: DokuWiki GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/linuxserver/dokuwiki
+          description: DokuWiki Docker Image
+    - MediaWiki:
+        - icon: si-mediawiki
+          href: https://www.mediawiki.org
+          description: MediaWiki Wiki Platform
+        - icon: github.png
+          href: https://github.com/wikimedia/mediawiki
+          description: MediaWiki GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/linuxserver/mediawiki
+          description: MediaWiki Docker Image
+    - WordPress:
+        - icon: si-wordpress
+          href: https://wordpress.org
+          description: WordPress Blog/CMS Platform
+        - icon: github.png
+          href: https://github.com/WordPress/WordPress
+          description: WordPress GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/linuxserver/wordpress
+          description: WordPress Docker Image
+    - Mealie:
+        - icon: si-mealie
+          href: https://hay-kot.github.io/mealie
+          description: Mealie Recipe Manager
+        - icon: github.png
+          href: https://github.com/hay-kot/mealie
+          description: Mealie GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/hkotel/mealie
+          description: Mealie Docker Image
+    - Form.io:
+        - icon: si-formio
+          href: https://www.form.io
+          description: Form.io Form Builder
+        - icon: github.png
+          href: https://github.com/formio/formio
+          description: Form.io GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/formio/formio-enterprise
+          description: Form.io Docker Image
+
+- Home Automation:
+    - Home Assistant:
+        - icon: si-homeassistant
+          href: https://www.home-assistant.io
+          description: Home Assistant Smart Home Platform
+        - icon: github.png
+          href: https://github.com/home-assistant/core
+          description: Home Assistant GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/linuxserver/homeassistant
+          description: Home Assistant Docker Image
+    - ESPHome:
+        - icon: si-esphome
+          href: https://esphome.io
+          description: ESPHome ESP32/ESP8266 Firmware
+        - icon: github.png
+          href: https://github.com/esphome/esphome
+          description: ESPHome GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/esphome/esphome
+          description: ESPHome Docker Image
+    - Node-RED:
+        - icon: si-nodered
+          href: https://nodered.org
+          description: Node-RED Flow-based Programming
+        - icon: github.png
+          href: https://github.com/node-red/node-red
+          description: Node-RED GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/nodered/node-red
+          description: Node-RED Docker Image
+    - Zigbee2MQTT:
+        - icon: si-zigbee2mqtt
+          href: https://www.zigbee2mqtt.io
+          description: Zigbee2MQTT Zigbee Bridge
+        - icon: github.png
+          href: https://github.com/Koenkk/zigbee2mqtt
+          description: Zigbee2MQTT GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/koenkk/zigbee2mqtt
+          description: Zigbee2MQTT Docker Image
+    - MotionEye:
+        - icon: si-motioneye
+          href: https://github.com/motioneye-project/motioneye
+          description: MotionEye Video Surveillance
+        - icon: github.png
+          href: https://github.com/motioneye-project/motioneye
+          description: MotionEye GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/linuxserver/motioneye
+          description: MotionEye Docker Image
+    - TasmoAdmin:
+        - icon: si-tasmota
+          href: https://github.com/reloxx13/TasmoAdmin
+          description: TasmoAdmin Tasmota Device Manager
+        - icon: github.png
+          href: https://github.com/reloxx13/TasmoAdmin
+          description: TasmoAdmin GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/raymondmm/tasmoadmin
+          description: TasmoAdmin Docker Image
+
+- Development & Utilities:
+    - Code Server:
+        - icon: si-visualstudiocode
+          href: https://github.com/coder/code-server
+          description: Code Server (VS Code in Browser)
+        - icon: github.png
+          href: https://github.com/coder/code-server
+          description: Code Server GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/linuxserver/code-server
+          description: Code Server Docker Image
+    - Jupyter Lab:
+        - icon: si-jupyter
+          href: https://jupyter.org
+          description: Jupyter Lab Notebooks
+        - icon: github.png
+          href: https://github.com/jupyterlab/jupyterlab
+          description: Jupyter Lab GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/linuxserver/jupyterlab
+          description: Jupyter Lab Docker Image
+    - Vaultwarden:
+        - icon: si-bitwarden
+          href: https://github.com/dani-garcia/vaultwarden
+          description: Vaultwarden Password Manager
+        - icon: github.png
+          href: https://github.com/dani-garcia/vaultwarden
+          description: Vaultwarden GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/vaultwarden/server
+          description: Vaultwarden Docker Image
+    - Duplicati:
+        - icon: si-duplicati
+          href: https://www.duplicati.com
+          description: Duplicati Backup Solution
+        - icon: github.png
+          href: https://github.com/duplicati/duplicati
+          description: Duplicati GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/linuxserver/duplicati
+          description: Duplicati Docker Image
+    - pgAdmin:
+        - icon: si-postgresql
+          href: https://www.pgadmin.org
+          description: pgAdmin PostgreSQL Management
+        - icon: github.png
+          href: https://github.com/pgadmin-org/pgadmin4
+          description: pgAdmin GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/dpage/pgadmin4
+          description: pgAdmin Docker Image
+    - GitLab CE:
+        - icon: si-gitlab
+          href: https://about.gitlab.com
+          description: GitLab DevOps Platform
+        - icon: github.png
+          href: https://gitlab.com/gitlab-org/gitlab
+          description: GitLab GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/gitlab/gitlab-ce
+          description: GitLab CE Docker Image
+
+- Monitoring & Observability:
+    - Grafana:
+        - icon: si-grafana
+          href: https://grafana.com
+          description: Grafana Visualization Platform
+        - icon: github.png
+          href: https://github.com/grafana/grafana
+          description: Grafana GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/grafana/grafana
+          description: Grafana Docker Image
+    - Prometheus:
+        - icon: si-prometheus
+          href: https://prometheus.io
+          description: Prometheus Metrics Collection
+        - icon: github.png
+          href: https://github.com/prometheus/prometheus
+          description: Prometheus GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/prom/prometheus
+          description: Prometheus Docker Image
+    - Uptime Kuma:
+        - icon: si-uptimekuma
+          href: https://uptime.kuma.pet
+          description: Uptime Kuma Status Monitoring
+        - icon: github.png
+          href: https://github.com/louislam/uptime-kuma
+          description: Uptime Kuma GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/louislam/uptime-kuma
+          description: Uptime Kuma Docker Image
+    - Glances:
+        - icon: si-glances
+          href: https://nicolargo.github.io/glances
+          description: Glances System Monitoring
+        - icon: github.png
+          href: https://github.com/nicolargo/glances
+          description: Glances GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/linuxserver/glances
+          description: Glances Docker Image
+    - Dozzle:
+        - icon: si-dozzle
+          href: https://dozzle.dev
+          description: Dozzle Docker Log Viewer
+        - icon: github.png
+          href: https://github.com/amir20/dozzle
+          description: Dozzle GitHub
+        - icon: docker.png
+          href: https://hub.docker.com/r/amir20/dozzle
+          description: Dozzle Docker Image
+
+- External Resources & Communities:
+    - Awesome Docker Compose:
+        - icon: docker.png
+          href: https://awesome-docker-compose.com
+          description: Curated Docker Compose Examples
+    - Servarr Wiki:
+        - icon: si-servarr
+          href: https://wiki.servarr.com
+          description: Servarr Applications Documentation
+    - Docker Compose Documentation:
+        - icon: docker.png
+          href: https://docs.docker.com/compose
+          description: Docker Compose Official Docs
     - Let's Encrypt:
         - icon: si-letsencrypt
           href: https://letsencrypt.org
-          description: SSL Certificate Provider
-          
-    - Docker Hub:
-        - icon: docker.png
-          href: https://hub.docker.com
-          description: Container Images
+          description: Free SSL Certificates
+    - Awesome Selfhosted:
+        - icon: si-awesome
+          href: https://awesome-selfhosted.net
+          description: Self-hosted Software List
+    - Homelab Wiki:
+        - icon: si-wikipedia
+          href: https://homelab.wiki
+          description: Homelab Community Wiki
+    - Reddit r/selfhosted:
+        - icon: si-reddit
+          href: https://reddit.com/r/selfhosted
+          description: Self-hosted Community
+    - Reddit r/homelab:
+        - icon: si-reddit
+          href: https://reddit.com/r/homelab
+          description: Homelab Community

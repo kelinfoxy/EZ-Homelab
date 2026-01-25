@@ -13,3 +13,7 @@
       dateStyle: long
       timeStyle: short
       hourCycle: h23
+
+- greeting:
+    text_size: 4xl
+    text: EZ Homelab
