@@ -420,6 +420,13 @@ perform_deployment() {
         cp "$REPO_DIR/docker-compose/infrastructure/docker-compose.yml" /opt/stacks/infrastructure/docker-compose.yml
         cp "$REPO_DIR/.env" /opt/stacks/infrastructure/.env
 
+        # Copy any additional config directories
+        for config_dir in "$REPO_DIR/docker-compose/infrastructure"/*/; do
+            if [ -d "$config_dir" ] && [ "$(basename "$config_dir")" != "." ]; then
+                cp -r "$config_dir" /opt/stacks/infrastructure/
+            fi
+        done
+
         # If core is not deployed, remove Authelia middleware references
         if [ "$DEPLOY_CORE" = false ]; then
             log_info "Core infrastructure not deployed - removing Authelia middleware references..."
@@ -488,6 +495,14 @@ setup_stacks_for_dockge() {
             if [ -f "$REPO_STACK_DIR/docker-compose.yml" ]; then
                 cp "$REPO_STACK_DIR/docker-compose.yml" "$STACK_DIR/docker-compose.yml"
                 cp "$REPO_DIR/.env" "$STACK_DIR/.env"
+
+                # Copy any additional config directories
+                for config_dir in "$REPO_STACK_DIR"/*/; do
+                    if [ -d "$config_dir" ] && [ "$(basename "$config_dir")" != "." ]; then
+                        cp -r "$config_dir" "$STACK_DIR/"
+                    fi
+                done
+
                 log_success "Prepared $stack stack for Dockge"
             else
                 log_warning "$stack stack docker-compose.yml not found, skipping..."
