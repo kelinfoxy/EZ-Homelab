@@ -78,3 +78,10 @@ docker-compose/productivity/nextcloud/html/
 prometheus-data/
 grafana-data/
 loki-data/
+# Service data directories (databases, logs, configs)
+**/config/db/
+**/data/
+**/logs/
+**/settings.json
+**/*.key
+**/*.pem

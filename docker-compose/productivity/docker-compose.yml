@@ -483,7 +483,10 @@ services:
       - "traefik.http.routers.jupyter.tls.certresolver=letsencrypt"
       - "traefik.http.routers.jupyter.middlewares=authelia@docker"
       - "traefik.http.services.jupyter.loadbalancer.server.port=8890"
-
+      # Sablier configuration
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME}-jupyter"
+      - "sablier.start-on-demand=true"
 volumes:
   nextcloud-db-data:
   wordpress-db-data:
