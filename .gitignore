@@ -74,6 +74,10 @@ acme.json
 # Nextcloud application files (should be mounted via volumes)
 docker-compose/productivity/nextcloud/html/
 
+# Wiki working directories (temporary)
+wiki-*/
+wiki-repo/
+
 # Monitoring data (if stored locally)
 prometheus-data/
 grafana-data/
