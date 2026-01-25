@@ -32,15 +32,15 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-bitwarden:
+    sablier-${SERVER_HOSTNAME}-vaultwarden:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-bitwarden
+          group: ${SERVER_HOSTNAME}-vaultwarden
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
-            displayName: bitwarden
+            displayName: Vaultwarden
             theme: ghost
             show-details-by-default: true
 
@@ -176,6 +176,18 @@ http:
             theme: ghost
             show-details-by-default: true
 
+    sablier-${SERVER_HOSTNAME}-jupyter:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-jupyter
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Jupyter
+            theme: ghost
+            show-details-by-default: true
+
     sablier-${SERVER_HOSTNAME}-komodo:
       plugin:
         sablier:
@@ -220,7 +232,7 @@ http:
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
-            displayName: mediawiki
+            displayName: MediaWiki
             theme: ghost
             show-details-by-default: true
 

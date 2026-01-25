@@ -22,16 +22,16 @@ http:
         - sablier-${SERVER_HOSTNAME}-bookstack@file
         - authelia@docker
     
-    bitwarden-${SERVER_HOSTNAME}:
-      rule: "Host(`bitwarden.${DOMAIN}`)"
+    vaultwarden-${SERVER_HOSTNAME}:
+      rule: "Host(`vault.${DOMAIN}`)"
       entryPoints:
         - websecure
-      service: bitwarden-${SERVER_HOSTNAME}
+      service: vaultwarden-${SERVER_HOSTNAME}
       tls:
         certResolver: letsencrypt
-      middlewares:
-        - sablier-${SERVER_HOSTNAME}-bitwarden@file
-        - authelia@docker
+      # SSO disabled for browser extension and mobile app compatibility
+      # middlewares:
+      #   - sablier-${SERVER_HOSTNAME}-vaultwarden@file
 
     calibre-web-${SERVER_HOSTNAME}:
       rule: "Host(`calibre.${DOMAIN}`)"
@@ -172,6 +172,17 @@ http:
       middlewares:
         - sablier-${SERVER_HOSTNAME}-jellyfin@file
         # No authelia middleware for media apps
+
+    jupyter-${SERVER_HOSTNAME}:
+      rule: "Host(`jupyter.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: jupyter-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-jupyter@file
+        - authelia@docker
 
     kopia-${SERVER_HOSTNAME}:
       rule: "Host(`kopia.${DOMAIN}`)"
@@ -381,10 +392,10 @@ http:
           - url: "http://192.168.4.11:9898"
         passHostHeader: true
 
-    bitwarden-${SERVER_HOSTNAME}:
+    vaultwarden-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:8000"
+          - url: "http://192.168.4.11:8091"
         passHostHeader: true
 
     bookstack-${SERVER_HOSTNAME}:
@@ -471,6 +482,12 @@ http:
           - url: "http://192.168.4.11:8096"
         passHostHeader: true
 
+    jupyter-${SERVER_HOSTNAME}:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.4.11:8890"
+        passHostHeader: true
+
     kopia-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
@@ -516,7 +533,7 @@ http:
     qbittorrent-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:8080"
+          - url: "http://192.168.4.11:8081"
         passHostHeader: true
 
     tdarr-${SERVER_HOSTNAME}:
@@ -528,7 +545,7 @@ http:
     unmanic-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:8888"
+          - url: "http://192.168.4.11:8889"
         passHostHeader: true
 
     wordpress-${SERVER_HOSTNAME}:

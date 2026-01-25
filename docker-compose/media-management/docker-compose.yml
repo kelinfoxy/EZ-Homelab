@@ -7,18 +7,6 @@
 # - no: Services with Sablier lazy loading (start on-demand)
 # - See individual service comments for specific reasoning
 
-# Service Access URLs:
-# - Sonarr: https://sonarr.${DOMAIN}
-# - Radarr: https://radarr.${DOMAIN}
-# - Prowlarr: https://prowlarr.${DOMAIN}
-# - Readarr: https://readarr.${DOMAIN}
-# - Lidarr: https://lidarr.${DOMAIN}
-# - LazyLibrarian: https://lazylibrarian.${DOMAIN}
-# - Mylar3: https://mylar.${DOMAIN}
-# - Jellyseerr: https://jellyseerr.${DOMAIN}
-# - Tdarr: https://tdarr.${DOMAIN}
-# - Unmanic: https://unmanic.${DOMAIN}
-
 services:
   # Sonarr - TV show automation
   # Access at: https://sonarr.yourdomain.duckdns.org
@@ -64,6 +52,7 @@ services:
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME}-arr"
       - "sablier.start-on-demand=true"
+
   # Radarr - Movie automation
   # Access at: https://radarr.yourdomain.duckdns.org
   radarr:
@@ -108,6 +97,7 @@ services:
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME}-arr"
       - "sablier.start-on-demand=true"
+
   # Prowlarr - Indexer manager
   # Access at: https://prowlarr.yourdomain.duckdns.org
   prowlarr:
@@ -150,6 +140,7 @@ services:
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME}-arr"
       - "sablier.start-on-demand=true"
+
   # Readarr - Ebook and audiobook management
   # Access at: https://readarr.${DOMAIN}
   readarr:
@@ -188,6 +179,7 @@ services:
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME}-arr"
       - "sablier.start-on-demand=true"
+
   # Lidarr - Music collection manager
   # Access at: https://lidarr.${DOMAIN}
   lidarr:
@@ -226,6 +218,7 @@ services:
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME}-arr"
       - "sablier.start-on-demand=true"
+
   # Lazy Librarian - Book manager
   # Access at: https://lazylibrarian.${DOMAIN}
   lazylibrarian:
@@ -265,6 +258,7 @@ services:
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME}-arr"
       - "sablier.start-on-demand=true"
+
   # Mylar3 - Comic book manager
   # Access at: https://mylar.${DOMAIN}
   mylar3:
@@ -303,6 +297,7 @@ services:
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME}-arr"
       - "sablier.start-on-demand=true"
+
   # Jellyseerr - Request management for Jellyfin/Plex
   # Access at: https://jellyseerr.${DOMAIN}
   jellyseerr:
@@ -320,7 +315,7 @@ services:
       - LOG_LEVEL=info
       - TZ=${TZ}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5055/"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5055/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -344,6 +339,7 @@ services:
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME}-arr"
       - "sablier.start-on-demand=true"
+
   # FlareSolverr - Cloudflare bypass for Prowlarr
   # No web UI - used by Prowlarr
   flaresolverr:
@@ -358,6 +354,10 @@ services:
     labels:
       - homelab.category=media
       - homelab.description=Cloudflare bypass for indexers
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME}-arr"
+      - "sablier.start-on-demand=true"
+  
   # Tdarr Server - Distributed transcoding server
   # Access at: https://tdarr.${DOMAIN}
   tdarr-server:
@@ -400,8 +400,9 @@ services:
       - "traefik.http.routers.tdarr.middlewares=authelia@docker"
       - "traefik.http.services.tdarr.loadbalancer.server.port=8265"
       - "sablier.enable=true"
-      - "sablier.group=${SERVER_HOSTNAME}-arr"
+      - "sablier.group=${SERVER_HOSTNAME}-tdarr"
       - "sablier.start-on-demand=true"
+
   # Tdarr Node - Transcoding worker
   # No web UI - controlled by server
   tdarr-node:
@@ -427,6 +428,10 @@ services:
     labels:
       - homelab.category=media
       - homelab.description=Tdarr transcoding worker node
+      - "sablier.enable=true"
+      - "sablier.group=${SERVER_HOSTNAME}-tdarr"
+      - "sablier.start-on-demand=true"
+
   # Unmanic - Another transcoding option
   # Access at: https://unmanic.${DOMAIN}
   unmanic:
@@ -463,7 +468,7 @@ services:
       - "traefik.http.routers.unmanic.middlewares=authelia@docker"
       - "traefik.http.services.unmanic.loadbalancer.server.port=8889"
       - "sablier.enable=true"
-      - "sablier.group=${SERVER_HOSTNAME}-arr"
+      - "sablier.group=${SERVER_HOSTNAME}-unmanic"
       - "sablier.start-on-demand=true"
 
 x-dockge:

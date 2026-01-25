@@ -39,14 +39,14 @@ This document tracks all ports used by services in the EZ-Homelab. Update this d
 | **Utilities** | [Backrest](../service-docs/backrest.md) | 9898 | 9898 | TCP | Web UI |
 | **Utilities** | [Duplicati](../service-docs/duplicati.md) | 8200 | 8200 | TCP | Web UI |
 | **Utilities** | [Form.io](../service-docs/formio.md) | 3002 | 3001 | TCP | Web UI |
-| **Utilities** | [Vaultwarden](../service-docs/vaultwarden.md) | 80 | 80 | TCP | Internal port |
+| **Utilities** | [Vaultwarden](../service-docs/vaultwarden.md) | 8091 | 80 | TCP | Web UI |
 | **VPN** | [Gluetun](../service-docs/gluetun.md) | 8888 | 8888 | TCP | HTTP proxy |
 | **VPN** | [Gluetun](../service-docs/gluetun.md) | 8388 | 8388 | TCP/UDP | Shadowsocks |
 | **VPN** | [Gluetun](../service-docs/gluetun.md) | 8081 | 8080 | TCP | qBittorrent Web UI |
 | **VPN** | [Gluetun](../service-docs/gluetun.md) | 6881 | 6881 | TCP/UDP | qBittorrent |
 | **VPN** | [qBittorrent](../service-docs/qbittorrent.md) | N/A | N/A | N/A | Routed through Gluetun |
-| **Productivity** | [DokuWiki](../service-docs/dokuwiki.md) | 80 | 80 | TCP | Internal port |
-| **Productivity** | [Nextcloud](../service-docs/nextcloud.md) | 80 | 80 | TCP | Internal port |
+| **Productivity** | [DokuWiki](../service-docs/dokuwiki.md) | 8087 | 80 | TCP | Web UI |
+| **Productivity** | [Nextcloud](../service-docs/nextcloud.md) | 8089 | 80 | TCP | Web UI |
 | **Productivity** | [Gitea](../service-docs/gitea.md) | 3010 | 3000 | TCP | Web UI |
 | **Productivity** | [MinIO](../service-docs/minio.md) | 9000 | 9000 | TCP | API |
 | **Productivity** | [MinIO](../service-docs/minio.md) | 9001 | 9001 | TCP | Web UI |

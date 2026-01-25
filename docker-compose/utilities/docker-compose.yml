@@ -42,7 +42,7 @@ services:
       - BACKREST_CONFIG=/config/config.json
       - TZ=${TZ}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9898/api/v1/status"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9898/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -126,7 +126,7 @@ services:
       - JWT_SECRET=${FORMIO_JWT_SECRET}
       - DB_SECRET=${FORMIO_DB_SECRET}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -174,7 +174,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "80:80"
+      - "8091:80"
     volumes:
       - ./vaultwarden/data:/data
     environment:
