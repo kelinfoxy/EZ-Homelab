@@ -289,32 +289,57 @@ share_certs_with_core() {
     log_info "Copying shared CA certificates from core server..."
     mkdir -p "/opt/stacks/core/shared-ca"
 
+    # First check if shared CA exists on core server
+    SHARED_CA_EXISTS=false
     if [ "$USE_SSHPASS" = true ] && [ -n "$SSH_PASSWORD" ]; then
-        # Use password authentication
-        log_info "Running: sshpass -p [PASSWORD] scp -o StrictHostKeyChecking=no $SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca.pem /opt/stacks/core/shared-ca/"
-        if sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca.pem" "$SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca-key.pem" "/opt/stacks/core/shared-ca/" 2>&1; then
-            log_success "Shared CA certificates copied from core server"
-        else
-            log_warning "Could not copy shared CA certificates from core server."
-            log_info "Please ensure the certificates exist on the core server at: /opt/stacks/core/shared-ca/"
-            log_info "You may need to manually copy the certificates."
-            log_info "Required files: ca.pem, ca-key.pem"
-            echo ""
-            return 1
+        if sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP" "[ -f /opt/stacks/core/shared-ca/ca.pem ] && [ -f /opt/stacks/core/shared-ca/ca-key.pem ]" 2>/dev/null; then
+            SHARED_CA_EXISTS=true
         fi
     else
-        # Use key authentication
-        log_info "Running: scp -o StrictHostKeyChecking=no $SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca.pem /opt/stacks/core/shared-ca/"
-        if scp -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca.pem" "$SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca-key.pem" "/opt/stacks/core/shared-ca/" 2>&1; then
-            log_success "Shared CA certificates copied from core server"
-        else
-            log_warning "Could not copy shared CA certificates from core server."
-            log_info "Please ensure the certificates exist on the core server at: /opt/stacks/core/shared-ca/"
-            log_info "You may need to manually copy the certificates."
-            log_info "Required files: ca.pem, ca-key.pem"
-            echo ""
-            return 1
+        if ssh -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP" "[ -f /opt/stacks/core/shared-ca/ca.pem ] && [ -f /opt/stacks/core/shared-ca/ca-key.pem ]" 2>/dev/null; then
+            SHARED_CA_EXISTS=true
         fi
+    fi
+
+    if [ "$SHARED_CA_EXISTS" = true ]; then
+        # Copy existing shared CA from core server
+        if [ "$USE_SSHPASS" = true ] && [ -n "$SSH_PASSWORD" ]; then
+            log_info "Running: sshpass -p [PASSWORD] scp -o StrictHostKeyChecking=no $SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca.pem /opt/stacks/core/shared-ca/"
+            if sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca.pem" "$SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca-key.pem" "/opt/stacks/core/shared-ca/" 2>&1; then
+                log_success "Shared CA certificates copied from core server"
+            else
+                log_warning "Failed to copy shared CA certificates from core server"
+                SHARED_CA_EXISTS=false
+            fi
+        else
+            log_info "Running: scp -o StrictHostKeyChecking=no $SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca.pem /opt/stacks/core/shared-ca/"
+            if scp -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca.pem" "$SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca-key.pem" "/opt/stacks/core/shared-ca/" 2>&1; then
+                log_success "Shared CA certificates copied from core server"
+            else
+                log_warning "Failed to copy shared CA certificates from core server"
+                SHARED_CA_EXISTS=false
+            fi
+        fi
+    fi
+
+    if [ "$SHARED_CA_EXISTS" = false ]; then
+        # Generate local shared CA if not available from core server
+        log_warning "Shared CA certificates not found on core server."
+        log_info "Generating local shared CA for infrastructure server..."
+        
+        openssl genrsa -out "/opt/stacks/core/shared-ca/ca-key.pem" 4096
+        openssl req -new -x509 -days 365 -key "/opt/stacks/core/shared-ca/ca-key.pem" -sha256 -out "/opt/stacks/core/shared-ca/ca.pem" -subj "/C=US/ST=State/L=City/O=Homelab/CN=Homelab-CA"
+        
+        log_success "Local shared CA generated"
+        log_info "IMPORTANT: Copy these certificates to your core server at /opt/stacks/core/shared-ca/"
+        log_info "Run this command on your CORE server:"
+        echo "  sudo mkdir -p /opt/stacks/core/shared-ca"
+        echo "  sudo scp $SSH_USER@$SERVER_IP:/opt/stacks/core/shared-ca/ca.pem /opt/stacks/core/shared-ca/"
+        echo "  sudo scp $SSH_USER@$SERVER_IP:/opt/stacks/core/shared-ca/ca-key.pem /opt/stacks/core/shared-ca/"
+        echo "  sudo chown -R $SSH_USER:$SSH_USER /opt/stacks/core/shared-ca"
+        echo ""
+        log_info "After copying, restart the core server's Docker services for the changes to take effect."
+        echo ""
     fi
 
     # Update Docker daemon configuration to use shared CA
