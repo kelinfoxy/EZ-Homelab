@@ -482,10 +482,12 @@ perform_deployment() {
 
     # Step 1: Create required directories
     log_info "Step 1: Creating required directories..."
-    mkdir -p /opt/stacks/core
-    mkdir -p /opt/stacks/infrastructure
-    mkdir -p /opt/stacks/dashboards
-    mkdir -p /opt/dockge
+    sudo mkdir -p /opt/stacks/core
+    sudo mkdir -p /opt/stacks/infrastructure
+    sudo mkdir -p /opt/stacks/dashboards
+    sudo mkdir -p /opt/dockge
+    sudo chown -R "$USER:$USER" /opt/stacks
+    sudo chown -R "$USER:$USER" /opt/dockge
     log_success "Directories created"
 
     # Step 2: Create Docker networks (if they don't exist)
@@ -501,8 +503,8 @@ perform_deployment() {
     echo ""
 
     # Copy Dockge stack files
-    cp "$REPO_DIR/docker-compose/dockge/docker-compose.yml" /opt/dockge/docker-compose.yml
-    cp "$REPO_DIR/.env" /opt/dockge/.env
+    sudo cp "$REPO_DIR/docker-compose/dockge/docker-compose.yml" /opt/dockge/docker-compose.yml
+    sudo cp "$REPO_DIR/.env" /opt/dockge/.env
 
     # Deploy Dockge stack
     cd /opt/dockge
@@ -519,8 +521,8 @@ perform_deployment() {
         echo ""
 
         # Copy core stack files
-        cp "$REPO_DIR/docker-compose/core/docker-compose.yml" /opt/stacks/core/docker-compose.yml
-        cp "$REPO_DIR/.env" /opt/stacks/core/.env
+        sudo cp "$REPO_DIR/docker-compose/core/docker-compose.yml" /opt/stacks/core/docker-compose.yml
+        sudo cp "$REPO_DIR/.env" /opt/stacks/core/.env
 
         # Copy configs
         if [ -d "/opt/stacks/core/traefik" ]; then
@@ -617,7 +619,7 @@ perform_deployment() {
         echo ""
 
         # Create dashboards directory
-        mkdir -p /opt/stacks/dashboards
+        sudo mkdir -p /opt/stacks/dashboards
 
         # Copy dashboards compose file
         cp "$REPO_DIR/docker-compose/dashboards/docker-compose.yml" /opt/stacks/dashboards/docker-compose.yml
