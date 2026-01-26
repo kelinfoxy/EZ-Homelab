@@ -190,7 +190,7 @@ This section provides a complete deployment plan for scenarios where the core in
 ## Prerequisites
 
 - Both servers must be on the same network and able to communicate
-- SSH access configured between servers (passwordless recommended for automation)
+- SSH access configured between servers (key-based or password authentication supported)
 - Domain configured with DuckDNS or similar
 - The EZ-Homelab script handles most Docker TLS and certificate setup automatically
 - Basic understanding of Docker concepts (optional - script guides you through setup)

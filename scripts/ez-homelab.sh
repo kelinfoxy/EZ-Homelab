@@ -71,42 +71,131 @@ generate_shared_ca() {
 
 # Function to setup multi-server TLS for remote servers
 setup_multi_server_tls() {
+    local ca_dir="/opt/stacks/core/shared-ca"
+    sudo mkdir -p "$ca_dir"
+    sudo chown "$ACTUAL_USER:$ACTUAL_USER" "$ca_dir"
+
     if [ -n "$CORE_SERVER_IP" ]; then
         log_info "Setting up multi-server TLS using shared CA from core server $CORE_SERVER_IP..."
-        
-        # Create shared-ca directory
-        local ca_dir="/opt/stacks/core/shared-ca"
-        sudo mkdir -p "$ca_dir"
-        sudo chown "$ACTUAL_USER:$ACTUAL_USER" "$ca_dir"
-        
-        # Copy shared CA from core server
-        if scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$ACTUAL_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca.pem" "$ca_dir/" 2>/dev/null; then
-            log_success "Shared CA copied from core server"
+    else
+        # Prompt for core server IP if not set
+        read -p "Enter the IP address of your core server: " CORE_SERVER_IP
+        while [ -z "$CORE_SERVER_IP" ]; do
+            log_warning "Core server IP is required for shared TLS"
+            read -p "Enter the IP address of your core server: " CORE_SERVER_IP
+        done
+        log_info "Setting up multi-server TLS using shared CA from core server $CORE_SERVER_IP..."
+    fi
+
+    # Prompt for SSH username if not set
+    if [ -z "$SSH_USER" ]; then
+        DEFAULT_SSH_USER="${DEFAULT_USER:-$USER}"
+        read -p "SSH username for core server [$DEFAULT_SSH_USER]: " SSH_USER
+        SSH_USER="${SSH_USER:-$DEFAULT_SSH_USER}"
+    fi
+
+    # Test SSH connection - try key authentication first
+    log_info "Testing SSH connection to core server ($SSH_USER@$CORE_SERVER_IP)..."
+    if ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no -o BatchMode=yes "$SSH_USER@$CORE_SERVER_IP" "echo 'SSH connection successful'" 2>/dev/null; then
+        log_success "SSH connection established using key authentication"
+        USE_SSHPASS=false
+    else
+        # Key authentication failed, try password authentication
+        log_info "Key authentication failed, trying password authentication..."
+        read -s -p "Enter SSH password for $SSH_USER@$CORE_SERVER_IP: " SSH_PASSWORD
+        echo ""
+
+        if sshpass -p "$SSH_PASSWORD" ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP" "echo 'SSH connection successful'" 2>/dev/null; then
+            log_success "SSH connection established using password authentication"
+            USE_SSHPASS=true
         else
-            log_warning "Failed to copy shared CA from core server $CORE_SERVER_IP"
-            log_warning "This will create TLS certificate mismatches between core and remote servers"
-            log_warning "Sablier will not be able to connect to this remote Docker daemon"
-            TLS_ISSUES_SUMMARY="⚠️  TLS Configuration Issue: Could not copy shared CA from core server $CORE_SERVER_IP
+            log_error "Cannot connect to core server via SSH. Please check:"
+            echo "  1. SSH is running on the core server"
+            echo "  2. SSH keys are properly configured, or username/password are correct"
+            echo "  3. The core server IP is correct"
+            echo ""
+            TLS_ISSUES_SUMMARY="⚠️  TLS Configuration Issue: Cannot connect to core server $CORE_SERVER_IP via SSH
    This will prevent Sablier from connecting to remote Docker daemons.
    
    To fix this:
-   1. Ensure SSH access works: ssh $ACTUAL_USER@$CORE_SERVER_IP
-   2. Verify core server has: /opt/stacks/core/shared-ca/ca.pem
-   3. Manually copy CA: scp $ACTUAL_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca.pem $ca_dir/
-   4. Regenerate server certificates on this server with shared CA
-   5. Restart Docker: sudo systemctl restart docker
-   6. Test connection: docker --tlsverify --tlscacert=$ca_dir/ca.pem --tlscert=$ca_dir/cert.pem --tlskey=$ca_dir/key.pem --host=tcp://localhost:2376 ps
+   1. Ensure SSH is running on the core server
+   2. Configure SSH keys or provide correct password
+   3. Verify the core server IP is correct
+   4. Test SSH connection: ssh $SSH_USER@$CORE_SERVER_IP
+   
+   Without SSH access, shared CA cannot be fetched for secure multi-server TLS."
+            return
+        fi
+    fi
+
+    # Fetch shared CA certificates from core server
+    log_info "Fetching shared CA certificates from core server..."
+    SHARED_CA_EXISTS=false
+
+    # Check if shared CA exists on core server (check both old and new locations)
+    if [ "$USE_SSHPASS" = true ] && [ -n "$SSH_PASSWORD" ]; then
+        if sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP" "[ -f /opt/stacks/core/shared-ca/ca.pem ] && [ -f /opt/stacks/core/shared-ca/ca-key.pem ] && [ -r /opt/stacks/core/shared-ca/ca.pem ] && [ -r /opt/stacks/core/shared-ca/ca-key.pem ]" 2>/dev/null; then
+            SHARED_CA_EXISTS=true
+            SHARED_CA_PATH="/opt/stacks/core/shared-ca"
+            log_info "Detected CA certificate and key in shared-ca location"
+        elif sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP" "[ -f /opt/stacks/core/docker-tls/ca.pem ] && [ -f /opt/stacks/core/docker-tls/ca-key.pem ] && [ -r /opt/stacks/core/docker-tls/ca.pem ] && [ -r /opt/stacks/core/docker-tls/ca-key.pem ]" 2>/dev/null; then
+            SHARED_CA_EXISTS=true
+            SHARED_CA_PATH="/opt/stacks/core/docker-tls"
+            log_info "Detected CA certificate and key in docker-tls location"
+        fi
+    else
+        if ssh -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP" "[ -f /opt/stacks/core/shared-ca/ca.pem ] && [ -f /opt/stacks/core/shared-ca/ca-key.pem ] && [ -r /opt/stacks/core/shared-ca/ca.pem ] && [ -r /opt/stacks/core/shared-ca/ca-key.pem ]" 2>/dev/null; then
+            SHARED_CA_EXISTS=true
+            SHARED_CA_PATH="/opt/stacks/core/shared-ca"
+            log_info "Detected CA certificate and key in shared-ca location"
+        elif ssh -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP" "[ -f /opt/stacks/core/docker-tls/ca.pem ] && [ -f /opt/stacks/core/docker-tls/ca-key.pem ] && [ -r /opt/stacks/core/docker-tls/ca.pem ] && [ -r /opt/stacks/core/docker-tls/ca-key.pem ]" 2>/dev/null; then
+            SHARED_CA_EXISTS=true
+            SHARED_CA_PATH="/opt/stacks/core/docker-tls"
+            log_info "Detected CA certificate and key in docker-tls location"
+        fi
+    fi
+
+    if [ "$SHARED_CA_EXISTS" = true ]; then
+        # Copy existing shared CA from core server
+        set +e
+        scp_output=$(scp -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP:$SHARED_CA_PATH/ca.pem" "$SSH_USER@$CORE_SERVER_IP:$SHARED_CA_PATH/ca-key.pem" "$ca_dir/" 2>&1)
+        scp_exit_code=$?
+        set -e
+        if [ $scp_exit_code -eq 0 ]; then
+            log_success "Shared CA certificate and key fetched from core server"
+            setup_docker_tls
+        else
+            log_error "Failed to fetch shared CA certificate and key from core server"
+            TLS_ISSUES_SUMMARY="⚠️  TLS Configuration Issue: Could not copy shared CA from core server $CORE_SERVER_IP
+   SCP Error: $scp_output
+   
+   To fix this:
+   1. Ensure SSH key authentication works: ssh $ACTUAL_USER@$CORE_SERVER_IP
+   2. Verify core server has: $SHARED_CA_PATH/ca.pem and ca-key.pem
+   3. Check file permissions on core server: ls -la $SHARED_CA_PATH/
+   4. Manually copy CA: scp $ACTUAL_USER@$CORE_SERVER_IP:$SHARED_CA_PATH/ca.pem $ca_dir/
+      scp $ACTUAL_USER@$CORE_SERVER_IP:$SHARED_CA_PATH/ca-key.pem $ca_dir/
+   5. Regenerate server certificates: run setup_docker_tls after copying
+   6. Restart Docker: sudo systemctl restart docker
    
    Then restart Sablier on the core server to reconnect."
-            generate_shared_ca
+            return
         fi
-        
-        # Setup Docker TLS with shared CA
-        setup_docker_tls
     else
-        log_info "No core server specified, setting up local TLS..."
-        generate_shared_ca
-        setup_docker_tls
+        log_warning "Shared CA certificates not found on core server."
+        log_info "Please ensure the core server has been set up first and has generated the shared CA certificates."
+        TLS_ISSUES_SUMMARY="⚠️  TLS Configuration Issue: Shared CA certificates not found on core server $CORE_SERVER_IP
+   This will prevent Sablier from connecting to remote Docker daemons.
+   
+   To fix this:
+   1. Ensure the core server is set up and has generated shared CA certificates
+   2. Verify SSH access: ssh $ACTUAL_USER@$CORE_SERVER_IP
+   3. Check core server locations: /opt/stacks/core/shared-ca/ or /opt/stacks/core/docker-tls/
+   4. Manually copy CA certificates if needed
+   5. Re-run the infrastructure deployment
+   
+   Without shared CA, remote Docker access will not work securely."
+        return
     fi
 }
 
@@ -330,148 +419,6 @@ prompt_for_values() {
         if [ "$DEPLOY_CORE" = true ]; then
             ADMIN_USER="$DEFAULT_ADMIN_USER"
             ADMIN_EMAIL="$DEFAULT_ADMIN_EMAIL"
-        fi
-    fi
-
-    echo ""
-}
-
-# Certificate fetching function for infrastructure-only deployments
-get_certs_from_core_server() {
-    log_info "Infrastructure-only deployment detected. Fetching certificate from core server for remote Docker control..."
-
-    # Prompt for core server IP
-    read -p "Enter the IP address of your core server: " CORE_SERVER_IP
-    while [ -z "$CORE_SERVER_IP" ]; do
-        log_warning "Core server IP is required for certificate fetching"
-        read -p "Enter the IP address of your core server: " CORE_SERVER_IP
-    done
-
-    # Prompt for SSH username
-    DEFAULT_SSH_USER="${DEFAULT_USER:-$USER}"
-    read -p "SSH username for core server [$DEFAULT_SSH_USER]: " SSH_USER
-    SSH_USER="${SSH_USER:-$DEFAULT_SSH_USER}"
-
-    # Test SSH connection - try key authentication first
-    log_info "Testing SSH connection to core server ($SSH_USER@$CORE_SERVER_IP)..."
-    if ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no -o BatchMode=yes "$SSH_USER@$CORE_SERVER_IP" "echo 'SSH connection successful'" 2>/dev/null; then
-        log_success "SSH connection established using key authentication"
-        USE_SSHPASS=false
-    else
-        # Key authentication failed, try password authentication
-        log_info "Key authentication failed, trying password authentication..."
-        read -s -p "Enter SSH password for $SSH_USER@$CORE_SERVER_IP: " SSH_PASSWORD
-        echo ""
-
-        if sshpass -p "$SSH_PASSWORD" ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP" "echo 'SSH connection successful'" 2>/dev/null; then
-            log_success "SSH connection established using password authentication"
-            USE_SSHPASS=true
-        else
-            log_error "Cannot connect to core server via SSH. Please check:"
-            echo "  1. SSH is running on the core server"
-            echo "  2. SSH keys are properly configured, or username/password are correct"
-            echo "  3. The core server IP is correct"
-            echo ""
-            read -p "Do you want to continue anyway? (y/N): " -n 1 -r
-            echo ""
-            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-                log_error "Certificate fetching cancelled. Please verify SSH access and try again."
-                exit 1
-            fi
-            USE_SSHPASS=true  # Assume password auth for copying
-        fi
-    fi
-
-    # Fetch shared CA certificates from core server
-    log_info "Fetching shared CA certificates from core server..."
-    sudo mkdir -p "/opt/stacks/core/shared-ca"
-
-    # First check if shared CA exists on core server (check both old and new locations)
-    SHARED_CA_EXISTS=false
-    if [ "$USE_SSHPASS" = true ] && [ -n "$SSH_PASSWORD" ]; then
-        if sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP" "[ -f /opt/stacks/core/shared-ca/ca.pem ] && [ -f /opt/stacks/core/shared-ca/ca-key.pem ] && [ -r /opt/stacks/core/shared-ca/ca.pem ] && [ -r /opt/stacks/core/shared-ca/ca-key.pem ]" 2>/dev/null; then
-            SHARED_CA_EXISTS=true
-            SHARED_CA_PATH="/opt/stacks/core/shared-ca"
-            log_info "Detected CA certificate and key in shared-ca location"
-        elif sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP" "[ -f /opt/stacks/core/docker-tls/ca.pem ] && [ -f /opt/stacks/core/docker-tls/ca-key.pem ] && [ -r /opt/stacks/core/docker-tls/ca.pem ] && [ -r /opt/stacks/core/docker-tls/ca-key.pem ]" 2>/dev/null; then
-            SHARED_CA_EXISTS=true
-            SHARED_CA_PATH="/opt/stacks/core/docker-tls"
-            log_info "Detected CA certificate and key in docker-tls location"
-        fi
-    else
-        if ssh -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP" "[ -f /opt/stacks/core/shared-ca/ca.pem ] && [ -f /opt/stacks/core/shared-ca/ca-key.pem ] && [ -r /opt/stacks/core/shared-ca/ca.pem ] && [ -r /opt/stacks/core/shared-ca/ca-key.pem ]" 2>/dev/null; then
-            SHARED_CA_EXISTS=true
-            SHARED_CA_PATH="/opt/stacks/core/shared-ca"
-            log_info "Detected CA certificate and key in shared-ca location"
-        elif ssh -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP" "[ -f /opt/stacks/core/docker-tls/ca.pem ] && [ -f /opt/stacks/core/docker-tls/ca-key.pem ] && [ -r /opt/stacks/core/docker-tls/ca.pem ] && [ -r /opt/stacks/core/docker-tls/ca-key.pem ]" 2>/dev/null; then
-            SHARED_CA_EXISTS=true
-            SHARED_CA_PATH="/opt/stacks/core/docker-tls"
-            log_info "Detected CA certificate and key in docker-tls location"
-        fi
-    fi
-
-    if [ "$SHARED_CA_EXISTS" = true ]; then
-        # Copy existing shared CA from core server
-        if [ "$USE_SSHPASS" = true ] && [ -n "$SSH_PASSWORD" ]; then
-            log_info "Running: sshpass -p [PASSWORD] scp -o StrictHostKeyChecking=no $SSH_USER@$CORE_SERVER_IP:$SHARED_CA_PATH/ca.pem $SSH_USER@$CORE_SERVER_IP:$SHARED_CA_PATH/ca-key.pem /opt/stacks/core/shared-ca/"
-            if sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP:$SHARED_CA_PATH/ca.pem" "$SSH_USER@$CORE_SERVER_IP:$SHARED_CA_PATH/ca-key.pem" "/opt/stacks/core/shared-ca/" 2>&1; then
-                log_success "Shared CA certificate and key fetched from core server"
-                # Generate server certificates signed by the shared CA
-                setup_docker_tls
-            else
-                log_warning "Failed to fetch shared CA certificate and key from core server"
-                SHARED_CA_EXISTS=false
-            fi
-        else
-            log_info "Running: scp -o StrictHostKeyChecking=no $SSH_USER@$CORE_SERVER_IP:$SHARED_CA_PATH/ca.pem $SSH_USER@$CORE_SERVER_IP:$SHARED_CA_PATH/ca-key.pem /opt/stacks/core/shared-ca/"
-            if scp -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP:$SHARED_CA_PATH/ca.pem" "$SSH_USER@$CORE_SERVER_IP:$SHARED_CA_PATH/ca-key.pem" "/opt/stacks/core/shared-ca/" 2>&1; then
-                log_success "Shared CA certificate and key fetched from core server"
-                # Generate server certificates signed by the shared CA
-                setup_docker_tls
-            else
-                log_warning "Failed to fetch shared CA certificate and key from core server"
-                SHARED_CA_EXISTS=false
-            fi
-        fi
-    fi
-
-    if [ "$SHARED_CA_EXISTS" = false ]; then
-        log_warning "Shared CA certificates not found on core server."
-        log_info "Please ensure the core server has been set up first and has generated the shared CA certificates."
-        log_info "You can manually copy the certificates later (check both locations on core server):"
-        echo "  sudo mkdir -p /opt/stacks/core/shared-ca"
-        echo "  # Try shared-ca location:"
-        echo "  sudo scp $SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca.pem /opt/stacks/core/shared-ca/"
-        echo "  sudo scp $SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca-key.pem /opt/stacks/core/shared-ca/"
-        echo "  # Or docker-tls location:"
-        echo "  sudo scp $SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/docker-tls/ca.pem /opt/stacks/core/shared-ca/"
-        echo "  sudo scp $SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/docker-tls/ca-key.pem /opt/stacks/core/shared-ca/"
-        echo "  sudo chown -R $SSH_USER:$SSH_USER /opt/stacks/core/shared-ca"
-        echo ""
-        log_info "Then restart the Docker daemon: sudo systemctl reload docker"
-        echo ""
-    fi
-
-    # Update Docker daemon configuration to use shared CA
-    if [ "$SHARED_CA_EXISTS" = true ]; then
-        log_info "Updating Docker daemon to use shared CA for TLS..."
-        if [ -f "/opt/stacks/core/shared-ca/ca.pem" ]; then
-            # Update daemon.json to use the shared CA for both server and client verification
-            cat > /tmp/daemon.json <<EOF
-{
-  "tls": true,
-  "tlsverify": true,
-  "tlscacert": "/opt/stacks/core/shared-ca/ca.pem",
-  "tlscert": "/home/$USER/EZ-Homelab/docker-tls/server-cert.pem",
-  "tlskey": "/home/$USER/EZ-Homelab/docker-tls/server-key.pem"
-}
-EOF
-            sudo cp /tmp/daemon.json /etc/docker/daemon.json
-            sudo systemctl restart docker
-            log_success "Docker daemon updated to use shared CA"
-            log_info "Core server can now securely connect to this Docker daemon using shared CA"
-        else
-            log_warning "Shared CA certificate not found, daemon configuration not updated"
         fi
     fi
 
@@ -1036,11 +983,6 @@ main() {
 
     # Save configuration
     save_env_file
-
-    # Handle certificate sharing for infrastructure-only deployments
-    if [ "$MAIN_CHOICE" = "3" ]; then
-        get_certs_from_core_server
-    fi
 
     # Perform deployment
     perform_deployment
