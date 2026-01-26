@@ -1,6 +1,66 @@
 # On Demand Remote Services with Authelia, Sablier & Traefik
 
-## 4 Step Process
+## Overview
+
+This guide explains how to set up lazy-loading services on remote servers (like Raspberry Pi) that start automatically when accessed via Traefik. The core server runs Sablier, which connects to remote Docker daemons via TLS to manage container lifecycle.
+
+## Prerequisites
+
+- Core server with Traefik, Authelia, and Sablier deployed
+- Remote server with Docker installed
+- Shared TLS CA configured between core and remote servers
+
+## Automated Setup
+
+For new remote servers, use the automated script:
+
+1. On the remote server, run `ez-homelab.sh` and select option 3 (Infrastructure Only)
+2. When prompted, enter the core server IP for shared TLS CA
+3. The script will automatically:
+   - Copy shared CA from core server via SSH
+   - Configure Docker TLS with shared certificates
+   - Generate server certificates signed by shared CA
+   - Set up Docker daemon for TLS on port 2376
+
+**Important**: The script will fail if it cannot copy the shared CA from the core server. Ensure SSH access is configured between servers before running option 3.
+
+## Manual Setup (if automated fails)
+
+If the automated setup fails, manually configure TLS:
+
+### On Core Server:
+```bash
+# Generate server certificates for remote server
+cd /opt/stacks/core/shared-ca
+openssl genrsa -out server-key.pem 4096
+openssl req -subj "/CN=<REMOTE_IP>" -new -key server-key.pem -out server.csr
+echo "subjectAltName = DNS:<REMOTE_IP>,IP:<REMOTE_IP>,IP:127.0.0.1" > extfile.cnf
+openssl x509 -req -days 365 -in server.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out server-cert.pem -extfile extfile.cnf
+```
+
+### On Remote Server:
+```bash
+# Copy certificates
+scp user@core-server:/opt/stacks/core/shared-ca/ca.pem /opt/stacks/core/shared-ca/
+scp user@core-server:/opt/stacks/core/shared-ca/server-cert.pem /opt/stacks/core/shared-ca/
+scp user@core-server:/opt/stacks/core/shared-ca/server-key.pem /opt/stacks/core/shared-ca/
+
+# Update Docker daemon
+sudo tee /etc/docker/daemon.json > /dev/null <<EOF
+{
+  "tls": true,
+  "tlsverify": true,
+  "tlscacert": "/opt/stacks/core/shared-ca/ca.pem",
+  "tlscert": "/opt/stacks/core/shared-ca/server-cert.pem",
+  "tlskey": "/opt/stacks/core/shared-ca/server-key.pem"
+}
+EOF
+
+sudo systemctl restart docker
+```
+
+## 4 Step Process for Adding Services
+
 1. Add route & service in Traefik external hosts file
 2. Add middleware in Sablier config file (sablier.yml)
 3. Add labels to compose files on Remote Host

@@ -1,8 +1,9 @@
 #!/bin/bash
 # EZ-Homelab Unified Setup & Deployment Script
-# This script provides a guided setup and deployment experience
-# Run as: ./ez-homelab.sh (will use sudo when needed)
 
+# Two step process required for first-time setup:
+# Run 'sudo ./ez-homelab.sh' to install Docker and perform system setup
+# Run './ez-homelab.sh' to deploy stacks after initial setup
 set -e  # Exit on error
 
 # Colors for output
@@ -29,6 +30,86 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+# Reusable function to replace environment variable placeholders in files
+replace_env_placeholders() {
+    local file_path="$1"
+    local missing_vars=""
+
+    if [ ! -f "$file_path" ]; then
+        log_warning "File $file_path does not exist, skipping placeholder replacement"
+        return
+    fi
+
+    # Find all ${VAR} patterns in the file
+    local vars=$(grep -o '\${[^}]*}' "$file_path" | sed 's/\${//' | sed 's/}//' | sort | uniq)
+
+    for var in $vars; do
+        if [ -z "${!var:-}" ]; then
+            log_warning "Environment variable $var not found in .env file"
+            missing_vars="$missing_vars $var"
+        else
+            # Replace ${VAR} with the value
+            sed -i "s|\${$var}|${!var}|g" "$file_path"
+        fi
+    done
+
+    # Store missing vars for end-of-script summary
+    if [ -n "$missing_vars" ]; then
+        MISSING_VARS_SUMMARY="${MISSING_VARS_SUMMARY}${missing_vars}"
+    fi
+}
+
+# Function to generate shared CA for multi-server TLS
+generate_shared_ca() {
+    local ca_dir="/opt/stacks/core/shared-ca"
+    mkdir -p "$ca_dir"
+    openssl genrsa -out "$ca_dir/ca-key.pem" 4096
+    openssl req -new -x509 -days 365 -key "$ca_dir/ca-key.pem" -sha256 -out "$ca_dir/ca.pem" -subj "/C=US/ST=State/L=City/O=Homelab/CN=Homelab-CA"
+    chown -R "$ACTUAL_USER:$ACTUAL_USER" "$ca_dir"
+    log_success "Shared CA generated"
+}
+
+# Function to setup multi-server TLS for remote servers
+setup_multi_server_tls() {
+    if [ -n "$CORE_SERVER_IP" ]; then
+        log_info "Setting up multi-server TLS using shared CA from core server $CORE_SERVER_IP..."
+        
+        # Create shared-ca directory
+        local ca_dir="/opt/stacks/core/shared-ca"
+        sudo mkdir -p "$ca_dir"
+        sudo chown "$ACTUAL_USER:$ACTUAL_USER" "$ca_dir"
+        
+        # Copy shared CA from core server
+        if scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "$ACTUAL_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca.pem" "$ca_dir/" 2>/dev/null; then
+            log_success "Shared CA copied from core server"
+        else
+            log_warning "Failed to copy shared CA from core server $CORE_SERVER_IP"
+            log_warning "This will create TLS certificate mismatches between core and remote servers"
+            log_warning "Sablier will not be able to connect to this remote Docker daemon"
+            TLS_ISSUES_SUMMARY="⚠️  TLS Configuration Issue: Could not copy shared CA from core server $CORE_SERVER_IP
+   This will prevent Sablier from connecting to remote Docker daemons.
+   
+   To fix this:
+   1. Ensure SSH access works: ssh $ACTUAL_USER@$CORE_SERVER_IP
+   2. Verify core server has: /opt/stacks/core/shared-ca/ca.pem
+   3. Manually copy CA: scp $ACTUAL_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca.pem $ca_dir/
+   4. Regenerate server certificates on this server with shared CA
+   5. Restart Docker: sudo systemctl restart docker
+   6. Test connection: docker --tlsverify --tlscacert=$ca_dir/ca.pem --tlscert=$ca_dir/cert.pem --tlskey=$ca_dir/key.pem --host=tcp://localhost:2376 ps
+   
+   Then restart Sablier on the core server to reconnect."
+            generate_shared_ca
+        fi
+        
+        # Setup Docker TLS with shared CA
+        setup_docker_tls
+    else
+        log_info "No core server specified, setting up local TLS..."
+        generate_shared_ca
+        setup_docker_tls
+    fi
+}
+
 # Get script directory and repo directory
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 REPO_DIR="$( cd "$SCRIPT_DIR/.." && pwd )"
@@ -43,6 +124,7 @@ fi
 # Default values
 DOMAIN=""
 SERVER_IP=""
+CORE_SERVER_IP=""
 ADMIN_USER=""
 ADMIN_EMAIL=""
 ADMIN_PASSWORD=""
@@ -50,6 +132,7 @@ DEPLOY_CORE=false
 DEPLOY_INFRASTRUCTURE=false
 DEPLOY_DASHBOARDS=false
 SETUP_STACKS=false
+TLS_ISSUES_SUMMARY=""
 
 # Load existing .env file if it exists
 load_env_file() {
@@ -158,6 +241,7 @@ prompt_for_values() {
     # Set defaults from env file or hardcoded fallbacks
     DEFAULT_DOMAIN="${DOMAIN:-example.duckdns.org}"
     DEFAULT_SERVER_IP="${SERVER_IP:-$(hostname -I | awk '{print $1}')}"
+    DEFAULT_CORE_SERVER_IP="${CORE_SERVER_IP:-}"
     DEFAULT_SERVER_HOSTNAME="${SERVER_HOSTNAME:-$(hostname)}"
     DEFAULT_TZ="${TZ:-America/New_York}"
 
@@ -167,6 +251,12 @@ prompt_for_values() {
     echo "  Server IP: $DEFAULT_SERVER_IP"
     echo "  Server Hostname: $DEFAULT_SERVER_HOSTNAME"
     echo "  Timezone: $DEFAULT_TZ"
+
+    if [ "$DEPLOY_CORE" = false ] && [ -z "$DEFAULT_CORE_SERVER_IP" ]; then
+        echo "  Core Server IP: [Will be prompted for multi-server TLS]"
+    elif [ -n "$DEFAULT_CORE_SERVER_IP" ]; then
+        echo "  Core Server IP: $DEFAULT_CORE_SERVER_IP"
+    fi
 
     if [ "$DEPLOY_CORE" = true ]; then
         DEFAULT_ADMIN_USER="${DEFAULT_USER:-admin}"
@@ -199,6 +289,12 @@ prompt_for_values() {
         read -p "Timezone [$DEFAULT_TZ]: " TZ
         TZ="${TZ:-$DEFAULT_TZ}"
 
+        # Core server IP (for multi-server setup)
+        if [ "$DEPLOY_CORE" = false ]; then
+            echo ""
+            read -p "Core server IP (for shared TLS CA): " CORE_SERVER_IP
+        fi
+
         # Admin credentials (only if deploying core)
         if [ "$DEPLOY_CORE" = true ]; then
             echo ""
@@ -229,6 +325,7 @@ prompt_for_values() {
         SERVER_IP="$DEFAULT_SERVER_IP"
         SERVER_HOSTNAME="$DEFAULT_SERVER_HOSTNAME"
         TZ="$DEFAULT_TZ"
+        CORE_SERVER_IP="$DEFAULT_CORE_SERVER_IP"
 
         if [ "$DEPLOY_CORE" = true ]; then
             ADMIN_USER="$DEFAULT_ADMIN_USER"
@@ -239,14 +336,14 @@ prompt_for_values() {
     echo ""
 }
 
-# Certificate sharing function for infrastructure-only deployments
-share_certs_with_core() {
-    log_info "Infrastructure-only deployment detected. Setting up certificate sharing for remote Docker control..."
+# Certificate fetching function for infrastructure-only deployments
+get_certs_from_core_server() {
+    log_info "Infrastructure-only deployment detected. Fetching certificate from core server for remote Docker control..."
 
     # Prompt for core server IP
     read -p "Enter the IP address of your core server: " CORE_SERVER_IP
     while [ -z "$CORE_SERVER_IP" ]; do
-        log_warning "Core server IP is required for certificate sharing"
+        log_warning "Core server IP is required for certificate fetching"
         read -p "Enter the IP address of your core server: " CORE_SERVER_IP
     done
 
@@ -278,75 +375,89 @@ share_certs_with_core() {
             read -p "Do you want to continue anyway? (y/N): " -n 1 -r
             echo ""
             if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-                log_error "Certificate sharing cancelled. Please verify SSH access and try again."
+                log_error "Certificate fetching cancelled. Please verify SSH access and try again."
                 exit 1
             fi
             USE_SSHPASS=true  # Assume password auth for copying
         fi
     fi
 
-    # Copy shared CA certificates from core server
-    log_info "Copying shared CA certificates from core server..."
-    mkdir -p "/opt/stacks/core/shared-ca"
+    # Fetch shared CA certificates from core server
+    log_info "Fetching shared CA certificates from core server..."
+    sudo mkdir -p "/opt/stacks/core/shared-ca"
 
-    # First check if shared CA exists on core server
+    # First check if shared CA exists on core server (check both old and new locations)
     SHARED_CA_EXISTS=false
     if [ "$USE_SSHPASS" = true ] && [ -n "$SSH_PASSWORD" ]; then
-        if sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP" "[ -f /opt/stacks/core/shared-ca/ca.pem ] && [ -f /opt/stacks/core/shared-ca/ca-key.pem ]" 2>/dev/null; then
+        if sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP" "[ -f /opt/stacks/core/shared-ca/ca.pem ] && [ -f /opt/stacks/core/shared-ca/ca-key.pem ] && [ -r /opt/stacks/core/shared-ca/ca.pem ] && [ -r /opt/stacks/core/shared-ca/ca-key.pem ]" 2>/dev/null; then
             SHARED_CA_EXISTS=true
+            SHARED_CA_PATH="/opt/stacks/core/shared-ca"
+            log_info "Detected CA certificate and key in shared-ca location"
+        elif sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP" "[ -f /opt/stacks/core/docker-tls/ca.pem ] && [ -f /opt/stacks/core/docker-tls/ca-key.pem ] && [ -r /opt/stacks/core/docker-tls/ca.pem ] && [ -r /opt/stacks/core/docker-tls/ca-key.pem ]" 2>/dev/null; then
+            SHARED_CA_EXISTS=true
+            SHARED_CA_PATH="/opt/stacks/core/docker-tls"
+            log_info "Detected CA certificate and key in docker-tls location"
         fi
     else
-        if ssh -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP" "[ -f /opt/stacks/core/shared-ca/ca.pem ] && [ -f /opt/stacks/core/shared-ca/ca-key.pem ]" 2>/dev/null; then
+        if ssh -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP" "[ -f /opt/stacks/core/shared-ca/ca.pem ] && [ -f /opt/stacks/core/shared-ca/ca-key.pem ] && [ -r /opt/stacks/core/shared-ca/ca.pem ] && [ -r /opt/stacks/core/shared-ca/ca-key.pem ]" 2>/dev/null; then
             SHARED_CA_EXISTS=true
+            SHARED_CA_PATH="/opt/stacks/core/shared-ca"
+            log_info "Detected CA certificate and key in shared-ca location"
+        elif ssh -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP" "[ -f /opt/stacks/core/docker-tls/ca.pem ] && [ -f /opt/stacks/core/docker-tls/ca-key.pem ] && [ -r /opt/stacks/core/docker-tls/ca.pem ] && [ -r /opt/stacks/core/docker-tls/ca-key.pem ]" 2>/dev/null; then
+            SHARED_CA_EXISTS=true
+            SHARED_CA_PATH="/opt/stacks/core/docker-tls"
+            log_info "Detected CA certificate and key in docker-tls location"
         fi
     fi
 
     if [ "$SHARED_CA_EXISTS" = true ]; then
         # Copy existing shared CA from core server
         if [ "$USE_SSHPASS" = true ] && [ -n "$SSH_PASSWORD" ]; then
-            log_info "Running: sshpass -p [PASSWORD] scp -o StrictHostKeyChecking=no $SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca.pem /opt/stacks/core/shared-ca/"
-            if sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca.pem" "$SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca-key.pem" "/opt/stacks/core/shared-ca/" 2>&1; then
-                log_success "Shared CA certificates copied from core server"
+            log_info "Running: sshpass -p [PASSWORD] scp -o StrictHostKeyChecking=no $SSH_USER@$CORE_SERVER_IP:$SHARED_CA_PATH/ca.pem $SSH_USER@$CORE_SERVER_IP:$SHARED_CA_PATH/ca-key.pem /opt/stacks/core/shared-ca/"
+            if sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP:$SHARED_CA_PATH/ca.pem" "$SSH_USER@$CORE_SERVER_IP:$SHARED_CA_PATH/ca-key.pem" "/opt/stacks/core/shared-ca/" 2>&1; then
+                log_success "Shared CA certificate and key fetched from core server"
+                # Generate server certificates signed by the shared CA
+                setup_docker_tls
             else
-                log_warning "Failed to copy shared CA certificates from core server"
+                log_warning "Failed to fetch shared CA certificate and key from core server"
                 SHARED_CA_EXISTS=false
             fi
         else
-            log_info "Running: scp -o StrictHostKeyChecking=no $SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca.pem /opt/stacks/core/shared-ca/"
-            if scp -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca.pem" "$SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca-key.pem" "/opt/stacks/core/shared-ca/" 2>&1; then
-                log_success "Shared CA certificates copied from core server"
+            log_info "Running: scp -o StrictHostKeyChecking=no $SSH_USER@$CORE_SERVER_IP:$SHARED_CA_PATH/ca.pem $SSH_USER@$CORE_SERVER_IP:$SHARED_CA_PATH/ca-key.pem /opt/stacks/core/shared-ca/"
+            if scp -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP:$SHARED_CA_PATH/ca.pem" "$SSH_USER@$CORE_SERVER_IP:$SHARED_CA_PATH/ca-key.pem" "/opt/stacks/core/shared-ca/" 2>&1; then
+                log_success "Shared CA certificate and key fetched from core server"
+                # Generate server certificates signed by the shared CA
+                setup_docker_tls
             else
-                log_warning "Failed to copy shared CA certificates from core server"
+                log_warning "Failed to fetch shared CA certificate and key from core server"
                 SHARED_CA_EXISTS=false
             fi
         fi
     fi
 
     if [ "$SHARED_CA_EXISTS" = false ]; then
-        # Generate local shared CA if not available from core server
         log_warning "Shared CA certificates not found on core server."
-        log_info "Generating local shared CA for infrastructure server..."
-        
-        openssl genrsa -out "/opt/stacks/core/shared-ca/ca-key.pem" 4096
-        openssl req -new -x509 -days 365 -key "/opt/stacks/core/shared-ca/ca-key.pem" -sha256 -out "/opt/stacks/core/shared-ca/ca.pem" -subj "/C=US/ST=State/L=City/O=Homelab/CN=Homelab-CA"
-        
-        log_success "Local shared CA generated"
-        log_info "IMPORTANT: Copy these certificates to your core server at /opt/stacks/core/shared-ca/"
-        log_info "Run this command on your CORE server:"
+        log_info "Please ensure the core server has been set up first and has generated the shared CA certificates."
+        log_info "You can manually copy the certificates later (check both locations on core server):"
         echo "  sudo mkdir -p /opt/stacks/core/shared-ca"
-        echo "  sudo scp $SSH_USER@$SERVER_IP:/opt/stacks/core/shared-ca/ca.pem /opt/stacks/core/shared-ca/"
-        echo "  sudo scp $SSH_USER@$SERVER_IP:/opt/stacks/core/shared-ca/ca-key.pem /opt/stacks/core/shared-ca/"
+        echo "  # Try shared-ca location:"
+        echo "  sudo scp $SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca.pem /opt/stacks/core/shared-ca/"
+        echo "  sudo scp $SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca-key.pem /opt/stacks/core/shared-ca/"
+        echo "  # Or docker-tls location:"
+        echo "  sudo scp $SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/docker-tls/ca.pem /opt/stacks/core/shared-ca/"
+        echo "  sudo scp $SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/docker-tls/ca-key.pem /opt/stacks/core/shared-ca/"
         echo "  sudo chown -R $SSH_USER:$SSH_USER /opt/stacks/core/shared-ca"
         echo ""
-        log_info "After copying, restart the core server's Docker services for the changes to take effect."
+        log_info "Then restart the Docker daemon: sudo systemctl reload docker"
         echo ""
     fi
 
     # Update Docker daemon configuration to use shared CA
-    log_info "Updating Docker daemon to use shared CA for TLS..."
-    if [ -f "/opt/stacks/core/shared-ca/ca.pem" ]; then
-        # Update daemon.json to use the shared CA for both server and client verification
-        cat > /tmp/daemon.json <<EOF
+    if [ "$SHARED_CA_EXISTS" = true ]; then
+        log_info "Updating Docker daemon to use shared CA for TLS..."
+        if [ -f "/opt/stacks/core/shared-ca/ca.pem" ]; then
+            # Update daemon.json to use the shared CA for both server and client verification
+            cat > /tmp/daemon.json <<EOF
 {
   "tls": true,
   "tlsverify": true,
@@ -355,12 +466,13 @@ share_certs_with_core() {
   "tlskey": "/home/$USER/EZ-Homelab/docker-tls/server-key.pem"
 }
 EOF
-        sudo cp /tmp/daemon.json /etc/docker/daemon.json
-        sudo systemctl reload docker
-        log_success "Docker daemon updated to use shared CA"
-        log_info "Core server can now securely connect to this Docker daemon using shared CA"
-    else
-        log_warning "Shared CA certificate not found, daemon configuration not updated"
+            sudo cp /tmp/daemon.json /etc/docker/daemon.json
+            sudo systemctl restart docker
+            log_success "Docker daemon updated to use shared CA"
+            log_info "Core server can now securely connect to this Docker daemon using shared CA"
+        else
+            log_warning "Shared CA certificate not found, daemon configuration not updated"
+        fi
     fi
 
     echo ""
@@ -425,10 +537,7 @@ system_setup() {
 
     # Step 5: Generate shared CA for multi-server TLS
     log_info "Step 5/10: Generating shared CA certificate for multi-server TLS..."
-    mkdir -p /opt/stacks/core/shared-ca
-    openssl genrsa -out /opt/stacks/core/shared-ca/ca-key.pem 4096
-    openssl req -new -x509 -days 365 -key /opt/stacks/core/shared-ca/ca-key.pem -sha256 -out /opt/stacks/core/shared-ca/ca.pem -subj "/C=US/ST=State/L=City/O=Homelab/CN=Homelab-CA"
-    chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/core/shared-ca
+    generate_shared_ca
 
     # Step 6: Configure Docker TLS
     log_info "Step 6/10: Configuring Docker TLS..."
@@ -466,9 +575,165 @@ system_setup() {
     fi
 }
 
+# Deploy Dockge function
+deploy_dockge() {
+    log_info "Deploying Dockge stack manager..."
+    log_info "  - Dockge (Docker Compose Manager)"
+    echo ""
+
+    # Copy Dockge stack files
+    sudo cp "$REPO_DIR/docker-compose/dockge/docker-compose.yml" /opt/dockge/docker-compose.yml
+    sudo cp "$REPO_DIR/.env" /opt/dockge/.env
+
+    # Replace placeholders in Dockge compose file
+    replace_env_placeholders "/opt/dockge/docker-compose.yml"
+
+    # Deploy Dockge stack
+    cd /opt/dockge
+    docker compose up -d
+    log_success "Dockge deployed"
+    echo ""
+}
+
+# Deploy core stack function
+deploy_core() {
+    log_info "Deploying core stack..."
+    log_info "  - DuckDNS (Dynamic DNS)"
+    log_info "  - Traefik (Reverse Proxy with SSL)"
+    log_info "  - Authelia (Single Sign-On)"
+    echo ""
+
+    # Copy core stack files
+    sudo cp "$REPO_DIR/docker-compose/core/docker-compose.yml" /opt/stacks/core/docker-compose.yml
+    sudo cp "$REPO_DIR/.env" /opt/stacks/core/.env
+
+    # Replace placeholders in core compose file
+    replace_env_placeholders "/opt/stacks/core/docker-compose.yml"
+
+    # Copy configs
+    if [ -d "/opt/stacks/core/traefik" ]; then
+        mv /opt/stacks/core/traefik /opt/stacks/core/traefik.backup.$(date +%Y%m%d_%H%M%S)
+    fi
+    cp -r "$REPO_DIR/config-templates/traefik" /opt/stacks/core/
+
+    # Replace ACME email placeholder
+    sed -i "s/ACME_EMAIL_PLACEHOLDER/${AUTHELIA_ADMIN_EMAIL}/g" /opt/stacks/core/traefik/traefik.yml
+
+    # Replace domain placeholders in traefik dynamic configs
+    find /opt/stacks/core/traefik/dynamic -name "*.yml" -exec sed -i "s/\${DOMAIN}/${DOMAIN}/g" {} \;
+    find /opt/stacks/core/traefik/dynamic -name "*.yml" -exec sed -i "s/\${SERVER_HOSTNAME}/${SERVER_HOSTNAME}/g" {} \;
+
+    if [ -d "/opt/stacks/core/authelia" ]; then
+        mv /opt/stacks/core/authelia /opt/stacks/core/authelia.backup.$(date +%Y%m%d_%H%M%S)
+    fi
+    cp -r "$REPO_DIR/config-templates/authelia" /opt/stacks/core/
+
+    # Replace domain placeholders
+    sed -i "s/your-domain.duckdns.org/${DOMAIN}/g" /opt/stacks/core/authelia/configuration.yml
+    sed -i "s/\${DOMAIN}/${DOMAIN}/g" /opt/stacks/core/authelia/configuration.yml
+
+    # Replace secret placeholders
+    sed -i "s|\${AUTHELIA_JWT_SECRET}|${AUTHELIA_JWT_SECRET}|g" /opt/stacks/core/authelia/configuration.yml
+    sed -i "s|\${AUTHELIA_SESSION_SECRET}|${AUTHELIA_SESSION_SECRET}|g" /opt/stacks/core/authelia/configuration.yml
+    sed -i "s|\${AUTHELIA_STORAGE_ENCRYPTION_KEY}|${AUTHELIA_STORAGE_ENCRYPTION_KEY}|g" /opt/stacks/core/authelia/configuration.yml
+    sed -i "s/admin/${AUTHELIA_ADMIN_USER}/g" /opt/stacks/core/authelia/users_database.yml
+    sed -i "s/admin@example.com/${AUTHELIA_ADMIN_EMAIL}/g" /opt/stacks/core/authelia/users_database.yml
+    sed -i "s/\${DEFAULT_EMAIL}/${AUTHELIA_ADMIN_EMAIL}/g" /opt/stacks/core/authelia/users_database.yml
+    sed -i "s|\$argon2id\$v=19\$m=65536,t=3,p=4\$CHANGEME|${AUTHELIA_ADMIN_PASSWORD}|g" /opt/stacks/core/authelia/users_database.yml
+
+    # Generate shared CA for multi-server TLS
+    log_info "Generating shared CA certificate for multi-server TLS..."
+    generate_shared_ca
+
+    # Replace placeholders in core compose file
+    replace_env_placeholders "/opt/stacks/core/docker-compose.yml"
+
+    # Deploy core stack
+    cd /opt/stacks/core
+    docker compose up -d
+    log_success "Core infrastructure deployed"
+    echo ""
+}
+
+# Deploy infrastructure stack function
+deploy_infrastructure() {
+    log_info "Deploying infrastructure stack..."
+    log_info "  - Pi-hole (DNS Ad Blocker)"
+    log_info "  - Watchtower (Container Updates)"
+    log_info "  - Dozzle (Log Viewer)"
+    log_info "  - Glances (System Monitor)"
+    log_info "  - Docker Proxy (Security)"
+    echo ""
+
+    # Copy infrastructure stack
+    cp "$REPO_DIR/docker-compose/infrastructure/docker-compose.yml" /opt/stacks/infrastructure/docker-compose.yml
+    cp "$REPO_DIR/.env" /opt/stacks/infrastructure/.env
+
+    # Replace placeholders in infrastructure compose file
+    replace_env_placeholders "/opt/stacks/infrastructure/docker-compose.yml"
+
+    # Copy any additional config directories
+    for config_dir in "$REPO_DIR/docker-compose/infrastructure"/*/; do
+        if [ -d "$config_dir" ] && [ "$(basename "$config_dir")" != "." ]; then
+            cp -r "$config_dir" /opt/stacks/infrastructure/
+        fi
+    done
+
+    # If core is not deployed, remove Authelia middleware references
+    if [ "$DEPLOY_CORE" = false ]; then
+        log_info "Core infrastructure not deployed - removing Authelia middleware references..."
+        sed -i '/middlewares=authelia@docker/d' /opt/stacks/infrastructure/docker-compose.yml
+    fi
+
+    # Replace placeholders in infrastructure compose file
+    replace_env_placeholders "/opt/stacks/infrastructure/docker-compose.yml"
+
+    # Deploy infrastructure stack
+    cd /opt/stacks/infrastructure
+    docker compose up -d
+    log_success "Infrastructure stack deployed"
+    echo ""
+}
+
+# Deploy dashboards stack function
+deploy_dashboards() {
+    log_info "Deploying dashboard stack..."
+    log_info "  - Homepage (Application Dashboard)"
+    log_info "  - Homarr (Modern Dashboard)"
+    echo ""
+
+    # Create dashboards directory
+    sudo mkdir -p /opt/stacks/dashboards
+
+    # Copy dashboards compose file
+    cp "$REPO_DIR/docker-compose/dashboards/docker-compose.yml" /opt/stacks/dashboards/docker-compose.yml
+    cp "$REPO_DIR/.env" /opt/stacks/dashboards/.env
+
+    # Replace placeholders in dashboards compose file
+    replace_env_placeholders "/opt/stacks/dashboards/docker-compose.yml"
+
+    # Copy homepage config
+    if [ -d "$REPO_DIR/docker-compose/dashboards/homepage" ]; then
+        cp -r "$REPO_DIR/docker-compose/dashboards/homepage" /opt/stacks/dashboards/
+    fi
+
+    # Replace placeholders in dashboards compose file
+    replace_env_placeholders "/opt/stacks/dashboards/docker-compose.yml"
+
+    # Deploy dashboards stack
+    cd /opt/stacks/dashboards
+    docker compose up -d
+    log_success "Dashboard stack deployed"
+    echo ""
+}
+
 # Deployment function
 perform_deployment() {
     log_info "Starting deployment..."
+
+    # Initialize missing vars summary
+    MISSING_VARS_SUMMARY=""
+    TLS_ISSUES_SUMMARY=""
 
     # Switch back to regular user if we were running as root
     if [ "$EUID" -eq 0 ]; then
@@ -482,164 +747,70 @@ perform_deployment() {
 
     # Step 1: Create required directories
     log_info "Step 1: Creating required directories..."
-    sudo mkdir -p /opt/stacks/core
-    sudo mkdir -p /opt/stacks/infrastructure
-    sudo mkdir -p /opt/stacks/dashboards
-    sudo mkdir -p /opt/dockge
+    sudo mkdir -p /opt/stacks/core || { log_error "Failed to create /opt/stacks/core"; exit 1; }
+    sudo mkdir -p /opt/stacks/infrastructure || { log_error "Failed to create /opt/stacks/infrastructure"; exit 1; }
+    sudo mkdir -p /opt/stacks/dashboards || { log_error "Failed to create /opt/stacks/dashboards"; exit 1; }
+    sudo mkdir -p /opt/dockge || { log_error "Failed to create /opt/dockge"; exit 1; }
     sudo chown -R "$USER:$USER" /opt/stacks
     sudo chown -R "$USER:$USER" /opt/dockge
     log_success "Directories created"
 
-    # Step 2: Create Docker networks (if they don't exist)
-    log_info "Step 2: Creating Docker networks..."
+    # Step 2: Setup multi-server TLS if needed
+    if [ "$DEPLOY_CORE" = false ]; then
+        setup_multi_server_tls
+    fi
+
+    # Step 3: Create Docker networks (if they don't exist)
+    log_info "Step $([ "$DEPLOY_CORE" = false ] && echo "3" || echo "2"): Creating Docker networks..."
     docker network create homelab-network 2>/dev/null && log_success "Created homelab-network" || log_info "homelab-network already exists"
     docker network create traefik-network 2>/dev/null && log_success "Created traefik-network" || log_info "traefik-network already exists"
     docker network create media-network 2>/dev/null && log_success "Created media-network" || log_info "media-network already exists"
     echo ""
 
-    # Step 3: Deploy Dockge (always deployed)
-    log_info "Step 3: Deploying Dockge stack manager..."
-    log_info "  - Dockge (Docker Compose Manager)"
-    echo ""
+    # Step 4: Deploy Dockge (always deployed)
+    deploy_dockge
 
-    # Copy Dockge stack files
-    sudo cp "$REPO_DIR/docker-compose/dockge/docker-compose.yml" /opt/dockge/docker-compose.yml
-    sudo cp "$REPO_DIR/.env" /opt/dockge/.env
-
-    # Deploy Dockge stack
-    cd /opt/dockge
-    docker compose up -d
-    log_success "Dockge deployed"
-    echo ""
-
-    # Deploy core infrastructure
+    # Deploy core stack
     if [ "$DEPLOY_CORE" = true ]; then
-        log_info "Step 4: Deploying core infrastructure stack..."
-        log_info "  - DuckDNS (Dynamic DNS)"
-        log_info "  - Traefik (Reverse Proxy with SSL)"
-        log_info "  - Authelia (Single Sign-On)"
-        echo ""
-
-        # Copy core stack files
-        sudo cp "$REPO_DIR/docker-compose/core/docker-compose.yml" /opt/stacks/core/docker-compose.yml
-        sudo cp "$REPO_DIR/.env" /opt/stacks/core/.env
-
-        # Copy configs
-        if [ -d "/opt/stacks/core/traefik" ]; then
-            mv /opt/stacks/core/traefik /opt/stacks/core/traefik.backup.$(date +%Y%m%d_%H%M%S)
-        fi
-        cp -r "$REPO_DIR/config-templates/traefik" /opt/stacks/core/
-
-        # Replace ACME email placeholder
-        sed -i "s/ACME_EMAIL_PLACEHOLDER/${AUTHELIA_ADMIN_EMAIL}/g" /opt/stacks/core/traefik/traefik.yml
-
-        # Replace domain placeholders in traefik dynamic configs
-        find /opt/stacks/core/traefik/dynamic -name "*.yml" -exec sed -i "s/\${DOMAIN}/${DOMAIN}/g" {} \;
-        find /opt/stacks/core/traefik/dynamic -name "*.yml" -exec sed -i "s/\${SERVER_HOSTNAME}/${SERVER_HOSTNAME}/g" {} \;
-
-        if [ -d "/opt/stacks/core/authelia" ]; then
-            mv /opt/stacks/core/authelia /opt/stacks/core/authelia.backup.$(date +%Y%m%d_%H%M%S)
-        fi
-        cp -r "$REPO_DIR/config-templates/authelia" /opt/stacks/core/
-
-        # Replace domain placeholders
-        sed -i "s/your-domain.duckdns.org/${DOMAIN}/g" /opt/stacks/core/authelia/configuration.yml
-        sed -i "s/\${DOMAIN}/${DOMAIN}/g" /opt/stacks/core/authelia/configuration.yml
-
-        # Replace secret placeholders
-        sed -i "s|\${AUTHELIA_JWT_SECRET}|${AUTHELIA_JWT_SECRET}|g" /opt/stacks/core/authelia/configuration.yml
-        sed -i "s|\${AUTHELIA_SESSION_SECRET}|${AUTHELIA_SESSION_SECRET}|g" /opt/stacks/core/authelia/configuration.yml
-        sed -i "s|\${AUTHELIA_STORAGE_ENCRYPTION_KEY}|${AUTHELIA_STORAGE_ENCRYPTION_KEY}|g" /opt/stacks/core/authelia/configuration.yml
-        sed -i "s/admin/${AUTHELIA_ADMIN_USER}/g" /opt/stacks/core/authelia/users_database.yml
-        sed -i "s/admin@example.com/${AUTHELIA_ADMIN_EMAIL}/g" /opt/stacks/core/authelia/users_database.yml
-        sed -i "s/\${DEFAULT_EMAIL}/${AUTHELIA_ADMIN_EMAIL}/g" /opt/stacks/core/authelia/users_database.yml
-        sed -i "s|\$argon2id\$v=19\$m=65536,t=3,p=4\$CHANGEME|${AUTHELIA_ADMIN_PASSWORD}|g" /opt/stacks/core/authelia/users_database.yml
-
-        # Generate shared CA for multi-server TLS
-        log_info "Generating shared CA certificate for multi-server TLS..."
-        mkdir -p /opt/stacks/core/shared-ca
-        openssl genrsa -out /opt/stacks/core/shared-ca/ca-key.pem 4096
-        openssl req -new -x509 -days 365 -key /opt/stacks/core/shared-ca/ca-key.pem -sha256 -out /opt/stacks/core/shared-ca/ca.pem -subj "/C=US/ST=State/L=City/O=Homelab/CN=Homelab-CA"
-        chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/core/shared-ca
-
-        # Deploy core stack
-        cd /opt/stacks/core
-        docker compose up -d
-        log_success "Core infrastructure deployed"
-        echo ""
+        deploy_core
     fi
 
     # Deploy infrastructure stack
     if [ "$DEPLOY_INFRASTRUCTURE" = true ]; then
-        step_num=$([ "$DEPLOY_CORE" = true ] && echo "5" || echo "4")
-        log_info "Step $step_num: Deploying infrastructure stack..."
-        log_info "  - Pi-hole (DNS Ad Blocker)"
-        log_info "  - Watchtower (Container Updates)"
-        log_info "  - Dozzle (Log Viewer)"
-        log_info "  - Glances (System Monitor)"
-        log_info "  - Docker Proxy (Security)"
-        echo ""
-
-        # Copy infrastructure stack
-        cp "$REPO_DIR/docker-compose/infrastructure/docker-compose.yml" /opt/stacks/infrastructure/docker-compose.yml
-        cp "$REPO_DIR/.env" /opt/stacks/infrastructure/.env
-
-        # Copy any additional config directories
-        for config_dir in "$REPO_DIR/docker-compose/infrastructure"/*/; do
-            if [ -d "$config_dir" ] && [ "$(basename "$config_dir")" != "." ]; then
-                cp -r "$config_dir" /opt/stacks/infrastructure/
-            fi
-        done
-
-        # If core is not deployed, remove Authelia middleware references
-        if [ "$DEPLOY_CORE" = false ]; then
-            log_info "Core infrastructure not deployed - removing Authelia middleware references..."
-            sed -i '/middlewares=authelia@docker/d' /opt/stacks/infrastructure/docker-compose.yml
-        fi
-
-        # Deploy infrastructure stack
-        cd /opt/stacks/infrastructure
-        docker compose up -d
-        log_success "Infrastructure stack deployed"
-        echo ""
+        step_num=$([ "$DEPLOY_CORE" = true ] && echo "6" || echo "5")
+        deploy_infrastructure
     fi
 
     # Deploy dashboard stack
     if [ "$DEPLOY_DASHBOARDS" = true ]; then
         if [ "$DEPLOY_CORE" = true ] && [ "$DEPLOY_INFRASTRUCTURE" = true ]; then
-            step_num=6
+            step_num=7
         elif [ "$DEPLOY_CORE" = true ] || [ "$DEPLOY_INFRASTRUCTURE" = true ]; then
-            step_num=5
+            step_num=6
         else
-            step_num=4
+            step_num=5
         fi
-        log_info "Step $step_num: Deploying dashboard stack..."
-        log_info "  - Homepage (Application Dashboard)"
-        log_info "  - Homarr (Modern Dashboard)"
-        echo ""
-
-        # Create dashboards directory
-        sudo mkdir -p /opt/stacks/dashboards
-
-        # Copy dashboards compose file
-        cp "$REPO_DIR/docker-compose/dashboards/docker-compose.yml" /opt/stacks/dashboards/docker-compose.yml
-        cp "$REPO_DIR/.env" /opt/stacks/dashboards/.env
-
-        # Copy homepage config
-        if [ -d "$REPO_DIR/docker-compose/dashboards/homepage" ]; then
-            cp -r "$REPO_DIR/docker-compose/dashboards/homepage" /opt/stacks/dashboards/
-        fi
-
-        # Deploy dashboards stack
-        cd /opt/stacks/dashboards
-        docker compose up -d
-        log_success "Dashboard stack deployed"
-        echo ""
+        deploy_dashboards
     fi
 
     # Setup stacks for Dockge
     if [ "$SETUP_STACKS" = true ]; then
         setup_stacks_for_dockge
+    fi
+
+    # Report any missing variables
+    if [ -n "$MISSING_VARS_SUMMARY" ]; then
+        log_warning "The following environment variables were missing and may cause issues:"
+        echo "$MISSING_VARS_SUMMARY"
+        log_info "Please update your .env file and redeploy affected stacks."
+    fi
+
+    # Report any TLS issues
+    if [ -n "$TLS_ISSUES_SUMMARY" ]; then
+        echo ""
+        log_warning "TLS Configuration Issues Detected:"
+        echo "$TLS_ISSUES_SUMMARY"
+        echo ""
     fi
 }
 
@@ -675,7 +846,7 @@ setup_docker_tls() {
     openssl x509 -req -days 365 -in "$TLS_DIR/client.csr" -CA "$TLS_DIR/ca.pem" -CAkey "$TLS_DIR/ca-key.pem" -CAcreateserial -out "$TLS_DIR/client-cert.pem"
     
     # Configure Docker daemon
-    cat > /etc/docker/daemon.json <<EOF
+    sudo tee /etc/docker/daemon.json > /dev/null <<EOF
 {
   "tls": true,
   "tlsverify": true,
@@ -686,11 +857,11 @@ setup_docker_tls() {
 EOF
     
     # Update systemd service
-    sed -i 's|-H fd://|-H fd:// -H tcp://0.0.0.0:2376|' /lib/systemd/system/docker.service
+    sudo sed -i 's|-H fd://|-H fd:// -H tcp://0.0.0.0:2376|' /lib/systemd/system/docker.service
     
     # Reload and restart Docker
-    systemctl daemon-reload
-    systemctl restart docker
+    sudo systemctl daemon-reload
+    sudo systemctl restart docker
     
     log_success "Docker TLS configured on port 2376"
 }
@@ -709,6 +880,9 @@ setup_stacks_for_dockge() {
             if [ -f "$REPO_STACK_DIR/docker-compose.yml" ]; then
                 cp "$REPO_STACK_DIR/docker-compose.yml" "$STACK_DIR/docker-compose.yml"
                 cp "$REPO_DIR/.env" "$STACK_DIR/.env"
+
+                # Replace placeholders in the compose file
+                replace_env_placeholders "$STACK_DIR/docker-compose.yml"
 
                 # Copy any additional config directories
                 for config_dir in "$REPO_STACK_DIR"/*/; do
@@ -749,6 +923,7 @@ show_main_menu() {
     echo "3) 🔧 Infrastructure Only"
     echo "   - Deploy Dockge and monitoring tools"
     echo "   - Requires existing Traefik (from previous setup)"
+    echo "   - Configures TLS for remote Docker access (Sablier)"
     echo "   - Services accessible without authentication"
     echo "   - All stacks prepared for Dockge"
     echo ""
@@ -783,7 +958,7 @@ main() {
             log_info "Selected: Core Only"
             DEPLOY_CORE=true
             DEPLOY_INFRASTRUCTURE=false
-            DEPLOY_DASHBOARDS=false
+            DEPLOY_DASHBOARDS=true
             SETUP_STACKS=true
             ;;
         3)
@@ -864,7 +1039,7 @@ main() {
 
     # Handle certificate sharing for infrastructure-only deployments
     if [ "$MAIN_CHOICE" = "3" ]; then
-        share_certs_with_core
+        get_certs_from_core_server
     fi
 
     # Perform deployment
