@@ -71,6 +71,9 @@ yarn-error.log*
 *.pfx
 acme.json
 
+# Docker TLS certificates directory
+docker-tls/
+
 # Nextcloud application files (should be mounted via volumes)
 docker-compose/productivity/nextcloud/html/
 

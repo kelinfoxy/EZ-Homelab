@@ -1,10 +1,30 @@
 Info
 
 I am developing the EZ-Homelab repository. The focus is on the repo not the test system.
-I'm troubleshooting the ez-homelab.sh setup process. The script works pretty well. However I noticed some of the compose files
-are missing a ports section. In order for a remote traefik & sablier install to work, the sablier.yml and traefik external host yml 
-files are configured on the remote server using the ip:port of the service. Therefore all services in all compose files must include
-port mapping if it has a webui.
-Make the changes in the repo folder, then I will run the ez-homelab.sh script and check the results.
+I'm troubleshooting the ez-homelab.sh setup process. 
 
+Install notes
+
+Ran install script directly on fresh Debian 12 install without creating the .env file first. 
+    There was a permission error creating .env file.
+    Note in order to install docker it must be run with sudo, then logout/login and rerun script without sudo.
+    When running with sudo it forces you to logout/login even if docker was already installed and running. If docker installed it should skip that part and continue.
+
+SSHed in using VS Code, manually created the .env file.
+    ran ez-homelab.sh completed without errors
+
+Sablier lazyloading wasn't working, the services were available by ip:port
+
+Required configure docker daemon on server to listen on port 2375 unsecured and  
+sudo ufw allow 2375/tcp
+    Need to implement TLS and configure sablier to use TLS
+
+Resolution
+
+- Fixed ez-homelab.sh to handle .env file creation as the actual user to avoid permission errors.
+- Added check for Docker group membership to only prompt logout when necessary.
+- Implemented TLS for Docker API (port 2376) with proper certificates.
+- Configured Sablier to use TLS with mounted certificates and DOCKER_HOST=tcp://${SERVER_IP}:2376.
+- Updated healthchecks in media-management services to use localhost instead of ${SERVER_IP}.
+- Verified TLS connection working, Sablier detecting groups successfully.
 

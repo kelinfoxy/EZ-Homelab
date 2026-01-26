@@ -33,6 +33,13 @@ log_error() {
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 REPO_DIR="$( cd "$SCRIPT_DIR/.." && pwd )"
 
+# Get actual user
+if [ "$EUID" -eq 0 ]; then
+    ACTUAL_USER=${SUDO_USER:-$USER}
+else
+    ACTUAL_USER=$USER
+fi
+
 # Default values
 DOMAIN=""
 SERVER_IP=""
@@ -56,8 +63,12 @@ load_env_file() {
         echo "  Domain: ${DOMAIN:-Not set}"
         echo "  Server IP: ${SERVER_IP:-Not set}"
         echo "  Server Hostname: ${SERVER_HOSTNAME:-Not set}"
-        echo "  Admin User: ${AUTHELIA_ADMIN_USER:-Not set}"
-        echo "  Admin Email: ${AUTHELIA_ADMIN_EMAIL:-Not set}"
+        echo "  Default User: ${DEFAULT_USER:-Not set}"
+        if [ -n "${DEFAULT_PASSWORD:-}" ]; then
+            echo "  Default Password: [HIDDEN]"
+        else
+            echo "  Default Password: Not set"
+        fi
         echo "  Timezone: ${TZ:-Not set}"
         echo ""
 
@@ -74,27 +85,29 @@ save_env_file() {
 
     # Create .env file if it doesn't exist
     if [ ! -f "$REPO_DIR/.env" ]; then
-        cp "$REPO_DIR/.env.example" "$REPO_DIR/.env"
+        sudo -u "$ACTUAL_USER" cp "$REPO_DIR/.env.example" "$REPO_DIR/.env"
     fi
 
-    # Update values
-    sed -i "s%DOMAIN=.*%DOMAIN=$DOMAIN%" "$REPO_DIR/.env"
-    sed -i "s%SERVER_IP=.*%SERVER_IP=$SERVER_IP%" "$REPO_DIR/.env"
-    sed -i "s%SERVER_HOSTNAME=.*%SERVER_HOSTNAME=$SERVER_HOSTNAME%" "$REPO_DIR/.env"
-    sed -i "s%TZ=.*%TZ=$TZ%" "$REPO_DIR/.env"
+    # Update values as the actual user
+    sudo -u "$ACTUAL_USER" sed -i "s%DOMAIN=.*%DOMAIN=$DOMAIN%" "$REPO_DIR/.env"
+    sudo -u "$ACTUAL_USER" sed -i "s%SERVER_IP=.*%SERVER_IP=$SERVER_IP%" "$REPO_DIR/.env"
+    sudo -u "$ACTUAL_USER" sed -i "s%SERVER_HOSTNAME=.*%SERVER_HOSTNAME=$SERVER_HOSTNAME%" "$REPO_DIR/.env"
+    sudo -u "$ACTUAL_USER" sed -i "s%TZ=.*%TZ=$TZ%" "$REPO_DIR/.env"
 
-    # Authelia settings (only if deploying core)
+    # Authelia settings (only generate secrets if deploying core)
     if [ "$DEPLOY_CORE" = true ]; then
         # Ensure we have admin credentials
         if [ -z "$ADMIN_USER" ]; then
-            ADMIN_USER="admin"
+            ADMIN_USER="${DEFAULT_USER:-admin}"
         fi
         if [ -z "$ADMIN_EMAIL" ]; then
-            ADMIN_EMAIL="${ADMIN_USER}@${DOMAIN}"
+            ADMIN_EMAIL="${DEFAULT_EMAIL:-${ADMIN_USER}@${DOMAIN}}"
         fi
         if [ -z "$ADMIN_PASSWORD" ]; then
-            log_info "Using default admin password (changeme123) - please change this after setup!"
-            ADMIN_PASSWORD="changeme123"
+            ADMIN_PASSWORD="${DEFAULT_PASSWORD:-changeme123}"
+            if [ "$ADMIN_PASSWORD" = "changeme123" ]; then
+                log_info "Using default admin password (changeme123) - please change this after setup!"
+            fi
         fi
 
         if [ -z "$AUTHELIA_JWT_SECRET" ]; then
@@ -108,11 +121,11 @@ save_env_file() {
         fi
 
         # Save Authelia settings to .env
-        sed -i "s%AUTHELIA_JWT_SECRET=.*%AUTHELIA_JWT_SECRET=$AUTHELIA_JWT_SECRET%" "$REPO_DIR/.env"
-        sed -i "s%AUTHELIA_SESSION_SECRET=.*%AUTHELIA_SESSION_SECRET=$AUTHELIA_SESSION_SECRET%" "$REPO_DIR/.env"
-        sed -i "s%AUTHELIA_STORAGE_ENCRYPTION_KEY=.*%AUTHELIA_STORAGE_ENCRYPTION_KEY=$AUTHELIA_STORAGE_ENCRYPTION_KEY%" "$REPO_DIR/.env"
-        sed -i "s%# AUTHELIA_ADMIN_USER=.*%AUTHELIA_ADMIN_USER=$ADMIN_USER%" "$REPO_DIR/.env"
-        sed -i "s%# AUTHELIA_ADMIN_EMAIL=.*%AUTHELIA_ADMIN_EMAIL=$ADMIN_EMAIL%" "$REPO_DIR/.env"
+        sudo -u "$ACTUAL_USER" sed -i "s%AUTHELIA_JWT_SECRET=.*%AUTHELIA_JWT_SECRET=$AUTHELIA_JWT_SECRET%" "$REPO_DIR/.env"
+        sudo -u "$ACTUAL_USER" sed -i "s%AUTHELIA_SESSION_SECRET=.*%AUTHELIA_SESSION_SECRET=$AUTHELIA_SESSION_SECRET%" "$REPO_DIR/.env"
+        sudo -u "$ACTUAL_USER" sed -i "s%AUTHELIA_STORAGE_ENCRYPTION_KEY=.*%AUTHELIA_STORAGE_ENCRYPTION_KEY=$AUTHELIA_STORAGE_ENCRYPTION_KEY%" "$REPO_DIR/.env"
+        sudo -u "$ACTUAL_USER" sed -i "s%# AUTHELIA_ADMIN_USER=.*%AUTHELIA_ADMIN_USER=$ADMIN_USER%" "$REPO_DIR/.env"
+        sudo -u "$ACTUAL_USER" sed -i "s%# AUTHELIA_ADMIN_EMAIL=.*%AUTHELIA_ADMIN_EMAIL=$ADMIN_EMAIL%" "$REPO_DIR/.env"
 
         # Generate password hash if needed
         if [ -z "$AUTHELIA_ADMIN_PASSWORD" ]; then
@@ -129,8 +142,8 @@ save_env_file() {
         fi
 
         # Save password hash
-        sed -i "s%# AUTHELIA_ADMIN_PASSWORD=.*%AUTHELIA_ADMIN_PASSWORD=$AUTHELIA_ADMIN_PASSWORD%" "$REPO_DIR/.env"
-        sed -i "s%AUTHELIA_ADMIN_PASSWORD=.*%AUTHELIA_ADMIN_PASSWORD=$AUTHELIA_ADMIN_PASSWORD%" "$REPO_DIR/.env"
+        sudo -u "$ACTUAL_USER" sed -i "s%# AUTHELIA_ADMIN_PASSWORD=.*%AUTHELIA_ADMIN_PASSWORD=$AUTHELIA_ADMIN_PASSWORD%" "$REPO_DIR/.env"
+        sudo -u "$ACTUAL_USER" sed -i "s%AUTHELIA_ADMIN_PASSWORD=.*%AUTHELIA_ADMIN_PASSWORD=$AUTHELIA_ADMIN_PASSWORD%" "$REPO_DIR/.env"
     fi
 
     log_success "Configuration saved to .env file"
@@ -139,77 +152,190 @@ save_env_file() {
 # Prompt for required values
 prompt_for_values() {
     echo ""
-    log_info "Please provide the following information:"
-    echo "  (Press Enter without typing to keep the current/default value shown in brackets)"
+    log_info "Configuration Setup:"
     echo ""
 
-    # Domain
-    if [ -z "$DOMAIN" ]; then
-        read -p "Enter your domain (e.g., example.duckdns.org): " DOMAIN
-        while [ -z "$DOMAIN" ]; do
-            log_warning "Domain is required"
-            read -p "Enter your domain (e.g., example.duckdns.org): " DOMAIN
-        done
-    else
-        read -p "Domain [$DOMAIN] (press Enter to keep current): " input
-        [ -n "$input" ] && DOMAIN="$input"
-    fi
+    # Set defaults from env file or hardcoded fallbacks
+    DEFAULT_DOMAIN="${DOMAIN:-example.duckdns.org}"
+    DEFAULT_SERVER_IP="${SERVER_IP:-$(hostname -I | awk '{print $1}')}"
+    DEFAULT_SERVER_HOSTNAME="${SERVER_HOSTNAME:-$(hostname)}"
+    DEFAULT_TZ="${TZ:-America/New_York}"
 
-    # Server IP
-    if [ -z "$SERVER_IP" ]; then
-        read -p "Enter your server IP address: " SERVER_IP
-        while [ -z "$SERVER_IP" ]; do
-            log_warning "Server IP is required"
-            read -p "Enter your server IP address: " SERVER_IP
-        done
-    else
-        read -p "Server IP [$SERVER_IP] (press Enter to keep current): " input
-        [ -n "$input" ] && SERVER_IP="$input"
-    fi
+    # Display current/default configuration
+    echo "Please review the following configuration:"
+    echo "  Domain: $DEFAULT_DOMAIN"
+    echo "  Server IP: $DEFAULT_SERVER_IP"
+    echo "  Server Hostname: $DEFAULT_SERVER_HOSTNAME"
+    echo "  Timezone: $DEFAULT_TZ"
 
-    # Server Hostname
-    if [ -z "$SERVER_HOSTNAME" ]; then
-        SERVER_HOSTNAME="debian"
-    fi
-    read -p "Server hostname [$SERVER_HOSTNAME] (press Enter to keep current): " input
-    [ -n "$input" ] && SERVER_HOSTNAME="$input"
-
-    # Timezone
-    if [ -z "$TZ" ]; then
-        TZ="America/New_York"
-    fi
-    read -p "Timezone [$TZ] (press Enter to keep current): " input
-    [ -n "$input" ] && TZ="$input"
-
-    # Admin credentials (only if deploying core)
     if [ "$DEPLOY_CORE" = true ]; then
+        DEFAULT_ADMIN_USER="${DEFAULT_USER:-admin}"
+        DEFAULT_ADMIN_EMAIL="${DEFAULT_EMAIL:-${DEFAULT_ADMIN_USER}@${DEFAULT_DOMAIN}}"
+        echo "  Admin User: $DEFAULT_ADMIN_USER"
+        echo "  Admin Email: $DEFAULT_ADMIN_EMAIL"
+        echo "  Admin Password: [Will be prompted if needed]"
+    fi
+
+    echo ""
+    read -p "Use these default values? (Y/n): " -n 1 -r
+    echo ""
+    if [[ $REPLY =~ ^[Nn]$ ]]; then
+        echo "Please enter custom values:"
         echo ""
-        log_info "Authelia Admin Credentials:"
 
-        if [ -z "$ADMIN_USER" ]; then
-            ADMIN_USER="admin"
+        # Domain
+        read -p "Domain [$DEFAULT_DOMAIN]: " DOMAIN
+        DOMAIN="${DOMAIN:-$DEFAULT_DOMAIN}"
+
+        # Server IP
+        read -p "Server IP [$DEFAULT_SERVER_IP]: " SERVER_IP
+        SERVER_IP="${SERVER_IP:-$DEFAULT_SERVER_IP}"
+
+        # Server Hostname
+        read -p "Server Hostname [$DEFAULT_SERVER_HOSTNAME]: " SERVER_HOSTNAME
+        SERVER_HOSTNAME="${SERVER_HOSTNAME:-$DEFAULT_SERVER_HOSTNAME}"
+
+        # Timezone
+        read -p "Timezone [$DEFAULT_TZ]: " TZ
+        TZ="${TZ:-$DEFAULT_TZ}"
+
+        # Admin credentials (only if deploying core)
+        if [ "$DEPLOY_CORE" = true ]; then
+            echo ""
+            log_info "Authelia Admin Credentials:"
+
+            read -p "Admin username [$DEFAULT_ADMIN_USER]: " ADMIN_USER
+            ADMIN_USER="${ADMIN_USER:-$DEFAULT_ADMIN_USER}"
+
+            read -p "Admin email [$DEFAULT_ADMIN_EMAIL]: " ADMIN_EMAIL
+            ADMIN_EMAIL="${ADMIN_EMAIL:-$DEFAULT_ADMIN_EMAIL}"
+
+            if [ -z "$ADMIN_PASSWORD" ]; then
+                while [ -z "$ADMIN_PASSWORD" ]; do
+                    read -s -p "Admin password (will be hashed): " ADMIN_PASSWORD
+                    echo ""
+                    if [ ${#ADMIN_PASSWORD} -lt 8 ]; then
+                        log_warning "Password must be at least 8 characters"
+                        ADMIN_PASSWORD=""
+                    fi
+                done
+            else
+                log_info "Admin password already configured"
+            fi
         fi
-        read -p "Admin username [$ADMIN_USER] (press Enter to keep current): " input
-        [ -n "$input" ] && ADMIN_USER="$input"
+    else
+        # Use defaults
+        DOMAIN="$DEFAULT_DOMAIN"
+        SERVER_IP="$DEFAULT_SERVER_IP"
+        SERVER_HOSTNAME="$DEFAULT_SERVER_HOSTNAME"
+        TZ="$DEFAULT_TZ"
 
-        if [ -z "$ADMIN_EMAIL" ]; then
-            ADMIN_EMAIL="${ADMIN_USER}@${DOMAIN}"
+        if [ "$DEPLOY_CORE" = true ]; then
+            ADMIN_USER="$DEFAULT_ADMIN_USER"
+            ADMIN_EMAIL="$DEFAULT_ADMIN_EMAIL"
         fi
-        read -p "Admin email [$ADMIN_EMAIL] (press Enter to keep current): " input
-        [ -n "$input" ] && ADMIN_EMAIL="$input"
+    fi
 
-        if [ -z "$ADMIN_PASSWORD" ]; then
-            while [ -z "$ADMIN_PASSWORD" ]; do
-                read -s -p "Admin password (will be hashed): " ADMIN_PASSWORD
-                echo ""
-                if [ ${#ADMIN_PASSWORD} -lt 8 ]; then
-                    log_warning "Password must be at least 8 characters"
-                    ADMIN_PASSWORD=""
-                fi
-            done
+    echo ""
+}
+
+# Certificate sharing function for infrastructure-only deployments
+share_certs_with_core() {
+    log_info "Infrastructure-only deployment detected. Setting up certificate sharing for remote Docker control..."
+
+    # Prompt for core server IP
+    read -p "Enter the IP address of your core server: " CORE_SERVER_IP
+    while [ -z "$CORE_SERVER_IP" ]; do
+        log_warning "Core server IP is required for certificate sharing"
+        read -p "Enter the IP address of your core server: " CORE_SERVER_IP
+    done
+
+    # Prompt for SSH username
+    DEFAULT_SSH_USER="${DEFAULT_USER:-$USER}"
+    read -p "SSH username for core server [$DEFAULT_SSH_USER]: " SSH_USER
+    SSH_USER="${SSH_USER:-$DEFAULT_SSH_USER}"
+
+    # Test SSH connection - try key authentication first
+    log_info "Testing SSH connection to core server ($SSH_USER@$CORE_SERVER_IP)..."
+    if ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no -o BatchMode=yes "$SSH_USER@$CORE_SERVER_IP" "echo 'SSH connection successful'" 2>/dev/null; then
+        log_success "SSH connection established using key authentication"
+        USE_SSHPASS=false
+    else
+        # Key authentication failed, try password authentication
+        log_info "Key authentication failed, trying password authentication..."
+        read -s -p "Enter SSH password for $SSH_USER@$CORE_SERVER_IP: " SSH_PASSWORD
+        echo ""
+
+        if sshpass -p "$SSH_PASSWORD" ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP" "echo 'SSH connection successful'" 2>/dev/null; then
+            log_success "SSH connection established using password authentication"
+            USE_SSHPASS=true
         else
-            log_info "Admin password already configured"
+            log_error "Cannot connect to core server via SSH. Please check:"
+            echo "  1. SSH is running on the core server"
+            echo "  2. SSH keys are properly configured, or username/password are correct"
+            echo "  3. The core server IP is correct"
+            echo ""
+            read -p "Do you want to continue anyway? (y/N): " -n 1 -r
+            echo ""
+            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                log_error "Certificate sharing cancelled. Please verify SSH access and try again."
+                exit 1
+            fi
+            USE_SSHPASS=true  # Assume password auth for copying
         fi
+    fi
+
+    # Copy shared CA certificates from core server
+    log_info "Copying shared CA certificates from core server..."
+    mkdir -p "/opt/stacks/core/shared-ca"
+
+    if [ "$USE_SSHPASS" = true ] && [ -n "$SSH_PASSWORD" ]; then
+        # Use password authentication
+        log_info "Running: sshpass -p [PASSWORD] scp -o StrictHostKeyChecking=no $SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca.pem /opt/stacks/core/shared-ca/"
+        if sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca.pem" "$SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca-key.pem" "/opt/stacks/core/shared-ca/" 2>&1; then
+            log_success "Shared CA certificates copied from core server"
+        else
+            log_warning "Could not copy shared CA certificates from core server."
+            log_info "Please ensure the certificates exist on the core server at: /opt/stacks/core/shared-ca/"
+            log_info "You may need to manually copy the certificates."
+            log_info "Required files: ca.pem, ca-key.pem"
+            echo ""
+            return 1
+        fi
+    else
+        # Use key authentication
+        log_info "Running: scp -o StrictHostKeyChecking=no $SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca.pem /opt/stacks/core/shared-ca/"
+        if scp -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca.pem" "$SSH_USER@$CORE_SERVER_IP:/opt/stacks/core/shared-ca/ca-key.pem" "/opt/stacks/core/shared-ca/" 2>&1; then
+            log_success "Shared CA certificates copied from core server"
+        else
+            log_warning "Could not copy shared CA certificates from core server."
+            log_info "Please ensure the certificates exist on the core server at: /opt/stacks/core/shared-ca/"
+            log_info "You may need to manually copy the certificates."
+            log_info "Required files: ca.pem, ca-key.pem"
+            echo ""
+            return 1
+        fi
+    fi
+
+    # Update Docker daemon configuration to use shared CA
+    log_info "Updating Docker daemon to use shared CA for TLS..."
+    if [ -f "/opt/stacks/core/shared-ca/ca.pem" ]; then
+        # Update daemon.json to use the shared CA for both server and client verification
+        cat > /tmp/daemon.json <<EOF
+{
+  "tls": true,
+  "tlsverify": true,
+  "tlscacert": "/opt/stacks/core/shared-ca/ca.pem",
+  "tlscert": "/home/$USER/EZ-Homelab/docker-tls/server-cert.pem",
+  "tlskey": "/home/$USER/EZ-Homelab/docker-tls/server-key.pem"
+}
+EOF
+        sudo cp /tmp/daemon.json /etc/docker/daemon.json
+        sudo systemctl reload docker
+        log_success "Docker daemon updated to use shared CA"
+        log_info "Core server can now securely connect to this Docker daemon using shared CA"
+    else
+        log_warning "Shared CA certificate not found, daemon configuration not updated"
     fi
 
     echo ""
@@ -235,12 +361,18 @@ system_setup() {
 
     # Step 2: Install required packages
     log_info "Step 2/10: Installing required packages..."
-    apt-get install -y curl wget git htop nano vim ufw fail2ban unattended-upgrades apt-listchanges
+    apt-get install -y curl wget git htop nano vim ufw fail2ban unattended-upgrades apt-listchanges sshpass
 
     # Step 3: Install Docker
     log_info "Step 3/10: Installing Docker..."
     if command -v docker &> /dev/null && docker --version &> /dev/null; then
         log_success "Docker is already installed ($(docker --version))"
+        # Check if user is in docker group
+        if ! groups "$ACTUAL_USER" | grep -q docker; then
+            log_info "Adding $ACTUAL_USER to docker group..."
+            usermod -aG docker "$ACTUAL_USER"
+            NEEDS_LOGOUT=true
+        fi
         # Check if Docker service is running
         if ! systemctl is-active --quiet docker; then
             log_warning "Docker service is not running, starting it..."
@@ -253,6 +385,7 @@ system_setup() {
     else
         curl -fsSL https://get.docker.com | sh
         usermod -aG docker "$ACTUAL_USER"
+        NEEDS_LOGOUT=true
     fi
 
     # Step 4: Install Docker Compose
@@ -265,50 +398,47 @@ system_setup() {
         log_success "Docker Compose installed ($(docker-compose --version))"
     fi
 
-    # Step 5: Configure UFW firewall
-    log_info "Step 5/10: Configuring firewall..."
+    # Step 5: Generate shared CA for multi-server TLS
+    log_info "Step 5/10: Generating shared CA certificate for multi-server TLS..."
+    mkdir -p /opt/stacks/core/shared-ca
+    openssl genrsa -out /opt/stacks/core/shared-ca/ca-key.pem 4096
+    openssl req -new -x509 -days 365 -key /opt/stacks/core/shared-ca/ca-key.pem -sha256 -out /opt/stacks/core/shared-ca/ca.pem -subj "/C=US/ST=State/L=City/O=Homelab/CN=Homelab-CA"
+    chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/core/shared-ca
+
+    # Step 6: Configure Docker TLS
+    log_info "Step 6/10: Configuring Docker TLS..."
+    setup_docker_tls
+
+    # Step 7: Configure UFW firewall
+    log_info "Step 7/10: Configuring firewall..."
     ufw --force enable
     ufw allow ssh
     ufw allow 80
     ufw allow 443
+    ufw allow 2376/tcp  # Docker TLS port
+    log_success "Firewall configured"
 
-    # Step 6: Configure automatic updates
-    log_info "Step 6/10: Configuring automatic updates..."
+    # Step 8: Configure automatic updates
+    log_info "Step 8/10: Configuring automatic updates..."
     dpkg-reconfigure -f noninteractive unattended-upgrades
 
-    # Step 7: Create required directories
-    log_info "Step 7/10: Creating required directories..."
-    mkdir -p /opt/stacks/core
-    mkdir -p /opt/stacks/infrastructure
-    mkdir -p /opt/stacks/dashboards
-    mkdir -p /opt/dockge
-
-    # Step 8: Set proper ownership
-    log_info "Step 8/10: Setting directory ownership..."
+    # Step 9: Set proper ownership
+    log_info "Step 9/10: Setting directory ownership..."
     chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks
     chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/dockge
 
-    # Step 9: Create Docker networks
-    log_info "Step 9/10: Creating Docker networks..."
+    # Step 10: Create Docker networks
+    log_info "Step 10/10: Creating Docker networks..."
     docker network create homelab-network 2>/dev/null && log_success "Created homelab-network" || log_info "homelab-network already exists"
     docker network create traefik-network 2>/dev/null && log_success "Created traefik-network" || log_info "traefik-network already exists"
     docker network create media-network 2>/dev/null && log_success "Created media-network" || log_info "media-network already exists"
 
-    # Step 10: Generate SSH keys for Git (optional)
-    log_info "Step 10/10: SSH key setup (optional)..."
-    if [ ! -f "/home/$ACTUAL_USER/.ssh/id_rsa" ]; then
-        log_info "Generating SSH key for $ACTUAL_USER..."
-        sudo -u "$ACTUAL_USER" ssh-keygen -t rsa -b 4096 -f "/home/$ACTUAL_USER/.ssh/id_rsa" -N ""
-        log_info "SSH public key:"
-        cat "/home/$ACTUAL_USER/.ssh/id_rsa.pub"
-        echo ""
-        log_info "Add this key to your Git provider (GitHub, GitLab, etc.)"
-    fi
-
     log_success "System setup completed!"
     echo ""
-    log_info "Please log out and back in for Docker group changes to take effect."
-    echo ""
+    if [ "$NEEDS_LOGOUT" = true ]; then
+        log_info "Please log out and back in for Docker group changes to take effect."
+        echo ""
+    fi
 }
 
 # Deployment function
@@ -398,6 +528,13 @@ perform_deployment() {
         sed -i "s/\${DEFAULT_EMAIL}/${AUTHELIA_ADMIN_EMAIL}/g" /opt/stacks/core/authelia/users_database.yml
         sed -i "s|\$argon2id\$v=19\$m=65536,t=3,p=4\$CHANGEME|${AUTHELIA_ADMIN_PASSWORD}|g" /opt/stacks/core/authelia/users_database.yml
 
+        # Generate shared CA for multi-server TLS
+        log_info "Generating shared CA certificate for multi-server TLS..."
+        mkdir -p /opt/stacks/core/shared-ca
+        openssl genrsa -out /opt/stacks/core/shared-ca/ca-key.pem 4096
+        openssl req -new -x509 -days 365 -key /opt/stacks/core/shared-ca/ca-key.pem -sha256 -out /opt/stacks/core/shared-ca/ca.pem -subj "/C=US/ST=State/L=City/O=Homelab/CN=Homelab-CA"
+        chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/core/shared-ca
+
         # Deploy core stack
         cd /opt/stacks/core
         docker compose up -d
@@ -479,7 +616,57 @@ perform_deployment() {
     fi
 }
 
-# Setup stacks for Dockge function
+# Setup Docker TLS function
+setup_docker_tls() {
+    local TLS_DIR="/home/$ACTUAL_USER/EZ-Homelab/docker-tls"
+    
+    # Create TLS directory
+    mkdir -p "$TLS_DIR"
+    chown "$ACTUAL_USER:$ACTUAL_USER" "$TLS_DIR"
+    
+    # Use shared CA if available, otherwise generate local CA
+    if [ -f "/opt/stacks/core/shared-ca/ca.pem" ] && [ -f "/opt/stacks/core/shared-ca/ca-key.pem" ]; then
+        log_info "Using shared CA certificate for Docker TLS..."
+        cp "/opt/stacks/core/shared-ca/ca.pem" "$TLS_DIR/ca.pem"
+        cp "/opt/stacks/core/shared-ca/ca-key.pem" "$TLS_DIR/ca-key.pem"
+    else
+        log_info "Generating local CA certificate for Docker TLS..."
+        # Generate CA
+        openssl genrsa -out "$TLS_DIR/ca-key.pem" 4096
+        openssl req -new -x509 -days 365 -key "$TLS_DIR/ca-key.pem" -sha256 -out "$TLS_DIR/ca.pem" -subj "/C=US/ST=State/L=City/O=Organization/CN=Docker-CA"
+    fi
+    
+    # Generate server key and cert
+    openssl genrsa -out "$TLS_DIR/server-key.pem" 4096
+    openssl req -subj "/CN=$SERVER_IP" -new -key "$TLS_DIR/server-key.pem" -out "$TLS_DIR/server.csr"
+    echo "subjectAltName = DNS:$SERVER_IP,IP:$SERVER_IP,IP:127.0.0.1" > "$TLS_DIR/extfile.cnf"
+    openssl x509 -req -days 365 -in "$TLS_DIR/server.csr" -CA "$TLS_DIR/ca.pem" -CAkey "$TLS_DIR/ca-key.pem" -CAcreateserial -out "$TLS_DIR/server-cert.pem" -extfile "$TLS_DIR/extfile.cnf"
+    
+    # Generate client key and cert
+    openssl genrsa -out "$TLS_DIR/client-key.pem" 4096
+    openssl req -subj "/CN=client" -new -key "$TLS_DIR/client-key.pem" -out "$TLS_DIR/client.csr"
+    openssl x509 -req -days 365 -in "$TLS_DIR/client.csr" -CA "$TLS_DIR/ca.pem" -CAkey "$TLS_DIR/ca-key.pem" -CAcreateserial -out "$TLS_DIR/client-cert.pem"
+    
+    # Configure Docker daemon
+    cat > /etc/docker/daemon.json <<EOF
+{
+  "tls": true,
+  "tlsverify": true,
+  "tlscacert": "$TLS_DIR/ca.pem",
+  "tlscert": "$TLS_DIR/server-cert.pem",
+  "tlskey": "$TLS_DIR/server-key.pem"
+}
+EOF
+    
+    # Update systemd service
+    sed -i 's|-H fd://|-H fd:// -H tcp://0.0.0.0:2376|' /lib/systemd/system/docker.service
+    
+    # Reload and restart Docker
+    systemctl daemon-reload
+    systemctl restart docker
+    
+    log_success "Docker TLS configured on port 2376"
+}
 setup_stacks_for_dockge() {
     log_info "Setting up all stacks for Dockge..."
 
@@ -627,11 +814,31 @@ main() {
         fi
     fi
 
+    # Ensure required directories exist
+    log_info "Ensuring required directories exist..."
+    if [ "$EUID" -eq 0 ]; then
+        mkdir -p /opt/stacks/core
+        mkdir -p /opt/stacks/infrastructure
+        mkdir -p /opt/stacks/dashboards
+        mkdir -p /opt/dockge
+    else
+        sudo mkdir -p /opt/stacks/core
+        sudo mkdir -p /opt/stacks/infrastructure
+        sudo mkdir -p /opt/stacks/dashboards
+        sudo mkdir -p /opt/dockge
+    fi
+    log_success "Directories ready"
+
     # Prompt for configuration values
     prompt_for_values
 
     # Save configuration
     save_env_file
+
+    # Handle certificate sharing for infrastructure-only deployments
+    if [ "$MAIN_CHOICE" = "3" ]; then
+        share_certs_with_core
+    fi
 
     # Perform deployment
     perform_deployment
