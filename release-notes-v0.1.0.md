@@ -32,7 +32,7 @@ Preconfigured with Traefik and Sablier (most require initial web UI setup):
 - **GitHub Wiki**: Mostly accurate but needs updates.
 
 ## Upgrading from Previous Versions
-No previous versions exist—this is the initial release. For future upgrades, pull latest images and redeploy via Dockge.
+No previous versions exist—this is the initial release. 
 
 ## Thanks & Feedback
 Thanks to the community for early feedback! Report issues or contribute via GitHub. See [Getting Started](docs/getting-started.md) for more details.
