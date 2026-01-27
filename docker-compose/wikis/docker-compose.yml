@@ -181,8 +181,8 @@ x-dockge:
   urls:
     # Proxied URLs (through Traefik)
     - https://bookstack.${DOMAIN}
-    - https://{$SERVER_IP}:6875
+    - https://${SERVER_IP}:6875
     - https://dokuwiki.${DOMAIN}
-    - https://{$SERVER_IP}:8087
+    - https://${SERVER_IP}:8087
     - https://mediawiki.${DOMAIN}
-    - https://{$SERVER_IP}:8086
+    - https://${SERVER_IP}:8086

@@ -8,18 +8,18 @@
 # - See individual service comments for specific reasoning
 
 # Service Access URLs:
-# - Prometheus: http://server-ip:9090 (or configure Traefik)
-# - Grafana: http://server-ip:3000 (or configure Traefik)
+# - Prometheus: http://${SERVER_IP}:9090 (or configure Traefik)
+# - Grafana: http://${SERVER_IP}:3000 (or configure Traefik)
 # - Uptime Kuma: https://status.${DOMAIN}
-# - Node Exporter: http://server-ip:9100/metrics
-# - cAdvisor: http://server-ip:8082
-# - Loki: http://server-ip:3100
+# - Node Exporter: http://${SERVER_IP}:9100/metrics
+# - cAdvisor: http://${SERVER_IP}:8082
+# - Loki: http://${SERVER_IP}:3100
 # NOTE: Prometheus, Grafana, Loki use ports because they need to be accessible to other services
 #       Add Traefik labels if you want https://prometheus.${DOMAIN} access
 
 services:
   # Prometheus - Metrics collection and storage
-  # Access at: http://server-ip:9090
+  # Access at: http://${SERVER_IP}:9090
   prometheus:
     image: prom/prometheus:v2.48.1
     deploy:
@@ -66,7 +66,7 @@ services:
       - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
 
   # Grafana - Metrics visualization
-  # Access at: http://server-ip:3000
+  # Access at: http://${SERVER_IP}:3000
   # Default credentials: admin / admin (change on first login)
   grafana:
     image: grafana/grafana:10.2.3
@@ -115,7 +115,7 @@ services:
       - "traefik.http.services.grafana.loadbalancer.server.port=3000"
 
   # Node Exporter - Host metrics exporter
-  # Metrics at: http://server-ip:9100/metrics
+  # Metrics at: http://${SERVER_IP}:9100/metrics
   node-exporter:
     image: prom/node-exporter:v1.7.0
     container_name: node-exporter
@@ -138,7 +138,7 @@ services:
       - "homelab.description=Hardware and OS metrics exporter"
 
   # cAdvisor - Container metrics exporter
-  # Access at: http://server-ip:8082
+  # Access at: http://${SERVER_IP}:8082
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.47.2
     container_name: cadvisor
@@ -215,7 +215,7 @@ services:
       - "traefik.http.services.uptime-kuma.loadbalancer.server.port=3001"
 
   # Loki - Log aggregation
-  # Access at: http://server-ip:3100
+  # Access at: http://${SERVER_IP}:3100
   loki:
     image: grafana/loki:2.9.3
     deploy:
@@ -289,3 +289,13 @@ networks:
     external: true
   traefik-network:
     external: true
+
+x-dockge:
+  urls:
+    # Proxied URLs (through Traefik)
+    - http://${SERVER_IP}:9090
+    - http://${SERVER_IP}:3000
+    - https://uptime-kuma.${DOMAIN}
+    - http://${SERVER_IP}:9100/metrics
+    - http://${SERVER_IP}:8082
+    - http://${SERVER_IP}:3100

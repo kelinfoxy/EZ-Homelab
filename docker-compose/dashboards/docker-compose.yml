@@ -114,9 +114,9 @@ x-dockge:
   urls:
     # Proxied URLs (through Traefik)
     - https://homepage.${DOMAIN}
-    - https://{$SERVER_IP}:3003
+    - https://${SERVER_IP}:3003
     - https://homarr.${DOMAIN}
-    - https://{$SERVER_IP}:7575
+    - https://${SERVER_IP}:7575
 
 networks:
   homelab-network:

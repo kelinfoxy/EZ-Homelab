@@ -237,10 +237,10 @@ networks:
 x-dockge:
   urls:
     - https://backrest.${DOMAIN}
-    - https://{$SERVER_IP}:9898
+    - https://${SERVER_IP}:9898
     - https://duplicati.${DOMAIN}
-    - https://{$SERVER_IP}:8200
+    - https://${SERVER_IP}:8200
     - https://forms.${DOMAIN}
-    - https://{$SERVER_IP}:3002
+    - https://${SERVER_IP}:3002
     - https://vault.${DOMAIN}
-    - https://{$SERVER_IP}:8091
+    - https://${SERVER_IP}:8091

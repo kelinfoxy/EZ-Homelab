@@ -327,12 +327,12 @@ x-dockge:
   urls:
     # Proxied URLs (through Traefik)
     - https://nextcloud.${DOMAIN}
-    - https://{$SERVER_IP}:8089
+    - https://${SERVER_IP}:8089
     - https://mealie.${DOMAIN}
-    - https://{$SERVER_IP}:9000
+    - https://${SERVER_IP}:9000
     - https://wordpress.${DOMAIN}
-    - https://{$SERVER_IP}:8088
+    - https://${SERVER_IP}:8088
     - https://gitea.${DOMAIN}
-    - https://{$SERVER_IP}:3010
+    - https://${SERVER_IP}:3010
     - https://jupyter.${DOMAIN}
-    - https://{$SERVER_IP}:8890
+    - https://${SERVER_IP}:8890

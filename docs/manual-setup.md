@@ -150,6 +150,63 @@ cd /opt/stacks/dashboards
 docker compose up -d
 ```
 
+## Step 10.5: Multi-Server TLS Setup (Optional)
+
+If you plan to deploy services on remote servers (like Raspberry Pi) that will be managed by Sablier for lazy loading, set up shared TLS certificates.
+
+### On Core Server (where Traefik/Authelia run):
+
+```bash
+# Create shared CA directory
+sudo mkdir -p /opt/stacks/core/shared-ca
+sudo chown $USER:$USER /opt/stacks/core/shared-ca
+
+# Generate shared CA certificate
+cd /opt/stacks/core/shared-ca
+openssl genrsa -out ca-key.pem 4096
+openssl req -new -x509 -days 365 -key ca-key.pem -sha256 -out ca.pem -subj "/C=US/ST=State/L=City/O=Homelab/CN=Homelab-CA"
+
+# Set proper permissions
+chmod 600 ca-key.pem
+chmod 644 ca.pem
+```
+
+### On Remote Servers:
+
+```bash
+# Create TLS directory
+sudo mkdir -p /opt/stacks/core/shared-ca
+sudo chown $USER:$USER /opt/stacks/core/shared-ca
+
+# Copy shared CA from core server (replace CORE_IP with your core server IP)
+scp user@CORE_IP:/opt/stacks/core/shared-ca/ca.pem /opt/stacks/core/shared-ca/
+scp user@CORE_IP:/opt/stacks/core/shared-ca/ca-key.pem /opt/stacks/core/shared-ca/
+
+# Generate client certificate for Docker client connections
+openssl genrsa -out client-key.pem 4096
+openssl req -subj "/CN=client" -new -key client-key.pem -out client.csr
+openssl x509 -req -days 365 -in client.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out client-cert.pem
+
+# Configure Docker TLS
+sudo tee /etc/docker/daemon.json > /dev/null <<EOF
+{
+  "tls": true,
+  "tlsverify": true,
+  "tlscacert": "/opt/stacks/core/shared-ca/ca.pem",
+  "tlscert": "/opt/stacks/core/shared-ca/server-cert.pem",
+  "tlskey": "/opt/stacks/core/shared-ca/server-key.pem"
+}
+EOF
+
+# Update Docker service to listen on TLS port
+sudo sed -i 's|-H fd://|-H fd:// -H tcp://0.0.0.0:2376|' /lib/systemd/system/docker.service
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+
+# Test TLS connection from core server
+# On core server, run: docker --tlsverify --tlscacert /opt/stacks/core/shared-ca/ca.pem --tlscert /opt/stacks/core/shared-ca/client-cert.pem --tlskey /opt/stacks/core/shared-ca/client-key.pem -H tcp://REMOTE_IP:2376 ps
+```
+
 ## Step 11: Verify Deployment
 
 ```bash
