@@ -2,6 +2,14 @@
 
 Welcome to your AI-powered homelab! This guide will walk you through setting up your production-ready infrastructure with Dockge, Traefik, Authelia, and [50+ services](services-overview.md).
 
+## Release v0.1.0 Highlights
+This is the first official release of EZ-Homelab, thoroughly tested on Debian 12. Key features include:
+- Automated SSL via DuckDNS and Let's Encrypt.
+- Authelia SSO enabled by default for security.
+- Sablier lazy loading to save resources.
+- 50+ preconfigured services across 10 stacks.
+- See [Release Notes](../release-notes-v0.1.0.md) for full details.
+
 ## Getting Started Checklist
 - [ ] Clone this repository to your home folder
 - [ ] Configure `.env` file with your domain and tokens ([see prerequisites](env-configuration.md))

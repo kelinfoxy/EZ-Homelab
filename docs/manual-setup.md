@@ -260,6 +260,11 @@ docker network create network-name
 - You need custom configurations
 - You're troubleshooting deployment issues
 
+## Post-Setup Notes
+- **Lazy Loading**: Services use Sablier for resource efficiency. Expect short delays on first access—refresh if you see timeouts.
+- **Security**: SSO is enabled by default; bypass only for media apps like Plex/Jellyfin.
+- **Testing**: This release has been thoroughly tested, but manual setup may need tweaks—report issues on GitHub.
+
 ## Switching to Automated
 
 If manual setup works, you can switch to the unified automated script for future updates:

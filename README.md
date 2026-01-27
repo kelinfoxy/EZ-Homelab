@@ -3,6 +3,7 @@
 [![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=flat&logo=docker&logoColor=white)](https://docker.com)
 [![Traefik](https://img.shields.io/badge/Traefik-24.0.0-24A1C6)](https://traefik.io)
 [![Authelia](https://img.shields.io/badge/Authelia-4.38.0-113155)](https://www.authelia.com)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/kelinfoxy/EZ-Homelab)](https://github.com/kelinfoxy/EZ-Homelab/releases/latest)
 
 >Production-ready homelab infrastructure with automated SSL, SSO authentication, and VPN routing.  
 Deploy 50+ services through a file-based, AI-manageable architecture.  

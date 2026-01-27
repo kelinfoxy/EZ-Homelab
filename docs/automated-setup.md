@@ -92,3 +92,9 @@ The `ez-homelab.sh` script is a comprehensive guided setup and deployment tool:
 - Comprehensive error messages with troubleshooting hints
 - Safe to re-run (idempotent operations)
 - Confirmation prompts for destructive actions
+
+## Release-Specific Notes
+- **Version**: Based on v0.1.0—ensure you're using the latest scripts.
+- **Stacks**: Core, Infrastructure, and Dashboards deploy automatically. Others are inactive by default.
+- **Dashboards**: Homepage is preconfigured at `homepage.yoursubdomain.duckdns.org`.
+- **Known Limitations**: Options 1 & 2 require additional testing; use Option 3 for production.
