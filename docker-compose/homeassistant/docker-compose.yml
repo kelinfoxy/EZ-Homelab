@@ -240,3 +240,19 @@ networks:
     external: true
   traefik-network:
     external: true
+
+x-dockge:
+  urls:
+    # Proxied URLs (through Traefik)
+    - https://ha.${DOMAIN}
+    - http://${SERVER_IP}:8123
+    - https://esphome.${DOMAIN}
+    - http://${SERVER_IP}:6052
+    - https://tasmoadmin.${DOMAIN}
+    - http://${SERVER_IP}:8084
+    - https://motioneye.${DOMAIN}
+    - http://${SERVER_IP}:8765
+    - https://nodered.${DOMAIN}
+    - http://${SERVER_IP}:1880
+    - mqtt://${SERVER_IP}:1883
+    - https://zigbee2mqtt.${DOMAIN}

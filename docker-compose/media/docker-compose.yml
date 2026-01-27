@@ -128,7 +128,9 @@ x-dockge:
   urls:
     # Proxied URLs (through Traefik)
     - https://jellyfin.${DOMAIN}
+    - http://${SERVER_IP}:8096
     - https://calibre.${DOMAIN}
+    - http://${SERVER_IP}:8083
 
 networks:
   homelab-network:

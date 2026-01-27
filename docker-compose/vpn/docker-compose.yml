@@ -54,7 +54,7 @@ services:
       - "traefik.http.services.qbittorrent.loadbalancer.server.port=8081"
       # Sablier configuration
       - "sablier.enable=true"
-      - "sablier.group=qbittorrent"
+      - "sablier.group=${SERVER_HOSTNAME}-qbittorrent"
       - "sablier.sessionDuration=1h"
 
   # qBittorrent - Torrent client
