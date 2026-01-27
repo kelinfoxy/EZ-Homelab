@@ -1,7 +1,7 @@
 # EZ-Homelab Release Notes - v0.1.0
 
 ## Overview
-EZ-Homelab v0.1.0 is the first official release of this thoroughly tested Docker homelab infrastructure. Tested on Debian 12, it deploys 50+ services with automated SSL, SSO authentication, and resource-efficient lazy loading. This release focuses on ease of setup, security, and scalability for self-hosted environments.
+EZ-Homelab v0.1.0 is the first official release of this Docker homelab infrastructure. Tested on Debian 12, it deploys 50+ services with automated SSL, SSO authentication, and resource-efficient lazy loading. This release focuses on ease of setup, security, and scalability for self-hosted environments.
 
 ## What's New
 - 🚀 **Sablier Lazy Loading**: Automatically starts services on-demand to save resources and reduce power costs. Enabled by default on most services; dependent services (e.g., *arr apps) load as groups.
