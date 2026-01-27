@@ -2,6 +2,42 @@
 
 Welcome to the AI-Homelab documentation! This is your comprehensive guide to deploying and managing a production-ready homelab infrastructure with 50+ pre-configured services.
 
+# Mission Statement
+
+>  ### Provide a fast, convenient, and free way to deploy homelab servers with popular features  
+> *  DuckDNS subdomains with LetsEncrypt SSL wildcard certificates  
+> *  Security First - Secure Single Sign On with Authelia  
+> *  Traefik - Proxy Host for an entire homelab  
+> *  Sablier - Lazy Loading of services  
+> *  TLS Certificates for docker proxy  
+>&nbsp;
+
+# Deployment Scenarios 
+
+1. **Single server**
+
+    **Select Option 1**
+    * Use Dockge to start the desired stacks
+    * Use Homepage to explore your services
+
+
+2. **Core Server + Remote Server**
+
+    **Core Server**
+    * A small low power device, like a Raspberry Pi 4 4GB.
+    * Deploy core stack. (Authelia, DuckDNS, Traefik, Sablier, Homepage) 
+    * Functions as a gateway between the internet and your servers.  
+    * Configure a remote host file for each Remote Server.  
+    * Configure sablier.yml for services to lazyload.  
+    * Generate TLS certificate, all servers use the same TLS certificate for dockerproxy
+
+    **Remote Server(s)** 
+    * Your old office or gaming PC, SBCs, second hand PCs, etc
+    * Select Option 3 to install Infrastructure only
+    * Ensure the TLS certificate was copied correctly and docker daemon configured
+    * Use Dockge to start the desired stacks
+    * Use Homepage to explore your services
+
 ## 📚 Documentation Structure
 
 ### 🚀 Getting Started
