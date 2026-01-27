@@ -5,7 +5,7 @@
 [![Authelia](https://img.shields.io/badge/Authelia-4.38.0-113155)](https://www.authelia.com)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/kelinfoxy/EZ-Homelab)](https://github.com/kelinfoxy/EZ-Homelab/releases/latest)
 
->Production-ready homelab infrastructure with automated SSL, SSO authentication, and VPN routing.  
+>Thoroughly tested homelab infrastructure with automated SSL, SSO authentication, and VPN routing.  
 Deploy 50+ services through a file-based, AI-manageable architecture.  
 Plus Dockge for visual management of containers, and Homepage dashboard to easily access deployed services.  
 
