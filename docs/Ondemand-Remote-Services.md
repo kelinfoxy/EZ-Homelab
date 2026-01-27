@@ -192,12 +192,12 @@ This section provides a complete deployment plan for scenarios where the core in
 - Both servers must be on the same network and able to communicate
 - SSH access configured between servers (key-based or password authentication supported)
 - Domain configured with DuckDNS or similar
-- The EZ-Homelab script handles most Docker TLS and certificate setup automatically
+- The EZ-Homelab script handles Docker TLS certificate generation on the core server and automatic copying to remote servers
 - Basic understanding of Docker concepts (optional - script guides you through setup)
 
-## Step 1: Configure Docker TLS on All Servers
+## Step 1: Configure Core Server
 
-### On Each Server (Core and Remote)
+### On Core Server Only
 
 1. **Install Docker** (if not already installed):
    ```bash
@@ -208,51 +208,34 @@ This section provides a complete deployment plan for scenarios where the core in
    # Log out and back in for group changes
    ```
 
-2. **Generate TLS Certificates**:
+2. **Configure Firewall** (optional, for security):
    ```bash
-   mkdir -p ~/EZ-Homelab/docker-tls
-   cd ~/EZ-Homelab/docker-tls
-
-   # Generate CA
-   openssl genrsa -out ca-key.pem 4096
-   openssl req -new -x509 -days 365 -key ca-key.pem -sha256 -out ca.pem -subj "/C=US/ST=State/L=City/O=Organization/CN=Docker-CA"
-
-   # Generate server key and cert (replace SERVER_IP with actual IP)
-   openssl genrsa -out server-key.pem 4096
-   openssl req -subj "/CN=<SERVER_IP>" -new -key server-key.pem -out server.csr
-   echo "subjectAltName = DNS:<SERVER_IP>,IP:<SERVER_IP>,IP:127.0.0.1" > extfile.cnf
-   openssl x509 -req -days 365 -in server.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out server-cert.pem -extfile extfile.cnf
-
-   # Generate client key and cert
-   openssl genrsa -out client-key.pem 4096
-   openssl req -subj "/CN=client" -new -key client-key.pem -out client.csr
-   openssl x509 -req -days 365 -in client.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out client-cert.pem
-   ```
-
-3. **Configure Docker Daemon**:
-   Create `/etc/docker/daemon.json`:
-   ```json
-   {
-     "tls": true,
-     "tlsverify": true,
-     "tlscacert": "/home/$USER/EZ-Homelab/docker-tls/ca.pem",
-     "tlscert": "/home/$USER/EZ-Homelab/docker-tls/server-cert.pem",
-     "tlskey": "/home/$USER/EZ-Homelab/docker-tls/server-key.pem"
-   }
-   ```
-
-4. **Update Systemd Service**:
-   ```bash
-   sudo sed -i 's|-H fd://|-H fd:// -H tcp://0.0.0.0:2376|' /lib/systemd/system/docker.service
-   sudo systemctl daemon-reload
-   sudo systemctl restart docker
-   ```
-
-5. **Configure Firewall**:
-   ```bash
-   sudo ufw allow 2376/tcp
+   sudo ufw allow 2376/tcp  # For Docker API access from remote servers
    sudo ufw --force enable
    ```
+
+The EZ-Homelab script will automatically generate TLS certificates and configure Docker daemon TLS when you deploy the core infrastructure.
+
+## Step 2: Configure Remote Servers
+
+### On Each Remote Server
+
+1. **Install Docker** (if not already installed):
+   ```bash
+   curl -fsSL https://get.docker.com | sh
+   usermod -aG docker $USER
+   systemctl enable docker
+   systemctl start docker
+   # Log out and back in for group changes
+   ```
+
+2. **Configure Firewall** (optional, for security):
+   ```bash
+   sudo ufw allow 2376/tcp  # For Docker API access from core server
+   sudo ufw --force enable
+   ```
+
+The EZ-Homelab script will automatically copy TLS certificates from the core server and configure Docker daemon TLS when you run the infrastructure-only deployment.
 
 ## Certificate and Secret Sharing
 
@@ -264,8 +247,9 @@ The EZ-Homelab script automatically handles certificate and secret sharing for i
 2. **Script Actions**:
    - Prompts for core server IP
    - Tests SSH connectivity
-   - Copies Docker TLS certificates for remote control
-   - Sets up certificates in the correct location
+   - Copies shared CA and TLS certificates from core server
+   - Generates server-specific certificates signed by the shared CA
+   - Configures Docker daemon for TLS on port 2376
 
 ### Manual Process (Fallback)
 
@@ -273,15 +257,33 @@ If automatic sharing fails, manually share certificates:
 
 1. **On Core Server**:
    ```bash
-   # Copy client certificates to remote server
-   scp /opt/stacks/core/docker-tls/ca.pem /opt/stacks/core/docker-tls/client-cert.pem /opt/stacks/core/docker-tls/client-key.pem user@remote-server:/opt/stacks/infrastructure/docker-tls/
+   # Generate server certificates for remote server
+   cd /opt/stacks/core/shared-ca
+   openssl genrsa -out server-key.pem 4096
+   openssl req -subj "/CN=<REMOTE_IP>" -new -key server-key.pem -out server.csr
+   echo "subjectAltName = DNS:<REMOTE_IP>,IP:<REMOTE_IP>,IP:127.0.0.1" > extfile.cnf
+   openssl x509 -req -days 365 -in server.csr -CA ca.pem -CAkey ca-key.pem -CAcreateserial -out server-cert.pem -extfile extfile.cnf
    ```
 
 2. **On Remote Server**:
    ```bash
-   # Ensure certificates are in the correct location
-   ls -la /opt/stacks/infrastructure/docker-tls/
-   # Should contain: ca.pem, client-cert.pem, client-key.pem
+   # Copy certificates
+   scp user@core-server:/opt/stacks/core/shared-ca/ca.pem /opt/stacks/core/shared-ca/
+   scp user@core-server:/opt/stacks/core/shared-ca/server-cert.pem /opt/stacks/core/shared-ca/
+   scp user@core-server:/opt/stacks/core/shared-ca/server-key.pem /opt/stacks/core/shared-ca/
+
+   # Update Docker daemon
+   sudo tee /etc/docker/daemon.json > /dev/null <<EOF
+   {
+     "tls": true,
+     "tlsverify": true,
+     "tlscacert": "/opt/stacks/core/shared-ca/ca.pem",
+     "tlscert": "/opt/stacks/core/shared-ca/server-cert.pem",
+     "tlskey": "/opt/stacks/core/shared-ca/server-key.pem"
+   }
+   EOF
+
+   sudo systemctl restart docker
    ```
 
 ## Step 3: Deploy Core Infrastructure
@@ -297,7 +299,8 @@ If automatic sharing fails, manually share certificates:
 
    The script will:
    - Generate Authelia secrets automatically
-   - Configure TLS for Docker API
+   - Generate shared TLS CA and certificates
+   - Configure Docker daemon TLS
    - Deploy Traefik, Authelia, and Sablier
    - Set up certificates for secure communication
 
@@ -324,44 +327,40 @@ If automatic sharing fails, manually share certificates:
    The script will automatically:
    - Prompt for core server IP address
    - Establish SSH connection to core server
-   - Copy Authelia secrets and TLS certificates
-   - Configure Docker TLS for remote control
+   - Copy shared CA and generate server-specific certificates
+   - Configure Docker daemon for TLS on port 2376
    - Set up required networks and directories
 
-2. **Manual certificate sharing** (if automatic fails):
-   If SSH connection fails, manually copy certificates:
-   ```bash
-   # On core server, copy certs to remote server
-   scp /opt/stacks/core/docker-tls/ca.pem /opt/stacks/core/docker-tls/client-cert.pem /opt/stacks/core/docker-tls/client-key.pem user@remote-server:/opt/stacks/infrastructure/docker-tls/
-   
-   # On remote server, copy Authelia secrets
-   scp /home/kelin/EZ-Homelab/.env user@remote-server:/home/kelin/EZ-Homelab/.env.core
-   ```
+2. **Manual certificate setup** (if automatic fails):
+   If SSH connection fails, follow the manual process in the Certificate and Secret Sharing section above.
 
 ## Step 5: Configure Sablier for Remote Control
 
 ### On Core Server
 
-Update Sablier configuration to control remote servers:
+Sablier uses middleware configuration in Traefik's dynamic files to control remote Docker daemons. The middleware specifies the remote server connection details.
 
-1. **Edit core docker-compose.yml**:
+1. **Create Sablier middleware configuration**:
+   `/opt/stacks/core/traefik/dynamic/sablier.yml`
    ```yaml
-   sablier-service:
-     environment:
-       - DOCKER_HOST=tcp://<REMOTE_SERVER_IP>:2376
-       - DOCKER_TLS_VERIFY=1
-       - DOCKER_CERT_PATH=/certs
-     volumes:
-       - ./docker-tls/ca.pem:/certs/ca.pem:ro
-       - ./docker-tls/client-cert.pem:/certs/cert.pem:ro
-       - ./docker-tls/client-key.pem:/certs/key.pem:ro
+   http:
+     middlewares:
+       sablier-<remote_hostname>-<group>:
+         plugin:
+           sablier:
+             sablierUrl: http://sablier-service:10000
+             group: <remote_hostname>-<group>
+             sessionDuration: 2m
+             ignoreUserAgent: curl
+             dynamic:
+               displayName: "<Service Group Display Name>"
+               theme: ghost
+               show-details-by-default: true
    ```
 
-2. **Restart core stack**:
+2. **Restart Traefik** to load the middleware:
    ```bash
-   cd /opt/stacks/core
-   docker compose down
-   docker compose up -d
+   docker restart traefik
    ```
 
 ## Step 6: Deploy Application Services
@@ -386,7 +385,7 @@ Update Sablier configuration to control remote servers:
    docker compose stop
    ```
 
-## Step 5: Configure Traefik Routing
+## Step 7: Configure Traefik Routing
 
 ### On Core Server
 
@@ -405,7 +404,7 @@ Since Traefik cannot auto-discover labels from remote Docker hosts, use the file
          tls:
            certResolver: letsencrypt
          middlewares:
-           - sablier-<remote_hostname>-arr@file
+           - sablier-<remote_hostname>-media@file
            - authelia@docker
 
      services:
@@ -416,30 +415,12 @@ Since Traefik cannot auto-discover labels from remote Docker hosts, use the file
            passHostHeader: true
    ```
 
-2. **Create Sablier middleware configuration**:
-   `/opt/stacks/core/traefik/dynamic/sablier.yml`
-   ```yaml
-   http:
-     middlewares:
-       sablier-<remote_hostname>-arr:
-         plugin:
-           sablier:
-             sablierUrl: http://sablier-service:10000
-             group: <remote_hostname>-arr
-             sessionDuration: 2m
-             ignoreUserAgent: curl
-             dynamic:
-               displayName: "Media Management Services"
-               theme: ghost
-               show-details-by-default: true
-   ```
-
-3. **Restart Traefik**:
+2. **Restart Traefik**:
    ```bash
    docker restart traefik
    ```
 
-## Step 6: Verification and Testing
+## Step 8: Verification and Testing
 
 1. **Check Sablier connection**:
    ```bash
@@ -460,10 +441,11 @@ Since Traefik cannot auto-discover labels from remote Docker hosts, use the file
 
 ## Troubleshooting
 
-- **TLS Connection Issues**: Check certificate validity and paths
-- **Sablier Not Detecting Groups**: Verify DOCKER_HOST and certificates
-- **Traefik Routing Problems**: Check external host YAML syntax
-- **Network Connectivity**: Ensure ports 2376, 80, 443 are open between servers
+- **TLS Connection Issues**: Check certificate validity and paths on both core and remote servers
+- **Sablier Not Detecting Groups**: Verify middleware configuration in `/opt/stacks/core/traefik/dynamic/sablier.yml` and that remote services have correct Sablier labels
+- **Traefik Routing Problems**: Check external host YAML syntax and that Traefik has reloaded configuration
+- **Network Connectivity**: Ensure ports 2376 (Docker API), 80, 443 are open between servers
+- **Certificate Sharing Failed**: Verify SSH access between servers and that the shared CA exists on core server
 
 ## Security Considerations
 
