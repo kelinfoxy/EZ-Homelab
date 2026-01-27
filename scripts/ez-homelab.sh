@@ -503,16 +503,15 @@ system_setup() {
     log_info "Step 8/10: Configuring automatic updates..."
     dpkg-reconfigure -f noninteractive unattended-upgrades
 
-    # Step 9: Set proper ownership
-    log_info "Step 9/10: Setting directory ownership..."
-    chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks
-    chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/dockge
-
     # Step 10: Create Docker networks
     log_info "Step 10/10: Creating Docker networks..."
     docker network create homelab-network 2>/dev/null && log_success "Created homelab-network" || log_info "homelab-network already exists"
     docker network create traefik-network 2>/dev/null && log_success "Created traefik-network" || log_info "traefik-network already exists"
     docker network create media-network 2>/dev/null && log_success "Created media-network" || log_info "media-network already exists"
+
+    # Step 9: Set proper ownership
+    log_info "Step 9/10: Setting directory ownership..."
+    chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt
 
     log_success "System setup completed!"
     echo ""
@@ -766,8 +765,8 @@ setup_docker_tls() {
     local TLS_DIR="/home/$ACTUAL_USER/EZ-Homelab/docker-tls"
     
     # Create TLS directory
-    mkdir -p "$TLS_DIR"
-    chown "$ACTUAL_USER:$ACTUAL_USER" "$TLS_DIR"
+    sudo mkdir -p "$TLS_DIR"
+    sudo chown "$ACTUAL_USER:$ACTUAL_USER" "$TLS_DIR"
     
     # Use shared CA if available, otherwise generate local CA
     if [ -f "/opt/stacks/core/shared-ca/ca.pem" ] && [ -f "/opt/stacks/core/shared-ca/ca-key.pem" ]; then
