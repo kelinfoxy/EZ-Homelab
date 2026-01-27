@@ -177,6 +177,14 @@ Services that provide alternatives to the defaults:
 
 **Want to contribute?** → [Development Workflow](docker-guidelines.md#service-creation-guidelines)
 
+## 🌐 Community Resources
+
+For community-contributed examples, user experiences, and additional guides, visit the [EZ-Homelab Wiki](https://github.com/kelinfoxy/EZ-Homelab/wiki).
+
+- [Community Examples](https://github.com/kelinfoxy/EZ-Homelab/wiki/community-examples)
+- [Troubleshooting Tips](https://github.com/kelinfoxy/EZ-Homelab/wiki/troubleshooting-tips)
+- [Advanced Setups](https://github.com/kelinfoxy/EZ-Homelab/wiki/advanced-setups)
+
 ---
 
-*This documentation is maintained by AI and community contributors. Last updated: January 20, 2026*
+*This documentation is maintained by AI and community contributors. Last updated: January 26, 2026*
