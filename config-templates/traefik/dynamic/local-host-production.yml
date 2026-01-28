@@ -427,181 +427,181 @@ http:
     backrest-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:9898"
+          - url: "http://${SERVER_IP}:9898"
         passHostHeader: true
 
     bitwarden-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:8000"
+          - url: "http://${SERVER_IP}:8000"
         passHostHeader: true
 
     bookstack-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:6875"
+          - url: "http://${SERVER_IP}:6875"
         passHostHeader: true
 
     calibre-web-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:8083"
+          - url: "http://${SERVER_IP}:8083"
         passHostHeader: true
 
     code-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:8079"
+          - url: "http://${SERVER_IP}:8079"
         passHostHeader: true
 
     dockge-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:5001"
+          - url: "http://${SERVER_IP}:5001"
         passHostHeader: true
 
     dockhand-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:3003"
+          - url: "http://${SERVER_IP}:3003"
         passHostHeader: true
 
     dokuwiki-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:8087"
+          - url: "http://${SERVER_IP}:8087"
         passHostHeader: true
 
     dozzle-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:8085"
+          - url: "http://${SERVER_IP}:8085"
         passHostHeader: true
 
     duplicati-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:8200"
+          - url: "http://${SERVER_IP}:8200"
         passHostHeader: true
 
     ez-assistant:
       loadbalancer:
         servers:
-          - url: "http://192.168.4.11:18789"  # Internal IP of ${SERVER_HOSTNAME} server
+          - url: "http://${SERVER_IP}:18789"  # Internal IP of ${SERVER_HOSTNAME} server
         passHostHeader: true
 
     formio-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:3002"
+          - url: "http://${SERVER_IP}:3002"
         passHostHeader: true
 
     gitea-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:3010"
+          - url: "http://${SERVER_IP}:3010"
         passHostHeader: true
 
     glances-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:61208"
+          - url: "http://${SERVER_IP}:61208"
         passHostHeader: true
 
     homarr-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:7575"
+          - url: "http://${SERVER_IP}:7575"
         passHostHeader: true
 
     homepage-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:3000"
+          - url: "http://${SERVER_IP}:3000"
         passHostHeader: true
 
     jellyfin-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:8096"
+          - url: "http://${SERVER_IP}:8096"
         passHostHeader: true
 
     jupyter-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:8890"
+          - url: "http://${SERVER_IP}:8890"
         passHostHeader: true
 
     kopia-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:51515"
+          - url: "http://${SERVER_IP}:51515"
         passHostHeader: true
 
     mealie-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:9000"
+          - url: "http://${SERVER_IP}:9000"
         passHostHeader: true
 
     mediawiki-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:8086"
+          - url: "http://${SERVER_IP}:8086"
         passHostHeader: true
 
     motioneye-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:8081"
+          - url: "http://${SERVER_IP}:8081"
         passHostHeader: true
 
     nextcloud-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:8089"
+          - url: "http://${SERVER_IP}:8089"
         passHostHeader: true
 
     openkm-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:18080"
+          - url: "http://${SERVER_IP}:18080"
         passHostHeader: true
 
     openwebui-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:3004"
+          - url: "http://${SERVER_IP}:3004"
         passHostHeader: true
 
     qbittorrent-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:8081"
+          - url: "http://${SERVER_IP}:8081"
         passHostHeader: true
 
     tdarr-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:8265"
+          - url: "http://${SERVER_IP}:8265"
         passHostHeader: true
 
     unmanic-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:8889"
+          - url: "http://${SERVER_IP}:8889"
         passHostHeader: true
 
     vaultwarden-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:8091"
+          - url: "http://${SERVER_IP}:8091"
         passHostHeader: true
 
     wordpress-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:8088"
+          - url: "http://${SERVER_IP}:8088"
         passHostHeader: true
 
     # Arr Services
@@ -609,41 +609,41 @@ http:
     jellyseerr-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:5055"
+          - url: "http://${SERVER_IP}:5055"
         passHostHeader: true
 
     prowlarr-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:9696"
+          - url: "http://${SERVER_IP}:9696"
         passHostHeader: true
 
     radarr-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:7878"
+          - url: "http://${SERVER_IP}:7878"
         passHostHeader: true
 
     sonarr-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:8989"
+          - url: "http://${SERVER_IP}:8989"
         passHostHeader: true
 
     lidarr-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:8686"
+          - url: "http://${SERVER_IP}:8686"
         passHostHeader: true
 
     readarr-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:8787"
+          - url: "http://${SERVER_IP}:8787"
         passHostHeader: true
 
     mylar3-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:8090"
+          - url: "http://${SERVER_IP}:8090"
         passHostHeader: true
