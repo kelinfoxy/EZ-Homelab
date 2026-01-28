@@ -22,16 +22,16 @@ http:
         - sablier-${SERVER_HOSTNAME}-bookstack@file
         - authelia@docker
     
-    vaultwarden-${SERVER_HOSTNAME}:
-      rule: "Host(`vault.${DOMAIN}`)"
+    bitwarden-${SERVER_HOSTNAME}:
+      rule: "Host(`bitwarden.${DOMAIN}`)"
       entryPoints:
         - websecure
-      service: vaultwarden-${SERVER_HOSTNAME}
+      service: bitwarden-${SERVER_HOSTNAME}
       tls:
         certResolver: letsencrypt
-      # SSO disabled for browser extension and mobile app compatibility
-      # middlewares:
-      #   - sablier-${SERVER_HOSTNAME}-vaultwarden@file
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-bitwarden@file
+        - authelia@docker
 
     calibre-web-${SERVER_HOSTNAME}:
       rule: "Host(`calibre.${DOMAIN}`)"
@@ -56,7 +56,7 @@ http:
         - authelia@docker
 
     dockge-${SERVER_HOSTNAME}:
-      rule: "Host(`jarvis.${DOMAIN}`)"
+      rule: "Host(`${SERVER_HOSTNAME}.${DOMAIN}`)"
       entryPoints:
         - websecure
       service: dockge-${SERVER_HOSTNAME}
@@ -108,6 +108,18 @@ http:
         - sablier-${SERVER_HOSTNAME}-duplicati@file
         - authelia@docker
 
+    ez-assistant:
+      rule: "Host(`assistant.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - authelia@docker
+        # - sablier-${SERVER_HOSTNAME}-assistant@file
+        - ez-assistant-websocket
+      service: ez-assistant
+
     formio-${SERVER_HOSTNAME}:
       rule: "Host(`formio.${DOMAIN}`)"
       entryPoints:
@@ -131,7 +143,7 @@ http:
         - authelia@docker
 
     glances-${SERVER_HOSTNAME}:
-      rule: "Host(`glances.jarvis.${DOMAIN}`)"
+      rule: "Host(`glances.${SERVER_HOSTNAME}.${DOMAIN}`)"
       entryPoints:
         - websecure
       service: glances-${SERVER_HOSTNAME}
@@ -142,7 +154,7 @@ http:
         - authelia@docker
 
     homepage-${SERVER_HOSTNAME}:
-      rule: "Host(`homepage.jarvis.${DOMAIN}`)"
+      rule: "Host(`homepage.${SERVER_HOSTNAME}.${DOMAIN}`)"
       entryPoints:
         - websecure
       service: homepage-${SERVER_HOSTNAME}
@@ -261,7 +273,7 @@ http:
         - authelia@docker
 
     qbittorrent-${SERVER_HOSTNAME}:
-      rule: "Host(`torrents.${DOMAIN}`)"
+      rule: "Host(`qbit.${DOMAIN}`)"
       entryPoints:
         - websecure
       service: qbittorrent-${SERVER_HOSTNAME}
@@ -293,6 +305,17 @@ http:
         - sablier-${SERVER_HOSTNAME}-unmanic@file
         - authelia@docker
 
+    vaultwarden-${SERVER_HOSTNAME}:
+      rule: "Host(`vault.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: vaultwarden-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      # SSO disabled for browser extension and mobile app compatibility
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-vaultwarden@file
+
     wordpress-${SERVER_HOSTNAME}:
       rule: "Host(`knot-u.${DOMAIN}`)"
       entryPoints:
@@ -304,7 +327,6 @@ http:
         - sablier-${SERVER_HOSTNAME}-wordpress@file
         - authelia@file
 
-# Arr Services (no SSO for media apps)
     
     jellyseerr-${SERVER_HOSTNAME}:
       rule: "Host(`jellyseerr.${DOMAIN}`)"
@@ -384,7 +406,23 @@ http:
         - authelia@docker
 
 
-# Service Definitions
+
+
+# Middleware Definitions
+  middlewares:
+    ez-assistant-websocket:
+      headers:
+        accessControlAllowHeaders:
+          - "Connection"
+          - "Upgrade"
+        accessControlAllowMethods:
+          - "GET"
+          - "POST"
+          - "OPTIONS"
+        accessControlMaxAge: 86400
+
+
+
   services:
     backrest-${SERVER_HOSTNAME}:
       loadBalancer:
@@ -392,10 +430,10 @@ http:
           - url: "http://192.168.4.11:9898"
         passHostHeader: true
 
-    vaultwarden-${SERVER_HOSTNAME}:
+    bitwarden-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:8091"
+          - url: "http://192.168.4.11:8000"
         passHostHeader: true
 
     bookstack-${SERVER_HOSTNAME}:
@@ -444,6 +482,12 @@ http:
       loadBalancer:
         servers:
           - url: "http://192.168.4.11:8200"
+        passHostHeader: true
+
+    ez-assistant:
+      loadbalancer:
+        servers:
+          - url: "http://192.168.4.11:18789"  # Internal IP of ${SERVER_HOSTNAME} server
         passHostHeader: true
 
     formio-${SERVER_HOSTNAME}:
@@ -527,7 +571,7 @@ http:
     openwebui-${SERVER_HOSTNAME}:
       loadBalancer:
         servers:
-          - url: "http://192.168.4.11:3000"
+          - url: "http://192.168.4.11:3004"
         passHostHeader: true
 
     qbittorrent-${SERVER_HOSTNAME}:
@@ -546,6 +590,12 @@ http:
       loadBalancer:
         servers:
           - url: "http://192.168.4.11:8889"
+        passHostHeader: true
+
+    vaultwarden-${SERVER_HOSTNAME}:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.4.11:8091"
         passHostHeader: true
 
     wordpress-${SERVER_HOSTNAME}:
