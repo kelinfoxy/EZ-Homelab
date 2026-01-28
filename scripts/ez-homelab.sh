@@ -566,8 +566,8 @@ deploy_core() {
     sed -i "s/ACME_EMAIL_PLACEHOLDER/${AUTHELIA_ADMIN_EMAIL}/g" /opt/stacks/core/traefik/traefik.yml
 
     # Replace domain placeholders in traefik dynamic configs
-    find /opt/stacks/core/traefik/dynamic -name "*.yml" -exec sed -i "s/\${DOMAIN}/${DOMAIN}/g" {} \;
-    find /opt/stacks/core/traefik/dynamic -name "*.yml" -exec sed -i "s/\${SERVER_HOSTNAME}/${SERVER_HOSTNAME}/g" {} \;
+    find /opt/stacks/core/traefik/dynamic -name "*.yml" -exec sed -i "s|\${DOMAIN}|${DOMAIN}|g" {} \;
+    find /opt/stacks/core/traefik/dynamic -name "*.yml" -exec sed -i "s|\${SERVER_HOSTNAME}|${SERVER_HOSTNAME}|g" {} \;
 
     if [ -d "/opt/stacks/core/authelia" ]; then
         mv /opt/stacks/core/authelia /opt/stacks/core/authelia.backup.$(date +%Y%m%d_%H%M%S)
@@ -575,8 +575,8 @@ deploy_core() {
     cp -r "$REPO_DIR/config-templates/authelia" /opt/stacks/core/
 
     # Replace domain placeholders
-    sed -i "s/your-domain.duckdns.org/${DOMAIN}/g" /opt/stacks/core/authelia/configuration.yml
-    sed -i "s/\${DOMAIN}/${DOMAIN}/g" /opt/stacks/core/authelia/configuration.yml
+    sed -i "s|your-domain.duckdns.org|${DOMAIN}|g" /opt/stacks/core/authelia/configuration.yml
+    sed -i "s|\${DOMAIN}|${DOMAIN}|g" /opt/stacks/core/authelia/configuration.yml
 
     # Replace secret placeholders
     sed -i "s|\${AUTHELIA_JWT_SECRET}|${AUTHELIA_JWT_SECRET}|g" /opt/stacks/core/authelia/configuration.yml
@@ -595,8 +595,8 @@ deploy_core() {
     replace_env_placeholders "/opt/stacks/core/docker-compose.yml"
 
     # Manual replacement for x-dockge section (ensure all placeholders are replaced)
-    sed -i "s/\${DOMAIN}/${DOMAIN}/g" /opt/stacks/core/docker-compose.yml
-    sed -i "s/\${SERVER_IP}/${SERVER_IP}/g" /opt/stacks/core/docker-compose.yml
+    sed -i "s|\${DOMAIN}|${DOMAIN}|g" /opt/stacks/core/docker-compose.yml
+    sed -i "s|\${SERVER_IP}|${SERVER_IP}|g" /opt/stacks/core/docker-compose.yml
 
     # Deploy core stack
     cd /opt/stacks/core
@@ -671,8 +671,8 @@ deploy_dashboards() {
     replace_env_placeholders "/opt/stacks/dashboards/docker-compose.yml"
 
     # Manual replacement for any remaining placeholders
-    sed -i "s/\${DOMAIN}/${DOMAIN}/g" /opt/stacks/dashboards/docker-compose.yml
-    sed -i "s/\${TZ}/${TZ}/g" /opt/stacks/dashboards/docker-compose.yml
+    sed -i "s|\${DOMAIN}|${DOMAIN}|g" /opt/stacks/dashboards/docker-compose.yml
+    sed -i "s|\${TZ}|${TZ}|g" /opt/stacks/dashboards/docker-compose.yml
 
     # Deploy dashboards stack
     cd /opt/stacks/dashboards
