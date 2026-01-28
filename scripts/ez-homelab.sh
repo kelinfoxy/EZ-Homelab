@@ -594,6 +594,10 @@ deploy_core() {
     # Replace placeholders in core compose file
     replace_env_placeholders "/opt/stacks/core/docker-compose.yml"
 
+    # Manual replacement for x-dockge section (ensure all placeholders are replaced)
+    sed -i "s/\${DOMAIN}/${DOMAIN}/g" /opt/stacks/core/docker-compose.yml
+    sed -i "s/\${SERVER_IP}/${SERVER_IP}/g" /opt/stacks/core/docker-compose.yml
+
     # Deploy core stack
     cd /opt/stacks/core
     docker compose up -d
@@ -665,6 +669,10 @@ deploy_dashboards() {
 
     # Replace placeholders in dashboards compose file
     replace_env_placeholders "/opt/stacks/dashboards/docker-compose.yml"
+
+    # Manual replacement for any remaining placeholders
+    sed -i "s/\${DOMAIN}/${DOMAIN}/g" /opt/stacks/dashboards/docker-compose.yml
+    sed -i "s/\${TZ}/${TZ}/g" /opt/stacks/dashboards/docker-compose.yml
 
     # Deploy dashboards stack
     cd /opt/stacks/dashboards
