@@ -116,6 +116,18 @@ http:
             theme: ghost
             show-details-by-default: true
 
+    sablier-${SERVER_HOSTNAME}-assistant:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-assistant
+          sessionDuration: 30m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: EZ-Assistant
+            theme: ghost
+            show-details-by-default: true
+
     sablier-${SERVER_HOSTNAME}-formio:
       plugin:
         sablier:
@@ -232,7 +244,7 @@ http:
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
-            displayName: MediaWiki
+            displayName: mediawiki
             theme: ghost
             show-details-by-default: true
 
