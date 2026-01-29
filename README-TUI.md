@@ -45,18 +45,18 @@ A modern, user-friendly Terminal User Interface (TUI) replacement for the comple
 
 #### Interactive Setup (Recommended)
 ```bash
-python ez-homelab-tui.py
+python ez-homelab.py
 ```
 
 #### Automated Deployment
 ```bash
 # Complete your .env file first, then:
-python ez-homelab-tui.py --yes
+python ez-homelab.py --yes
 ```
 
 #### Save Configuration Only
 ```bash
-python ez-homelab-tui.py --save-only
+python ez-homelab.py --save-only
 ```
 
 ## Command Line Options
@@ -193,7 +193,7 @@ After successful deployment:
 ### Running Tests
 ```bash
 # Basic syntax check
-python -m py_compile ez-homelab-tui.py
+python -m py_compile ez-homelab.py
 
 # YAML validation
 python -c "import yaml; yaml.safe_load(open('config-templates/traefik/dynamic/external-host-production.yml'))"
