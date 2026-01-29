@@ -43,8 +43,10 @@ services:
       - "homelab.category=dashboard"
       - "homelab.description=Application dashboard"
       # Traefik reverse proxy (comment/uncomment to disable/enable)
-      # If Traefik is on a remote server: these labels are NOT USED; 
-      #   configure external yml files in /traefik/dynamic folder instead.
+      # IMPORTANT: On REMOTE SERVERS (where Traefik runs elsewhere):
+      #   - COMMENT OUT all traefik.* labels below (don't delete them)
+      #   - Routes are configured via external YAML files on the core server
+      #   - This prevents conflicts between Docker labels and file provider
       - "traefik.enable=true"
       - "traefik.http.routers.homepage.rule=Host(`homepage.${DOMAIN}`)"
       - "traefik.http.routers.homepage.entrypoints=websecure"

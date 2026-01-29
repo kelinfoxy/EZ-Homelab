@@ -235,6 +235,14 @@ load_env_file() {
         echo "  Domain: ${DOMAIN:-Not set}"
         echo "  Server IP: ${SERVER_IP:-Not set}"
         echo "  Server Hostname: ${SERVER_HOSTNAME:-Not set}"
+        echo "  Remote Server IP: ${REMOTE_SERVER_IP:-Not set}"
+        echo "  Remote Server Hostname: ${REMOTE_SERVER_HOSTNAME:-Not set}"
+        echo "  Remote Server User: ${REMOTE_SERVER_USER:-Not set}"
+        if [ -n "${REMOTE_SERVER_PASSWORD:-}" ]; then
+            echo "  Remote Server Password: [HIDDEN]"
+        else
+            echo "  Remote Server Password: Not set"
+        fi
         echo "  Default User: ${DEFAULT_USER:-Not set}"
         if [ -n "${DEFAULT_PASSWORD:-}" ]; then
             echo "  Default Password: [HIDDEN]"
@@ -264,6 +272,10 @@ save_env_file() {
     sudo -u "$ACTUAL_USER" sed -i "s%DOMAIN=.*%DOMAIN=$DOMAIN%" "$REPO_DIR/.env"
     sudo -u "$ACTUAL_USER" sed -i "s%SERVER_IP=.*%SERVER_IP=$SERVER_IP%" "$REPO_DIR/.env"
     sudo -u "$ACTUAL_USER" sed -i "s%SERVER_HOSTNAME=.*%SERVER_HOSTNAME=$SERVER_HOSTNAME%" "$REPO_DIR/.env"
+    sudo -u "$ACTUAL_USER" sed -i "s%REMOTE_SERVER_IP=.*%REMOTE_SERVER_IP=$REMOTE_SERVER_IP%" "$REPO_DIR/.env"
+    sudo -u "$ACTUAL_USER" sed -i "s%REMOTE_SERVER_HOSTNAME=.*%REMOTE_SERVER_HOSTNAME=$REMOTE_SERVER_HOSTNAME%" "$REPO_DIR/.env"
+    sudo -u "$ACTUAL_USER" sed -i "s%REMOTE_SERVER_USER=.*%REMOTE_SERVER_USER=$REMOTE_SERVER_USER%" "$REPO_DIR/.env"
+    sudo -u "$ACTUAL_USER" sed -i "s%REMOTE_SERVER_PASSWORD=.*%REMOTE_SERVER_PASSWORD=$REMOTE_SERVER_PASSWORD%" "$REPO_DIR/.env"
     sudo -u "$ACTUAL_USER" sed -i "s%TZ=.*%TZ=$TZ%" "$REPO_DIR/.env"
 
     # Authelia settings (only generate secrets if deploying core)
@@ -332,6 +344,10 @@ prompt_for_values() {
     DEFAULT_SERVER_IP="${SERVER_IP:-$(hostname -I | awk '{print $1}')}"
     DEFAULT_CORE_SERVER_IP="${CORE_SERVER_IP:-}"
     DEFAULT_SERVER_HOSTNAME="${SERVER_HOSTNAME:-$(hostname)}"
+    DEFAULT_REMOTE_SERVER_IP="${REMOTE_SERVER_IP:-}"
+    DEFAULT_REMOTE_SERVER_HOSTNAME="${REMOTE_SERVER_HOSTNAME:-}"
+    DEFAULT_REMOTE_SERVER_USER="${REMOTE_SERVER_USER:-${DEFAULT_USER:-}}"
+    DEFAULT_REMOTE_SERVER_PASSWORD="${REMOTE_SERVER_PASSWORD:-}"
     DEFAULT_TZ="${TZ:-America/New_York}"
 
     # Display current/default configuration
@@ -339,6 +355,14 @@ prompt_for_values() {
     echo "  Domain: $DEFAULT_DOMAIN"
     echo "  Server IP: $DEFAULT_SERVER_IP"
     echo "  Server Hostname: $DEFAULT_SERVER_HOSTNAME"
+    echo "  Remote Server IP: $DEFAULT_REMOTE_SERVER_IP"
+    echo "  Remote Server Hostname: $DEFAULT_REMOTE_SERVER_HOSTNAME"
+    echo "  Remote Server User: $DEFAULT_REMOTE_SERVER_USER"
+    if [ -n "$DEFAULT_REMOTE_SERVER_PASSWORD" ]; then
+        echo "  Remote Server Password: [HIDDEN]"
+    else
+        echo "  Remote Server Password: Not set"
+    fi
     echo "  Timezone: $DEFAULT_TZ"
 
     if [ "$DEPLOY_CORE" = false ] && [ -z "$DEFAULT_CORE_SERVER_IP" ]; then
@@ -373,6 +397,25 @@ prompt_for_values() {
         # Server Hostname
         read -p "Server Hostname [$DEFAULT_SERVER_HOSTNAME]: " SERVER_HOSTNAME
         SERVER_HOSTNAME="${SERVER_HOSTNAME:-$DEFAULT_SERVER_HOSTNAME}"
+
+        # Remote Server IP
+        read -p "Remote Server IP [$DEFAULT_REMOTE_SERVER_IP]: " REMOTE_SERVER_IP
+        REMOTE_SERVER_IP="${REMOTE_SERVER_IP:-$DEFAULT_REMOTE_SERVER_IP}"
+
+        # Remote Server Hostname
+        read -p "Remote Server Hostname [$DEFAULT_REMOTE_SERVER_HOSTNAME]: " REMOTE_SERVER_HOSTNAME
+        REMOTE_SERVER_HOSTNAME="${REMOTE_SERVER_HOSTNAME:-$DEFAULT_REMOTE_SERVER_HOSTNAME}"
+
+        # Remote Server User
+        read -p "Remote Server User [$DEFAULT_REMOTE_SERVER_USER]: " REMOTE_SERVER_USER
+        REMOTE_SERVER_USER="${REMOTE_SERVER_USER:-$DEFAULT_REMOTE_SERVER_USER}"
+
+        # Remote Server Password
+        read -s -p "Remote Server Password: " REMOTE_SERVER_PASSWORD
+        echo ""
+        if [ -z "$REMOTE_SERVER_PASSWORD" ]; then
+            REMOTE_SERVER_PASSWORD="$DEFAULT_REMOTE_SERVER_PASSWORD"
+        fi
 
         # Timezone
         read -p "Timezone [$DEFAULT_TZ]: " TZ
@@ -562,12 +605,28 @@ deploy_core() {
     fi
     cp -r "$REPO_DIR/config-templates/traefik" /opt/stacks/core/
 
+    # Only copy external host files on core server (where Traefik runs)
+    if [ "$DEPLOY_CORE" = true ]; then
+        log_info "Core server detected - copying external host routing files"
+    else
+        log_info "Remote server detected - removing external host routing files"
+        rm -f /opt/stacks/core/traefik/dynamic/external-host-*.yml
+    fi
+
     # Replace ACME email placeholder
     sed -i "s/ACME_EMAIL_PLACEHOLDER/${AUTHELIA_ADMIN_EMAIL}/g" /opt/stacks/core/traefik/traefik.yml
 
     # Replace domain placeholders in traefik dynamic configs
     find /opt/stacks/core/traefik/dynamic -name "*.yml" -exec sed -i "s/\${DOMAIN}/${DOMAIN}/g" {} \;
     find /opt/stacks/core/traefik/dynamic -name "*.yml" -exec sed -i "s/\${SERVER_HOSTNAME}/${SERVER_HOSTNAME}/g" {} \;
+    find /opt/stacks/core/traefik/dynamic -name "*.yml" -exec sed -i "s/\${REMOTE_SERVER_HOSTNAME}/${REMOTE_SERVER_HOSTNAME}/g" {} \;
+    find /opt/stacks/core/traefik/dynamic -name "*.yml" -exec sed -i "s/\${REMOTE_SERVER_IP}/${REMOTE_SERVER_IP}/g" {} \;
+
+    # Rename external-host-production.yml to use remote server hostname
+    if [ -f "/opt/stacks/core/traefik/dynamic/external-host-production.yml" ]; then
+        mv "/opt/stacks/core/traefik/dynamic/external-host-production.yml" "/opt/stacks/core/traefik/dynamic/external-host-${REMOTE_SERVER_HOSTNAME}.yml"
+        log_info "Renamed external-host-production.yml to external-host-${REMOTE_SERVER_HOSTNAME}.yml"
+    fi
 
     if [ -d "/opt/stacks/core/authelia" ]; then
         mv /opt/stacks/core/authelia /opt/stacks/core/authelia.backup.$(date +%Y%m%d_%H%M%S)
@@ -661,6 +720,11 @@ deploy_dashboards() {
     # Copy homepage config
     if [ -d "$REPO_DIR/docker-compose/dashboards/homepage" ]; then
         cp -r "$REPO_DIR/docker-compose/dashboards/homepage" /opt/stacks/dashboards/
+        
+        # Replace placeholders in homepage config files
+        find /opt/stacks/dashboards/homepage -name "*.yaml" -type f | while read -r config_file; do
+            replace_env_placeholders "$config_file"
+        done
     fi
 
     # Replace placeholders in dashboards compose file

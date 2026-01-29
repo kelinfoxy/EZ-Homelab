@@ -1,0 +1,795 @@
+http:
+  routers:
+    backrest-${SERVER_HOSTNAME}:
+      rule: "Host(`backrest.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: backrest-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-backrest@file
+        - authelia@docker
+
+    bookstack-${SERVER_HOSTNAME}:
+      rule: "Host(`bookstack.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: bookstack-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-bookstack@file
+        - authelia@docker
+    
+    vaultwarden-${SERVER_HOSTNAME}:
+      rule: "Host(`vault.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: vaultwarden-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      # SSO disabled for browser extension and mobile app compatibility
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-vaultwarden@file
+
+    calibre-web-${SERVER_HOSTNAME}:
+      rule: "Host(`calibre.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: calibre-web-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-calibre-web@file
+        - authelia@docker
+
+    code-${SERVER_HOSTNAME}:
+      rule: "Host(`code.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: code-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-code-server@file
+        - authelia@docker
+
+    dockge-${SERVER_HOSTNAME}:
+      rule: "Host(`jarvis.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: dockge-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - authelia@docker
+
+    dockhand-${SERVER_HOSTNAME}:
+      rule: "Host(`dockhand.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: dockhand-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - authelia@docker
+
+    dokuwiki-${SERVER_HOSTNAME}:
+      rule: "Host(`dokuwiki.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: dokuwiki-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-dokuwiki@file
+        - authelia@docker
+
+    dozzle-${SERVER_HOSTNAME}:
+      rule: "Host(`dozzle.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: dozzle-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-dozzle@file
+        - authelia@docker
+
+    duplicati-${SERVER_HOSTNAME}:
+      rule: "Host(`duplicati.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: duplicati-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-duplicati@file
+        - authelia@docker
+
+    ez-assistant-${SERVER_HOSTNAME}:
+      rule: "Host(`assistant.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - authelia@docker
+        # - sablier-${SERVER_HOSTNAME}-assistant@file
+        - ez-assistant-websocket
+      service: ez-assistant-${SERVER_HOSTNAME}
+
+    formio-${SERVER_HOSTNAME}:
+      rule: "Host(`formio.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: formio-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-formio@file
+        - authelia@docker
+
+    gitea-${SERVER_HOSTNAME}:
+      rule: "Host(`gitea.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: gitea-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-gitea@file
+        - authelia@docker
+
+    glances-${SERVER_HOSTNAME}:
+      rule: "Host(`glances.jarvis.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: glances-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-glances@file
+        - authelia@docker
+
+    homepage-${SERVER_HOSTNAME}:
+      rule: "Host(`homepage.jarvis.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: homepage-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - authelia@docker
+
+    homarr-${SERVER_HOSTNAME}:
+      rule: "Host(`homarr.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: homarr-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - authelia@docker
+        - sablier-${SERVER_HOSTNAME}-homarr@file
+
+    jellyfin-${SERVER_HOSTNAME}:
+      rule: "Host(`jellyfin.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: jellyfin-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-jellyfin@file
+        # No authelia middleware for media apps
+
+    jupyter-${SERVER_HOSTNAME}:
+      rule: "Host(`jupyter.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: jupyter-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-jupyter@file
+        - authelia@docker
+
+    kopia-${SERVER_HOSTNAME}:
+      rule: "Host(`kopia.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: kopia-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-kopia@file
+        - authelia@docker
+
+    mealie-${SERVER_HOSTNAME}:
+      rule: "Host(`mealie.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: mealie-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-mealie@file
+        - authelia@docker
+
+    motioneye-${SERVER_HOSTNAME}:
+      rule: "Host(`motioneye.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: motioneye-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - authelia@docker
+
+    mediawiki-${SERVER_HOSTNAME}:
+      rule: "Host(`mediawiki.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: mediawiki-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-mediawiki@file
+        - authelia@docker
+
+    nextcloud-${SERVER_HOSTNAME}:
+      rule: "Host(`nextcloud.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: nextcloud-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-nextcloud@file
+        - authelia@docker
+
+    openkm-${SERVER_HOSTNAME}:
+      rule: "Host(`openkm.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: openkm-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-openkm@file
+        - authelia@docker
+
+    openwebui-${SERVER_HOSTNAME}:
+      rule: "Host(`openwebui.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: openwebui-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-openwebui@file
+        - authelia@docker
+
+    qbittorrent-${SERVER_HOSTNAME}:
+      rule: "Host(`qbit.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: qbittorrent-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-arr@file
+        - authelia@docker
+
+    tdarr-${SERVER_HOSTNAME}:
+      rule: "Host(`tdarr.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: tdarr-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-arr@file
+        - authelia@docker
+
+    unmanic-${SERVER_HOSTNAME}:
+      rule: "Host(`unmanic.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: unmanic-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-unmanic@file
+        - authelia@docker
+        - authelia@docker
+
+    wordpress-${SERVER_HOSTNAME}:
+      rule: "Host(`wordpress.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: wordpress-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-wordpress@file
+        - authelia@docker
+
+# Arr Services (no SSO for media apps)
+    
+    jellyseerr-${SERVER_HOSTNAME}:
+      rule: "Host(`jellyseerr.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: jellyseerr-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-arr@file
+        - authelia@docker
+
+    prowlarr-${SERVER_HOSTNAME}:
+      rule: "Host(`prowlarr.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: prowlarr-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-arr@file
+        - authelia@docker
+
+    radarr-${SERVER_HOSTNAME}:
+      rule: "Host(`radarr.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: radarr-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-arr@file
+        - authelia@docker
+
+    sonarr-${SERVER_HOSTNAME}:
+      rule: "Host(`sonarr.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: sonarr-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-arr@file
+        - authelia@docker
+
+    lidarr-${SERVER_HOSTNAME}:
+      rule: "Host(`lidarr.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: lidarr-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-arr@file
+        - authelia@docker
+
+    readarr-${SERVER_HOSTNAME}:
+      rule: "Host(`readarr.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: readarr-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-arr@file
+        - authelia@docker
+
+    mylar3-${SERVER_HOSTNAME}:
+      rule: "Host(`mylar3.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: mylar3-${SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - sablier-${SERVER_HOSTNAME}-arr@file
+        - authelia@docker
+
+# Remote Server Services (${REMOTE_SERVER_HOSTNAME})
+    dockge-${REMOTE_SERVER_HOSTNAME}:
+      rule: "Host(`dockge.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: dockge-${REMOTE_SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - authelia@docker
+
+    dozzle-${REMOTE_SERVER_HOSTNAME}:
+      rule: "Host(`dozzle.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: dozzle-${REMOTE_SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - authelia@docker
+
+    glances-${REMOTE_SERVER_HOSTNAME}:
+      rule: "Host(`glances.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: glances-${REMOTE_SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - authelia@docker
+
+    backrest-${REMOTE_SERVER_HOSTNAME}:
+      rule: "Host(`backrest.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: backrest-${REMOTE_SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - authelia@docker
+
+    duplicati-${REMOTE_SERVER_HOSTNAME}:
+      rule: "Host(`duplicati.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: duplicati-${REMOTE_SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - authelia@docker
+
+    homepage-${REMOTE_SERVER_HOSTNAME}:
+      rule: "Host(`homepage.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: homepage-${REMOTE_SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - authelia@docker
+
+    homarr-${REMOTE_SERVER_HOSTNAME}:
+      rule: "Host(`homarr.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: homarr-${REMOTE_SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - authelia@docker
+
+    grafana-${REMOTE_SERVER_HOSTNAME}:
+      rule: "Host(`grafana.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: grafana-${REMOTE_SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - authelia@docker
+
+    prometheus-${REMOTE_SERVER_HOSTNAME}:
+      rule: "Host(`prometheus.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: prometheus-${REMOTE_SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - authelia@docker
+
+    uptime-kuma-${REMOTE_SERVER_HOSTNAME}:
+      rule: "Host(`status.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: uptime-kuma-${REMOTE_SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - authelia@docker
+
+# Service Definitions
+  services:
+    backrest-${SERVER_HOSTNAME}:
+      loadBalancer:
+        servers:
+          - url: "http://${SERVER_IP}:9898"
+        passHostHeader: true
+
+    vaultwarden-${SERVER_HOSTNAME}:
+      loadBalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8091"
+        passHostHeader: true
+
+    bookstack-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:6875"
+        passHostHeader: true
+
+    calibre-web-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8083"
+        passHostHeader: true
+
+    code-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8079"
+        passHostHeader: true
+
+    dockge-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:5001"
+        passHostHeader: true
+
+    dockhand-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:3003"
+        passHostHeader: true
+
+    dokuwiki-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8087"
+        passHostHeader: true
+
+    dozzle-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8085"
+        passHostHeader: true
+
+    duplicati-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8200"
+        passHostHeader: true
+
+    ez-assistant-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:18789"  # Internal IP of ${SERVER_HOSTNAME} server
+        passHostHeader: true
+
+    formio-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:3002"
+        passHostHeader: true
+
+    gitea-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:3010"
+        passHostHeader: true
+
+    glances-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:61208"
+        passHostHeader: true
+
+    homarr-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:7575"
+        passHostHeader: true
+
+    homepage-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:3000"
+        passHostHeader: true
+
+    jellyfin-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8096"
+        passHostHeader: true
+
+    jupyter-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8890"
+        passHostHeader: true
+
+    kopia-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:51515"
+        passHostHeader: true
+
+    mealie-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:9000"
+        passHostHeader: true
+
+    mediawiki-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8086"
+        passHostHeader: true
+
+    motioneye-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8081"
+        passHostHeader: true
+
+    nextcloud-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8089"
+        passHostHeader: true
+
+    openkm-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:18080"
+        passHostHeader: true
+
+    openwebui-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:3000"
+        passHostHeader: true
+
+    qbittorrent-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8081"
+        passHostHeader: true
+
+    tdarr-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8265"
+        passHostHeader: true
+
+    unmanic-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8889"
+        passHostHeader: true
+
+    wordpress-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8088"
+        passHostHeader: true
+
+    # Arr Services
+
+    jellyseerr-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:5055"
+        passHostHeader: true
+
+    prowlarr-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:9696"
+        passHostHeader: true
+
+    radarr-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:7878"
+        passHostHeader: true
+
+    sonarr-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8989"
+        passHostHeader: true
+
+    lidarr-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8686"
+        passHostHeader: true
+
+    readarr-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8787"
+        passHostHeader: true
+
+    mylar3-${SERVER_HOSTNAME}:
+      loadBalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8090"
+        passHostHeader: true
+
+
+
+
+# Remote Server Service Definitions (${REMOTE_SERVER_HOSTNAME})
+    dockge-${REMOTE_SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${REMOTE_SERVER_IP}:5001"
+        passHostHeader: true
+
+    dozzle-${REMOTE_SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${REMOTE_SERVER_IP}:8085"
+        passHostHeader: true
+
+    glances-${REMOTE_SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${REMOTE_SERVER_IP}:61208"
+        passHostHeader: true
+
+    backrest-${REMOTE_SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${REMOTE_SERVER_IP}:9898"
+        passHostHeader: true
+
+    duplicati-${REMOTE_SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${REMOTE_SERVER_IP}:8200"
+        passHostHeader: true
+
+    homepage-${REMOTE_SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${REMOTE_SERVER_IP}:3000"
+        passHostHeader: true
+
+    homarr-${REMOTE_SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${REMOTE_SERVER_IP}:7575"
+        passHostHeader: true
+
+    grafana-${REMOTE_SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${REMOTE_SERVER_IP}:3000"
+        passHostHeader: true
+
+    prometheus-${REMOTE_SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${REMOTE_SERVER_IP}:9090"
+        passHostHeader: true
+
+    uptime-kuma-${REMOTE_SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${REMOTE_SERVER_IP}:3001"
+        passHostHeader: true
+
+# Middleware Definitions
+  middlewares:
+    ez-assistant-websocket:
+      headers:
+        accessControlAllowHeaders:
+          - "Connection"
+          - "Upgrade"
+        accessControlAllowMethods:
+          - "GET"
+          - "POST"
+          - "OPTIONS"
+        accessControlMaxAge: 86400

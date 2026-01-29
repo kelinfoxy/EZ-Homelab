@@ -1,0 +1,86 @@
+# Authelia Configuration
+# Copy to /opt/stacks/authelia/configuration.yml
+# IMPORTANT: Replace 'your-domain.duckdns.org' with your actual DuckDNS domain
+
+server:
+  host: 0.0.0.0
+  port: 9091
+
+log:
+  level: info
+
+theme: dark
+
+jwt_secret: ${AUTHELIA_JWT_SECRET}
+
+default_redirection_url: https://auth.${DOMAIN}
+
+totp:
+  issuer: ${DOMAIN}
+  period: 30
+  skew: 1
+
+authentication_backend:
+  file:
+    path: /config/users_database.yml
+    password:
+      algorithm: argon2id
+      iterations: 1
+      key_length: 32
+      salt_length: 16
+      memory: 1024
+      parallelism: 8
+
+access_control:
+  default_policy: deny
+  
+  rules:
+    # Bypass Authelia for Jellyfin (allow app access)
+    - domain: jellyfin.${DOMAIN}
+      policy: bypass
+    
+    # Bypass for Plex (allow app access)
+    - domain: plex.${DOMAIN}
+      policy: bypass
+    
+    # Bypass for Home Assistant (has its own auth)
+    - domain: ha.${DOMAIN}
+      policy: bypass
+    
+    # Protected: All other services require authentication
+    - domain: "*.${DOMAIN}"
+      policy: one_factor
+    
+    # Two-factor for admin services (optional)
+    # - domain:
+    #     - "admin.${DOMAIN}"
+    #     - "portainer.${DOMAIN}"
+    #   policy: two_factor
+
+session:
+  name: authelia_session
+  secret: ${AUTHELIA_SESSION_SECRET}
+  expiration: 24h      # Session expires after 24 hours
+  inactivity: 24h      # Session expires after 24 hours of inactivity
+  remember_me_duration: 1M
+  domain: ${DOMAIN}
+  cookies:
+    - name: authelia_session
+      domain: ${DOMAIN}
+      secure: true
+      same_site: lax
+
+regulation:
+  max_retries: 3
+  find_time: 2m
+  ban_time: 5m
+
+storage:
+  encryption_key: ${AUTHELIA_STORAGE_ENCRYPTION_KEY}
+  local:
+    path: /config/db.sqlite3
+
+notifier:
+  # File-based notifications (for development/testing)
+  filesystem:
+    filename: /config/notification.txt
