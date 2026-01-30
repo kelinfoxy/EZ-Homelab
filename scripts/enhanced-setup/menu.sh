@@ -130,11 +130,21 @@ show_system_status() {
     fi
 
     # Service count
-    local service_count
-    service_count=$(find_all_services | wc -l)
-    if (( service_count > 0 )); then
-        local running_count
-        running_count=$(find_all_services | while read -r service; do is_service_running "$service" && echo "1"; done | wc -l)
+    local service_count=0
+    local running_count=0
+    
+    # Safely count services with error handling
+    if service_list=$(find_all_services 2>/dev/null); then
+        service_count=$(echo "$service_list" | wc -l 2>/dev/null || echo "0")
+        # Remove whitespace and ensure it's a number
+        service_count=$(echo "$service_count" | tr -d '[:space:]' | sed 's/[^0-9]*//g')
+        if [[ "$service_count" =~ ^[0-9]+$ ]] && (( service_count > 0 )); then
+            running_count=$(echo "$service_list" | while read -r service; do is_service_running "$service" 2>/dev/null && echo "1"; done | wc -l 2>/dev/null || echo "0")
+            running_count=$(echo "$running_count" | tr -d '[:space:]' | sed 's/[^0-9]*//g')
+        fi
+    fi
+    
+    if [[ "$service_count" =~ ^[0-9]+$ ]] && (( service_count > 0 )); then
         echo "✅ Services: $running_count/$service_count running"
     else
         echo "ℹ️  Services: None deployed yet"
