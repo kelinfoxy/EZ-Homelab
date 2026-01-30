@@ -168,7 +168,20 @@ test_docker_installation() {
 install_system_packages() {
     print_info "Installing system packages..."
 
-    sudo apt update
+    # Check if user has sudo access
+    if ! sudo -n true 2>/dev/null; then
+        print_error "This script requires sudo access to install system packages."
+        print_error "Please run this script as a user with sudo privileges, or install the required packages manually:"
+        print_error "  sudo apt update && sudo apt install -y ${SYSTEM_PACKAGES[*]}"
+        return 1
+    fi
+
+    # Update package lists
+    print_info "Updating package lists..."
+    if ! sudo apt update; then
+        print_error "Failed to update package lists. Please check your internet connection and apt configuration."
+        return 1
+    fi
 
     local missing_packages=()
     for package in "${SYSTEM_PACKAGES[@]}"; do
@@ -178,7 +191,14 @@ install_system_packages() {
     done
 
     if [[ ${#missing_packages[@]} -gt 0 ]]; then
-        sudo apt install -y "${missing_packages[@]}"
+        print_info "Installing missing packages: ${missing_packages[*]}"
+        if ! sudo apt install -y "${missing_packages[@]}"; then
+            print_error "Failed to install required packages: ${missing_packages[*]}"
+            print_error "Please install them manually: sudo apt install -y ${missing_packages[*]}"
+            return 1
+        fi
+    else
+        print_info "All required packages are already installed"
     fi
 
     print_success "System packages installed"
@@ -345,7 +365,16 @@ main() {
     fi
 
     # Install system packages
-    run_with_progress "Installing system packages" "install_system_packages"
+    if ! run_with_progress "Installing system packages" "install_system_packages"; then
+        print_error "Failed to install system packages. This is required for Docker installation."
+        print_error "Please resolve the issue and re-run this script."
+        print_error "Common solutions:"
+        print_error "  - Ensure you have sudo access: sudo -l"
+        print_error "  - Check internet connection: ping 8.8.8.8"
+        print_error "  - Update package lists: sudo apt update"
+        print_error "  - Install packages manually: sudo apt install -y ${SYSTEM_PACKAGES[*]}"
+        exit 1
+    fi
 
     # Set up Python environment
     run_with_progress "Setting up Python environment" "setup_python_environment"
