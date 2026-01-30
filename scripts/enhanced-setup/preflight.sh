@@ -18,10 +18,10 @@ MIN_DISK_SPACE=20  # GB
 MIN_MEMORY=1024    # MB
 MIN_CPU_CORES=2
 
-# Required packages
+# Required packages (will be installed by setup.sh if missing)
 REQUIRED_PACKAGES=("curl" "wget" "git" "jq")
 
-# Optional packages (recommended)
+# Optional packages (recommended but not required)
 OPTIONAL_PACKAGES=("htop" "ncdu" "tmux" "unzip")
 
 # =============================================================================
@@ -102,7 +102,7 @@ check_network_connectivity() {
     return 0
 }
 
-# Check required packages
+# Check required packages (will be installed by setup.sh if missing)
 check_required_packages() {
     print_info "Checking required packages..."
 
@@ -114,9 +114,9 @@ check_required_packages() {
     done
 
     if [[ ${#missing[@]} -gt 0 ]]; then
-        print_error "Missing required packages: ${missing[*]}"
-        print_info "Install with: sudo apt update && sudo apt install -y ${missing[*]}"
-        return 1
+        print_warning "Required packages missing: ${missing[*]}"
+        print_info "These will be installed automatically by setup.sh"
+        return 2  # Warning, not error
     fi
 
     print_success "All required packages installed"

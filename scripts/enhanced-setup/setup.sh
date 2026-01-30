@@ -258,6 +258,11 @@ check_nvidia_setup_needed() {
 
 # Install NVIDIA drivers (if requested)
 install_nvidia_drivers() {
+    if $non_interactive; then
+        print_info "Skipping NVIDIA setup (non-interactive mode)"
+        return 0
+    fi
+
     if ! ui_yesno "NVIDIA GPU detected. Install NVIDIA drivers and Docker GPU support?"; then
         print_info "Skipping NVIDIA setup"
         return 0
@@ -329,10 +334,14 @@ main() {
     print_info "Starting EZ-Homelab system setup..."
     print_info "This will install Docker and configure your system for EZ-Homelab."
 
-    # Run pre-flight checks first
-    if ! "$(dirname "${BASH_SOURCE[0]}")/preflight.sh" --no-ui; then
-        print_error "Pre-flight checks failed. Please resolve issues before proceeding."
+    # Run pre-flight checks first (allow warnings)
+    local preflight_exit=0
+    "$(dirname "${BASH_SOURCE[0]}")/preflight.sh" --no-ui || preflight_exit=$?
+    if [[ $preflight_exit -eq 1 ]]; then
+        print_error "Pre-flight checks failed with critical errors. Please resolve issues before proceeding."
         exit 1
+    elif [[ $preflight_exit -eq 2 ]]; then
+        print_warning "Pre-flight checks completed with warnings. Setup will proceed and install missing dependencies."
     fi
 
     # Install system packages
