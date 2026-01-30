@@ -184,7 +184,7 @@ validate_os() {
         "Ubuntu"|"Debian"|"Raspbian")
             if [[ "$OS_NAME" == "Ubuntu" && "$OS_VERSION" =~ ^(20|22|24) ]]; then
                 return 0
-            elif [[ "$OS_NAME" == "Debian" && "$OS_VERSION" =~ ^(11|12) ]]; then
+            elif [[ "$OS_NAME" == "Debian" && "$OS_VERSION" =~ ^(11|12|13) ]]; then
                 return 0
             elif [[ "$OS_NAME" == "Raspbian" ]]; then
                 return 0
