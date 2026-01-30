@@ -365,6 +365,9 @@ main() {
     print_info "3. Run: ./localize.sh"
     print_info "4. Run: ./deploy.sh core"
 
+    echo ""
+    print_info "Returning to EZ-Homelab menu..."
+
     exit 0
 }
 

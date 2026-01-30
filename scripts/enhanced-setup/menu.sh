@@ -254,10 +254,14 @@ handle_config_menu() {
     case "$choice" in
         1)
             print_info "Starting interactive pre-deployment wizard..."
-            print_info "The menu will exit to allow the wizard to run. The menu will restart after completion."
+            print_info "The wizard will run and return to this menu when complete."
             echo
             read -rp "Press Enter to continue..."
-            exec ./pre-deployment-wizard.sh
+            if ./pre-deployment-wizard.sh; then
+                print_success "Pre-deployment wizard completed successfully"
+            else
+                print_error "Pre-deployment wizard exited with an error"
+            fi
             ;;
         2)
             print_info "Localizing configuration templates..."
