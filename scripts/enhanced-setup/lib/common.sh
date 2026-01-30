@@ -25,8 +25,8 @@ IS_ARM64=false
 [[ "$ARCH" == "aarch64" ]] && IS_ARM64=true
 
 # System information
-OS_NAME="$(lsb_release -si 2>/dev/null || echo "Unknown")"
-OS_VERSION="$(lsb_release -sr 2>/dev/null || echo "Unknown")"
+OS_NAME="$(lsb_release -si 2>/dev/null | tail -1 || echo "Unknown")"
+OS_VERSION="$(lsb_release -sr 2>/dev/null | tail -1 || echo "Unknown")"
 KERNEL_VERSION="$(uname -r)"
 
 # Colors for output

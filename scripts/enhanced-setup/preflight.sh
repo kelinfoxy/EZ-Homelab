@@ -232,7 +232,7 @@ check_user_permissions() {
         return 2
     fi
 
-    if ! sudo -n true 2>/dev/null; then
+    if ! sudo -n true 2>/dev/null && ! sudo -l >/dev/null 2>&1; then
         print_error "User does not have sudo access"
         print_error "Please ensure your user can run sudo commands"
         return 1
@@ -319,7 +319,8 @@ main() {
     local warnings=0
     local failed=0
 
-    # Run all checks
+    # Run all checks (disable strict error checking for this loop)
+    set +e
     local checks=(
         "check_os_compatibility"
         "check_system_resources"
@@ -346,6 +347,7 @@ main() {
             ((failed++))
         fi
     done
+    set -e  # Re-enable strict error checking
 
     echo ""
     print_info "Pre-flight validation complete!"

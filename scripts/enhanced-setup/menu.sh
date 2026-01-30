@@ -209,11 +209,13 @@ handle_system_menu() {
     case "$choice" in
         1)
             print_info "Running system preflight check..."
+            set +e
             ./preflight.sh
+            set -e
             ;;
         2)
             print_info "Installing and configuring Docker..."
-            ./setup.sh
+            ./setup.sh --no-ui --skip-nvidia
             ;;
         3)
             print_info "Validating Docker installation..."
@@ -252,19 +254,22 @@ handle_config_menu() {
     case "$choice" in
         1)
             print_info "Starting interactive pre-deployment wizard..."
-            ./pre-deployment-wizard.sh
+            print_info "The menu will exit to allow the wizard to run. The menu will restart after completion."
+            echo
+            read -rp "Press Enter to continue..."
+            exec ./pre-deployment-wizard.sh
             ;;
         2)
             print_info "Localizing configuration templates..."
-            ./localize.sh
+            ./localize.sh || true
             ;;
         3)
             print_info "Generalizing configuration files..."
-            ./generalize.sh
+            ./generalize.sh --method restore --no-ui || true
             ;;
         4)
             print_info "Validating all configurations..."
-            ./validate.sh
+            ./validate.sh || true
             ;;
         5)
             print_info "Current configuration status:"
@@ -347,30 +352,30 @@ handle_monitor_menu() {
     case "$choice" in
         1)
             print_info "Showing monitoring dashboard..."
-            ./monitor.sh dashboard
+            ./monitor.sh dashboard || true
             ;;
         2)
             print_info "Monitoring service health..."
-            ./monitor.sh check
+            ./monitor.sh check || true
             ;;
         3)
             print_info "Monitoring system resources..."
             echo "System Resources:"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            ./monitor.sh check | grep -E "(CPU|Memory|Disk)"
+            ./monitor.sh check | grep -E "(CPU|Memory|Disk)" || true
             ;;
         4)
             echo "Available services:"
-            ./service.sh list | grep "✅ Running" | head -10
+            ./service.sh list | grep "✅ Running" | head -10 || true
             echo
             read -rp "Enter service name to view logs (or press Enter to skip): " service_name
             if [[ -n "$service_name" ]]; then
-                ./service.sh logs "$service_name" -n 20
+                ./service.sh logs "$service_name" -n 20 || true
             fi
             ;;
         5)
             print_info "Starting continuous monitoring (Ctrl+C to stop)..."
-            ./monitor.sh watch -i 30
+            ./monitor.sh watch -i 30 || true
             ;;
         6) return 0 ;; # Back to main menu
         *)
@@ -390,39 +395,39 @@ handle_backup_menu() {
     case "$choice" in
         1)
             print_info "Backing up configuration files..."
-            ./backup.sh config
+            ./backup.sh config || true
             ;;
         2)
             print_info "Backing up Docker volumes..."
-            ./backup.sh volumes
+            ./backup.sh volumes || true
             ;;
         3)
             print_info "Backing up system logs..."
-            ./backup.sh logs
+            ./backup.sh logs || true
             ;;
         4)
             print_info "Backing up everything..."
-            ./backup.sh all
+            ./backup.sh all || true
             ;;
         5)
             echo "Available backups:"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            ./backup.sh list config
-            ./backup.sh list volumes
-            ./backup.sh list logs
+            ./backup.sh list config || true
+            ./backup.sh list volumes || true
+            ./backup.sh list logs || true
             ;;
         6)
             echo "Available backups:"
-            ./backup.sh list config | grep -E "\.tar\.gzip$" | tail -5
+            ./backup.sh list config | grep -E "\.tar\.gzip$" | tail -5 || true
             echo
             read -rp "Enter backup filename to restore (or press Enter to skip): " backup_file
             if [[ -n "$backup_file" ]]; then
-                ./backup.sh config --restore "$backup_file"
+                ./backup.sh config --restore "$backup_file" || true
             fi
             ;;
         7)
             print_info "Setting up automated backups..."
-            ./backup.sh schedule
+            ./backup.sh schedule || true
             ;;
         8) return 0 ;; # Back to main menu
         *)
@@ -442,35 +447,35 @@ handle_update_menu() {
     case "$choice" in
         1)
             print_info "Checking for service updates..."
-            ./update.sh check
+            ./update.sh check || true
             ;;
         2)
             echo "Available services:"
-            ./service.sh list | grep "✅ Running" | head -10
+            ./service.sh list | grep "✅ Running" | head -10 || true
             echo
             read -rp "Enter service name to update (or press Enter to skip): " service_name
             if [[ -n "$service_name" ]]; then
-                ./update.sh update "$service_name"
+                ./update.sh update "$service_name" || true
             fi
             ;;
         3)
             print_warning "This will update all services. Continue? (y/N): "
             read -r response
             if [[ "$response" =~ ^[Yy]$ ]]; then
-                ./update.sh update all
+                ./update.sh update all || true
             fi
             ;;
         4)
             print_info "Showing update history..."
-            ./update.sh status
+            ./update.sh status || true
             ;;
         5)
             print_info "Monitoring update progress..."
-            ./update.sh monitor
+            ./update.sh monitor || true
             ;;
         6)
             print_info "Setting up automated updates..."
-            ./update.sh schedule
+            ./update.sh schedule || true
             ;;
         7) return 0 ;; # Back to main menu
         *)
@@ -499,7 +504,7 @@ handle_advanced_menu() {
                     break
                 fi
                 if [[ -n "$cmd" ]]; then
-                    ./service.sh $cmd
+                    ./service.sh $cmd || true
                 fi
             done
             ;;
@@ -541,7 +546,7 @@ handle_advanced_menu() {
             echo
             read -rp "Run cleanup? (y/N): " response
             if [[ "$response" =~ ^[Yy]$ ]]; then
-                ./service.sh cleanup
+                ./service.sh cleanup || true
             fi
             ;;
         6)
@@ -554,7 +559,7 @@ handle_advanced_menu() {
             case "$tool_choice" in
                 1) ping -c 3 8.8.8.8 ;;
                 2) docker logs $(docker ps -q | head -1) 2>/dev/null || echo "No containers running" ;;
-                3) ./validate.sh ;;
+                3) ./validate.sh || true ;;
                 4) uname -a && docker --version ;;
             esac
             ;;
@@ -593,7 +598,7 @@ show_system_menu() {
             break
         fi
 
-        handle_system_menu "$choice"
+        handle_system_menu "$choice" || true
     done
 }
 
@@ -607,7 +612,7 @@ show_config_menu() {
             break
         fi
 
-        handle_config_menu "$choice"
+        handle_config_menu "$choice" || true
     done
 }
 
@@ -621,7 +626,7 @@ show_deploy_menu() {
             break
         fi
 
-        handle_deploy_menu "$choice"
+        handle_deploy_menu "$choice" || true
     done
 }
 
@@ -635,7 +640,7 @@ show_monitor_menu() {
             break
         fi
 
-        handle_monitor_menu "$choice"
+        handle_monitor_menu "$choice" || true
     done
 }
 
@@ -649,7 +654,7 @@ show_backup_menu() {
             break
         fi
 
-        handle_backup_menu "$choice"
+        handle_backup_menu "$choice" || true
     done
 }
 
@@ -663,7 +668,7 @@ show_update_menu() {
             break
         fi
 
-        handle_update_menu "$choice"
+        handle_update_menu "$choice" || true
     done
 }
 
@@ -677,7 +682,7 @@ show_advanced_menu() {
             break
         fi
 
-        handle_advanced_menu "$choice"
+        handle_advanced_menu "$choice" || true
     done
 }
 
