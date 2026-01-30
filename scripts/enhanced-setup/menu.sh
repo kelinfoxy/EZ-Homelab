@@ -256,6 +256,13 @@ handle_config_menu() {
             print_info "Starting interactive pre-deployment wizard..."
             print_info "The wizard will run and return to this menu when complete."
             echo
+            # Check if UI tools are available
+            if ! command_exists whiptail && ! command_exists dialog; then
+                print_error "Pre-deployment wizard requires whiptail or dialog to be installed"
+                print_info "Install with: sudo apt install whiptail"
+                read -rp "Press Enter to continue..."
+                continue
+            fi
             read -rp "Press Enter to continue..."
             if ./pre-deployment-wizard.sh; then
                 print_success "Pre-deployment wizard completed successfully"
