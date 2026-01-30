@@ -20,8 +20,8 @@ RECOMMENDED_DOCKER_VERSION="24.0.0"
 # Required system packages
 SYSTEM_PACKAGES=("curl" "wget" "git" "jq" "unzip" "software-properties-common" "apt-transport-https" "ca-certificates" "gnupg" "lsb-release")
 
-# Python packages (for virtual environment)
-PYTHON_PACKAGES=("docker-compose" "pyyaml" "requests")
+# Python packages (for virtual environment) - LEGACY, no longer used
+# PYTHON_PACKAGES=("docker-compose" "pyyaml" "requests")
 
 # =============================================================================
 # DOCKER INSTALLATION FUNCTIONS
@@ -204,37 +204,6 @@ install_system_packages() {
     print_success "System packages installed"
 }
 
-# Set up Python virtual environment
-setup_python_environment() {
-    print_info "Setting up Python virtual environment..."
-
-    local venv_dir="$HOME/.ez-homelab-venv"
-
-    # Create virtual environment
-    if [[ ! -d "$venv_dir" ]]; then
-        python3 -m venv "$venv_dir"
-    fi
-
-    # Activate and install packages
-    source "$venv_dir/bin/activate"
-
-    # Upgrade pip
-    pip install --upgrade pip
-
-    # Install required packages
-    if $IS_ARM64; then
-        # Use PiWheels for ARM64
-        pip install --extra-index-url https://www.piwheels.org/simple "${PYTHON_PACKAGES[@]}"
-    else
-        pip install "${PYTHON_PACKAGES[@]}"
-    fi
-
-    # Deactivate
-    deactivate
-
-    print_success "Python virtual environment configured"
-}
-
 # Configure system settings
 configure_system_settings() {
     print_info "Configuring system settings..."
@@ -375,9 +344,6 @@ main() {
         print_error "  - Install packages manually: sudo apt install -y ${SYSTEM_PACKAGES[*]}"
         exit 1
     fi
-
-    # Set up Python environment
-    run_with_progress "Setting up Python environment" "setup_python_environment"
 
     # Configure system settings
     run_with_progress "Configuring system settings" "configure_system_settings"
