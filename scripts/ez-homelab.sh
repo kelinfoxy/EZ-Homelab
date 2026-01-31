@@ -770,6 +770,13 @@ deploy_core() {
     # Only copy external host files on core server (where Traefik runs)
     if [ "$DEPLOY_CORE" = true ]; then
         log_info "Core server detected - copying external host routing files"
+        # Remove local-host-production.yml if no remote server hostname is set (single-server setup)
+        if [ -z "${REMOTE_SERVER_HOSTNAME:-}" ]; then
+            rm -f /opt/stacks/core/traefik/dynamic/local-host-production.yml
+            # Remove remote server sections from sablier.yml for single-server setup
+            sed -i '335,$d' /opt/stacks/core/traefik/dynamic/sablier.yml
+            log_info "Single-server setup - removed remote server sections from sablier.yml"
+        fi
     else
         log_info "Remote server detected - removing external host routing files"
         rm -f /opt/stacks/core/traefik/dynamic/external-host-*.yml
@@ -919,6 +926,13 @@ deploy_dashboards() {
         find /opt/stacks/dashboards/homepage -name "*.yaml" -type f | while read -r config_file; do
             replace_env_placeholders "$config_file"
         done
+        
+        # Remove remote server entries from homepage services for single-server setup
+        if [ -z "${REMOTE_SERVER_HOSTNAME:-}" ]; then
+            sed -i '/\${REMOTE_SERVER_HOSTNAME}/d' /opt/stacks/dashboards/homepage/services.yaml
+            sed -i '/\${REMOTE_SERVER_HOSTNAME}/d' /opt/stacks/dashboards/homepage/homepage/services.yaml
+            log_info "Single-server setup - removed remote server entries from homepage services"
+        fi
         
         # Process template files and rename them
         find /opt/stacks/dashboards/homepage -name "*.template" -type f | while read -r template_file; do
