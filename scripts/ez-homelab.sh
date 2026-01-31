@@ -6,6 +6,10 @@
 # Run './ez-homelab.sh' to deploy stacks after initial setup
 set -e  # Exit on error
 
+# Debug logging configuration
+DEBUG=${DEBUG:-false}
+DEBUG_LOG_FILE="/tmp/ez-homelab-debug.log"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -13,49 +17,118 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Debug logging function
+debug_log() {
+    if [ "$DEBUG" = true ]; then
+        echo "$(date '+%Y-%m-%d %H:%M:%S') [DEBUG] $1" >> "$DEBUG_LOG_FILE"
+    fi
+}
+
+# Initialize debug log
+if [ "$DEBUG" = true ]; then
+    echo "$(date '+%Y-%m-%d %H:%M:%S') [DEBUG] ===== EZ-HOMELAB DEBUG LOG STARTED =====" > "$DEBUG_LOG_FILE"
+    debug_log "Script started with DEBUG=true"
+    debug_log "User: $USER, EUID: $EUID, PWD: $PWD"
+fi
+
 # Log functions
 log_info() {
     echo -e "${BLUE}[INFO]${NC} $1"
+    debug_log "[INFO] $1"
 }
 
 log_success() {
     echo -e "${GREEN}[SUCCESS]${NC} $1"
+    debug_log "[SUCCESS] $1"
 }
 
 log_warning() {
     echo -e "${YELLOW}[WARNING]${NC} $1"
+    debug_log "[WARNING] $1"
 }
 
 log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
+    debug_log "[ERROR] $1"
 }
 
-# Reusable function to replace environment variable placeholders in files
+# Safely load environment variables from .env file
+load_env_file_safely() {
+    local env_file="$1"
+    debug_log "Loading env file safely: $env_file"
+
+    if [ ! -f "$env_file" ]; then
+        debug_log "Env file does not exist: $env_file"
+        return 1
+    fi
+
+    # Read the .env file line by line and export variables safely
+    while IFS= read -r line || [ -n "$line" ]; do
+        # Skip comments and empty lines
+        [[ $line =~ ^[[:space:]]*# ]] && continue
+        [[ -z "$line" ]] && continue
+
+        # Parse KEY=VALUE, handling quoted values
+        if [[ $line =~ ^([^=]+)=(.*)$ ]]; then
+            local key="${BASH_REMATCH[1]}"
+            local value="${BASH_REMATCH[2]}"
+
+            # Remove surrounding quotes if present
+            if [[ $value =~ ^\'(.*)\'$ ]]; then
+                value="${BASH_REMATCH[1]}"
+            elif [[ $value =~ ^\"(.*)\"$ ]]; then
+                value="${BASH_REMATCH[1]}"
+            fi
+
+            # Export the variable
+            export "$key"="$value"
+            debug_log "Exported $key=[HIDDEN]"  # Don't log actual values for security
+        fi
+    done < "$env_file"
+
+    debug_log "Env file loaded successfully"
+}
 replace_env_placeholders() {
     local file_path="$1"
+    local fail_on_missing="${2:-false}"  # New parameter to control failure behavior
     local missing_vars=""
+    local replaced_count=0
+
+    debug_log "replace_env_placeholders called for file: $file_path, fail_on_missing: $fail_on_missing"
 
     if [ ! -f "$file_path" ]; then
         log_warning "File $file_path does not exist, skipping placeholder replacement"
+        debug_log "File $file_path does not exist"
         return
     fi
 
     # Find all ${VAR} patterns in the file
     local vars=$(grep -o '\${[^}]*}' "$file_path" | sed 's/\${//' | sed 's/}//' | sort | uniq)
+    debug_log "Found variables to replace: $vars"
 
     for var in $vars; do
         if [ -z "${!var:-}" ]; then
             log_warning "Environment variable $var not found in .env file"
+            debug_log "Missing variable: $var"
             missing_vars="$missing_vars $var"
         else
             # Replace ${VAR} with the value
+            debug_log "Replacing \${$var} with value: [HIDDEN]"  # Don't log actual secrets
             sed -i "s|\${$var}|${!var}|g" "$file_path"
+            replaced_count=$((replaced_count + 1))
         fi
     done
 
-    # Store missing vars for end-of-script summary
+    debug_log "Replaced $replaced_count variables in $file_path"
+
+    # Handle missing variables
     if [ -n "$missing_vars" ]; then
         MISSING_VARS_SUMMARY="${MISSING_VARS_SUMMARY}${missing_vars}"
+        if [ "$fail_on_missing" = true ]; then
+            log_error "Critical environment variables missing: $missing_vars"
+            debug_log "Failing deployment due to missing critical variables: $missing_vars"
+            exit 1
+        fi
     fi
 }
 
@@ -227,7 +300,7 @@ TLS_ISSUES_SUMMARY=""
 load_env_file() {
     if [ -f "$REPO_DIR/.env" ]; then
         log_info "Found existing .env file, loading current configuration..."
-        source "$REPO_DIR/.env"
+        load_env_file_safely "$REPO_DIR/.env"
 
         # Show current values
         echo ""
@@ -261,6 +334,7 @@ load_env_file() {
 
 # Save configuration to .env file
 save_env_file() {
+    debug_log "save_env_file() called, DEPLOY_CORE=$DEPLOY_CORE"
     log_info "Saving configuration to .env file..."
 
     # Create .env file if it doesn't exist
@@ -326,11 +400,69 @@ save_env_file() {
         fi
 
         # Save password hash
-        sudo -u "$ACTUAL_USER" sed -i "s%# AUTHELIA_ADMIN_PASSWORD=.*%AUTHELIA_ADMIN_PASSWORD=$AUTHELIA_ADMIN_PASSWORD%" "$REPO_DIR/.env"
-        sudo -u "$ACTUAL_USER" sed -i "s%AUTHELIA_ADMIN_PASSWORD=.*%AUTHELIA_ADMIN_PASSWORD=$AUTHELIA_ADMIN_PASSWORD%" "$REPO_DIR/.env"
+        sudo -u "$ACTUAL_USER" sed -i "s%# AUTHELIA_ADMIN_PASSWORD=.*%AUTHELIA_ADMIN_PASSWORD=\"$AUTHELIA_ADMIN_PASSWORD\"%" "$REPO_DIR/.env"
+        sudo -u "$ACTUAL_USER" sed -i "s%AUTHELIA_ADMIN_PASSWORD=.*%AUTHELIA_ADMIN_PASSWORD=\"$AUTHELIA_ADMIN_PASSWORD\"%" "$REPO_DIR/.env"
     fi
 
+    debug_log "Configuration saved to .env file"
     log_success "Configuration saved to .env file"
+}
+
+# Validate that required secrets are present for core deployment
+validate_secrets() {
+    debug_log "validate_secrets called, DEPLOY_CORE=$DEPLOY_CORE"
+
+    if [ "$DEPLOY_CORE" = false ]; then
+        debug_log "Core not being deployed, skipping secret validation"
+        return 0
+    fi
+
+    log_info "Validating required secrets for core deployment..."
+    debug_log "Checking Authelia secrets..."
+
+    local missing_secrets=""
+
+    # Check required Authelia secrets
+    if [ -z "${AUTHELIA_JWT_SECRET:-}" ]; then
+        missing_secrets="$missing_secrets AUTHELIA_JWT_SECRET"
+        debug_log "AUTHELIA_JWT_SECRET is missing"
+    fi
+
+    if [ -z "${AUTHELIA_SESSION_SECRET:-}" ]; then
+        missing_secrets="$missing_secrets AUTHELIA_SESSION_SECRET"
+        debug_log "AUTHELIA_SESSION_SECRET is missing"
+    fi
+
+    if [ -z "${AUTHELIA_STORAGE_ENCRYPTION_KEY:-}" ]; then
+        missing_secrets="$missing_secrets AUTHELIA_STORAGE_ENCRYPTION_KEY"
+        debug_log "AUTHELIA_STORAGE_ENCRYPTION_KEY is missing"
+    fi
+
+    if [ -z "${AUTHELIA_ADMIN_PASSWORD:-}" ]; then
+        missing_secrets="$missing_secrets AUTHELIA_ADMIN_PASSWORD"
+        debug_log "AUTHELIA_ADMIN_PASSWORD is missing"
+    fi
+
+    # Check other required variables
+    if [ -z "${DOMAIN:-}" ]; then
+        missing_secrets="$missing_secrets DOMAIN"
+        debug_log "DOMAIN is missing"
+    fi
+
+    if [ -z "${SERVER_IP:-}" ]; then
+        missing_secrets="$missing_secrets SERVER_IP"
+        debug_log "SERVER_IP is missing"
+    fi
+
+    if [ -n "$missing_secrets" ]; then
+        log_error "Critical configuration missing: $missing_secrets"
+        log_error "This will prevent Authelia and other services from starting correctly."
+        debug_log "Failing deployment due to missing secrets: $missing_secrets"
+        exit 1
+    fi
+
+    log_success "All required secrets validated"
+    debug_log "Secret validation passed"
 }
 
 # Prompt for required values
@@ -346,7 +478,7 @@ prompt_for_values() {
     DEFAULT_SERVER_HOSTNAME="${SERVER_HOSTNAME:-$(hostname)}"
     DEFAULT_REMOTE_SERVER_IP="${REMOTE_SERVER_IP:-}"
     DEFAULT_REMOTE_SERVER_HOSTNAME="${REMOTE_SERVER_HOSTNAME:-}"
-    DEFAULT_REMOTE_SERVER_USER="${REMOTE_SERVER_USER:-${DEFAULT_USER:-}}"
+    DEFAULT_REMOTE_SERVER_USER="${REMOTE_SERVER_USER:-${DEFAULT_USER}}"
     DEFAULT_REMOTE_SERVER_PASSWORD="${REMOTE_SERVER_PASSWORD:-}"
     DEFAULT_TZ="${TZ:-America/New_York}"
 
@@ -573,6 +705,14 @@ deploy_dockge() {
     # Copy Dockge stack files
     sudo cp "$REPO_DIR/docker-compose/dockge/docker-compose.yml" /opt/dockge/docker-compose.yml
     sudo cp "$REPO_DIR/.env" /opt/dockge/.env
+    sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/dockge/docker-compose.yml
+    sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/dockge/.env
+
+    # Remove sensitive variables from dockge .env (Dockge doesn't need them)
+    sed -i '/^AUTHELIA_ADMIN_PASSWORD=/d' /opt/dockge/.env
+    sed -i '/^AUTHELIA_JWT_SECRET=/d' /opt/dockge/.env
+    sed -i '/^AUTHELIA_SESSION_SECRET=/d' /opt/dockge/.env
+    sed -i '/^AUTHELIA_STORAGE_ENCRYPTION_KEY=/d' /opt/dockge/.env
 
     # Replace placeholders in Dockge compose file
     replace_env_placeholders "/opt/dockge/docker-compose.yml"
@@ -586,6 +726,7 @@ deploy_dockge() {
 
 # Deploy core stack function
 deploy_core() {
+    debug_log "deploy_core called"
     log_info "Deploying core stack..."
     log_info "  - DuckDNS (Dynamic DNS)"
     log_info "  - Traefik (Reverse Proxy with SSL)"
@@ -593,17 +734,38 @@ deploy_core() {
     echo ""
 
     # Copy core stack files
+    debug_log "Copying core stack files"
     sudo cp "$REPO_DIR/docker-compose/core/docker-compose.yml" /opt/stacks/core/docker-compose.yml
     sudo cp "$REPO_DIR/.env" /opt/stacks/core/.env
+    sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/core/docker-compose.yml
+    sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/core/.env
 
-    # Replace placeholders in core compose file
-    replace_env_placeholders "/opt/stacks/core/docker-compose.yml"
+    # Remove variables that core stack doesn't need
+    sed -i '/^QBITTORRENT_/d' /opt/stacks/core/.env
+    sed -i '/^GRAFANA_/d' /opt/stacks/core/.env
+    sed -i '/^CODE_SERVER_/d' /opt/stacks/core/.env
+    sed -i '/^JUPYTER_/d' /opt/stacks/core/.env
+    sed -i '/^POSTGRES_/d' /opt/stacks/core/.env
+    sed -i '/^NEXTCLOUD_/d' /opt/stacks/core/.env
+    sed -i '/^GITEA_/d' /opt/stacks/core/.env
+    sed -i '/^WORDPRESS_/d' /opt/stacks/core/.env
+    sed -i '/^BOOKSTACK_/d' /opt/stacks/core/.env
+    sed -i '/^MEDIAWIKI_/d' /opt/stacks/core/.env
+    sed -i '/^BITWARDEN_/d' /opt/stacks/core/.env
+    sed -i '/^FORMIO_/d' /opt/stacks/core/.env
+    sed -i '/^HOMEPAGE_VAR_/d' /opt/stacks/core/.env
+    sed -i '/^AUTHELIA_ADMIN_PASSWORD=/d' /opt/stacks/core/.env
 
-    # Copy configs
+    # Replace placeholders in core compose file (fail on missing critical vars)
+    replace_env_placeholders "/opt/stacks/core/docker-compose.yml" true
+
+    # Copy and configure Traefik config
+    debug_log "Setting up Traefik configuration"
     if [ -d "/opt/stacks/core/traefik" ]; then
         mv /opt/stacks/core/traefik /opt/stacks/core/traefik.backup.$(date +%Y%m%d_%H%M%S)
     fi
     cp -r "$REPO_DIR/config-templates/traefik" /opt/stacks/core/
+    sudo chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/core/traefik
 
     # Only copy external host files on core server (where Traefik runs)
     if [ "$DEPLOY_CORE" = true ]; then
@@ -613,47 +775,44 @@ deploy_core() {
         rm -f /opt/stacks/core/traefik/dynamic/external-host-*.yml
     fi
 
-    # Replace ACME email placeholder
-    sed -i "s/ACME_EMAIL_PLACEHOLDER/${AUTHELIA_ADMIN_EMAIL}/g" /opt/stacks/core/traefik/traefik.yml
+    # Replace all placeholders in Traefik config files
+    debug_log "Replacing placeholders in Traefik config files"
+    find /opt/stacks/core/traefik -name "*.yml" -type f | while read -r config_file; do
+        # Don't fail on missing variables for external host files (they're optional)
+        if [[ "$config_file" == *external-host* ]]; then
+            replace_env_placeholders "$config_file" false
+        else
+            replace_env_placeholders "$config_file" true
+        fi
+    done
 
-    # Replace domain placeholders in traefik dynamic configs
-    find /opt/stacks/core/traefik/dynamic -name "*.yml" -exec sed -i "s/\${DOMAIN}/${DOMAIN}/g" {} \;
-    find /opt/stacks/core/traefik/dynamic -name "*.yml" -exec sed -i "s/\${SERVER_HOSTNAME}/${SERVER_HOSTNAME}/g" {} \;
-    find /opt/stacks/core/traefik/dynamic -name "*.yml" -exec sed -i "s/\${REMOTE_SERVER_HOSTNAME}/${REMOTE_SERVER_HOSTNAME}/g" {} \;
-    find /opt/stacks/core/traefik/dynamic -name "*.yml" -exec sed -i "s/\${REMOTE_SERVER_IP}/${REMOTE_SERVER_IP}/g" {} \;
-
-    # Rename external-host-production.yml to use remote server hostname
-    if [ -f "/opt/stacks/core/traefik/dynamic/external-host-production.yml" ]; then
+    # Rename external-host-production.yml to use remote server hostname (only for multi-server setups)
+    if [ -n "${REMOTE_SERVER_HOSTNAME:-}" ] && [ -f "/opt/stacks/core/traefik/dynamic/external-host-production.yml" ]; then
         mv "/opt/stacks/core/traefik/dynamic/external-host-production.yml" "/opt/stacks/core/traefik/dynamic/external-host-${REMOTE_SERVER_HOSTNAME}.yml"
         log_info "Renamed external-host-production.yml to external-host-${REMOTE_SERVER_HOSTNAME}.yml"
     fi
 
+    # Copy and configure Authelia config
+    debug_log "Setting up Authelia configuration"
     if [ -d "/opt/stacks/core/authelia" ]; then
         mv /opt/stacks/core/authelia /opt/stacks/core/authelia.backup.$(date +%Y%m%d_%H%M%S)
     fi
     cp -r "$REPO_DIR/config-templates/authelia" /opt/stacks/core/
+    sudo chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/core/authelia
 
-    # Replace domain placeholders
-    sed -i "s/your-domain.duckdns.org/${DOMAIN}/g" /opt/stacks/core/authelia/configuration.yml
-    sed -i "s/\${DOMAIN}/${DOMAIN}/g" /opt/stacks/core/authelia/configuration.yml
-
-    # Replace secret placeholders
-    sed -i "s|\${AUTHELIA_JWT_SECRET}|${AUTHELIA_JWT_SECRET}|g" /opt/stacks/core/authelia/configuration.yml
-    sed -i "s|\${AUTHELIA_SESSION_SECRET}|${AUTHELIA_SESSION_SECRET}|g" /opt/stacks/core/authelia/configuration.yml
-    sed -i "s|\${AUTHELIA_STORAGE_ENCRYPTION_KEY}|${AUTHELIA_STORAGE_ENCRYPTION_KEY}|g" /opt/stacks/core/authelia/configuration.yml
-    sed -i "s/admin/${AUTHELIA_ADMIN_USER}/g" /opt/stacks/core/authelia/users_database.yml
-    sed -i "s/admin@example.com/${AUTHELIA_ADMIN_EMAIL}/g" /opt/stacks/core/authelia/users_database.yml
-    sed -i "s/\${DEFAULT_EMAIL}/${AUTHELIA_ADMIN_EMAIL}/g" /opt/stacks/core/authelia/users_database.yml
-    sed -i "s|\$argon2id\$v=19\$m=65536,t=3,p=4\$CHANGEME|${AUTHELIA_ADMIN_PASSWORD}|g" /opt/stacks/core/authelia/users_database.yml
+    # Replace all placeholders in Authelia config files
+    debug_log "Replacing placeholders in Authelia config files"
+    find /opt/stacks/core/authelia -name "*.yml" -type f | while read -r config_file; do
+        replace_env_placeholders "$config_file" true
+    done
 
     # Generate shared CA for multi-server TLS
+    debug_log "Generating shared CA"
     log_info "Generating shared CA certificate for multi-server TLS..."
     generate_shared_ca
 
-    # Replace placeholders in core compose file
-    replace_env_placeholders "/opt/stacks/core/docker-compose.yml"
-
     # Deploy core stack
+    debug_log "Deploying core stack with docker compose"
     cd /opt/stacks/core
     docker compose up -d
     log_success "Core infrastructure deployed"
@@ -673,6 +832,24 @@ deploy_infrastructure() {
     # Copy infrastructure stack
     cp "$REPO_DIR/docker-compose/infrastructure/docker-compose.yml" /opt/stacks/infrastructure/docker-compose.yml
     cp "$REPO_DIR/.env" /opt/stacks/infrastructure/.env
+    sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/infrastructure/docker-compose.yml
+    sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/infrastructure/.env
+
+    # Remove variables that infrastructure stack doesn't need
+    sed -i '/^AUTHELIA_/d' /opt/stacks/infrastructure/.env
+    sed -i '/^QBITTORRENT_/d' /opt/stacks/infrastructure/.env
+    sed -i '/^GRAFANA_/d' /opt/stacks/infrastructure/.env
+    sed -i '/^CODE_SERVER_/d' /opt/stacks/infrastructure/.env
+    sed -i '/^JUPYTER_/d' /opt/stacks/infrastructure/.env
+    sed -i '/^POSTGRES_/d' /opt/stacks/infrastructure/.env
+    sed -i '/^NEXTCLOUD_/d' /opt/stacks/infrastructure/.env
+    sed -i '/^GITEA_/d' /opt/stacks/infrastructure/.env
+    sed -i '/^WORDPRESS_/d' /opt/stacks/infrastructure/.env
+    sed -i '/^BOOKSTACK_/d' /opt/stacks/infrastructure/.env
+    sed -i '/^MEDIAWIKI_/d' /opt/stacks/infrastructure/.env
+    sed -i '/^BITWARDEN_/d' /opt/stacks/infrastructure/.env
+    sed -i '/^FORMIO_/d' /opt/stacks/infrastructure/.env
+    sed -i '/^HOMEPAGE_VAR_/d' /opt/stacks/infrastructure/.env
 
     # Replace placeholders in infrastructure compose file
     replace_env_placeholders "/opt/stacks/infrastructure/docker-compose.yml"
@@ -713,6 +890,22 @@ deploy_dashboards() {
     # Copy dashboards compose file
     cp "$REPO_DIR/docker-compose/dashboards/docker-compose.yml" /opt/stacks/dashboards/docker-compose.yml
     cp "$REPO_DIR/.env" /opt/stacks/dashboards/.env
+    sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/dashboards/docker-compose.yml
+    sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/dashboards/.env
+
+    # Remove variables that dashboards stack doesn't need
+    sed -i '/^AUTHELIA_/d' /opt/stacks/dashboards/.env
+    sed -i '/^QBITTORRENT_/d' /opt/stacks/dashboards/.env
+    sed -i '/^CODE_SERVER_/d' /opt/stacks/dashboards/.env
+    sed -i '/^JUPYTER_/d' /opt/stacks/dashboards/.env
+    sed -i '/^POSTGRES_/d' /opt/stacks/dashboards/.env
+    sed -i '/^NEXTCLOUD_/d' /opt/stacks/dashboards/.env
+    sed -i '/^GITEA_/d' /opt/stacks/dashboards/.env
+    sed -i '/^WORDPRESS_/d' /opt/stacks/dashboards/.env
+    sed -i '/^BOOKSTACK_/d' /opt/stacks/dashboards/.env
+    sed -i '/^MEDIAWIKI_/d' /opt/stacks/dashboards/.env
+    sed -i '/^BITWARDEN_/d' /opt/stacks/dashboards/.env
+    sed -i '/^FORMIO_/d' /opt/stacks/dashboards/.env
 
     # Replace placeholders in dashboards compose file
     replace_env_placeholders "/opt/stacks/dashboards/docker-compose.yml"
@@ -720,10 +913,20 @@ deploy_dashboards() {
     # Copy homepage config
     if [ -d "$REPO_DIR/docker-compose/dashboards/homepage" ]; then
         cp -r "$REPO_DIR/docker-compose/dashboards/homepage" /opt/stacks/dashboards/
+        sudo chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/dashboards/homepage
         
         # Replace placeholders in homepage config files
         find /opt/stacks/dashboards/homepage -name "*.yaml" -type f | while read -r config_file; do
             replace_env_placeholders "$config_file"
+        done
+        
+        # Process template files and rename them
+        find /opt/stacks/dashboards/homepage -name "*.template" -type f | while read -r template_file; do
+            replace_env_placeholders "$template_file"
+            # Rename template file to remove .template extension
+            new_file="${template_file%.template}"
+            mv "$template_file" "$new_file"
+            log_info "Processed and renamed $template_file to $new_file"
         done
     fi
 
@@ -739,6 +942,7 @@ deploy_dashboards() {
 
 # Deployment function
 perform_deployment() {
+    debug_log "perform_deployment() called with DEPLOY_CORE=$DEPLOY_CORE, DEPLOY_INFRASTRUCTURE=$DEPLOY_INFRASTRUCTURE, DEPLOY_DASHBOARDS=$DEPLOY_DASHBOARDS, SETUP_STACKS=$SETUP_STACKS"
     log_info "Starting deployment..."
 
     # Initialize missing vars summary
@@ -748,12 +952,15 @@ perform_deployment() {
     # Switch back to regular user if we were running as root
     if [ "$EUID" -eq 0 ]; then
         ACTUAL_USER=${SUDO_USER:-$USER}
+        debug_log "Running as root, switching to user $ACTUAL_USER"
         log_info "Switching to user $ACTUAL_USER for deployment..."
         exec sudo -u "$ACTUAL_USER" "$0" "$@"
     fi
 
-    # Source the .env file
-    source "$REPO_DIR/.env"
+    # Source the .env file safely
+    debug_log "Sourcing .env file from $REPO_DIR/.env"
+    load_env_file_safely "$REPO_DIR/.env"
+    debug_log "Environment loaded, DOMAIN=$DOMAIN, SERVER_IP=$SERVER_IP"
 
     # Step 1: Create required directories
     log_info "Step 1: Creating required directories..."
@@ -761,8 +968,8 @@ perform_deployment() {
     sudo mkdir -p /opt/stacks/infrastructure || { log_error "Failed to create /opt/stacks/infrastructure"; exit 1; }
     sudo mkdir -p /opt/stacks/dashboards || { log_error "Failed to create /opt/stacks/dashboards"; exit 1; }
     sudo mkdir -p /opt/dockge || { log_error "Failed to create /opt/dockge"; exit 1; }
-    sudo chown -R "$USER:$USER" /opt/stacks
-    sudo chown -R "$USER:$USER" /opt/dockge
+    sudo chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks
+    sudo chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/dockge
     log_success "Directories created"
 
     # Step 2: Setup multi-server TLS if needed
@@ -890,6 +1097,33 @@ setup_stacks_for_dockge() {
             if [ -f "$REPO_STACK_DIR/docker-compose.yml" ]; then
                 cp "$REPO_STACK_DIR/docker-compose.yml" "$STACK_DIR/docker-compose.yml"
                 cp "$REPO_DIR/.env" "$STACK_DIR/.env"
+                sudo chown "$ACTUAL_USER:$ACTUAL_USER" "$STACK_DIR/docker-compose.yml"
+                sudo chown "$ACTUAL_USER:$ACTUAL_USER" "$STACK_DIR/.env"
+
+                # Remove sensitive/unnecessary variables from stack .env
+                sed -i '/^AUTHELIA_ADMIN_PASSWORD=/d' "$STACK_DIR/.env"
+                sed -i '/^AUTHELIA_JWT_SECRET=/d' "$STACK_DIR/.env"
+                sed -i '/^AUTHELIA_SESSION_SECRET=/d' "$STACK_DIR/.env"
+                sed -i '/^AUTHELIA_STORAGE_ENCRYPTION_KEY=/d' "$STACK_DIR/.env"
+                sed -i '/^SURFSHARK_/d' "$STACK_DIR/.env"
+                sed -i '/^SMTP_/d' "$STACK_DIR/.env"
+                sed -i '/^REMOTE_SERVER_/d' "$STACK_DIR/.env"
+                sed -i '/^PIHOLE_/d' "$STACK_DIR/.env"
+                sed -i '/^WATCHTOWER_/d' "$STACK_DIR/.env"
+                sed -i '/^QBITTORRENT_/d' "$STACK_DIR/.env"
+                sed -i '/^GRAFANA_/d' "$STACK_DIR/.env"
+                sed -i '/^CODE_SERVER_/d' "$STACK_DIR/.env"
+                sed -i '/^JUPYTER_/d' "$STACK_DIR/.env"
+                sed -i '/^POSTGRES_/d' "$STACK_DIR/.env"
+                sed -i '/^PGADMIN_/d' "$STACK_DIR/.env"
+                sed -i '/^NEXTCLOUD_/d' "$STACK_DIR/.env"
+                sed -i '/^GITEA_/d' "$STACK_DIR/.env"
+                sed -i '/^WORDPRESS_/d' "$STACK_DIR/.env"
+                sed -i '/^BOOKSTACK_/d' "$STACK_DIR/.env"
+                sed -i '/^MEDIAWIKI_/d' "$STACK_DIR/.env"
+                sed -i '/^BITWARDEN_/d' "$STACK_DIR/.env"
+                sed -i '/^FORMIO_/d' "$STACK_DIR/.env"
+                sed -i '/^HOMEPAGE_VAR_/d' "$STACK_DIR/.env"
 
                 # Replace placeholders in the compose file
                 replace_env_placeholders "$STACK_DIR/docker-compose.yml"
@@ -898,6 +1132,7 @@ setup_stacks_for_dockge() {
                 for config_dir in "$REPO_STACK_DIR"/*/; do
                     if [ -d "$config_dir" ] && [ "$(basename "$config_dir")" != "." ]; then
                         cp -r "$config_dir" "$STACK_DIR/"
+                        sudo chown -R "$ACTUAL_USER:$ACTUAL_USER" "$STACK_DIR/$(basename "$config_dir")"
                     fi
                 done
 
@@ -943,6 +1178,7 @@ show_main_menu() {
 
 # Main logic
 main() {
+    debug_log "main() called with arguments: $@"
     log_info "EZ-Homelab Unified Setup & Deployment Script"
     echo ""
 
@@ -950,6 +1186,9 @@ main() {
     ENV_EXISTS=false
     if load_env_file; then
         ENV_EXISTS=true
+        debug_log "Existing .env file loaded"
+    else
+        debug_log "No existing .env file found"
     fi
 
     # Show main menu
@@ -1047,6 +1286,9 @@ main() {
     # Save configuration
     save_env_file
 
+    # Validate secrets for core deployment
+    validate_secrets
+
     # Perform deployment
     perform_deployment
 
@@ -1082,6 +1324,7 @@ main() {
     echo ""
     log_info "For documentation, see: $REPO_DIR/docs/"
     log_info "For troubleshooting, see: $REPO_DIR/docs/quick-reference.md"
+    debug_log "Script completed successfully"
     echo ""
 }
 
