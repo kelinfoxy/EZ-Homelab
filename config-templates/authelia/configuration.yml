@@ -64,11 +64,6 @@ session:
   inactivity: 24h      # Session expires after 24 hours of inactivity
   remember_me_duration: 1M
   domain: ${DOMAIN}
-  cookies:
-    - name: authelia_session
-      domain: ${DOMAIN}
-      secure: true
-      same_site: lax
 
 regulation:
   max_retries: 3

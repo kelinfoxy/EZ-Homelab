@@ -767,6 +767,11 @@ deploy_core() {
     cp -r "$REPO_DIR/config-templates/traefik" /opt/stacks/core/
     sudo chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/core/traefik
 
+    # Move Traefik config file to the correct location for Docker mount
+    debug_log "Moving Traefik config file to config directory"
+    mkdir -p /opt/stacks/core/traefik/config
+    mv /opt/stacks/core/traefik/traefik.yml /opt/stacks/core/traefik/config/
+
     # Only copy external host files on core server (where Traefik runs)
     if [ "$DEPLOY_CORE" = true ]; then
         log_info "Core server detected - copying external host routing files"
@@ -812,6 +817,10 @@ deploy_core() {
     find /opt/stacks/core/authelia -name "*.yml" -type f | while read -r config_file; do
         replace_env_placeholders "$config_file" true
     done
+
+    # Remove invalid session.cookies section from Authelia config (not supported in v4.37.5)
+    debug_log "Removing invalid session.cookies section from Authelia config"
+    sed -i '/^  cookies:/,/^$/d' /opt/stacks/core/authelia/configuration.yml
 
     # Move config files to the correct location for Docker mount
     debug_log "Moving Authelia config files to config directory"
