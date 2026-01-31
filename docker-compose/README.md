@@ -17,10 +17,23 @@ docker-compose/
 ├── nextcloud/         # Nextcloud stack
 ├── productivity/      # Productivity tools
 ├── utilities/         # Utility services
-└── README.md          # This file
-```
+## ⚠️ Important: Core Services First
 
-## Usage
+**Before deploying any other stacks, ensure the `core/` services are running:**
+
+- **Traefik**: Reverse proxy and SSL termination
+- **Authelia**: Single sign-on authentication
+- **DuckDNS**: Dynamic DNS for domain resolution
+
+These services provide the foundation for all other services. Most stacks depend on Traefik for routing and Authelia for authentication.
+
+### Quick Start Core Services
+```bash
+cd core
+cp .env.template .env  # Edit with your values
+cp docker-compose.yml.template docker-compose.yml  # Or use the pre-configured version
+docker compose up -d
+```
 
 ### Starting Services
 

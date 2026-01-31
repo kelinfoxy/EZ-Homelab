@@ -10,7 +10,7 @@
 
 services:
   # Nextcloud - File sync and collaboration
-  # Access at: https://nextcloud.kelinreij.duckdns.org
+  # Access at: https://nextcloud.${DOMAIN}
   # Uses Sablier lazy loading - starts on-demand, stops after 5min inactivity
   nextcloud:
     image: nextcloud:28
@@ -40,10 +40,10 @@ services:
       - MYSQL_PASSWORD=${NEXTCLOUD_DB_PASSWORD}
       - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER}
       - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD}
-      - NEXTCLOUD_TRUSTED_DOMAINS=nextcloud.kelinreij.duckdns.org
+      - NEXTCLOUD_TRUSTED_DOMAINS=nextcloud.${DOMAIN}
       - TRUSTED_PROXIES=172.18.0.0/16
       - OVERWRITEPROTOCOL=https
-      - OVERWRITEHOST=nextcloud.kelinreij.duckdns.org
+      - OVERWRITEHOST=nextcloud.${DOMAIN}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/status.php"]
       interval: 30s
@@ -60,7 +60,7 @@ services:
       - "homelab.description=File sync and collaboration"
       - "traefik.enable=true"
       # Router configuration
-      - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.${DOMAIN}`)"
       - "traefik.http.routers.nextcloud.entrypoints=websecure"
       - "traefik.http.routers.nextcloud.tls.certresolver=letsencrypt"
       - "traefik.http.routers.nextcloud.middlewares=authelia@docker"
@@ -68,7 +68,7 @@ services:
       - "traefik.http.services.nextcloud.loadbalancer.server.port=8089"
       # Sablier configuration
       - "sablier.enable=true"
-      - "sablier.group=jasper-nextcloud"
+      - "sablier.group=${SERVER_HOSTNAME}-nextcloud"
       - "sablier.start-on-demand=true"
 
   nextcloud-db:
@@ -90,7 +90,7 @@ services:
       - "homelab.description=Nextcloud database"
 
   # Mealie - Recipe manager
-  # Access at: https://mealie.kelinreij.duckdns.org
+  # Access at: https://mealie.${DOMAIN}
   mealie:
     image: ghcr.io/mealie-recipes/mealie:latest
     container_name: mealie
@@ -103,10 +103,10 @@ services:
     volumes:
       - ./mealie/data:/app/data
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
-      - BASE_URL=https://mealie.kelinreij.duckdns.org
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - BASE_URL=https://mealie.${DOMAIN}
       - DB_ENGINE=sqlite
     labels:
       # TRAEFIK CONFIGURATION
@@ -116,7 +116,7 @@ services:
       - "homelab.description=Recipe manager and meal planner"
       - "traefik.enable=true"
       # Router configuration
-      - "traefik.http.routers.mealie.rule=Host(`mealie.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.mealie.rule=Host(`mealie.${DOMAIN}`)"
       - "traefik.http.routers.mealie.entrypoints=websecure"
       - "traefik.http.routers.mealie.tls.certresolver=letsencrypt"
       - "traefik.http.routers.mealie.middlewares=authelia@docker"
@@ -124,11 +124,11 @@ services:
       - "traefik.http.services.mealie.loadbalancer.server.port=9000"
       # Sablier configuration
       - "sablier.enable=true"
-      - "sablier.group=jasper-mealie"
+      - "sablier.group=${SERVER_HOSTNAME}-mealie"
       - "sablier.start-on-demand=true"
 
   # WordPress - Blog/website platform
-  # Access at: https://blog.kelinreij.duckdns.org
+  # Access at: https://blog.${DOMAIN}
   wordpress:
     image: wordpress:latest
     container_name: wordpress
@@ -161,7 +161,7 @@ services:
       - "homelab.description=Blog and website platform"
       - "traefik.enable=true"
       # Router configuration
-      - "traefik.http.routers.wordpress.rule=Host(`wordpress.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.wordpress.rule=Host(`wordpress.${DOMAIN}`)"
       - "traefik.http.routers.wordpress.entrypoints=websecure"
       - "traefik.http.routers.wordpress.tls.certresolver=letsencrypt"
       - "traefik.http.routers.wordpress.middlewares=authelia@docker"
@@ -169,7 +169,7 @@ services:
       - "traefik.http.services.wordpress.loadbalancer.server.port=8088"
       # Sablier configuration
       - "sablier.enable=true"
-      - "sablier.group=jasper-wordpress"
+      - "sablier.group=${SERVER_HOSTNAME}-wordpress"
       - "sablier.start-on-demand=true"
 
   wordpress-db:
@@ -190,7 +190,7 @@ services:
       - "homelab.description=WordPress database"
 
   # Gitea - Self-hosted Git service
-  # Access at: https://git.kelinreij.duckdns.org
+  # Access at: https://git.${DOMAIN}
   gitea:
     image: gitea/gitea:latest
     deploy:
@@ -214,8 +214,8 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - USER_UID=1000
-      - USER_GID=1000
+      - USER_UID=${PUID}
+      - USER_GID=${PGID}
       - GITEA__database__DB_TYPE=postgres
       - GITEA__database__HOST=gitea-db:5432
       - GITEA__database__NAME=gitea
@@ -237,7 +237,7 @@ services:
       - "homelab.description=Self-hosted Git service"
       - "traefik.enable=true"
       # Router configuration
-      - "traefik.http.routers.gitea.rule=Host(`gitea.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.gitea.rule=Host(`gitea.${DOMAIN}`)"
       - "traefik.http.routers.gitea.entrypoints=websecure"
       - "traefik.http.routers.gitea.tls.certresolver=letsencrypt"
       - "traefik.http.routers.gitea.middlewares=authelia@docker"
@@ -245,7 +245,7 @@ services:
       - "traefik.http.services.gitea.loadbalancer.server.port=3010"
       # Sablier configuration
       - "sablier.enable=true"
-      - "sablier.group=jasper-gitea"
+      - "sablier.group=${SERVER_HOSTNAME}-gitea"
       - "sablier.start-on-demand=true"
 
   gitea-db:
@@ -266,7 +266,7 @@ services:
 
 
   # Jupyter Lab - Interactive computing notebooks
-  # Access at: https://jupyter.kelinreij.duckdns.org
+  # Access at: https://jupyter.${DOMAIN}
   # Token displayed in logs on first start
   jupyter:
     image: jupyter/scipy-notebook:latest
@@ -302,14 +302,14 @@ services:
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
-      - "traefik.http.routers.jupyter.rule=Host(`jupyter.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.jupyter.rule=Host(`jupyter.${DOMAIN}`)"
       - "traefik.http.routers.jupyter.entrypoints=websecure"
       - "traefik.http.routers.jupyter.tls.certresolver=letsencrypt"
       - "traefik.http.routers.jupyter.middlewares=authelia@docker"
       - "traefik.http.services.jupyter.loadbalancer.server.port=8890"
       # Sablier configuration
       - "sablier.enable=true"
-      - "sablier.group=jasper-jupyter"
+      - "sablier.group=${SERVER_HOSTNAME}-jupyter"
       - "sablier.start-on-demand=true"
 
 volumes:
@@ -326,13 +326,13 @@ networks:
 x-dockge:
   urls:
     # Proxied URLs (through Traefik)
-    - https://nextcloud.kelinreij.duckdns.org
-    - https://192.168.4.4:8089
-    - https://mealie.kelinreij.duckdns.org
-    - https://192.168.4.4:9000
-    - https://wordpress.kelinreij.duckdns.org
-    - https://192.168.4.4:8088
-    - https://gitea.kelinreij.duckdns.org
-    - https://192.168.4.4:3010
-    - https://jupyter.kelinreij.duckdns.org
-    - https://192.168.4.4:8890
+    - https://nextcloud.${DOMAIN}
+    - https://${SERVER_IP}:8089
+    - https://mealie.${DOMAIN}
+    - https://${SERVER_IP}:9000
+    - https://wordpress.${DOMAIN}
+    - https://${SERVER_IP}:8088
+    - https://gitea.${DOMAIN}
+    - https://${SERVER_IP}:3010
+    - https://jupyter.${DOMAIN}
+    - https://${SERVER_IP}:8890

@@ -24,9 +24,9 @@ services:
       - /mnt/media:/media
       - /mnt/downloads:/downloads # Large downloads on separate drive
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8989/"]
       interval: 30s
@@ -44,13 +44,13 @@ services:
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
-      - "traefik.http.routers.sonarr.rule=Host(`sonarr.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.sonarr.rule=Host(`sonarr.${DOMAIN}`)"
       - "traefik.http.routers.sonarr.entrypoints=websecure"
       - "traefik.http.routers.sonarr.tls.certresolver=letsencrypt"
       - "traefik.http.routers.sonarr.middlewares=authelia@docker"
       - "traefik.http.services.sonarr.loadbalancer.server.port=8989"
       - "sablier.enable=true"
-      - "sablier.group=jasper-arr"
+      - "sablier.group=${SERVER_HOSTNAME}-arr"
       - "sablier.start-on-demand=true"
 
   # Radarr - Movie automation
@@ -69,9 +69,9 @@ services:
       - /mnt/media:/media
       - /mnt/downloads:/downloads # Large downloads on separate drive
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:7878/"]
       interval: 30s
@@ -89,13 +89,13 @@ services:
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
-      - "traefik.http.routers.radarr.rule=Host(`radarr.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.radarr.rule=Host(`radarr.${DOMAIN}`)"
       - "traefik.http.routers.radarr.entrypoints=websecure"
       - "traefik.http.routers.radarr.tls.certresolver=letsencrypt"
       - "traefik.http.routers.radarr.middlewares=authelia@docker"
       - "traefik.http.services.radarr.loadbalancer.server.port=7878"
       - "sablier.enable=true"
-      - "sablier.group=jasper-arr"
+      - "sablier.group=${SERVER_HOSTNAME}-arr"
       - "sablier.start-on-demand=true"
 
   # Prowlarr - Indexer manager
@@ -112,9 +112,9 @@ services:
     volumes:
       - ./prowlarr/config:/config
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9696/"]
       interval: 30s
@@ -132,17 +132,17 @@ services:
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
-      - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.${DOMAIN}`)"
       - "traefik.http.routers.prowlarr.entrypoints=websecure"
       - "traefik.http.routers.prowlarr.tls.certresolver=letsencrypt"
       - "traefik.http.routers.prowlarr.middlewares=authelia@docker"
       - "traefik.http.services.prowlarr.loadbalancer.server.port=9696"
       - "sablier.enable=true"
-      - "sablier.group=jasper-arr"
+      - "sablier.group=${SERVER_HOSTNAME}-arr"
       - "sablier.start-on-demand=true"
 
   # Readarr - Ebook and audiobook management
-  # Access at: https://readarr.kelinreij.duckdns.org
+  # Access at: https://readarr.${DOMAIN}
   readarr:
     image: linuxserver/readarr:0.4.19-nightly
     container_name: readarr
@@ -157,9 +157,9 @@ services:
       - /mnt/media/books:/books
       - /mnt/downloads:/downloads
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     labels:
       # TRAEFIK CONFIGURATION
       # ==========================================
@@ -171,17 +171,17 @@ services:
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
-      - "traefik.http.routers.readarr.rule=Host(`readarr.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.readarr.rule=Host(`readarr.${DOMAIN}`)"
       - "traefik.http.routers.readarr.entrypoints=websecure"
       - "traefik.http.routers.readarr.tls.certresolver=letsencrypt"
       - "traefik.http.routers.readarr.middlewares=authelia@docker"
       - "traefik.http.services.readarr.loadbalancer.server.port=8787"
       - "sablier.enable=true"
-      - "sablier.group=jasper-arr"
+      - "sablier.group=${SERVER_HOSTNAME}-arr"
       - "sablier.start-on-demand=true"
 
   # Lidarr - Music collection manager
-  # Access at: https://lidarr.kelinreij.duckdns.org
+  # Access at: https://lidarr.${DOMAIN}
   lidarr:
     image: linuxserver/lidarr:2.0.7
     container_name: lidarr
@@ -196,9 +196,9 @@ services:
       - /mnt/media/music:/music
       - /mnt/downloads:/downloads
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     labels:
       # TRAEFIK CONFIGURATION
       # ==========================================
@@ -210,17 +210,17 @@ services:
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
-      - "traefik.http.routers.lidarr.rule=Host(`lidarr.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.lidarr.rule=Host(`lidarr.${DOMAIN}`)"
       - "traefik.http.routers.lidarr.entrypoints=websecure"
       - "traefik.http.routers.lidarr.tls.certresolver=letsencrypt"
       - "traefik.http.routers.lidarr.middlewares=authelia@docker"
       - "traefik.http.services.lidarr.loadbalancer.server.port=8686"
       - "sablier.enable=true"
-      - "sablier.group=jasper-arr"
+      - "sablier.group=${SERVER_HOSTNAME}-arr"
       - "sablier.start-on-demand=true"
 
   # Lazy Librarian - Book manager
-  # Access at: https://lazylibrarian.kelinreij.duckdns.org
+  # Access at: https://lazylibrarian.${DOMAIN}
   lazylibrarian:
     image: linuxserver/lazylibrarian:latest
     container_name: lazylibrarian
@@ -235,9 +235,9 @@ services:
       - /mnt/media/books:/books
       - /mnt/downloads:/downloads
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
       - DOCKER_MODS=linuxserver/mods:lazylibrarian-ffmpeg
     labels:
       # TRAEFIK CONFIGURATION
@@ -250,17 +250,17 @@ services:
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
-      - "traefik.http.routers.lazylibrarian.rule=Host(`lazylibrarian.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.lazylibrarian.rule=Host(`lazylibrarian.${DOMAIN}`)"
       - "traefik.http.routers.lazylibrarian.entrypoints=websecure"
       - "traefik.http.routers.lazylibrarian.tls.certresolver=letsencrypt"
       - "traefik.http.routers.lazylibrarian.middlewares=authelia@docker"
       - "traefik.http.services.lazylibrarian.loadbalancer.server.port=5299"
       - "sablier.enable=true"
-      - "sablier.group=jasper-arr"
+      - "sablier.group=${SERVER_HOSTNAME}-arr"
       - "sablier.start-on-demand=true"
 
   # Mylar3 - Comic book manager
-  # Access at: https://mylar.kelinreij.duckdns.org
+  # Access at: https://mylar.${DOMAIN}
   mylar3:
     image: linuxserver/mylar3:latest
     container_name: mylar3
@@ -275,9 +275,9 @@ services:
       - /mnt/media/comics:/comics
       - /mnt/downloads:/downloads
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     labels:
       # TRAEFIK CONFIGURATION
       # ==========================================
@@ -289,17 +289,17 @@ services:
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
-      - "traefik.http.routers.mylar.rule=Host(`mylar.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.mylar.rule=Host(`mylar.${DOMAIN}`)"
       - "traefik.http.routers.mylar.entrypoints=websecure"
       - "traefik.http.routers.mylar.tls.certresolver=letsencrypt"
       - "traefik.http.routers.mylar.middlewares=authelia@docker"
       - "traefik.http.services.mylar.loadbalancer.server.port=8090"
       - "sablier.enable=true"
-      - "sablier.group=jasper-arr"
+      - "sablier.group=${SERVER_HOSTNAME}-arr"
       - "sablier.start-on-demand=true"
 
   # Jellyseerr - Request management for Jellyfin/Plex
-  # Access at: https://jellyseerr.kelinreij.duckdns.org
+  # Access at: https://jellyseerr.${DOMAIN}
   jellyseerr:
     image: fallenbagel/jellyseerr:latest
     container_name: jellyseerr
@@ -313,7 +313,7 @@ services:
       - ./jellyseerr/config:/app/config
     environment:
       - LOG_LEVEL=info
-      - TZ=America/New_York
+      - TZ=${TZ}
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5055/"]
       interval: 30s
@@ -331,13 +331,13 @@ services:
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
-      - "traefik.http.routers.jellyseerr.rule=Host(`jellyseerr.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.jellyseerr.rule=Host(`jellyseerr.${DOMAIN}`)"
       - "traefik.http.routers.jellyseerr.entrypoints=websecure"
       - "traefik.http.routers.jellyseerr.tls.certresolver=letsencrypt"
       - "traefik.http.routers.jellyseerr.middlewares=authelia@docker"
       - "traefik.http.services.jellyseerr.loadbalancer.server.port=5055"
       - "sablier.enable=true"
-      - "sablier.group=jasper-arr"
+      - "sablier.group=${SERVER_HOSTNAME}-arr"
       - "sablier.start-on-demand=true"
 
   # FlareSolverr - Cloudflare bypass for Prowlarr
@@ -350,32 +350,32 @@ services:
       - homelab-network
     environment:
       - LOG_LEVEL=info
-      - TZ=America/New_York
+      - TZ=${TZ}
     labels:
       - homelab.category=media
       - homelab.description=Cloudflare bypass for indexers
       - "sablier.enable=true"
-      - "sablier.group=jasper-arr"
+      - "sablier.group=${SERVER_HOSTNAME}-arr"
       - "sablier.start-on-demand=true"
   
 x-dockge:
   urls:
-    - https://sonarr.kelinreij.duckdns.org
-    - http://192.168.4.4:8989
-    - https://radarr.kelinreij.duckdns.org
-    - http://192.168.4.4:7878
-    - https://prowlarr.kelinreij.duckdns.org
-    - http://192.168.4.4:9696
-    - https://readarr.kelinreij.duckdns.org
-    - http://192.168.4.4:8787
-    - https://lidarr.kelinreij.duckdns.org
-    - http://192.168.4.4:8686
-    - https://lazylibrarian.kelinreij.duckdns.org
-    - http://192.168.4.4:5299
-    - https://mylar.kelinreij.duckdns.org
-    - http://192.168.4.4:8090
-    - https://jellyseerr.kelinreij.duckdns.org
-    - http://192.168.4.4:5055
+    - https://sonarr.${DOMAIN}
+    - http://${SERVER_IP}:8989
+    - https://radarr.${DOMAIN}
+    - http://${SERVER_IP}:7878
+    - https://prowlarr.${DOMAIN}
+    - http://${SERVER_IP}:9696
+    - https://readarr.${DOMAIN}
+    - http://${SERVER_IP}:8787
+    - https://lidarr.${DOMAIN}
+    - http://${SERVER_IP}:8686
+    - https://lazylibrarian.${DOMAIN}
+    - http://${SERVER_IP}:5299
+    - https://mylar.${DOMAIN}
+    - http://${SERVER_IP}:8090
+    - https://jellyseerr.${DOMAIN}
+    - http://${SERVER_IP}:5055
 
 networks:
   homelab-network:

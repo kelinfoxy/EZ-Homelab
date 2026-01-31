@@ -32,10 +32,10 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock # For Docker integration do not mount RO
       - /opt/stacks:/opt/stacks # To discover other stacks
     environment:
-      - PUID=${PUID}  # Must be set to the docker user ID
-      - PGID=${PGID}  # Must be set to the docker group ID
+      - PUID=995  # Must be set to the docker user ID
+      - PGID=995  # Must be set to the docker group ID
       - TZ=${TZ}
-      - HOMEPAGE_ALLOWED_HOSTS=${HOMEPAGE_ALLOWED_HOSTS}
+      - HOMEPAGE_ALLOWED_HOSTS=homepage.${DOMAIN}
     labels:
       # TRAEFIK CONFIGURATION
       # ==========================================
@@ -48,15 +48,14 @@ services:
       #   - Routes are configured via external YAML files on the core server
       #   - This prevents conflicts between Docker labels and file provider
       - "traefik.enable=true"
-      - "traefik.docker.network=traefik-network"
       - "traefik.http.routers.homepage.rule=Host(`homepage.${DOMAIN}`)"
       - "traefik.http.routers.homepage.entrypoints=websecure"
       - "traefik.http.routers.homepage.tls=true"
       - "traefik.http.routers.homepage.middlewares=authelia@docker"
-      - "traefik.http.services.homepage.loadbalancer.server.port=3000"
+      - "traefik.http.services.homepage.loadbalancer.server.port=3003"
       # Sablier lazy loading (disabled by default - uncomment to enable)
       # - "sablier.enable=true"
-      # - "sablier.group=jasper-homarr"
+      # - "sablier.group=${SERVER_HOSTNAME}-homarr"
       # - "sablier.start-on-demand=true"
 
   # Homarr - Modern dashboard
@@ -86,7 +85,7 @@ services:
       - ./homarr/icons:/app/public/icons
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - TZ=America/New_York
+      - TZ=${TZ}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:7575/"]
       interval: 30s
@@ -109,7 +108,7 @@ services:
       - "traefik.http.services.homarr.loadbalancer.server.port=7575"
       # Sablier configuration
       - "sablier.enable=true"
-      - "sablier.group=jasper-homarr"
+      - "sablier.group=${SERVER_HOSTNAME}-homarr"
       - "sablier.start-on-demand=true"
 
 # DOCKGE URL CONFIGURATION
@@ -117,9 +116,9 @@ x-dockge:
   urls:
     # Proxied URLs (through Traefik)
     - https://homepage.${DOMAIN}
-    - https://192.168.4.4:3003
+    - https://${SERVER_IP}:3003
     - https://homarr.${DOMAIN}
-    - https://192.168.4.4:7575
+    - https://${SERVER_IP}:7575
 
 networks:
   homelab-network:

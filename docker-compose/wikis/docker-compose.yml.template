@@ -1,6 +1,6 @@
 services:
   # DokuWiki - Wiki without database
-  # Access at: https://wiki.kelinreij.duckdns.org
+  # Access at: https://wiki.${DOMAIN}
   # Uses Sablier lazy loading - starts on-demand, stops after 5min inactivity
   dokuwiki:
     image: lscr.io/linuxserver/dokuwiki:latest
@@ -14,9 +14,9 @@ services:
     volumes:
       - ./dokuwiki/config:/config
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     labels:
       # TRAEFIK CONFIGURATION
       # Service metadata
@@ -25,7 +25,7 @@ services:
       - "homelab.description=File-based wiki"
       - "traefik.enable=true"
       # Router configuration
-      - "traefik.http.routers.dokuwiki.rule=Host(`dokuwiki.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.dokuwiki.rule=Host(`dokuwiki.${DOMAIN}`)"
       - "traefik.http.routers.dokuwiki.entrypoints=websecure"
       - "traefik.http.routers.dokuwiki.tls.certresolver=letsencrypt"
       - "traefik.http.routers.dokuwiki.middlewares=authelia@docker"
@@ -33,11 +33,11 @@ services:
       - "traefik.http.services.dokuwiki.loadbalancer.server.port=8087"
       # Sablier configuration
       - "sablier.enable=true"
-      - "sablier.group=jasper-dokuwiki"
+      - "sablier.group=${SERVER_HOSTNAME}-dokuwiki"
       - "sablier.start-on-demand=true"
 
   # BookStack - Documentation platform
-  # Access at: https://docs.kelinreij.duckdns.org
+  # Access at: https://docs.${DOMAIN}
   # Uses Sablier lazy loading - starts on-demand, stops after 5min inactivity
   bookstack:
     image: lscr.io/linuxserver/bookstack:latest
@@ -51,9 +51,9 @@ services:
     volumes:
       - ./bookstack/config:/config
     environment:
-      - PUID=1000
-      - PGID=1000
-      - APP_URL=https://bookstack.kelinreij.duckdns.org
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - APP_URL=https://bookstack.${DOMAIN}
       - DB_HOST=bookstack-db
       - DB_PORT=3306
       - DB_DATABASE=bookstack
@@ -76,7 +76,7 @@ services:
       - "homelab.description=Documentation and wiki platform"
       - "traefik.enable=true"
       # Router configuration
-      - "traefik.http.routers.bookstack.rule=Host(`bookstack.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.bookstack.rule=Host(`bookstack.${DOMAIN}`)"
       - "traefik.http.routers.bookstack.entrypoints=websecure"
       - "traefik.http.routers.bookstack.tls.certresolver=letsencrypt"
       - "traefik.http.routers.bookstack.middlewares=authelia@docker"
@@ -84,7 +84,7 @@ services:
       - "traefik.http.services.bookstack.loadbalancer.server.port=6875"
       # Sablier configuration
       - "sablier.enable=true"
-      - "sablier.group=jasper-bookstack"
+      - "sablier.group=${SERVER_HOSTNAME}-bookstack"
       - "sablier.start-on-demand=true"
 
   bookstack-db:
@@ -105,7 +105,7 @@ services:
       - "homelab.description=BookStack database"
 
   # MediaWiki - Wiki platform
-  # Access at: https://mediawiki.kelinreij.duckdns.org
+  # Access at: https://mediawiki.${DOMAIN}
   mediawiki:
     image: mediawiki:latest
     container_name: mediawiki
@@ -139,7 +139,7 @@ services:
       - "homelab.description=MediaWiki platform"
       - "traefik.enable=true"
       # Router configuration
-      - "traefik.http.routers.mediawiki.rule=Host(`mediawiki.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.mediawiki.rule=Host(`mediawiki.${DOMAIN}`)"
       - "traefik.http.routers.mediawiki.entrypoints=websecure"
       - "traefik.http.routers.mediawiki.tls.certresolver=letsencrypt"
       - "traefik.http.routers.mediawiki.middlewares=authelia@docker"
@@ -147,7 +147,7 @@ services:
       - "traefik.http.services.mediawiki.loadbalancer.server.port=8086"
       # Sablier configuration
       - "sablier.enable=true"
-      - "sablier.group=jasper-mediawiki"
+      - "sablier.group=${SERVER_HOSTNAME}-mediawiki"
       - "sablier.start-on-demand=true"
 
   mediawiki-db:
@@ -180,9 +180,9 @@ networks:
 x-dockge:
   urls:
     # Proxied URLs (through Traefik)
-    - https://bookstack.kelinreij.duckdns.org
-    - https://192.168.4.4:6875
-    - https://dokuwiki.kelinreij.duckdns.org
-    - https://192.168.4.4:8087
-    - https://mediawiki.kelinreij.duckdns.org
-    - https://192.168.4.4:8086
+    - https://bookstack.${DOMAIN}
+    - https://${SERVER_IP}:6875
+    - https://dokuwiki.${DOMAIN}
+    - https://${SERVER_IP}:8087
+    - https://mediawiki.${DOMAIN}
+    - https://${SERVER_IP}:8086

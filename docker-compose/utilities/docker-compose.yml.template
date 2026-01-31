@@ -8,7 +8,7 @@
 
 services:
   # Backrest - Backup solution for restic
-  # Access at: https://backrest.kelinreij.duckdns.org
+  # Access at: https://backrest.${DOMAIN}
   # Uses Sablier lazy loading - starts on-demand, stops after 5min inactivity
   backrest:
     image: garethgeorge/backrest:latest
@@ -28,7 +28,7 @@ services:
     environment:
       - BACKREST_DATA=/data
       - BACKREST_CONFIG=/config/config.json
-      - TZ=America/New_York
+      - TZ=${TZ}
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9898/"]
       interval: 30s
@@ -43,7 +43,7 @@ services:
       - "homelab.description=Backup management with restic"
       - "traefik.enable=true"
       # Router configuration
-      - "traefik.http.routers.backrest.rule=Host(`backrest.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.backrest.rule=Host(`backrest.${DOMAIN}`)"
       - "traefik.http.routers.backrest.entrypoints=websecure"
       - "traefik.http.routers.backrest.tls.certresolver=letsencrypt"
       - "traefik.http.routers.backrest.middlewares=authelia@docker"
@@ -51,11 +51,11 @@ services:
       - "traefik.http.services.backrest.loadbalancer.server.port=9898"
       # Sablier configuration
       - "sablier.enable=true"
-      - "sablier.group=jasper-backrest"
+      - "sablier.group=${SERVER_HOSTNAME}-backrest"
       - "sablier.start-on-demand=true"
   
   # Duplicati - Backup solution
-  # Access at: https://duplicati.kelinreij.duckdns.org
+  # Access at: https://duplicati.${DOMAIN}
   duplicati:
     image: lscr.io/linuxserver/duplicati:2.0.7
     container_name: duplicati
@@ -71,9 +71,9 @@ services:
       - /mnt:/source/mnt:ro
       - /mnt/backups:/backups
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8200/"]
       interval: 30s
@@ -88,7 +88,7 @@ services:
       - "homelab.description=Backup software with encryption"
       - "traefik.enable=true"
       # Router configuration
-      - "traefik.http.routers.duplicati.rule=Host(`duplicati.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.duplicati.rule=Host(`duplicati.${DOMAIN}`)"
       - "traefik.http.routers.duplicati.entrypoints=websecure"
       - "traefik.http.routers.duplicati.tls.certresolver=letsencrypt"
       - "traefik.http.routers.duplicati.middlewares=authelia@docker"
@@ -96,7 +96,7 @@ services:
       - "traefik.http.services.duplicati.loadbalancer.server.port=8200"
       # Sablier configuration
       - "sablier.enable=true"
-      - "sablier.group=jasper-duplicati"
+      - "sablier.group=${SERVER_HOSTNAME}-duplicati"
       - "sablier.start-on-demand=true"
   
   # Form.io - Form builder
@@ -132,7 +132,7 @@ services:
       # Traefik labels
       - "traefik.enable=true"
       # Router configuration
-      - "traefik.http.routers.formio.rule=Host(`forms.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.formio.rule=Host(`forms.${DOMAIN}`)"
       - "traefik.http.routers.formio.entrypoints=websecure"
       - "traefik.http.routers.formio.tls.certresolver=letsencrypt"
       - "traefik.http.routers.formio.middlewares=authelia@docker"
@@ -140,7 +140,7 @@ services:
       - "traefik.http.services.formio.loadbalancer.server.port=3001"
       # Sablier configuration
       - "sablier.enable=true"
-      - "sablier.group=jasper-formio"
+      - "sablier.group=${SERVER_HOSTNAME}-formio"
       - "sablier.start-on-demand=true"
   
   formio-mongo:
@@ -154,7 +154,7 @@ services:
       - "homelab.description=Form.io database"
 
   # Bitwarden (Vaultwarden) - Password manager
-  # Access at: https://vault.kelinreij.duckdns.org
+  # Access at: https://vault.${DOMAIN}
   # Note: SSO disabled for browser extension and mobile app compatibility
   
   vaultwarden:
@@ -169,7 +169,7 @@ services:
     volumes:
       - ./vaultwarden/data:/data
     environment:
-      - DOMAIN=https://vault.kelinreij.duckdns.org
+      - DOMAIN=https://vault.${DOMAIN}
       - SIGNUPS_ALLOWED=${BITWARDEN_SIGNUPS_ALLOWED}
       - INVITATIONS_ALLOWED=${BITWARDEN_INVITATIONS_ALLOWED}
       - ADMIN_TOKEN=${BITWARDEN_ADMIN_TOKEN}
@@ -196,7 +196,7 @@ services:
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
-      - "traefik.http.routers.vaultwarden.rule=Host(`vault.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.vaultwarden.rule=Host(`vault.${DOMAIN}`)"
       - "traefik.http.routers.vaultwarden.entrypoints=websecure"
       - "traefik.http.routers.vaultwarden.tls=true"
       - "traefik.http.routers.vaultwarden.tls.certresolver=letsencrypt"
@@ -205,7 +205,7 @@ services:
       - "traefik.http.services.vaultwarden.loadbalancer.server.port=80"
       # Sablier configuration
       - "sablier.enable=true"
-      - "sablier.group=jasper-vaultwarden"
+      - "sablier.group=${SERVER_HOSTNAME}-vaultwarden"
       - "sablier.start-on-demand=true"
 
   # Authelia Redis - Session storage for Authelia
@@ -236,11 +236,11 @@ networks:
 
 x-dockge:
   urls:
-    - https://backrest.kelinreij.duckdns.org
-    - https://192.168.4.4:9898
-    - https://duplicati.kelinreij.duckdns.org
-    - https://192.168.4.4:8200
-    - https://forms.kelinreij.duckdns.org
-    - https://192.168.4.4:3002
-    - https://vault.kelinreij.duckdns.org
-    - https://192.168.4.4:8091
+    - https://backrest.${DOMAIN}
+    - https://${SERVER_IP}:9898
+    - https://duplicati.${DOMAIN}
+    - https://${SERVER_IP}:8200
+    - https://forms.${DOMAIN}
+    - https://${SERVER_IP}:3002
+    - https://vault.${DOMAIN}
+    - https://${SERVER_IP}:8091

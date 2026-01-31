@@ -37,7 +37,7 @@ services:
       - OPENVPN_USER=${SURFSHARK_USERNAME}
       - OPENVPN_PASSWORD=${SURFSHARK_PASSWORD}
       - SERVER_COUNTRIES=${VPN_SERVER_COUNTRIES}
-      - TZ=America/New_York
+      - TZ=${TZ}
     # TRAEFIK CONFIGURATION
     labels:
       # Service metadata
@@ -46,7 +46,7 @@ services:
       - "homelab.description=VPN client for secure downloads"
       - "traefik.enable=true"
       # Router configuration
-      - "traefik.http.routers.qbittorrent.rule=Host(`qbit.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.qbittorrent.rule=Host(`qbit.${DOMAIN}`)"
       - "traefik.http.routers.qbittorrent.entrypoints=websecure"
       - "traefik.http.routers.qbittorrent.tls=true"
       - "traefik.http.routers.qbittorrent.middlewares=authelia@docker"
@@ -54,7 +54,7 @@ services:
       - "traefik.http.services.qbittorrent.loadbalancer.server.port=8081"
       # Sablier configuration
       - "sablier.enable=true"
-      - "sablier.group=jasper-qbittorrent"
+      - "sablier.group=${SERVER_HOSTNAME}-qbittorrent"
       - "sablier.sessionDuration=1h"
 
   # qBittorrent - Torrent client
@@ -77,9 +77,9 @@ services:
       - ./qbittorrent/config:/config
       - /mnt/downloads:/downloads
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
       - WEBUI_PORT=8080
     depends_on:
       - gluetun
@@ -92,5 +92,5 @@ networks:
 
 x-dockge:
   urls:
-    - https://qbit.kelinreij.duckdns.org
-    - https://192.168.4.4:8081
+    - https://qbit.${DOMAIN}
+    - https://${SERVER_IP}:8081

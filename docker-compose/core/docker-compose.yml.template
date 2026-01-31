@@ -27,6 +27,8 @@ services:
   
   traefik:
     # Reverse proxy and SSL termination - core routing service, must always run
+    # CONFIGURATION REQUIREMENT: traefik.yml MUST be in ./traefik/config/ directory
+    # VOLUME MOUNT: ./traefik/config:/config - config file location is critical
     image: traefik:v3
     container_name: traefik
     restart: unless-stopped
@@ -62,7 +64,10 @@ services:
 
   authelia:
     # Single sign-on authentication service - must always run for user authentication
-    image: authelia/authelia:latest
+    # VERSION PINNING: Pinned to v4.37.5 due to breaking changes in v4.39.15+
+    # BREAKING CHANGES: v4.39.15+ has incompatible configuration and database changes
+    # UPGRADE NOTES: Test in separate environment before upgrading. Backup config and DB.
+    image: authelia/authelia:4.37.5
     container_name: authelia
     restart: unless-stopped
     environment:

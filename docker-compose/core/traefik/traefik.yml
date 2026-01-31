@@ -27,9 +27,9 @@ entryPoints:
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: kelinfoxy@gmail.com  # Will be replaced by deploy script
-      caServer: https://acme-staging-v02.api.letsencrypt.org/directory
-      storage: /acme.json
+      email: ${ACME_EMAIL}  # Your email for Let's Encrypt notifications
+      caServer: https://acme-v02.api.letsencrypt.org/directory  # Use staging for testing
+      storage: /letsencrypt/acme.json
       # DNS challenge - For wildcard certificates (*.yourdomain.duckdns.org)
       # Works with DuckDNS - requires DUCKDNS_TOKEN in environment
       dnsChallenge:

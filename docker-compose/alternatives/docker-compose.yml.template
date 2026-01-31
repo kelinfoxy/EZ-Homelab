@@ -10,7 +10,7 @@
 
 services:
   # Portainer - Docker management UI (Alternative to Dockge)
-  # Access at: https://portainer.kelinreij.duckdns.org
+  # Access at: https://portainer.${DOMAIN}
   # NOTE: Dockge is the default Docker management UI. Deploy Portainer only if you prefer its interface
   # Docker management interface should always run when deployed
   portainer:
@@ -34,14 +34,14 @@ services:
       - "homelab.category=alternatives"
       - "homelab.description=Docker container management UI (Alternative to Dockge)"
       - "traefik.enable=true"
-      - "traefik.http.routers.portainer.rule=Host(`portainer.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.portainer.rule=Host(`portainer.${DOMAIN}`)"
       - "traefik.http.routers.portainer.entrypoints=websecure"
       - "traefik.http.routers.portainer.tls.certresolver=letsencrypt"
       - "traefik.http.routers.portainer.middlewares=authelia@docker"
       - "traefik.http.services.portainer.loadbalancer.server.port=9000"
 
   # Authentik - Alternative SSO/Identity Provider with Web UI
-  # Access at: https://authentik.kelinreij.duckdns.org
+  # Access at: https://authentik.${DOMAIN}
   # NOTE: Authelia is the default SSO. Deploy Authentik only if you need a web UI for user management
   # WARNING: Do not run both Authelia and Authentik at the same time
   # SSO service should always run when deployed as alternative to Authelia
@@ -73,7 +73,7 @@ services:
       - "homelab.category=alternatives"
       - "homelab.description=SSO/Identity provider with web UI (Alternative to Authelia)"
       - "traefik.enable=true"
-      - "traefik.http.routers.authentik.rule=Host(`authentik.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.authentik.rule=Host(`authentik.${DOMAIN}`)"
       - "traefik.http.routers.authentik.entrypoints=websecure"
       - "traefik.http.routers.authentik.tls.certresolver=letsencrypt"
       - "traefik.http.routers.authentik.middlewares=authelia@docker"
@@ -181,9 +181,9 @@ services:
       - /mnt/media:/media:ro  # Large media files on separate drive
       - plex-transcode:/transcode
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
       - PLEX_CLAIM=${PLEX_CLAIM}
     # Hardware transcoding support
     # Uncomment ONE of the following options:
@@ -211,12 +211,12 @@ services:
       - "homelab.description=Alternative media streaming server to Jellyfin"
       # Traefik labels - NO Authelia for app access
       - "traefik.enable=true"
-      - "traefik.http.routers.plex.rule=Host(`plex.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.plex.rule=Host(`plex.${DOMAIN}`)"
       - "traefik.http.routers.plex.entrypoints=websecure"
       - "traefik.http.routers.plex.tls.certresolver=letsencrypt"
       - "traefik.http.services.plex.loadbalancer.server.port=32400"
-      - "x-dockge.url=https://plex.kelinreij.duckdns.org"
-      - "x-dockge.url=https://plex.kelinreij.duckdns.org"
+      - "x-dockge.url=https://plex.${DOMAIN}"
+      - "x-dockge.url=https://plex.${DOMAIN}"
 
 volumes:
   portainer-data:

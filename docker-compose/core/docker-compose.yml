@@ -15,9 +15,9 @@ services:
     container_name: duckdns
     restart: unless-stopped
     environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
       - SUBDOMAINS=${DUCKDNS_SUBDOMAINS}
       - TOKEN=${DUCKDNS_TOKEN}
     volumes:
@@ -27,6 +27,8 @@ services:
   
   traefik:
     # Reverse proxy and SSL termination - core routing service, must always run
+    # CONFIGURATION REQUIREMENT: traefik.yml MUST be in ./traefik/config/ directory
+    # VOLUME MOUNT: ./traefik/config:/config - config file location is critical
     image: traefik:v3
     container_name: traefik
     restart: unless-stopped
@@ -62,11 +64,14 @@ services:
 
   authelia:
     # Single sign-on authentication service - must always run for user authentication
-    image: authelia/authelia:latest
+    # VERSION PINNING: Pinned to v4.37.5 due to breaking changes in v4.39.15+
+    # BREAKING CHANGES: v4.39.15+ has incompatible configuration and database changes
+    # UPGRADE NOTES: Test in separate environment before upgrading. Backup config and DB.
+    image: authelia/authelia:4.37.5
     container_name: authelia
     restart: unless-stopped
     environment:
-      - TZ=${TZ}
+      - TZ=America/New_York
     ports:
       - "9091:9091"
     volumes:
@@ -115,11 +120,12 @@ services:
       - SABLIER_DOCKER_API_VERSION=1.51
       - SABLIER_DOCKER_NETWORK=traefik-network
       - SABLIER_LOG_LEVEL=debug
-      - DOCKER_HOST=tcp://${SERVER_IP}:2376
-      - DOCKER_TLS_VERIFY=1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - DOCKER_TLS_VERIFY=0
       - DOCKER_CERT_PATH=/certs
     volumes:
       - ./shared-ca:/certs:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
       - 10000:10000
     labels:

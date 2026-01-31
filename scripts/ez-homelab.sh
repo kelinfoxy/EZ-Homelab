@@ -383,7 +383,9 @@ save_env_file() {
         sudo -u "$ACTUAL_USER" sed -i "s%AUTHELIA_SESSION_SECRET=.*%AUTHELIA_SESSION_SECRET=$AUTHELIA_SESSION_SECRET%" "$REPO_DIR/.env"
         sudo -u "$ACTUAL_USER" sed -i "s%AUTHELIA_STORAGE_ENCRYPTION_KEY=.*%AUTHELIA_STORAGE_ENCRYPTION_KEY=$AUTHELIA_STORAGE_ENCRYPTION_KEY%" "$REPO_DIR/.env"
         sudo -u "$ACTUAL_USER" sed -i "s%# AUTHELIA_ADMIN_USER=.*%AUTHELIA_ADMIN_USER=$ADMIN_USER%" "$REPO_DIR/.env"
+        sudo -u "$ACTUAL_USER" sed -i "s%AUTHELIA_ADMIN_USER=.*%AUTHELIA_ADMIN_USER=$ADMIN_USER%" "$REPO_DIR/.env"
         sudo -u "$ACTUAL_USER" sed -i "s%# AUTHELIA_ADMIN_EMAIL=.*%AUTHELIA_ADMIN_EMAIL=$ADMIN_EMAIL%" "$REPO_DIR/.env"
+        sudo -u "$ACTUAL_USER" sed -i "s%AUTHELIA_ADMIN_EMAIL=.*%AUTHELIA_ADMIN_EMAIL=$ADMIN_EMAIL%" "$REPO_DIR/.env"
 
         # Generate password hash if needed
         if [ -z "$AUTHELIA_ADMIN_PASSWORD" ]; then
@@ -403,6 +405,10 @@ save_env_file() {
         sudo -u "$ACTUAL_USER" sed -i "s%# AUTHELIA_ADMIN_PASSWORD=.*%AUTHELIA_ADMIN_PASSWORD=\"$AUTHELIA_ADMIN_PASSWORD\"%" "$REPO_DIR/.env"
         sudo -u "$ACTUAL_USER" sed -i "s%AUTHELIA_ADMIN_PASSWORD=.*%AUTHELIA_ADMIN_PASSWORD=\"$AUTHELIA_ADMIN_PASSWORD\"%" "$REPO_DIR/.env"
     fi
+
+    # Update HOMEPAGE_ALLOWED_HOSTS with expanded values
+    HOMEPAGE_ALLOWED_HOSTS="homepage.${DOMAIN},${SERVER_IP}:3003"
+    sudo -u "$ACTUAL_USER" sed -i "s|HOMEPAGE_ALLOWED_HOSTS=.*|HOMEPAGE_ALLOWED_HOSTS=$HOMEPAGE_ALLOWED_HOSTS|" "$REPO_DIR/.env"
 
     debug_log "Configuration saved to .env file"
     log_success "Configuration saved to .env file"
@@ -946,7 +952,6 @@ deploy_dashboards() {
         # Remove remote server entries from homepage services for single-server setup
         if [ -z "${REMOTE_SERVER_HOSTNAME:-}" ]; then
             sed -i '/\${REMOTE_SERVER_HOSTNAME}/d' /opt/stacks/dashboards/homepage/services.yaml
-            sed -i '/\${REMOTE_SERVER_HOSTNAME}/d' /opt/stacks/dashboards/homepage/homepage/services.yaml
             log_info "Single-server setup - removed remote server entries from homepage services"
         fi
         

@@ -41,7 +41,7 @@ services:
       - homelab.description=Docker socket proxy for security
 
   # Pi-hole - Network-wide ad blocker and DNS server
-  # Access at: https://pihole.kelinreij.duckdns.org
+  # Access at: https://pihole.${DOMAIN}
   # DNS service must always run for network-wide ad blocking
   pihole:
     image: pihole/pihole:2024.01.0
@@ -66,9 +66,9 @@ services:
       - ./pihole/etc-pihole:/etc/pihole
       - ./pihole/etc-dnsmasq.d:/etc/dnsmasq.d
     environment:
-      - TZ=America/New_York
+      - TZ=${TZ}
       - WEBPASSWORD=${PIHOLE_PASSWORD}
-      - FTLCONF_LOCAL_IPV4=192.168.4.4
+      - FTLCONF_LOCAL_IPV4=${SERVER_IP}
     dns:
       - 127.0.0.1
       - 1.1.1.1
@@ -86,7 +86,7 @@ services:
       #   - Routes are configured via external YAML files on the core server
       #   - This prevents conflicts between Docker labels and file provider
       - "traefik.enable=true"
-      - "traefik.http.routers.pihole.rule=Host(`pihole.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.pihole.rule=Host(`pihole.${DOMAIN}`)"
       - "traefik.http.routers.pihole.entrypoints=websecure"
       - "traefik.http.routers.pihole.tls.certresolver=letsencrypt"
       - "traefik.http.routers.pihole.middlewares=authelia@docker"
@@ -115,7 +115,7 @@ services:
       - "homelab.description=Automatic Docker container updates"
 
   # Dozzle - Real-time Docker log viewer
-  # Access at: https://dozzle.kelinreij.duckdns.org
+  # Access at: https://dozzle.${DOMAIN}
   # Uses Sablier lazy loading - starts on-demand, stops after 5min inactivity
   dozzle:
     image: amir20/dozzle:latest
@@ -155,7 +155,7 @@ services:
       - "homelab.description=Real-time Docker log viewer"
       - "traefik.enable=true"
       # Router configuration
-      - "traefik.http.routers.dozzle.rule=Host(`dozzle.jasper.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.dozzle.rule=Host(`dozzle.${SERVER_HOSTNAME}.${DOMAIN}`)"
       - "traefik.http.routers.dozzle.entrypoints=websecure"
       - "traefik.http.routers.dozzle.tls=true"
       - "traefik.http.routers.dozzle.middlewares=authelia@docker"
@@ -163,11 +163,11 @@ services:
       - "traefik.http.services.dozzle.loadbalancer.server.port=8085"
       # Sablier configuration
       - "sablier.enable=true"
-      - "sablier.group=jasper-dozzle"
+      - "sablier.group=${SERVER_HOSTNAME}-dozzle"
       - "sablier.start-on-demand=true"
 
   # Glances - System monitoring
-  # Access at: https://glances.kelinreij.duckdns.org
+  # Access at: https://glances.${DOMAIN}
   # Uses Sablier lazy loading - starts on-demand, stops after 30min inactivity
   glances:
     image: nicolargo/glances:latest-full
@@ -207,7 +207,7 @@ services:
       - "homelab.description=System and Docker monitoring"
       - "traefik.enable=true"
       # Router configuration
-      - "traefik.http.routers.glances.rule=Host(`glances.jasper.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.glances.rule=Host(`glances.${SERVER_HOSTNAME}.${DOMAIN}`)"
       - "traefik.http.routers.glances.entrypoints=websecure"
       - "traefik.http.routers.glances.tls=true"
       - "traefik.http.routers.glances.middlewares=authelia@docker"
@@ -215,11 +215,11 @@ services:
       - "traefik.http.services.glances.loadbalancer.server.port=61208"
       # Sablier configuration
       - "sablier.enable=true"
-      - "sablier.group=jasper-glances"
+      - "sablier.group=${SERVER_HOSTNAME}-glances"
       - "sablier.start-on-demand=true"
 
   # Code Server - VS Code in browser
-  # Access at: https://code.kelinreij.duckdns.org
+  # Access at: https://code.${DOMAIN}
   # Uses Sablier lazy loading - starts on-demand, stops after 30min inactivity
   code-server:
     image: lscr.io/linuxserver/code-server:latest
@@ -244,9 +244,9 @@ services:
       - /opt/stacks:/opt/stacks  # Access to all stacks
       - /mnt:/mnt:ro  # Read-only access to data
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
       - PASSWORD=${CODE_SERVER_PASSWORD}
       - SUDO_PASSWORD=${CODE_SERVER_SUDO_PASSWORD}
     healthcheck:
@@ -263,7 +263,7 @@ services:
       - "homelab.description=VS Code in browser"
       - "traefik.enable=true"
       # Router configuration
-      - "traefik.http.routers.code-server.rule=Host(`code.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.code-server.rule=Host(`code.${DOMAIN}`)"
       - "traefik.http.routers.code-server.entrypoints=websecure"
       - "traefik.http.routers.code-server.tls.certresolver=letsencrypt"
       - "traefik.http.routers.code-server.middlewares=authelia@docker"
@@ -271,21 +271,21 @@ services:
       - "traefik.http.services.code-server.loadbalancer.server.port=8443"
       # Sablier configuration
       - "sablier.enable=true"
-      - "sablier.group=jasper-code-server"
+      - "sablier.group=${SERVER_HOSTNAME}-code-server"
       - "sablier.start-on-demand=true"
 
 x-dockge:
   urls:
-    - https://pihole.kelinreij.duckdns.org
-    - https://192.168.4.4:53
-    - https://dozzle.kelinreij.duckdns.org
-    - https://192.168.4.4:8085
-    - https://glances.kelinreij.duckdns.org
-    - https://192.168.4.4:61208
-    - https://code.kelinreij.duckdns.org
-    - https://192.168.4.4:8079
-    - http://192.168.4.4:2375  # Docker Proxy
-    - http://192.168.4.4:19999  # Netdata
+    - https://pihole.${DOMAIN}
+    - https://${SERVER_IP}:53
+    - https://dozzle.${DOMAIN}
+    - https://${SERVER_IP}:8085
+    - https://glances.${DOMAIN}
+    - https://${SERVER_IP}:61208
+    - https://code.${DOMAIN}
+    - https://${SERVER_IP}:8079
+    - http://${SERVER_IP}:2375  # Docker Proxy
+    - http://${SERVER_IP}:19999  # Netdata
 
 networks:
   homelab-network:

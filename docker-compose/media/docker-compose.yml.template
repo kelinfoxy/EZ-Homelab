@@ -10,9 +10,9 @@
 # - See individual service comments for specific reasoning
 
 # Service Access URLs:
-# - Jellyfin: https://jellyfin.kelinreij.duckdns.org (no SSO - app access)
-# - Plex: https://plex.kelinreij.duckdns.org (no SSO - app access)
-# - qBittorrent: https://qbit.kelinreij.duckdns.org (routed through Gluetun VPN)
+# - Jellyfin: https://jellyfin.${DOMAIN} (no SSO - app access)
+# - Plex: https://plex.${DOMAIN} (no SSO - app access)
+# - qBittorrent: https://qbit.${DOMAIN} (routed through Gluetun VPN)
 
 services:
   # Jellyfin - Open-source media streaming server
@@ -42,9 +42,9 @@ services:
       - ./jellyfin/cache:/cache
       - /mnt/media:/media:ro  # Large media files on separate drive
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8096/"]
       interval: 30s
@@ -62,7 +62,7 @@ services:
       - "homelab.description=Open-source media streaming server"
       - "traefik.enable=true"
       # Router configuration
-      - "traefik.http.routers.jellyfin.rule=Host(`jellyfin.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.jellyfin.rule=Host(`jellyfin.${DOMAIN}`)"
       - "traefik.http.routers.jellyfin.entrypoints=websecure"
       - "traefik.http.routers.jellyfin.tls=true"
       - "traefik.http.routers.jellyfin.tls.certresolver=letsencrypt"
@@ -70,12 +70,12 @@ services:
       - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
       # Sablier configuration
       - "sablier.enable=true"
-      - "sablier.group=jasper-jellyfin"
+      - "sablier.group=${SERVER_HOSTNAME}-jellyfin"
       - "sablier.start-on-demand=true"
       - "sablier.theme=hacker-terminal"
 
   # Calibre-Web - Ebook reader and server
-  # Access at: https://calibre.kelinreij.duckdns.org
+  # Access at: https://calibre.${DOMAIN}
   calibre-web:
     image: lscr.io/linuxserver/calibre-web:latest
     deploy:
@@ -98,9 +98,9 @@ services:
       - ./calibre-web/config:/config
       - /mnt/media/books:/books
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
       - DOCKER_MODS=linuxserver/mods:universal-calibre
     # TRAEFIK CONFIGURATION
     labels:
@@ -110,7 +110,7 @@ services:
       - "homelab.description=Ebook reader and library management"
       - "traefik.enable=true"
       # Router configuration
-      - "traefik.http.routers.calibre.rule=Host(`calibre.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.calibre.rule=Host(`calibre.${DOMAIN}`)"
       - "traefik.http.routers.calibre.entrypoints=websecure"
       - "traefik.http.routers.calibre.tls.certresolver=letsencrypt"
       - "traefik.http.routers.calibre.middlewares=authelia@docker"
@@ -118,7 +118,7 @@ services:
       - "traefik.http.services.calibre.loadbalancer.server.port=8083"
       # Sablier configuration (disabled by default)
       - "sablier.enable=true"
-      - "sablier.group=jasper-calibre-web"
+      - "sablier.group=${SERVER_HOSTNAME}-calibre-web"
       - "sablier.start-on-demand=true"
 
 # ==========================================
@@ -127,10 +127,10 @@ services:
 x-dockge:
   urls:
     # Proxied URLs (through Traefik)
-    - https://jellyfin.kelinreij.duckdns.org
-    - http://192.168.4.4:8096
-    - https://calibre.kelinreij.duckdns.org
-    - http://192.168.4.4:8083
+    - https://jellyfin.${DOMAIN}
+    - http://${SERVER_IP}:8096
+    - https://calibre.${DOMAIN}
+    - http://${SERVER_IP}:8083
 
 networks:
   homelab-network:

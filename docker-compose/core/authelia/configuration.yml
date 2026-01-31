@@ -1,6 +1,6 @@
-# Authelia Configuration
+# Authelia Configuration Template
 # Copy to /opt/stacks/authelia/configuration.yml
-# IMPORTANT: Replace '${DOMAIN}' with your actual DuckDNS domain
+# IMPORTANT: Replace environment variable placeholders with your actual values
 
 server:
   host: 0.0.0.0
@@ -35,7 +35,7 @@ access_control:
   default_policy: deny
   
   rules:
-    # Bypass Authelia for Jellyfin (allow app access)
+    # Bypass Authelia for media services (allow app access)
     - domain: jellyfin.${DOMAIN}
       policy: bypass
     

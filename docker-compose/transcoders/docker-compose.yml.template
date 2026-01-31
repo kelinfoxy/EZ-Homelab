@@ -1,6 +1,6 @@
 services:  
   # Tdarr Server - Distributed transcoding server
-  # Access at: https://tdarr.kelinreij.duckdns.org
+  # Access at: https://tdarr.${DOMAIN}
   tdarr-server:
     image: ghcr.io/haveagitgat/tdarr:latest
     container_name: tdarr-server
@@ -18,9 +18,9 @@ services:
       - /mnt/media:/media
       - /mnt/tdarr-transcode:/temp # Transcode cache on separate drive
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
       - serverIP=0.0.0.0
       - serverPort=8266
       - webUIPort=8265
@@ -35,13 +35,13 @@ services:
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
-      - "traefik.http.routers.tdarr.rule=Host(`tdarr.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.tdarr.rule=Host(`tdarr.${DOMAIN}`)"
       - "traefik.http.routers.tdarr.entrypoints=websecure"
       - "traefik.http.routers.tdarr.tls.certresolver=letsencrypt"
       - "traefik.http.routers.tdarr.middlewares=authelia@docker"
       - "traefik.http.services.tdarr.loadbalancer.server.port=8265"
       - "sablier.enable=true"
-      - "sablier.group=jasper-tdarr"
+      - "sablier.group=${SERVER_HOSTNAME}-tdarr"
       - "sablier.start-on-demand=true"
 
   # Tdarr Node - Transcoding worker
@@ -58,9 +58,9 @@ services:
       - /mnt/media:/media
       - /mnt/tdarr-transcode:/temp
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
       - nodeID=MainNode
       - nodeIP=0.0.0.0
       - nodePort=8267
@@ -70,11 +70,11 @@ services:
       - homelab.category=media
       - homelab.description=Tdarr transcoding worker node
       - "sablier.enable=true"
-      - "sablier.group=jasper-tdarr"
+      - "sablier.group=${SERVER_HOSTNAME}-tdarr"
       - "sablier.start-on-demand=true"
 
   # Unmanic - Another transcoding option
-  # Access at: https://unmanic.kelinreij.duckdns.org
+  # Access at: https://unmanic.${DOMAIN}
   unmanic:
     image: josh5/unmanic:latest
     container_name: unmanic
@@ -89,9 +89,9 @@ services:
       - /mnt/media:/library
       - /mnt/unmanic-cache:/tmp/unmanic # Transcode cache on separate drive
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     labels:
       # TRAEFIK CONFIGURATION
       # ==========================================
@@ -103,13 +103,13 @@ services:
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
-      - "traefik.http.routers.unmanic.rule=Host(`unmanic.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.unmanic.rule=Host(`unmanic.${DOMAIN}`)"
       - "traefik.http.routers.unmanic.entrypoints=websecure"
       - "traefik.http.routers.unmanic.tls.certresolver=letsencrypt"
       - "traefik.http.routers.unmanic.middlewares=authelia@docker"
       - "traefik.http.services.unmanic.loadbalancer.server.port=8889"
       - "sablier.enable=true"
-      - "sablier.group=jasper-unmanic"
+      - "sablier.group=${SERVER_HOSTNAME}-unmanic"
       - "sablier.start-on-demand=true"
 
 networks:
@@ -120,7 +120,7 @@ networks:
 
 x-dockge:
   urls:
-    - https://tdarr.kelinreij.duckdns.org
-    - http://192.168.4.4:8265
-    - https://unmanic.kelinreij.duckdns.org
-    - http://192.168.4.4:8888
+    - https://tdarr.${DOMAIN}
+    - http://${SERVER_IP}:8265
+    - https://unmanic.${DOMAIN}
+    - http://${SERVER_IP}:8888
