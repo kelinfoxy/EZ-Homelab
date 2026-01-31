@@ -34,6 +34,7 @@ services:
       - "homelab.category=alternatives"
       - "homelab.description=Docker container management UI (Alternative to Dockge)"
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
       - "traefik.http.routers.portainer.rule=Host(`portainer.kelinreij.duckdns.org`)"
       - "traefik.http.routers.portainer.entrypoints=websecure"
       - "traefik.http.routers.portainer.tls.certresolver=letsencrypt"
@@ -73,6 +74,7 @@ services:
       - "homelab.category=alternatives"
       - "homelab.description=SSO/Identity provider with web UI (Alternative to Authelia)"
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
       - "traefik.http.routers.authentik.rule=Host(`authentik.kelinreij.duckdns.org`)"
       - "traefik.http.routers.authentik.entrypoints=websecure"
       - "traefik.http.routers.authentik.tls.certresolver=letsencrypt"
@@ -211,6 +213,7 @@ services:
       - "homelab.description=Alternative media streaming server to Jellyfin"
       # Traefik labels - NO Authelia for app access
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
       - "traefik.http.routers.plex.rule=Host(`plex.kelinreij.duckdns.org`)"
       - "traefik.http.routers.plex.entrypoints=websecure"
       - "traefik.http.routers.plex.tls.certresolver=letsencrypt"

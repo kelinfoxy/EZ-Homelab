@@ -45,6 +45,7 @@ services:
       - "homelab.category=downloaders"
       - "homelab.description=VPN client for secure downloads"
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
       # Router configuration
       - "traefik.http.routers.qbittorrent.rule=Host(`qbit.kelinreij.duckdns.org`)"
       - "traefik.http.routers.qbittorrent.entrypoints=websecure"

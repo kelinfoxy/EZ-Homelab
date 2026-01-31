@@ -42,6 +42,7 @@ services:
       - "homelab.category=utilities"
       - "homelab.description=Backup management with restic"
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
       # Router configuration
       - "traefik.http.routers.backrest.rule=Host(`backrest.kelinreij.duckdns.org`)"
       - "traefik.http.routers.backrest.entrypoints=websecure"
@@ -87,6 +88,7 @@ services:
       - "homelab.category=utilities"
       - "homelab.description=Backup software with encryption"
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
       # Router configuration
       - "traefik.http.routers.duplicati.rule=Host(`duplicati.kelinreij.duckdns.org`)"
       - "traefik.http.routers.duplicati.entrypoints=websecure"

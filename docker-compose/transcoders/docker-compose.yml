@@ -35,6 +35,7 @@ services:
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
       - "traefik.http.routers.tdarr.rule=Host(`tdarr.kelinreij.duckdns.org`)"
       - "traefik.http.routers.tdarr.entrypoints=websecure"
       - "traefik.http.routers.tdarr.tls.certresolver=letsencrypt"
@@ -103,6 +104,7 @@ services:
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
       - "traefik.http.routers.unmanic.rule=Host(`unmanic.kelinreij.duckdns.org`)"
       - "traefik.http.routers.unmanic.entrypoints=websecure"
       - "traefik.http.routers.unmanic.tls.certresolver=letsencrypt"

@@ -76,6 +76,7 @@ services:
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
       - "traefik.http.routers.esphome.rule=Host(`esphome.kelinreij.duckdns.org`)"
       - "traefik.http.routers.esphome.entrypoints=websecure"
       - "traefik.http.routers.esphome.tls.certresolver=letsencrypt"
@@ -107,6 +108,7 @@ services:
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
       - "traefik.http.routers.tasmoadmin.rule=Host(`tasmoadmin.kelinreij.duckdns.org`)"
       - "traefik.http.routers.tasmoadmin.entrypoints=websecure"
       - "traefik.http.routers.tasmoadmin.tls.certresolver=letsencrypt"
@@ -139,6 +141,7 @@ services:
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
       - "traefik.http.routers.motioneye.rule=Host(`motioneye.kelinreij.duckdns.org`)"
       - "traefik.http.routers.motioneye.entrypoints=websecure"
       - "traefik.http.routers.motioneye.tls.certresolver=letsencrypt"
@@ -179,6 +182,7 @@ services:
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
       - "traefik.http.routers.nodered.rule=Host(`nodered.kelinreij.duckdns.org`)"
       - "traefik.http.routers.nodered.entrypoints=websecure"
       - "traefik.http.routers.nodered.tls.certresolver=letsencrypt"

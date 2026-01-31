@@ -24,6 +24,7 @@ services:
       - "homelab.category=productivity"
       - "homelab.description=File-based wiki"
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
       # Router configuration
       - "traefik.http.routers.dokuwiki.rule=Host(`dokuwiki.kelinreij.duckdns.org`)"
       - "traefik.http.routers.dokuwiki.entrypoints=websecure"
@@ -75,6 +76,7 @@ services:
       - "homelab.category=productivity"
       - "homelab.description=Documentation and wiki platform"
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
       # Router configuration
       - "traefik.http.routers.bookstack.rule=Host(`bookstack.kelinreij.duckdns.org`)"
       - "traefik.http.routers.bookstack.entrypoints=websecure"
@@ -138,6 +140,7 @@ services:
       - "homelab.category=productivity"
       - "homelab.description=MediaWiki platform"
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
       # Router configuration
       - "traefik.http.routers.mediawiki.rule=Host(`mediawiki.kelinreij.duckdns.org`)"
       - "traefik.http.routers.mediawiki.entrypoints=websecure"

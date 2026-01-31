@@ -59,6 +59,7 @@ services:
       - "homelab.category=productivity"
       - "homelab.description=File sync and collaboration"
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
       # Router configuration
       - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.kelinreij.duckdns.org`)"
       - "traefik.http.routers.nextcloud.entrypoints=websecure"
@@ -115,6 +116,7 @@ services:
       - "homelab.category=productivity"
       - "homelab.description=Recipe manager and meal planner"
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
       # Router configuration
       - "traefik.http.routers.mealie.rule=Host(`mealie.kelinreij.duckdns.org`)"
       - "traefik.http.routers.mealie.entrypoints=websecure"
@@ -160,6 +162,7 @@ services:
       - "homelab.category=productivity"
       - "homelab.description=Blog and website platform"
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
       # Router configuration
       - "traefik.http.routers.wordpress.rule=Host(`wordpress.kelinreij.duckdns.org`)"
       - "traefik.http.routers.wordpress.entrypoints=websecure"
@@ -236,6 +239,7 @@ services:
       - "homelab.category=productivity"
       - "homelab.description=Self-hosted Git service"
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
       # Router configuration
       - "traefik.http.routers.gitea.rule=Host(`gitea.kelinreij.duckdns.org`)"
       - "traefik.http.routers.gitea.entrypoints=websecure"
@@ -302,6 +306,7 @@ services:
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
       - "traefik.http.routers.jupyter.rule=Host(`jupyter.kelinreij.duckdns.org`)"
       - "traefik.http.routers.jupyter.entrypoints=websecure"
       - "traefik.http.routers.jupyter.tls.certresolver=letsencrypt"

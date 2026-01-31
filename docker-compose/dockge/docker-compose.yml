@@ -50,6 +50,7 @@ services:
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik-network"
       - "traefik.http.routers.dockge.rule=Host(`dockge.kelinreij.duckdns.org`)"
       - "traefik.http.routers.dockge.entrypoints=websecure"
       - "traefik.http.routers.dockge.tls.certresolver=letsencrypt"
