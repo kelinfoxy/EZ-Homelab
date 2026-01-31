@@ -813,6 +813,13 @@ deploy_core() {
         replace_env_placeholders "$config_file" true
     done
 
+    # Move config files to the correct location for Docker mount
+    debug_log "Moving Authelia config files to config directory"
+    mkdir -p /opt/stacks/core/authelia/config
+    mv /opt/stacks/core/authelia/configuration.yml /opt/stacks/core/authelia/config/
+    mv /opt/stacks/core/authelia/users_database.yml /opt/stacks/core/authelia/config/
+    sudo chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/core/authelia
+
     # Generate shared CA for multi-server TLS
     debug_log "Generating shared CA"
     log_info "Generating shared CA certificate for multi-server TLS..."
