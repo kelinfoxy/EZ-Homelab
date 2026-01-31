@@ -8,6 +8,7 @@ set -e  # Exit on error
 
 # Debug logging configuration
 DEBUG=${DEBUG:-false}
+VERBOSE=${VERBOSE:-false}  # New verbosity toggle
 DEBUG_LOG_FILE="/tmp/ez-homelab-debug.log"
 
 # Colors for output
@@ -33,17 +34,23 @@ fi
 
 # Log functions
 log_info() {
-    echo -e "${BLUE}[INFO]${NC} $1"
+    if [ "$VERBOSE" = true ]; then
+        echo -e "${BLUE}[INFO]${NC} $1"
+    fi
     debug_log "[INFO] $1"
 }
 
 log_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
+    if [ "$VERBOSE" = true ]; then
+        echo -e "${GREEN}[SUCCESS]${NC} $1"
+    fi
     debug_log "[SUCCESS] $1"
 }
 
 log_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
+    if [ "$VERBOSE" = true ]; then
+        echo -e "${YELLOW}[WARNING]${NC} $1"
+    fi
     debug_log "[WARNING] $1"
 }
 
@@ -107,6 +114,14 @@ replace_env_placeholders() {
     debug_log "Found variables to replace: $vars"
 
     for var in $vars; do
+        # Skip derived variables that should not be replaced
+        case "$var" in
+            "ACME_EMAIL"|"AUTHELIA_ADMIN_EMAIL"|"SMTP_USERNAME"|"SMTP_PASSWORD")
+                debug_log "Skipping derived variable: $var"
+                continue
+                ;;
+        esac
+
         if [ -z "${!var:-}" ]; then
             log_warning "Environment variable $var not found in .env file"
             debug_log "Missing variable: $var"
@@ -130,6 +145,38 @@ replace_env_placeholders() {
             exit 1
         fi
     fi
+}
+
+# Enhanced placeholder replacement for all configuration files
+enhance_placeholder_replacement() {
+    log_info "Starting enhanced placeholder replacement..."
+
+    local processed_files=0
+
+    # Process docker-compose files
+    if [ -d "$REPO_DIR/docker-compose" ]; then
+        while IFS= read -r -d '' file_path; do
+            if [ -f "$file_path" ]; then
+                debug_log "Processing docker-compose file: $file_path"
+                replace_env_placeholders "$file_path" false
+                processed_files=$((processed_files + 1))
+            fi
+        done < <(find "$REPO_DIR/docker-compose" -name "*.yml" -o -name "*.yaml" -print0 2>/dev/null)
+    fi
+
+    # Process config-templates files
+    if [ -d "$REPO_DIR/config-templates" ]; then
+        while IFS= read -r -d '' file_path; do
+            if [ -f "$file_path" ]; then
+                debug_log "Processing config template file: $file_path"
+                replace_env_placeholders "$file_path" false
+                processed_files=$((processed_files + 1))
+            fi
+        done < <(find "$REPO_DIR/config-templates" -name "*.yml" -o -name "*.yaml" -print0 2>/dev/null)
+    fi
+
+    log_success "Enhanced placeholder replacement completed - processed $processed_files files"
+    debug_log "Enhanced replacement completed for $processed_files files"
 }
 
 # Function to generate shared CA for multi-server TLS
@@ -296,40 +343,269 @@ DEPLOY_DASHBOARDS=false
 SETUP_STACKS=false
 TLS_ISSUES_SUMMARY=""
 
+# Required variables for configuration
+REQUIRED_VARS=("SERVER_IP" "SERVER_HOSTNAME" "DUCKDNS_SUBDOMAINS" "DUCKDNS_TOKEN" "DOMAIN" "DEFAULT_USER" "DEFAULT_PASSWORD" "DEFAULT_EMAIL")
+
 # Load existing .env file if it exists
 load_env_file() {
     if [ -f "$REPO_DIR/.env" ]; then
         log_info "Found existing .env file, loading current configuration..."
         load_env_file_safely "$REPO_DIR/.env"
-
-        # Show current values
-        echo ""
-        echo "Current configuration:"
-        echo "  Domain: ${DOMAIN:-Not set}"
-        echo "  Server IP: ${SERVER_IP:-Not set}"
-        echo "  Server Hostname: ${SERVER_HOSTNAME:-Not set}"
-        echo "  Remote Server IP: ${REMOTE_SERVER_IP:-Not set}"
-        echo "  Remote Server Hostname: ${REMOTE_SERVER_HOSTNAME:-Not set}"
-        echo "  Remote Server User: ${REMOTE_SERVER_USER:-Not set}"
-        if [ -n "${REMOTE_SERVER_PASSWORD:-}" ]; then
-            echo "  Remote Server Password: [HIDDEN]"
-        else
-            echo "  Remote Server Password: Not set"
-        fi
-        echo "  Default User: ${DEFAULT_USER:-Not set}"
-        if [ -n "${DEFAULT_PASSWORD:-}" ]; then
-            echo "  Default Password: [HIDDEN]"
-        else
-            echo "  Default Password: Not set"
-        fi
-        echo "  Timezone: ${TZ:-Not set}"
-        echo ""
-
         return 0
     else
         log_info "No existing .env file found. We'll create one during setup."
         return 1
     fi
+}
+
+# Validate variable values
+validate_variable() {
+    local var_name="$1"
+    local var_value="$2"
+    
+    case "$var_name" in
+        "SERVER_IP")
+            # Basic IP validation
+            if [[ $var_value =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                return 0
+            else
+                return 1
+            fi
+            ;;
+        "DOMAIN")
+            # Basic domain validation
+            if [[ $var_value =~ ^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+                return 0
+            else
+                return 1
+            fi
+            ;;
+        "DUCKDNS_SUBDOMAINS")
+            # DuckDNS subdomain should be non-empty and contain only valid characters
+            local trimmed_value=$(echo "$var_value" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+            if [ -n "$trimmed_value" ] && [[ $trimmed_value =~ ^[a-zA-Z0-9.-]+$ ]]; then
+                return 0
+            else
+                return 1
+            fi
+            ;;
+        "DEFAULT_PASSWORD")
+            # Password should be at least 8 characters
+            if [ ${#var_value} -ge 8 ]; then
+                return 0
+            else
+                return 1
+            fi
+            ;;
+        "DEFAULT_EMAIL")
+            # Basic email validation
+            if [[ $var_value =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+                return 0
+            else
+                return 1
+            fi
+            ;;
+        *)
+            # For other variables, trim whitespace and check they're not empty
+            local trimmed_value=$(echo "$var_value" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+            if [ -n "$trimmed_value" ]; then
+                return 0
+            else
+                return 1
+            fi
+            ;;
+    esac
+}
+
+# Prompt for a single variable
+prompt_for_variable() {
+    local var="$1"
+    local user_input=""
+    local current_value="${!var:-}"
+    local prompt_text=""
+    
+    while true; do
+        # Build prompt text with current value if it exists
+        if [ -n "$current_value" ]; then
+            if [ "$var" = "DEFAULT_PASSWORD" ]; then
+                prompt_text="🔒 ${var} ([HIDDEN]): "
+            else
+                prompt_text="${var} (${current_value}): "
+            fi
+        else
+            prompt_text="${var}: "
+        fi
+        
+        # Add icon prefix
+        case "$var" in
+            "SERVER_IP")
+                prompt_text="🌐 ${prompt_text}"
+                ;;
+            "DOMAIN")
+                prompt_text="🌍 ${prompt_text}"
+                ;;
+            "DUCKDNS_SUBDOMAINS")
+                prompt_text="🦆 ${prompt_text}"
+                ;;
+            "DUCKDNS_TOKEN")
+                prompt_text="🔑 ${prompt_text}"
+                ;;
+            "DEFAULT_USER")
+                prompt_text="👤 ${prompt_text}"
+                ;;
+            "DEFAULT_PASSWORD")
+                # Lock icon already added above for passwords
+                ;;
+            "DEFAULT_EMAIL")
+                prompt_text="📧 ${prompt_text}"
+                ;;
+            "SERVER_HOSTNAME")
+                prompt_text="🏠 ${prompt_text}"
+                ;;
+        esac
+        
+        # Get user input
+        if [ "$var" = "DEFAULT_PASSWORD" ]; then
+            read -s -p "$prompt_text" user_input
+            echo ""
+        else
+            read -p "$prompt_text" user_input
+        fi
+        
+        # Check for quit command
+        if [ "$user_input" = "q" ] || [ "$user_input" = "Q" ]; then
+            log_info "Setup cancelled by user"
+            exit 0
+        fi
+        
+        if [ -z "$user_input" ]; then
+            if [ -n "$current_value" ]; then
+                # Use existing value - overwrite prompt with status
+                if [ "$var" != "DEFAULT_PASSWORD" ]; then
+                    echo -e "\033[1A\033[K✅ ${var}: ${current_value}"
+                fi
+                return 0
+            else
+                log_warning "${var} cannot be empty. Please provide a value."
+                continue
+            fi
+        fi
+        
+        if validate_variable "$var" "$user_input"; then
+            eval "$var=\"$user_input\""
+            # Overwrite prompt with status
+            if [ "$var" != "DEFAULT_PASSWORD" ]; then
+                echo -e "\033[1A\033[K✅ ${var}: ${user_input}"
+            else
+                echo -e "\033[1A\033[K✅ ${var}: [HIDDEN]"
+            fi
+            return 0
+        else
+            log_warning "Invalid value for ${var}. Please try again."
+            continue
+        fi
+    done
+}
+
+# Validate and prompt for required variables with loop
+validate_and_prompt_variables() {
+    local all_valid=false
+    local user_wants_to_review=false
+    local first_display=true
+    
+    while true; do
+        user_wants_to_review=false
+        
+        all_valid=true
+        
+        # Check validity without showing initial summary
+        for var in "${REQUIRED_VARS[@]}"; do
+            local display_value=$(echo "${!var:-}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+            if [ -z "$display_value" ] || ! validate_variable "$var" "${!var}"; then
+                all_valid=false
+            fi
+        done
+        
+        if [ "$all_valid" = true ]; then
+            if [ "$first_display" = true ]; then
+                echo "Current configuration:"
+                for var in "${REQUIRED_VARS[@]}"; do
+                    local display_value=$(echo "${!var:-}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+                    if [ "$var" = "DEFAULT_PASSWORD" ]; then
+                        echo "  ✅ ${var}: [HIDDEN]"
+                    else
+                        echo "  ✅ ${var}: ${display_value}"
+                    fi
+                done
+                echo ""
+                first_display=false
+            fi
+            echo ""
+            echo "Choose an option:"
+            echo "  1) ✅ Deploy now"
+            echo "  2) 🔄 Make Changes"
+            echo "  q) ❌ Quit setup"
+            echo ""
+            read -p "Enter your choice (1, 2, or q): " user_choice
+            
+            case "$user_choice" in
+                1|"p"|"proceed")
+                    log_info "Proceeding with current configuration..."
+                    return 0
+                    ;;
+                2|"r"|"review"|"change")
+                    user_wants_to_review=true
+                    echo ""
+                    echo "Reviewing all variables - press Enter to keep current value or enter new value:"
+                    echo ""
+                    ;;
+                [Qq]|[Qq]uit)
+                    log_info "Setup cancelled by user"
+                    exit 0
+                    ;;
+                *)
+                    log_warning "Invalid choice. Please enter 1, 2, or q."
+                    echo ""
+                    continue
+                    ;;
+            esac
+        else
+            echo ""
+            echo "Some variables need configuration. Press Enter to continue or 'q' to quit."
+            read -p "Press Enter to configure missing variables, or 'q' to quit: " user_choice
+            
+            case "$user_choice" in
+                [Qq]|[Qq]uit)
+                    log_info "Setup cancelled by user"
+                    exit 0
+                    ;;
+                ""|"c"|"continue")
+                    # Continue with prompting
+                    ;;
+                *)
+                    log_warning "Invalid choice. Press Enter to continue or 'q' to quit."
+                    continue
+                    ;;
+            esac
+        fi
+        
+        # Prompt for variables (either missing ones or all if reviewing)
+        if [ "$user_wants_to_review" = true ]; then
+            # Review all variables one by one
+            for var in "${REQUIRED_VARS[@]}"; do
+                prompt_for_variable "$var"
+            done
+            # After review, continue the loop to show menu again
+            continue
+        else
+            # Only prompt for missing/invalid variables
+            for var in "${REQUIRED_VARS[@]}"; do
+                if [ -z "${!var:-}" ] || ! validate_variable "$var" "${!var}"; then
+                    prompt_for_variable "$var"
+                fi
+            done
+        fi
+    done
 }
 
 # Save configuration to .env file
@@ -342,15 +618,20 @@ save_env_file() {
         sudo -u "$ACTUAL_USER" cp "$REPO_DIR/.env.example" "$REPO_DIR/.env"
     fi
 
-    # Update values as the actual user
-    sudo -u "$ACTUAL_USER" sed -i "s%DOMAIN=.*%DOMAIN=$DOMAIN%" "$REPO_DIR/.env"
-    sudo -u "$ACTUAL_USER" sed -i "s%SERVER_IP=.*%SERVER_IP=$SERVER_IP%" "$REPO_DIR/.env"
-    sudo -u "$ACTUAL_USER" sed -i "s%SERVER_HOSTNAME=.*%SERVER_HOSTNAME=$SERVER_HOSTNAME%" "$REPO_DIR/.env"
-    sudo -u "$ACTUAL_USER" sed -i "s%REMOTE_SERVER_IP=.*%REMOTE_SERVER_IP=$REMOTE_SERVER_IP%" "$REPO_DIR/.env"
-    sudo -u "$ACTUAL_USER" sed -i "s%REMOTE_SERVER_HOSTNAME=.*%REMOTE_SERVER_HOSTNAME=$REMOTE_SERVER_HOSTNAME%" "$REPO_DIR/.env"
-    sudo -u "$ACTUAL_USER" sed -i "s%REMOTE_SERVER_USER=.*%REMOTE_SERVER_USER=$REMOTE_SERVER_USER%" "$REPO_DIR/.env"
-    sudo -u "$ACTUAL_USER" sed -i "s%REMOTE_SERVER_PASSWORD=.*%REMOTE_SERVER_PASSWORD=$REMOTE_SERVER_PASSWORD%" "$REPO_DIR/.env"
-    sudo -u "$ACTUAL_USER" sed -i "s%TZ=.*%TZ=$TZ%" "$REPO_DIR/.env"
+    # Update only the required variables
+    for var in "${REQUIRED_VARS[@]}"; do
+        if [ -n "${!var:-}" ]; then
+            sudo -u "$ACTUAL_USER" sed -i "s|^${var}=.*|${var}=${!var}|" "$REPO_DIR/.env"
+        fi
+    done
+
+    # Update HOMEPAGE_ALLOWED_HOSTS dynamically
+    if [ -n "${DOMAIN:-}" ] && [ -n "${SERVER_IP:-}" ]; then
+        # Allow user to specify homepage subdomain
+        HOMEPAGE_SUBDOMAIN="${HOMEPAGE_SUBDOMAIN:-homepage}"
+        HOMEPAGE_ALLOWED_HOSTS="${HOMEPAGE_SUBDOMAIN}.${DOMAIN},${SERVER_IP}:3003"
+        sudo -u "$ACTUAL_USER" sed -i "s|HOMEPAGE_ALLOWED_HOSTS=.*|HOMEPAGE_ALLOWED_HOSTS=$HOMEPAGE_ALLOWED_HOSTS|" "$REPO_DIR/.env"
+    fi
 
     # Authelia settings (only generate secrets if deploying core)
     if [ "$DEPLOY_CORE" = true ]; then
@@ -469,141 +750,6 @@ validate_secrets() {
 
     log_success "All required secrets validated"
     debug_log "Secret validation passed"
-}
-
-# Prompt for required values
-prompt_for_values() {
-    echo ""
-    log_info "Configuration Setup:"
-    echo ""
-
-    # Set defaults from env file or hardcoded fallbacks
-    DEFAULT_DOMAIN="${DOMAIN:-example.duckdns.org}"
-    DEFAULT_SERVER_IP="${SERVER_IP:-$(hostname -I | awk '{print $1}')}"
-    DEFAULT_CORE_SERVER_IP="${CORE_SERVER_IP:-}"
-    DEFAULT_SERVER_HOSTNAME="${SERVER_HOSTNAME:-$(hostname)}"
-    DEFAULT_REMOTE_SERVER_IP="${REMOTE_SERVER_IP:-}"
-    DEFAULT_REMOTE_SERVER_HOSTNAME="${REMOTE_SERVER_HOSTNAME:-}"
-    DEFAULT_REMOTE_SERVER_USER="${REMOTE_SERVER_USER:-${DEFAULT_USER}}"
-    DEFAULT_REMOTE_SERVER_PASSWORD="${REMOTE_SERVER_PASSWORD:-}"
-    DEFAULT_TZ="${TZ:-America/New_York}"
-
-    # Display current/default configuration
-    echo "Please review the following configuration:"
-    echo "  Domain: $DEFAULT_DOMAIN"
-    echo "  Server IP: $DEFAULT_SERVER_IP"
-    echo "  Server Hostname: $DEFAULT_SERVER_HOSTNAME"
-    echo "  Remote Server IP: $DEFAULT_REMOTE_SERVER_IP"
-    echo "  Remote Server Hostname: $DEFAULT_REMOTE_SERVER_HOSTNAME"
-    echo "  Remote Server User: $DEFAULT_REMOTE_SERVER_USER"
-    if [ -n "$DEFAULT_REMOTE_SERVER_PASSWORD" ]; then
-        echo "  Remote Server Password: [HIDDEN]"
-    else
-        echo "  Remote Server Password: Not set"
-    fi
-    echo "  Timezone: $DEFAULT_TZ"
-
-    if [ "$DEPLOY_CORE" = false ] && [ -z "$DEFAULT_CORE_SERVER_IP" ]; then
-        echo "  Core Server IP: [Will be prompted for multi-server TLS]"
-    elif [ -n "$DEFAULT_CORE_SERVER_IP" ]; then
-        echo "  Core Server IP: $DEFAULT_CORE_SERVER_IP"
-    fi
-
-    if [ "$DEPLOY_CORE" = true ]; then
-        DEFAULT_ADMIN_USER="${DEFAULT_USER:-admin}"
-        DEFAULT_ADMIN_EMAIL="${DEFAULT_EMAIL:-${DEFAULT_ADMIN_USER}@${DEFAULT_DOMAIN}}"
-        echo "  Admin User: $DEFAULT_ADMIN_USER"
-        echo "  Admin Email: $DEFAULT_ADMIN_EMAIL"
-        echo "  Admin Password: [Will be prompted if needed]"
-    fi
-
-    echo ""
-    read -p "Use these default values? (Y/n): " -n 1 -r
-    echo ""
-    if [[ $REPLY =~ ^[Nn]$ ]]; then
-        echo "Please enter custom values:"
-        echo ""
-
-        # Domain
-        read -p "Domain [$DEFAULT_DOMAIN]: " DOMAIN
-        DOMAIN="${DOMAIN:-$DEFAULT_DOMAIN}"
-
-        # Server IP
-        read -p "Server IP [$DEFAULT_SERVER_IP]: " SERVER_IP
-        SERVER_IP="${SERVER_IP:-$DEFAULT_SERVER_IP}"
-
-        # Server Hostname
-        read -p "Server Hostname [$DEFAULT_SERVER_HOSTNAME]: " SERVER_HOSTNAME
-        SERVER_HOSTNAME="${SERVER_HOSTNAME:-$DEFAULT_SERVER_HOSTNAME}"
-
-        # Remote Server IP
-        read -p "Remote Server IP [$DEFAULT_REMOTE_SERVER_IP]: " REMOTE_SERVER_IP
-        REMOTE_SERVER_IP="${REMOTE_SERVER_IP:-$DEFAULT_REMOTE_SERVER_IP}"
-
-        # Remote Server Hostname
-        read -p "Remote Server Hostname [$DEFAULT_REMOTE_SERVER_HOSTNAME]: " REMOTE_SERVER_HOSTNAME
-        REMOTE_SERVER_HOSTNAME="${REMOTE_SERVER_HOSTNAME:-$DEFAULT_REMOTE_SERVER_HOSTNAME}"
-
-        # Remote Server User
-        read -p "Remote Server User [$DEFAULT_REMOTE_SERVER_USER]: " REMOTE_SERVER_USER
-        REMOTE_SERVER_USER="${REMOTE_SERVER_USER:-$DEFAULT_REMOTE_SERVER_USER}"
-
-        # Remote Server Password
-        read -s -p "Remote Server Password: " REMOTE_SERVER_PASSWORD
-        echo ""
-        if [ -z "$REMOTE_SERVER_PASSWORD" ]; then
-            REMOTE_SERVER_PASSWORD="$DEFAULT_REMOTE_SERVER_PASSWORD"
-        fi
-
-        # Timezone
-        read -p "Timezone [$DEFAULT_TZ]: " TZ
-        TZ="${TZ:-$DEFAULT_TZ}"
-
-        # Core server IP (for multi-server setup)
-        if [ "$DEPLOY_CORE" = false ]; then
-            echo ""
-            read -p "Core server IP (for shared TLS CA): " CORE_SERVER_IP
-        fi
-
-        # Admin credentials (only if deploying core)
-        if [ "$DEPLOY_CORE" = true ]; then
-            echo ""
-            log_info "Authelia Admin Credentials:"
-
-            read -p "Admin username [$DEFAULT_ADMIN_USER]: " ADMIN_USER
-            ADMIN_USER="${ADMIN_USER:-$DEFAULT_ADMIN_USER}"
-
-            read -p "Admin email [$DEFAULT_ADMIN_EMAIL]: " ADMIN_EMAIL
-            ADMIN_EMAIL="${ADMIN_EMAIL:-$DEFAULT_ADMIN_EMAIL}"
-
-            if [ -z "$ADMIN_PASSWORD" ]; then
-                while [ -z "$ADMIN_PASSWORD" ]; do
-                    read -s -p "Admin password (will be hashed): " ADMIN_PASSWORD
-                    echo ""
-                    if [ ${#ADMIN_PASSWORD} -lt 8 ]; then
-                        log_warning "Password must be at least 8 characters"
-                        ADMIN_PASSWORD=""
-                    fi
-                done
-            else
-                log_info "Admin password already configured"
-            fi
-        fi
-    else
-        # Use defaults
-        DOMAIN="$DEFAULT_DOMAIN"
-        SERVER_IP="$DEFAULT_SERVER_IP"
-        SERVER_HOSTNAME="$DEFAULT_SERVER_HOSTNAME"
-        TZ="$DEFAULT_TZ"
-        CORE_SERVER_IP="$DEFAULT_CORE_SERVER_IP"
-
-        if [ "$DEPLOY_CORE" = true ]; then
-            ADMIN_USER="$DEFAULT_ADMIN_USER"
-            ADMIN_EMAIL="$DEFAULT_ADMIN_EMAIL"
-        fi
-    fi
-
-    echo ""
 }
 
 # System setup function (Docker, directories, etc.)
@@ -1057,13 +1203,7 @@ perform_deployment() {
         log_info "Please update your .env file and redeploy affected stacks."
     fi
 
-    # Report any TLS issues
-    if [ -n "$TLS_ISSUES_SUMMARY" ]; then
-        echo ""
-        log_warning "TLS Configuration Issues Detected:"
-        echo "$TLS_ISSUES_SUMMARY"
-        echo ""
-    fi
+    # TLS issues will be reported in the final summary
 }
 
 # Setup Docker TLS function
@@ -1186,28 +1326,18 @@ setup_stacks_for_dockge() {
 
 # Main menu
 show_main_menu() {
-    echo "=========================================="
-    echo "        EZ-HOMELAB SETUP & DEPLOYMENT"
-    echo "=========================================="
+    clear
     echo ""
-    echo "What would you like to do?"
-    echo ""
-    echo "1) 🚀 Default Setup (Recommended)"
-    echo "   - Deploy Dockge, core infrastructure, dashboards & monitoring"
-    echo "   - All additional stacks prepared for Dockge"
-    echo ""
-    echo "2) 🏗️  Core Only"
-    echo "   - Deploy Dockge and core infrastructure only"
-    echo "   - All stacks prepared for Dockge"
-    echo ""
-    echo "3) 🔧 Infrastructure Only"
-    echo "   - Deploy Dockge and monitoring tools"
-    echo "   - Requires existing Traefik (from previous setup)"
-    echo "   - Configures TLS for remote Docker access (Sablier)"
-    echo "   - Services accessible without authentication"
-    echo "   - All stacks prepared for Dockge"
-    echo ""
-    echo "4) ❌ Exit"
+    echo "╔═════════════════════════════════════════════════════════════╗"
+    echo "║          EZ-HOMELAB           SETUP & DEPLOYMENT            ║"
+    echo "║                                                             ║"
+    echo "║                1)  Install Prerequisites                    ║"
+    echo "║                2)  Deploy Core Server                       ║"
+    echo "║                3)  Deploy Additional Server                 ║"
+    echo "║                4)  Install NVIDIA Drivers                   ║"
+    echo "║                                                             ║"
+    echo "║                q)  Quit                                     ║"
+    echo "╚═════════════════════════════════════════════════════════════╝"
     echo ""
 }
 
@@ -1228,31 +1358,24 @@ main() {
 
     # Show main menu
     show_main_menu
-    read -p "Choose an option (1-4): " MAIN_CHOICE
+    read -p "Choose an option (1-3): " MAIN_CHOICE
 
     case $MAIN_CHOICE in
         1)
-            log_info "Selected: Default Setup"
+            log_info "Selected: Core Server"
             DEPLOY_CORE=true
             DEPLOY_INFRASTRUCTURE=true
             DEPLOY_DASHBOARDS=true
             SETUP_STACKS=true
             ;;
         2)
-            log_info "Selected: Core Only"
-            DEPLOY_CORE=true
-            DEPLOY_INFRASTRUCTURE=false
-            DEPLOY_DASHBOARDS=true
-            SETUP_STACKS=true
-            ;;
-        3)
-            log_info "Selected: Infrastructure Only"
+            log_info "Selected: Additional Server"
             DEPLOY_CORE=false
             DEPLOY_INFRASTRUCTURE=true
             DEPLOY_DASHBOARDS=false
             SETUP_STACKS=true
             ;;
-        4)
+        3)
             log_info "Exiting..."
             exit 0
             ;;
@@ -1316,10 +1439,13 @@ main() {
     log_success "Directories ready"
 
     # Prompt for configuration values
-    prompt_for_values
+    validate_and_prompt_variables
 
     # Save configuration
     save_env_file
+
+    # Perform enhanced placeholder replacement across all config files
+    enhance_placeholder_replacement
 
     # Validate secrets for core deployment
     validate_secrets
@@ -1329,36 +1455,49 @@ main() {
 
     # Show completion message
     echo ""
-    echo "=========================================="
-    log_success "Setup and deployment completed successfully!"
-    echo "=========================================="
-    echo ""
+    echo "╔═════════════════════════════════════════════════════════════╗"
+    echo "║                  Deployment Complete!                       ║"
+    echo "║  SSL Certificates may take a few minutes to be issued.      ║"
+    echo "║                                                             ║"
+    echo "║  https://dockge.kelinreij.duckdns.org                       ║"
+    echo "║  http://192.168.4.4:5001                                    ║"
+    echo "║                                                             ║"
+    echo "║  https://homepage.kelinreij.duckdns.org                     ║"
+    echo "║  http://192.168.4.4:3003                                    ║"
+    echo "║                                                             ║"
+    echo "╚═════════════════════════════════════════════════════════════╝"
 
-    if [ "$DEPLOY_INFRASTRUCTURE" = true ]; then
-        log_info "Access your services:"
-        echo ""
-        echo "  🚀 Dockge:   https://dockge.${DOMAIN}"
-        [ "$DEPLOY_CORE" = true ] && echo "  🔒 Authelia: https://auth.${DOMAIN}"
-        [ "$DEPLOY_CORE" = true ] && echo "  🔀 Traefik:  https://traefik.${DOMAIN}"
-        echo "  📊 Homepage: https://homepage.${DOMAIN}"
-        echo ""
+    # Show consolidated warnings if any
+    if [ -n "$MISSING_VARS_SUMMARY" ] || [ -n "$TLS_ISSUES_SUMMARY" ]; then
+        echo "╔═════════════════════════════════════════════════════════════╗"
+        echo "║                     ⚠️  WARNING  ⚠️                        ║"
+        echo "║       The following variables were not defined              ║"
+        echo "║  If something isn't working as expected check these first   ║"
+        echo "║                                                             ║"
+        
+        if [ -n "$MISSING_VARS_SUMMARY" ]; then
+            log_warning "Missing Environment Variables:"
+            echo "$MISSING_VARS_SUMMARY"
+            echo "║                                                             ║"
+        fi
+                
+        if [ -n "$TLS_ISSUES_SUMMARY" ]; then
+            log_warning "TLS Configuration Issues:"
+            echo "$TLS_ISSUES_SUMMARY"
+            echo "║                                                             ║"
+        fi
     fi
+    echo "╚═════════════════════════════════════════════════════════════╝"
 
-    log_info "Next steps:"
+    echo "╔══════════════════════════════════════════╗"
+    echo "║              📚 RESOURCES                 ║"
+    echo "╚══════════════════════════════════════════╝"
     echo ""
-    echo "  1. Access Dockge at https://dockge.${DOMAIN}"
-    if [ "$DEPLOY_CORE" = true ]; then
-        echo "     (Use your Authelia credentials: ${AUTHELIA_ADMIN_USER})"
-    fi
+    echo "  📖 Documentation: $REPO_DIR/docs/"
+    echo "  🔧 Quick Reference: $REPO_DIR/docs/quick-reference.md"
+    echo "  🐙 Repository: https://github.com/your-repo/ez-homelab"
+    echo "  📋 Wiki: https://github.com/your-repo/ez-homelab/wiki"
     echo ""
-    echo "  2. Start additional stacks from Dockge's web UI"
-    echo ""
-    echo "  3. Configure services via the AI assistant in VS Code"
-    echo ""
-    echo "=========================================="
-    echo ""
-    log_info "For documentation, see: $REPO_DIR/docs/"
-    log_info "For troubleshooting, see: $REPO_DIR/docs/quick-reference.md"
     debug_log "Script completed successfully"
     echo ""
 }

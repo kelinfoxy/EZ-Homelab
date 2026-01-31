@@ -13,6 +13,6 @@
 #  host: 192.168.4.5
 #  port: 2375
 
-#${SERVER_HOSTNAME}:
+#jasper:
 #  host: 192.168.4.11
 #  port: 2375

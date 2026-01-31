@@ -4,288 +4,288 @@
 - Dashboards:
     - Homepage:
         icon: homepage.png
-        href: https://homepage.${DOMAIN}
+        href: https://homepage.kelinreij.duckdns.org
         description: Hosted on Raspberry Pi
 
     - Homepage - ${REMOTE_SERVER_HOSTNAME}:
         icon: homepage.png
-        href: https://homepage.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}
+        href: https://homepage.${REMOTE_SERVER_HOSTNAME}.kelinreij.duckdns.org
         description: ${REMOTE_SERVER_HOSTNAME} - Application Dashboard
 
     - Homarr:
         icon: homarr.png
-        href: https://homarr.${DOMAIN}
+        href: https://homarr.kelinreij.duckdns.org
         description: Alternative Dashboard
 
     - Homarr - ${REMOTE_SERVER_HOSTNAME}:
         icon: homarr.png
-        href: https://homarr.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}
+        href: https://homarr.${REMOTE_SERVER_HOSTNAME}.kelinreij.duckdns.org
         description: ${REMOTE_SERVER_HOSTNAME} - Alternative Dashboard
 
-    - Dockge - ${SERVER_HOSTNAME}:
+    - Dockge - jasper:
         icon: dockge.png
-        href: https://${SERVER_HOSTNAME}.${DOMAIN}
+        href: https://jasper.kelinreij.duckdns.org
         description: Main Server
  
     - Dockge - ${REMOTE_SERVER_HOSTNAME}:
         icon: dockge.png
-        href: https://${REMOTE_SERVER_HOSTNAME}.${DOMAIN}
+        href: https://${REMOTE_SERVER_HOSTNAME}.kelinreij.duckdns.org
         description: Raspberry Pi Authentication Server
 
 - Core:
     - Traefik:
         icon: traefik.png
-        href: https://traefik.${DOMAIN}
+        href: https://traefik.kelinreij.duckdns.org
         description: Reverse Proxy & SSL
 
     - Authelia:
         icon: authelia.png
-        href: https://auth.${DOMAIN}
+        href: https://auth.kelinreij.duckdns.org
         description: Authentication SSO Portal
 
     - Pi-hole:
         icon: pi-hole.png
-        href: https://pihole.${DOMAIN}
+        href: https://pihole.kelinreij.duckdns.org
         description: Network-wide Ad Blocking
 
 - Monitoring Stack:
     - Dozzle:
         icon: dozzle.png
-        href: https://dozzle.${SERVER_HOSTNAME}.${DOMAIN}
-        description: ${SERVER_HOSTNAME} - Real-time Log Viewer
+        href: https://dozzle.jasper.kelinreij.duckdns.org
+        description: jasper - Real-time Log Viewer
 
     - Dozzle:
         icon: dozzle.png
-        href: https://dozzle.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}
+        href: https://dozzle.${REMOTE_SERVER_HOSTNAME}.kelinreij.duckdns.org
         description: ${REMOTE_SERVER_HOSTNAME} - Real-time Log Viewer
 
-    - Glances - ${SERVER_HOSTNAME}:
+    - Glances - jasper:
         icon: glances.png
-        href: https://glances.${SERVER_HOSTNAME}.${DOMAIN}
-        description: ${SERVER_HOSTNAME} - System Monitoring
+        href: https://glances.jasper.kelinreij.duckdns.org
+        description: jasper - System Monitoring
 
     - Glances - ${REMOTE_SERVER_HOSTNAME}:
         icon: glances.png
-        href: https://glances.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}
+        href: https://glances.${REMOTE_SERVER_HOSTNAME}.kelinreij.duckdns.org
         description: ${REMOTE_SERVER_HOSTNAME} - System Monitoring
 
     - Uptime Kuma:
         icon: uptime-kuma.png
-        href: https://uptime-kuma.${DOMAIN}
+        href: https://uptime-kuma.kelinreij.duckdns.org
         description: Uptime Monitoring
 
     - Grafana - ${REMOTE_SERVER_HOSTNAME}:
         icon: grafana.png
-        href: https://grafana.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}
+        href: https://grafana.${REMOTE_SERVER_HOSTNAME}.kelinreij.duckdns.org
         description: ${REMOTE_SERVER_HOSTNAME} - Metrics Dashboard
 
     - Prometheus - ${REMOTE_SERVER_HOSTNAME}:
         icon: prometheus.png
-        href: https://prometheus.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}
+        href: https://prometheus.${REMOTE_SERVER_HOSTNAME}.kelinreij.duckdns.org
         description: ${REMOTE_SERVER_HOSTNAME} - Metrics Collection
 
     - Uptime Kuma - ${REMOTE_SERVER_HOSTNAME}:
         icon: uptime-kuma.png
-        href: https://status.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}
+        href: https://status.${REMOTE_SERVER_HOSTNAME}.kelinreij.duckdns.org
         description: ${REMOTE_SERVER_HOSTNAME} - Uptime Monitoring
 
 - Media:
     - Jellyfin:
         icon: jellyfin.png
-        href: https://jellyfin.${DOMAIN}
+        href: https://jellyfin.kelinreij.duckdns.org
         description: Open Source Media Server
 
     - Jellyseerr:
         icon: jellyseerr.png
-        href: https://jellyseerr.${DOMAIN}
+        href: https://jellyseerr.kelinreij.duckdns.org
         description: Media Request Manager
 
     - Calibre-Web:
         icon: calibre-web.png
-        href: https://calibre.${DOMAIN}
+        href: https://calibre.kelinreij.duckdns.org
         description: Ebook Library
 
 - Media Management:
     - Sonarr:
         icon: sonarr.png
-        href: https://sonarr.${DOMAIN}
+        href: https://sonarr.kelinreij.duckdns.org
         description: TV Shows Automation
 
     - Radarr:
         icon: radarr.png
-        href: https://radarr.${DOMAIN}
+        href: https://radarr.kelinreij.duckdns.org
         description: Movies Automation
 
     - Prowlarr:
         icon: prowlarr.png
-        href: https://prowlarr.${DOMAIN}
+        href: https://prowlarr.kelinreij.duckdns.org
         description: Indexer Manager
 
     - Readarr:
         icon: readarr.png
-        href: https://readarr.${DOMAIN}
+        href: https://readarr.kelinreij.duckdns.org
         description: Books Automation
 
     - Lidarr:
         icon: lidarr.png
-        href: https://lidarr.${DOMAIN}
+        href: https://lidarr.kelinreij.duckdns.org
         description: Music Automation
 
     - Mylar3:
         icon: mylar.png
-        href: https://mylar.${DOMAIN}
+        href: https://mylar.kelinreij.duckdns.org
         description: Comics Manager
 
 - Home Automation:
     - Home Assistant:
         icon: home-assistant.png
-        href: https://hass.${DOMAIN}
+        href: https://hass.kelinreij.duckdns.org
         description: Home Automation Platform
 
     - ESPHome:
         icon: esphome.png
-        href: https://esphome.${DOMAIN}
+        href: https://esphome.kelinreij.duckdns.org
         description: ESP Device Manager
 
     - Node-RED:
         icon: node-red.png
-        href: https://nodered.${DOMAIN}
+        href: https://nodered.kelinreij.duckdns.org
         description: Flow-based Automation
 
     - Zigbee2MQTT:
         icon: zigbee2mqtt.png
-        href: https://zigbee.${DOMAIN}
+        href: https://zigbee.kelinreij.duckdns.org
         description: Zigbee Bridge
 
     - Mosquitto:
         icon: mosquitto.png
-        href: https://mqtt.${DOMAIN}
+        href: https://mqtt.kelinreij.duckdns.org
         description: MQTT Broker
 
 - Productivity:
     - Nextcloud:
         icon: nextcloud.png
-        href: https://nextcloud.${DOMAIN}
+        href: https://nextcloud.kelinreij.duckdns.org
         description: Cloud Storage & Collaboration
 
     - Gitea:
         icon: gitea.png
-        href: https://gitea.${DOMAIN}
+        href: https://gitea.kelinreij.duckdns.org
         description: Git Repository
 
     - Mealie:
         icon: mealie.png
-        href: https://mealie.${DOMAIN}
+        href: https://mealie.kelinreij.duckdns.org
         description: Recipe Manager
 
     - WordPress:
         icon: wordpress.png
-        href: https://wordpress.${DOMAIN}
+        href: https://wordpress.kelinreij.duckdns.org
         description: CMS Platform
 
 - Wikis:
     - BookStack:
         icon: bookstack.png
-        href: https://bookstack.${DOMAIN}
+        href: https://bookstack.kelinreij.duckdns.org
         description: Wiki Platform
 
     - DokuWiki:
         icon: dokuwiki.png
-        href: https://dokuwiki.${DOMAIN}
+        href: https://dokuwiki.kelinreij.duckdns.org
         description: Simple Wiki
         
     - Mediawiki:
         icon: mediawiki.png
-        href: https://mediawiki.${DOMAIN}
+        href: https://mediawiki.kelinreij.duckdns.org
         description: Collaborative Wiki
 
 - Development:
     - VS Code Server:
         icon: vscode.png
-        href: https://code.${DOMAIN}
+        href: https://code.kelinreij.duckdns.org
         description: Browser-based IDE
 
     - Jupyter:
         icon: jupyter.png
-        href: https://jupyter.${DOMAIN}
+        href: https://jupyter.kelinreij.duckdns.org
         description: Data Science Notebooks
 
 - Downloaders:
     - qBittorrent:
         icon: qbittorrent.png
-        href: https://qbit.${DOMAIN}
+        href: https://qbit.kelinreij.duckdns.org
         description: Torrent Client
     - Transcoders:
         - Tdarr:
             icon: tdarr.png
-            href: https://tdarr.${DOMAIN}
+            href: https://tdarr.kelinreij.duckdns.org
             description: Media Transcoding
 
         - Unmanic:
             icon: unmanic.png
-            href: https://unmanic.${DOMAIN}
+            href: https://unmanic.kelinreij.duckdns.org
             description: Media Transcoder
         
 - Utilities:
     - Vaultwarden:
         icon: vaultwarden.png
-        href: https://vault.${DOMAIN}
+        href: https://vault.kelinreij.duckdns.org
         description: Password Manager
 
     - Formio:
         icon: mdi-form-select
-        href: https://formio.${DOMAIN}
+        href: https://formio.kelinreij.duckdns.org
         description: Form Builder
 
 - Backup:
     - Backrest:
         icon: mdi-backup-restore
-        href: https://backrest.${DOMAIN}
+        href: https://backrest.kelinreij.duckdns.org
         description: Backup Solution
 
     - Backrest - ${REMOTE_SERVER_HOSTNAME}:
         icon: mdi-backup-restore
-        href: https://backrest.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}
+        href: https://backrest.${REMOTE_SERVER_HOSTNAME}.kelinreij.duckdns.org
         description: ${REMOTE_SERVER_HOSTNAME} - Backup Solution
 
     - Duplicati:
         icon: duplicati.png
-        href: https://duplicati.${DOMAIN}
+        href: https://duplicati.kelinreij.duckdns.org
         description: Backup Software
 
     - Duplicati - ${REMOTE_SERVER_HOSTNAME}:
         icon: duplicati.png
-        href: https://duplicati.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}
+        href: https://duplicati.${REMOTE_SERVER_HOSTNAME}.kelinreij.duckdns.org
         description: ${REMOTE_SERVER_HOSTNAME} - Backup Software
 
 - Metrics:
     - Grafana:
         icon: grafana.png
-        href: https://grafana.${DOMAIN}
+        href: https://grafana.kelinreij.duckdns.org
         description: Metrics Dashboard
 
     - Prometheus:
         icon: prometheus.png
-        href: https://prometheus.${DOMAIN}
+        href: https://prometheus.kelinreij.duckdns.org
         description: Metrics Collection
         
     - cAdvisor:
         icon: cadvisor.png
-        href: https://cadvisor.${DOMAIN}
+        href: https://cadvisor.kelinreij.duckdns.org
         description: Container Metrics
         
 - Alternatives:
     - Portainer:
         icon: portainer.png
-        href: https://portainer.${DOMAIN}
+        href: https://portainer.kelinreij.duckdns.org
         description: Container Management UI
 
     - Authentik:
         icon: authentik.png
-        href: https://authentik.${DOMAIN}
+        href: https://authentik.kelinreij.duckdns.org
         description: Alternative Auth Provider
 
     - Plex:
         icon: plex.png
-        href: https://plex.${DOMAIN}
+        href: https://plex.kelinreij.duckdns.org
         description: Media Server
