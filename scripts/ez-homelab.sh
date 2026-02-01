@@ -906,7 +906,6 @@ deploy_core() {
     sed -i '/^BITWARDEN_/d' /opt/stacks/core/.env
     sed -i '/^FORMIO_/d' /opt/stacks/core/.env
     sed -i '/^HOMEPAGE_VAR_/d' /opt/stacks/core/.env
-    sed -i '/^AUTHELIA_ADMIN_PASSWORD=/d' /opt/stacks/core/.env
 
     # Replace placeholders in core compose file (fail on missing critical vars)
     replace_env_placeholders "/opt/stacks/core/docker-compose.yml" true
@@ -1356,36 +1355,76 @@ main() {
         debug_log "No existing .env file found"
     fi
 
-    # Show main menu
-    show_main_menu
-    read -p "Choose an option (1-3): " MAIN_CHOICE
+    # Menu selection loop
+    while true; do
+        # Show main menu
+        show_main_menu
+        read -p "Choose an option (1-4 or q): " MAIN_CHOICE
 
-    case $MAIN_CHOICE in
-        1)
-            log_info "Selected: Core Server"
-            DEPLOY_CORE=true
-            DEPLOY_INFRASTRUCTURE=true
-            DEPLOY_DASHBOARDS=true
-            SETUP_STACKS=true
-            ;;
-        2)
-            log_info "Selected: Additional Server"
-            DEPLOY_CORE=false
-            DEPLOY_INFRASTRUCTURE=true
-            DEPLOY_DASHBOARDS=false
-            SETUP_STACKS=true
-            ;;
-        3)
-            log_info "Exiting..."
-            exit 0
-            ;;
-        *)
-            log_error "Invalid choice. Please run the script again."
-            exit 1
-            ;;
-    esac
+        case $MAIN_CHOICE in
+            1)
+                log_info "Selected: Install Prerequisites"
+                FORCE_SYSTEM_SETUP=true
+                DEPLOY_CORE=false
+                DEPLOY_INFRASTRUCTURE=false
+                DEPLOY_DASHBOARDS=false
+                SETUP_STACKS=false
+                break
+                ;;
+            2)
+                log_info "Selected: Deploy Core Server"
+                DEPLOY_CORE=true
+                DEPLOY_INFRASTRUCTURE=true
+                DEPLOY_DASHBOARDS=true
+                SETUP_STACKS=true
+                break
+                ;;
+            3)
+                log_info "Selected: Deploy Additional Server"
+                DEPLOY_CORE=false
+                DEPLOY_INFRASTRUCTURE=true
+                DEPLOY_DASHBOARDS=false
+                SETUP_STACKS=true
+                break
+                ;;
+            4)
+                log_info "Selected: Install NVIDIA Drivers"
+                INSTALL_NVIDIA=true
+                DEPLOY_CORE=false
+                DEPLOY_INFRASTRUCTURE=false
+                DEPLOY_DASHBOARDS=false
+                SETUP_STACKS=false
+                break
+                ;;
+            [Qq]|[Qq]uit)
+                log_info "Exiting..."
+                exit 0
+                ;;
+            *)
+                log_warning "Invalid choice '$MAIN_CHOICE'. Please select 1-4 or q to quit."
+                echo ""
+                sleep 2
+                continue
+                ;;
+        esac
+    done
 
     echo ""
+
+    # Handle special menu options
+    if [ "$FORCE_SYSTEM_SETUP" = true ]; then
+        log_info "Installing prerequisites..."
+        system_setup "$@"
+        log_success "Prerequisites installed successfully."
+        exit 0
+    fi
+
+    if [ "$INSTALL_NVIDIA" = true ]; then
+        log_info "Installing NVIDIA drivers..."
+        # TODO: Implement NVIDIA driver installation
+        log_warning "NVIDIA driver installation not yet implemented."
+        exit 0
+    fi
 
     # Check if system setup is needed
     # Only run system setup if Docker is not installed OR if running as root and Docker setup hasn't been done
