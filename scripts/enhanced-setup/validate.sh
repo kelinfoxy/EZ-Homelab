@@ -15,16 +15,13 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib/ui.sh"
 
 # Validate .env file
 validate_env_file() {
-    echo "DEBUG: Starting validate_env_file"
     local env_file="$EZ_HOME/.env"
-    echo "DEBUG: env_file = $env_file"
 
     if [[ ! -f "$env_file" ]]; then
-        echo "DEBUG: .env file not found"
+        print_error ".env file not found at $env_file"
         return 1
     fi
 
-    echo "DEBUG: .env file exists"
     return 0
 }
 

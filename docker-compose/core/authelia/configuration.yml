@@ -1,6 +1,6 @@
-# Authelia Configuration Template
+# Authelia Configuration
 # Copy to /opt/stacks/authelia/configuration.yml
-# IMPORTANT: Replace environment variable placeholders with your actual values
+# IMPORTANT: Replace 'kelinreij.duckdns.org' with your actual DuckDNS domain
 
 server:
   host: 0.0.0.0
@@ -11,12 +11,12 @@ log:
 
 theme: dark
 
-jwt_secret: ${AUTHELIA_JWT_SECRET}
+jwt_secret: generate-with-openssl-rand-hex-64
 
-default_redirection_url: https://auth.${DOMAIN}
+default_redirection_url: https://auth.kelinreij.duckdns.org
 
 totp:
-  issuer: ${DOMAIN}
+  issuer: kelinreij.duckdns.org
   period: 30
   skew: 1
 
@@ -35,41 +35,41 @@ access_control:
   default_policy: deny
   
   rules:
-    # Bypass Authelia for media services (allow app access)
-    - domain: jellyfin.${DOMAIN}
+    # Bypass Authelia for Jellyfin (allow app access)
+    - domain: jellyfin.kelinreij.duckdns.org
       policy: bypass
     
     # Bypass for Plex (allow app access)
-    - domain: plex.${DOMAIN}
+    - domain: plex.kelinreij.duckdns.org
       policy: bypass
     
     # Bypass for Home Assistant (has its own auth)
-    - domain: ha.${DOMAIN}
+    - domain: ha.kelinreij.duckdns.org
       policy: bypass
     
     # Bypass for development services (they have their own auth or setup)
-    - domain: pgadmin.${DOMAIN}
+    - domain: pgadmin.kelinreij.duckdns.org
       policy: bypass
-    - domain: gitlab.${DOMAIN}
+    - domain: gitlab.kelinreij.duckdns.org
       policy: bypass
     
     # Protected: All other services require authentication
-    - domain: "*.${DOMAIN}"
+    - domain: "*.kelinreij.duckdns.org"
       policy: one_factor
     
     # Two-factor for admin services (optional)
     # - domain:
-    #     - "admin.${DOMAIN}"
-    #     - "portainer.${DOMAIN}"
+    #     - "admin.kelinreij.duckdns.org"
+    #     - "portainer.kelinreij.duckdns.org"
     #   policy: two_factor
 
 session:
   name: authelia_session
-  secret: ${AUTHELIA_SESSION_SECRET}
+  secret: generate-with-openssl-rand-hex-64
   expiration: 24h      # Session expires after 24 hours
   inactivity: 24h      # Session expires after 24 hours of inactivity
   remember_me_duration: 1M
-  domain: ${DOMAIN}
+  domain: kelinreij.duckdns.org
 
 regulation:
   max_retries: 3
@@ -77,7 +77,7 @@ regulation:
   ban_time: 5m
 
 storage:
-  encryption_key: ${AUTHELIA_STORAGE_ENCRYPTION_KEY}
+  encryption_key: generate-with-openssl-rand-hex-64
   local:
     path: /data/db.sqlite3
 
