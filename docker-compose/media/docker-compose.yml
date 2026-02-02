@@ -68,7 +68,6 @@ services:
       - "sablier.theme=hacker-terminal"
 
   # Calibre-Web - Ebook reader and server
-  # Access at: https://calibre.${DOMAIN}
   calibre-web:
     image: lscr.io/linuxserver/calibre-web:latest
     deploy:
