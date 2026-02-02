@@ -131,7 +131,7 @@ localize_yml_file() {
 
     for var in $vars; do
         # Trim whitespace from variable name
-        var=$(echo "$var" | sed 's/^[ \t\n]*//;s/[ \t\n]*$//')
+        var=$(echo "$var" | xargs)
         # Skip derived variables that should not be replaced
         case "$var" in
             "ACME_EMAIL"|"AUTHELIA_ADMIN_EMAIL"|"SMTP_USERNAME"|"SMTP_PASSWORD")
@@ -156,10 +156,10 @@ localize_yml_file() {
     debug_log "Replaced $replaced_count variables in $file_path"
 
     # Post-replacement validation: check for remaining ${VAR} (except skipped)
-    local remaining_vars=$(grep -v '^[[:space:]]*#' "$file_path" | grep -o '\${[^}]*}' | sed 's/\${//' | sed 's/}//' | sort | uniq)
+    local remaining_vars=$(grep -v '^[ \t]*#' "$file_path" | grep -o '\${[^}]*}' | sed 's/\${//' | sed 's/}//' | sort | uniq)
     local invalid_remaining=""
     for rvar in $remaining_vars; do
-        rvar=$(echo "$rvar" | sed 's/^[ \t\n]*//;s/[ \t\n]*$//')
+        rvar=$(echo "$rvar" | xargs)
         case "$rvar" in
             "ACME_EMAIL"|"AUTHELIA_ADMIN_EMAIL"|"SMTP_USERNAME"|"SMTP_PASSWORD")
                 continue
