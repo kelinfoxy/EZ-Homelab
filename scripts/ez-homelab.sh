@@ -84,8 +84,8 @@ load_env_file_safely() {
                 value="${BASH_REMATCH[1]}"
             fi
 
-            # Export the variable
-            export "$key"="$value"
+            # Trim whitespace from value
+            value=$(echo "$value" | xargs)
             debug_log "Exported $key=[HIDDEN]"  # Don't log actual values for security
         fi
     done < "$env_file"
