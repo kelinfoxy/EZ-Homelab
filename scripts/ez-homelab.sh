@@ -83,6 +83,10 @@ load_env_file_safely() {
             # Trim whitespace from key and value
             key=$(echo "$key" | xargs)
             value=$(echo "$value" | xargs)
+            
+            # Export the variable
+            export "$key"="$value"
+            
             debug_log "Exported $key=[HIDDEN]"  # Don't log actual values for security
         fi
     done < "$env_file"
