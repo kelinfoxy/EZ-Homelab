@@ -915,7 +915,7 @@ deploy_core() {
 
     # Replace all placeholders in Traefik config files
     debug_log "Replacing placeholders in Traefik config files"
-    find /opt/stacks/core/traefik -name "*.yml" -type f | while read -r config_file; do
+    for config_file in $(find /opt/stacks/core/traefik -name "*.yml" -type f); do
         # Don't fail on missing variables for external host files (they're optional)
         if [[ "$config_file" == *external-host* ]]; then
             localize_yml_file "$config_file" false
@@ -940,7 +940,7 @@ deploy_core() {
 
     # Replace all placeholders in Authelia config files
     debug_log "Replacing placeholders in Authelia config files"
-    find /opt/stacks/core/authelia -name "*.yml" -type f | while read -r config_file; do
+    for config_file in $(find /opt/stacks/core/authelia -name "*.yml" -type f); do
         localize_yml_file "$config_file" true
     done
 
