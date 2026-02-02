@@ -84,6 +84,9 @@ load_env_file_safely() {
             key=$(echo "$key" | xargs)
             value=$(echo "$value" | xargs)
             
+            # Strip carriage return if present (DOS line endings)
+            value=${value%$'\r'}
+            
             # Export the variable
             export "$key"="$value"
             
@@ -128,6 +131,7 @@ localize_yml_file() {
 
     # Use envsubst to replace all ${VAR} with environment values
     if command -v envsubst >/dev/null 2>&1; then
+        log_info "DEBUG: DEFAULT_EMAIL=$DEFAULT_EMAIL"
         envsubst < "$file_path" > "$file_path.tmp" && mv "$file_path.tmp" "$file_path"
         debug_log "Replaced variables in $file_path using envsubst"
         replaced_count=$(grep -o '\${[^}]*}' "$file_path" | wc -l)
