@@ -77,6 +77,9 @@ load_env_file_safely() {
             local key="${BASH_REMATCH[1]}"
             local value="${BASH_REMATCH[2]}"
 
+            # Strip inline comments
+            value=${value%%#*}
+
             # Trim whitespace from key and value
             key=$(echo "$key" | xargs)
             value=$(echo "$value" | xargs)
@@ -1317,7 +1320,6 @@ setup_stacks_for_dockge() {
 
 # Main menu
 show_main_menu() {
-    clear
     echo ""
     echo "╔═════════════════════════════════════════════════════════════╗"
     echo "║          EZ-HOMELAB           SETUP & DEPLOYMENT            ║"
@@ -1533,6 +1535,7 @@ run_cmd() {
 main() {
     debug_log "main() called with arguments: $@"
     log_info "EZ-Homelab Unified Setup & Deployment Script"
+    clear
     echo ""
 
     # Parse command line arguments
