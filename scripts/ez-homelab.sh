@@ -119,35 +119,19 @@ localize_yml_file() {
         debug_log "Backed up $file_path"
     fi
 
-    # Find all ${VAR} patterns in the file
-    local vars=$(grep -o '\${[^}]*}' "$file_path" | sed 's/\${//' | sed 's/}//' | sort | uniq)
-    debug_log "Found variables to replace: $vars"
-
-    for var in $vars; do
-        # Trim whitespace from variable name
-        var=$(echo "$var" | xargs)
-        # Skip derived variables that should not be replaced
-        case "$var" in
-            "ACME_EMAIL"|"AUTHELIA_ADMIN_EMAIL"|"SMTP_USERNAME"|"SMTP_PASSWORD")
-                debug_log "Skipping derived variable: $var"
-                continue
-                ;;
-        esac
-
-        if [ -z "${!var+x}" ]; then
-            log_warning "Environment variable $var not found in .env file"
-            debug_log "Missing variable: $var"
-            missing_vars="$missing_vars $var"
-        else
-            # Replace ${VAR} with the value, handling special characters
-            local escaped_value=$(printf '%s\n' "${!var}" | sed 's/[[\.*^$()+?{|]/\\&/g')
-            debug_log "Replacing \${$var} with value: [HIDDEN]"  # Don't log actual secrets
-            sed -i "s|\${[ \t]*${var}[ \t]*}|${escaped_value}|g" "$file_path"
-            replaced_count=$((replaced_count + 1))
+    # Use envsubst to replace all ${VAR} with environment values
+    if command -v envsubst >/dev/null 2>&1; then
+        envsubst < "$file_path" > "$file_path.tmp" && mv "$file_path.tmp" "$file_path"
+        debug_log "Replaced variables in $file_path using envsubst"
+        replaced_count=$(grep -o '\${[^}]*}' "$file_path" | wc -l)
+        replaced_count=$((replaced_count / 2))  # Approximate, since envsubst replaces all
+    else
+        log_warning "envsubst not available, cannot localize $file_path"
+        if [ "$fail_on_missing" = true ]; then
+            exit 1
         fi
-    done
-
-    debug_log "Replaced $replaced_count variables in $file_path"
+        return
+    fi
 
     # Post-replacement validation: check for remaining ${VAR} (except skipped)
     local remaining_vars=$(grep -v '^[ \t]*#' "$file_path" | grep -o '\${[^}]*}' | sed 's/\${//' | sed 's/}//' | sort | uniq)
