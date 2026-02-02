@@ -1,16 +1,12 @@
 # Media Management Services
-# Content automation and library management (*arr apps, transcoders, etc.)
-# Place in /opt/stacks/media-management/docker-compose.yml
-
 # RESTART POLICY GUIDE:
 # - unless-stopped: Core infrastructure services that should always run
 # - no: Services with Sablier lazy loading (start on-demand)
 # - See individual service comments for specific reasoning
 
 services:
-  # Sonarr - TV show automation
-  # Access at: https://sonarr.yourdomain.duckdns.org
   sonarr:
+    # Sonarr - TV show management and automation
     image: linuxserver/sonarr:4.0.0
     container_name: sonarr
     restart: no
@@ -45,7 +41,7 @@ services:
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.sonarr.rule=Host(`sonarr.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.sonarr.rule=Host(`sonarr.${DOMAIN}`)"
       - "traefik.http.routers.sonarr.entrypoints=websecure"
       - "traefik.http.routers.sonarr.tls.certresolver=letsencrypt"
       - "traefik.http.routers.sonarr.middlewares=authelia@docker"
@@ -55,7 +51,6 @@ services:
       - "sablier.start-on-demand=true"
 
   # Radarr - Movie automation
-  # Access at: https://radarr.yourdomain.duckdns.org
   radarr:
     image: linuxserver/radarr:5.2.6
     container_name: radarr
@@ -91,7 +86,7 @@ services:
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.radarr.rule=Host(`radarr.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.radarr.rule=Host(`radarr.${DOMAIN}`)"
       - "traefik.http.routers.radarr.entrypoints=websecure"
       - "traefik.http.routers.radarr.tls.certresolver=letsencrypt"
       - "traefik.http.routers.radarr.middlewares=authelia@docker"
@@ -135,7 +130,7 @@ services:
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.${DOMAIN}`)"
       - "traefik.http.routers.prowlarr.entrypoints=websecure"
       - "traefik.http.routers.prowlarr.tls.certresolver=letsencrypt"
       - "traefik.http.routers.prowlarr.middlewares=authelia@docker"
@@ -145,7 +140,6 @@ services:
       - "sablier.start-on-demand=true"
 
   # Readarr - Ebook and audiobook management
-  # Access at: https://readarr.kelinreij.duckdns.org
   readarr:
     image: linuxserver/readarr:0.4.19-nightly
     container_name: readarr
@@ -175,7 +169,7 @@ services:
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.readarr.rule=Host(`readarr.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.readarr.rule=Host(`readarr.${DOMAIN}`)"
       - "traefik.http.routers.readarr.entrypoints=websecure"
       - "traefik.http.routers.readarr.tls.certresolver=letsencrypt"
       - "traefik.http.routers.readarr.middlewares=authelia@docker"
@@ -185,7 +179,6 @@ services:
       - "sablier.start-on-demand=true"
 
   # Lidarr - Music collection manager
-  # Access at: https://lidarr.kelinreij.duckdns.org
   lidarr:
     image: linuxserver/lidarr:2.0.7
     container_name: lidarr
@@ -215,7 +208,7 @@ services:
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.lidarr.rule=Host(`lidarr.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.lidarr.rule=Host(`lidarr.${DOMAIN}`)"
       - "traefik.http.routers.lidarr.entrypoints=websecure"
       - "traefik.http.routers.lidarr.tls.certresolver=letsencrypt"
       - "traefik.http.routers.lidarr.middlewares=authelia@docker"
@@ -225,7 +218,6 @@ services:
       - "sablier.start-on-demand=true"
 
   # Lazy Librarian - Book manager
-  # Access at: https://lazylibrarian.kelinreij.duckdns.org
   lazylibrarian:
     image: linuxserver/lazylibrarian:latest
     container_name: lazylibrarian
@@ -256,7 +248,7 @@ services:
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.lazylibrarian.rule=Host(`lazylibrarian.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.lazylibrarian.rule=Host(`lazylibrarian.${DOMAIN}`)"
       - "traefik.http.routers.lazylibrarian.entrypoints=websecure"
       - "traefik.http.routers.lazylibrarian.tls.certresolver=letsencrypt"
       - "traefik.http.routers.lazylibrarian.middlewares=authelia@docker"
@@ -266,7 +258,6 @@ services:
       - "sablier.start-on-demand=true"
 
   # Mylar3 - Comic book manager
-  # Access at: https://mylar.kelinreij.duckdns.org
   mylar3:
     image: linuxserver/mylar3:latest
     container_name: mylar3
@@ -296,7 +287,7 @@ services:
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.mylar.rule=Host(`mylar.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.mylar.rule=Host(`mylar.${DOMAIN}`)"
       - "traefik.http.routers.mylar.entrypoints=websecure"
       - "traefik.http.routers.mylar.tls.certresolver=letsencrypt"
       - "traefik.http.routers.mylar.middlewares=authelia@docker"
@@ -306,7 +297,6 @@ services:
       - "sablier.start-on-demand=true"
 
   # Jellyseerr - Request management for Jellyfin/Plex
-  # Access at: https://jellyseerr.kelinreij.duckdns.org
   jellyseerr:
     image: fallenbagel/jellyseerr:latest
     container_name: jellyseerr
@@ -339,7 +329,7 @@ services:
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.jellyseerr.rule=Host(`jellyseerr.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.jellyseerr.rule=Host(`jellyseerr.${DOMAIN}`)"
       - "traefik.http.routers.jellyseerr.entrypoints=websecure"
       - "traefik.http.routers.jellyseerr.tls.certresolver=letsencrypt"
       - "traefik.http.routers.jellyseerr.middlewares=authelia@docker"
@@ -368,21 +358,21 @@ services:
   
 x-dockge:
   urls:
-    - https://sonarr.kelinreij.duckdns.org
+    - https://sonarr.${DOMAIN}
     - http://192.168.4.4:8989
-    - https://radarr.kelinreij.duckdns.org
+    - https://radarr.${DOMAIN}
     - http://192.168.4.4:7878
-    - https://prowlarr.kelinreij.duckdns.org
+    - https://prowlarr.${DOMAIN}
     - http://192.168.4.4:9696
-    - https://readarr.kelinreij.duckdns.org
+    - https://readarr.${DOMAIN}
     - http://192.168.4.4:8787
-    - https://lidarr.kelinreij.duckdns.org
+    - https://lidarr.${DOMAIN}
     - http://192.168.4.4:8686
-    - https://lazylibrarian.kelinreij.duckdns.org
+    - https://lazylibrarian.${DOMAIN}
     - http://192.168.4.4:5299
-    - https://mylar.kelinreij.duckdns.org
+    - https://mylar.${DOMAIN}
     - http://192.168.4.4:8090
-    - https://jellyseerr.kelinreij.duckdns.org
+    - https://jellyseerr.${DOMAIN}
     - http://192.168.4.4:5055
 
 networks:

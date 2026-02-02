@@ -1,6 +1,4 @@
 # Backup and Utility Services
-# Place in /opt/stacks/utilities/docker-compose.yml
-
 # RESTART POLICY GUIDE:
 # - unless-stopped: Core infrastructure services that should always run
 # - no: Services with Sablier lazy loading (start on-demand)
@@ -8,7 +6,6 @@
 
 services:
   # Backrest - Backup solution for restic
-  # Access at: https://backrest.kelinreij.duckdns.org
   # Uses Sablier lazy loading - starts on-demand, stops after 5min inactivity
   backrest:
     image: garethgeorge/backrest:latest
@@ -44,7 +41,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
       # Router configuration
-      - "traefik.http.routers.backrest.rule=Host(`backrest.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.backrest.rule=Host(`backrest.${DOMAIN}`)"
       - "traefik.http.routers.backrest.entrypoints=websecure"
       - "traefik.http.routers.backrest.tls.certresolver=letsencrypt"
       - "traefik.http.routers.backrest.middlewares=authelia@docker"
@@ -56,7 +53,6 @@ services:
       - "sablier.start-on-demand=true"
   
   # Duplicati - Backup solution
-  # Access at: https://duplicati.kelinreij.duckdns.org
   duplicati:
     image: lscr.io/linuxserver/duplicati:2.0.7
     container_name: duplicati
@@ -90,7 +86,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
       # Router configuration
-      - "traefik.http.routers.duplicati.rule=Host(`duplicati.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.duplicati.rule=Host(`duplicati.${DOMAIN}`)"
       - "traefik.http.routers.duplicati.entrypoints=websecure"
       - "traefik.http.routers.duplicati.tls.certresolver=letsencrypt"
       - "traefik.http.routers.duplicati.middlewares=authelia@docker"
@@ -134,7 +130,7 @@ services:
       # Traefik labels
       - "traefik.enable=true"
       # Router configuration
-      - "traefik.http.routers.formio.rule=Host(`forms.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.formio.rule=Host(`forms.${DOMAIN}`)"
       - "traefik.http.routers.formio.entrypoints=websecure"
       - "traefik.http.routers.formio.tls.certresolver=letsencrypt"
       - "traefik.http.routers.formio.middlewares=authelia@docker"
@@ -156,7 +152,6 @@ services:
       - "homelab.description=Form.io database"
 
   # Bitwarden (Vaultwarden) - Password manager
-  # Access at: https://vault.kelinreij.duckdns.org
   # Note: SSO disabled for browser extension and mobile app compatibility
   
   vaultwarden:
@@ -171,7 +166,7 @@ services:
     volumes:
       - ./vaultwarden/data:/data
     environment:
-      - DOMAIN=https://vault.kelinreij.duckdns.org
+      - DOMAIN=https://vault.${DOMAIN}
       - SIGNUPS_ALLOWED=${BITWARDEN_SIGNUPS_ALLOWED}
       - INVITATIONS_ALLOWED=${BITWARDEN_INVITATIONS_ALLOWED}
       - ADMIN_TOKEN=${BITWARDEN_ADMIN_TOKEN}
@@ -198,7 +193,7 @@ services:
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
-      - "traefik.http.routers.vaultwarden.rule=Host(`vault.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.vaultwarden.rule=Host(`vault.${DOMAIN}`)"
       - "traefik.http.routers.vaultwarden.entrypoints=websecure"
       - "traefik.http.routers.vaultwarden.tls=true"
       - "traefik.http.routers.vaultwarden.tls.certresolver=letsencrypt"
@@ -238,11 +233,11 @@ networks:
 
 x-dockge:
   urls:
-    - https://backrest.kelinreij.duckdns.org
+    - https://backrest.${DOMAIN}
     - https://192.168.4.4:9898
-    - https://duplicati.kelinreij.duckdns.org
+    - https://duplicati.${DOMAIN}
     - https://192.168.4.4:8200
-    - https://forms.kelinreij.duckdns.org
+    - https://forms.${DOMAIN}
     - https://192.168.4.4:3002
-    - https://vault.kelinreij.duckdns.org
+    - https://vault.${DOMAIN}
     - https://192.168.4.4:8091

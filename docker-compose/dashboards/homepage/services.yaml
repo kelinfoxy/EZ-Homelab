@@ -17,9 +17,9 @@
         href: https://jasper.kelinreij.duckdns.org
         description: Main Server
  
-    - Dockge - ${REMOTE_SERVER_HOSTNAME}:
+    - Dockge - your-remote-server :
         icon: dockge.png
-        href: https://${REMOTE_SERVER_HOSTNAME}.kelinreij.duckdns.org
+        href: https://your-remote-server .kelinreij.duckdns.org
         description: Raspberry Pi Authentication Server
 
 - Core:
@@ -46,18 +46,18 @@
 
     - Dozzle:
         icon: dozzle.png
-        href: https://dozzle.${REMOTE_SERVER_HOSTNAME}.kelinreij.duckdns.org
-        description: ${REMOTE_SERVER_HOSTNAME} - Real-time Log Viewer
+        href: https://dozzle.your-remote-server .kelinreij.duckdns.org
+        description: your-remote-server  - Real-time Log Viewer
 
     - Glances - jasper:
         icon: glances.png
         href: https://glances.jasper.kelinreij.duckdns.org
         description: jasper - System Monitoring
 
-    - Glances - ${REMOTE_SERVER_HOSTNAME}:
+    - Glances - your-remote-server :
         icon: glances.png
-        href: https://glances.${REMOTE_SERVER_HOSTNAME}.kelinreij.duckdns.org
-        description: ${REMOTE_SERVER_HOSTNAME} - System Monitoring
+        href: https://glances.your-remote-server .kelinreij.duckdns.org
+        description: your-remote-server  - System Monitoring
 
     - Uptime Kuma:
         icon: uptime-kuma.png

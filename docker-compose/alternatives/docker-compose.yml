@@ -1,8 +1,5 @@
 # Alternative Services Stack
 # This stack contains alternative/optional services that are not deployed by default
-# Deploy manually through Dockge if you want to use these alternatives
-# Place in /opt/stacks/alternatives/docker-compose.yml
-
 # RESTART POLICY GUIDE:
 # - unless-stopped: Core infrastructure services that should always run
 # - no: Services with Sablier lazy loading (start on-demand)
@@ -10,8 +7,6 @@
 
 services:
   # Portainer - Docker management UI (Alternative to Dockge)
-  # Access at: https://portainer.kelinreij.duckdns.org
-  # NOTE: Dockge is the default Docker management UI. Deploy Portainer only if you prefer its interface
   # Docker management interface should always run when deployed
   portainer:
     image: portainer/portainer-ce:2.19.4
@@ -35,14 +30,14 @@ services:
       - "homelab.description=Docker container management UI (Alternative to Dockge)"
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.portainer.rule=Host(`portainer.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.portainer.rule=Host(`portainer.${DOMAIN}`)"
       - "traefik.http.routers.portainer.entrypoints=websecure"
       - "traefik.http.routers.portainer.tls.certresolver=letsencrypt"
       - "traefik.http.routers.portainer.middlewares=authelia@docker"
       - "traefik.http.services.portainer.loadbalancer.server.port=9000"
 
   # Authentik - Alternative SSO/Identity Provider with Web UI
-  # Access at: https://authentik.kelinreij.duckdns.org
+  # Access at: https://authentik.${DOMAIN}
   # NOTE: Authelia is the default SSO. Deploy Authentik only if you need a web UI for user management
   # WARNING: Do not run both Authelia and Authentik at the same time
   # SSO service should always run when deployed as alternative to Authelia
@@ -75,7 +70,7 @@ services:
       - "homelab.description=SSO/Identity provider with web UI (Alternative to Authelia)"
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.authentik.rule=Host(`authentik.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.authentik.rule=Host(`authentik.${DOMAIN}`)"
       - "traefik.http.routers.authentik.entrypoints=websecure"
       - "traefik.http.routers.authentik.tls.certresolver=letsencrypt"
       - "traefik.http.routers.authentik.middlewares=authelia@docker"
@@ -165,9 +160,7 @@ services:
       retries: 5
 
   # Plex Media Server - Alternative to Jellyfin
-  # Access at: https://plex.yourdomain.duckdns.org
   # NOTE: No Authelia - allows app access from Roku, Fire TV, mobile, etc.
-  # Media server should always run when deployed as alternative to Jellyfin
   plex:
     image: plexinc/pms-docker:1.40.0.7998-f68041501
     container_name: plex
@@ -214,12 +207,12 @@ services:
       # Traefik labels - NO Authelia for app access
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.plex.rule=Host(`plex.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.plex.rule=Host(`plex.${DOMAIN}`)"
       - "traefik.http.routers.plex.entrypoints=websecure"
       - "traefik.http.routers.plex.tls.certresolver=letsencrypt"
       - "traefik.http.services.plex.loadbalancer.server.port=32400"
-      - "x-dockge.url=https://plex.kelinreij.duckdns.org"
-      - "x-dockge.url=https://plex.kelinreij.duckdns.org"
+      - "x-dockge.url=https://plex.${DOMAIN}"
+      - "x-dockge.url=https://plex.${DOMAIN}"
 
 volumes:
   portainer-data:

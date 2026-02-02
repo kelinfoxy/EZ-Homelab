@@ -1,22 +1,14 @@
 # Media Services
-# Default Services for media management and streaming
-# Place in /opt/stacks/media/docker-compose.yml
-
 # SABLIER SESSION DURATION: Set to 5m for testing. Increase to 30m for production in config-templates/traefik/dynamic/sablier.yml
-
 # RESTART POLICY GUIDE:
 # - unless-stopped: Core infrastructure services that should always run
 # - no: Services with Sablier lazy loading (start on-demand)
 # - See individual service comments for specific reasoning
 
-# Service Access URLs:
-# - Jellyfin: https://jellyfin.kelinreij.duckdns.org (no SSO - app access)
-# - Plex: https://plex.kelinreij.duckdns.org (no SSO - app access)
-# - qBittorrent: https://qbit.kelinreij.duckdns.org (routed through Gluetun VPN)
+
 
 services:
   # Jellyfin - Open-source media streaming server
-  # Access at: https://jellyfin.yourdomain.duckdns.org
   # NOTE: No Authelia - allows app access from Roku, Fire TV, mobile, etc.
   # Uses Sablier lazy loading - starts on-demand, stops after 5min inactivity
   jellyfin:
@@ -63,7 +55,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
       # Router configuration
-      - "traefik.http.routers.jellyfin.rule=Host(`jellyfin.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.jellyfin.rule=Host(`jellyfin.${DOMAIN}`)"
       - "traefik.http.routers.jellyfin.entrypoints=websecure"
       - "traefik.http.routers.jellyfin.tls=true"
       - "traefik.http.routers.jellyfin.tls.certresolver=letsencrypt"
@@ -76,7 +68,7 @@ services:
       - "sablier.theme=hacker-terminal"
 
   # Calibre-Web - Ebook reader and server
-  # Access at: https://calibre.kelinreij.duckdns.org
+  # Access at: https://calibre.${DOMAIN}
   calibre-web:
     image: lscr.io/linuxserver/calibre-web:latest
     deploy:
@@ -112,7 +104,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
       # Router configuration
-      - "traefik.http.routers.calibre.rule=Host(`calibre.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.calibre.rule=Host(`calibre.${DOMAIN}`)"
       - "traefik.http.routers.calibre.entrypoints=websecure"
       - "traefik.http.routers.calibre.tls.certresolver=letsencrypt"
       - "traefik.http.routers.calibre.middlewares=authelia@docker"
@@ -123,15 +115,12 @@ services:
       - "sablier.group=jasper-calibre-web"
       - "sablier.start-on-demand=true"
 
-# ==========================================
-# DOCKGE URL CONFIGURATION
-# ==========================================
 x-dockge:
   urls:
     # Proxied URLs (through Traefik)
-    - https://jellyfin.kelinreij.duckdns.org
+    - https://jellyfin.${DOMAIN}
     - http://192.168.4.4:8096
-    - https://calibre.kelinreij.duckdns.org
+    - https://calibre.${DOMAIN}
     - http://192.168.4.4:8083
 
 networks:

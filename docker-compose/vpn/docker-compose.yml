@@ -1,7 +1,4 @@
 # VPN Stack
-# VPN client and VPN-routed download clients
-# Place in /opt/stacks/vpn/docker-compose.yml
-
 # RESTART POLICY GUIDE:
 # - unless-stopped: Core infrastructure services that should always run
 # - no: Services with Sablier lazy loading (start on-demand)
@@ -10,7 +7,6 @@
 services:
   # Gluetun - VPN client (Surfshark)
   # Routes download clients through VPN for security
-  # VPN service should always run to maintain secure connections
   gluetun:
     image: qmcgaw/gluetun:latest
     container_name: gluetun
@@ -47,7 +43,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
       # Router configuration
-      - "traefik.http.routers.qbittorrent.rule=Host(`qbit.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.qbittorrent.rule=Host(`qbit.${DOMAIN}`)"
       - "traefik.http.routers.qbittorrent.entrypoints=websecure"
       - "traefik.http.routers.qbittorrent.tls=true"
       - "traefik.http.routers.qbittorrent.middlewares=authelia@docker"
@@ -59,7 +55,6 @@ services:
       - "sablier.sessionDuration=1h"
 
   # qBittorrent - Torrent client
-  # Routes through Gluetun VPN
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
     deploy:
@@ -93,5 +88,5 @@ networks:
 
 x-dockge:
   urls:
-    - https://qbit.kelinreij.duckdns.org
+    - https://qbit.${DOMAIN}
     - https://192.168.4.4:8081

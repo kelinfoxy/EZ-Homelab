@@ -7,29 +7,29 @@
         href: https://homepage.kelinreij.duckdns.org
         description: Hosted on Raspberry Pi
 
-    - Homepage - ${REMOTE_SERVER_HOSTNAME}:
+    - Homepage - your-remote-server :
         icon: homepage.png
-        href: https://homepage.${REMOTE_SERVER_HOSTNAME}.kelinreij.duckdns.org
-        description: ${REMOTE_SERVER_HOSTNAME} - Application Dashboard
+        href: https://homepage.your-remote-server .kelinreij.duckdns.org
+        description: your-remote-server  - Application Dashboard
 
     - Homarr:
         icon: homarr.png
         href: https://homarr.kelinreij.duckdns.org
         description: Alternative Dashboard
 
-    - Homarr - ${REMOTE_SERVER_HOSTNAME}:
+    - Homarr - your-remote-server :
         icon: homarr.png
-        href: https://homarr.${REMOTE_SERVER_HOSTNAME}.kelinreij.duckdns.org
-        description: ${REMOTE_SERVER_HOSTNAME} - Alternative Dashboard
+        href: https://homarr.your-remote-server .kelinreij.duckdns.org
+        description: your-remote-server  - Alternative Dashboard
 
     - Dockge - jasper:
         icon: dockge.png
         href: https://jasper.kelinreij.duckdns.org
         description: Main Server
  
-    - Dockge - ${REMOTE_SERVER_HOSTNAME}:
+    - Dockge - your-remote-server :
         icon: dockge.png
-        href: https://${REMOTE_SERVER_HOSTNAME}.kelinreij.duckdns.org
+        href: https://your-remote-server .kelinreij.duckdns.org
         description: Raspberry Pi Authentication Server
 
 - Core:
@@ -56,38 +56,38 @@
 
     - Dozzle:
         icon: dozzle.png
-        href: https://dozzle.${REMOTE_SERVER_HOSTNAME}.kelinreij.duckdns.org
-        description: ${REMOTE_SERVER_HOSTNAME} - Real-time Log Viewer
+        href: https://dozzle.your-remote-server .kelinreij.duckdns.org
+        description: your-remote-server  - Real-time Log Viewer
 
     - Glances - jasper:
         icon: glances.png
         href: https://glances.jasper.kelinreij.duckdns.org
         description: jasper - System Monitoring
 
-    - Glances - ${REMOTE_SERVER_HOSTNAME}:
+    - Glances - your-remote-server :
         icon: glances.png
-        href: https://glances.${REMOTE_SERVER_HOSTNAME}.kelinreij.duckdns.org
-        description: ${REMOTE_SERVER_HOSTNAME} - System Monitoring
+        href: https://glances.your-remote-server .kelinreij.duckdns.org
+        description: your-remote-server  - System Monitoring
 
     - Uptime Kuma:
         icon: uptime-kuma.png
         href: https://uptime-kuma.kelinreij.duckdns.org
         description: Uptime Monitoring
 
-    - Grafana - ${REMOTE_SERVER_HOSTNAME}:
+    - Grafana - your-remote-server :
         icon: grafana.png
-        href: https://grafana.${REMOTE_SERVER_HOSTNAME}.kelinreij.duckdns.org
-        description: ${REMOTE_SERVER_HOSTNAME} - Metrics Dashboard
+        href: https://grafana.your-remote-server .kelinreij.duckdns.org
+        description: your-remote-server  - Metrics Dashboard
 
-    - Prometheus - ${REMOTE_SERVER_HOSTNAME}:
+    - Prometheus - your-remote-server :
         icon: prometheus.png
-        href: https://prometheus.${REMOTE_SERVER_HOSTNAME}.kelinreij.duckdns.org
-        description: ${REMOTE_SERVER_HOSTNAME} - Metrics Collection
+        href: https://prometheus.your-remote-server .kelinreij.duckdns.org
+        description: your-remote-server  - Metrics Collection
 
-    - Uptime Kuma - ${REMOTE_SERVER_HOSTNAME}:
+    - Uptime Kuma - your-remote-server :
         icon: uptime-kuma.png
-        href: https://status.${REMOTE_SERVER_HOSTNAME}.kelinreij.duckdns.org
-        description: ${REMOTE_SERVER_HOSTNAME} - Uptime Monitoring
+        href: https://status.your-remote-server .kelinreij.duckdns.org
+        description: your-remote-server  - Uptime Monitoring
 
 - Media:
     - Jellyfin:
@@ -243,20 +243,20 @@
         href: https://backrest.kelinreij.duckdns.org
         description: Backup Solution
 
-    - Backrest - ${REMOTE_SERVER_HOSTNAME}:
+    - Backrest - your-remote-server :
         icon: mdi-backup-restore
-        href: https://backrest.${REMOTE_SERVER_HOSTNAME}.kelinreij.duckdns.org
-        description: ${REMOTE_SERVER_HOSTNAME} - Backup Solution
+        href: https://backrest.your-remote-server .kelinreij.duckdns.org
+        description: your-remote-server  - Backup Solution
 
     - Duplicati:
         icon: duplicati.png
         href: https://duplicati.kelinreij.duckdns.org
         description: Backup Software
 
-    - Duplicati - ${REMOTE_SERVER_HOSTNAME}:
+    - Duplicati - your-remote-server :
         icon: duplicati.png
-        href: https://duplicati.${REMOTE_SERVER_HOSTNAME}.kelinreij.duckdns.org
-        description: ${REMOTE_SERVER_HOSTNAME} - Backup Software
+        href: https://duplicati.your-remote-server .kelinreij.duckdns.org
+        description: your-remote-server  - Backup Software
 
 - Metrics:
     - Grafana:

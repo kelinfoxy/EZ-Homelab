@@ -1,17 +1,11 @@
 # Home Assistant and IoT Services
-# Home automation platform and related tools
-# Place in /opt/stacks/homeassistant/docker-compose.yml
-
-# Service Access URLs:
-# - Home Assistant: https://ha.kelinreij.duckdns.org (configure via Traefik file provider - uses host network)
-# - ESPHome: https://esphome.kelinreij.duckdns.org
-# - Node-RED: https://nodered.kelinreij.duckdns.org
-# - Mosquitto MQTT: mqtt://server-ip:1883 (no web UI)
-# - Zigbee2MQTT: https://zigbee2mqtt.kelinreij.duckdns.org (requires USB adapter)
+# RESTART POLICY GUIDE:
+# - unless-stopped: Core infrastructure services that should always run
+# - no: Services with Sablier lazy loading (start on-demand)
+# - See individual service comments for specific reasoning
 
 services:
   # Home Assistant - Home automation platform
-  # Access at: https://ha.kelinreij.duckdns.org
   # NOTE: No Authelia - HA has its own authentication
   homeassistant:
     image: ghcr.io/home-assistant/home-assistant:2024.1
@@ -40,7 +34,6 @@ services:
       # Use Traefik's file provider or external host routing
 
   # ESPHome - ESP8266/ESP32 firmware manager
-  # Access at: https://esphome.kelinreij.duckdns.org
   esphome:
     image: ghcr.io/esphome/esphome:latest
     deploy:
@@ -77,14 +70,13 @@ services:
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.esphome.rule=Host(`esphome.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.esphome.rule=Host(`esphome.${DOMAIN}`)"
       - "traefik.http.routers.esphome.entrypoints=websecure"
       - "traefik.http.routers.esphome.tls.certresolver=letsencrypt"
       - "traefik.http.routers.esphome.middlewares=authelia@docker"
       - "traefik.http.services.esphome.loadbalancer.server.port=6052"
 
   # TasmoAdmin - Tasmota device manager
-  # Access at: https://tasmoadmin.kelinreij.duckdns.org
   tasmoadmin:
     image: ghcr.io/tasmoadmin/tasmoadmin:latest
     container_name: tasmoadmin
@@ -109,14 +101,13 @@ services:
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.tasmoadmin.rule=Host(`tasmoadmin.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.tasmoadmin.rule=Host(`tasmoadmin.${DOMAIN}`)"
       - "traefik.http.routers.tasmoadmin.entrypoints=websecure"
       - "traefik.http.routers.tasmoadmin.tls.certresolver=letsencrypt"
       - "traefik.http.routers.tasmoadmin.middlewares=authelia@docker"
       - "traefik.http.services.tasmoadmin.loadbalancer.server.port=80"
 
   # MotionEye - Video surveillance
-  # Access at: https://motioneye.kelinreij.duckdns.org
   motioneye:
     image: ccrisan/motioneye:master-amd64
     container_name: motioneye
@@ -125,7 +116,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "8765:8765"  # Optional: direct access
+      - "8765:8765"  
     volumes:
       - ./$(basename $file .yml)/config:/etc/motioneye
       - /mnt/surveillance:/var/lib/motioneye  # Large video files on separate drive
@@ -142,14 +133,13 @@ services:
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.motioneye.rule=Host(`motioneye.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.motioneye.rule=Host(`motioneye.${DOMAIN}`)"
       - "traefik.http.routers.motioneye.entrypoints=websecure"
       - "traefik.http.routers.motioneye.tls.certresolver=letsencrypt"
       - "traefik.http.routers.motioneye.middlewares=authelia@docker"
       - "traefik.http.services.motioneye.loadbalancer.server.port=8765"
 
   # Node-RED - Flow-based automation (Home Assistant addon alternative)
-  # Access at: https://nodered.kelinreij.duckdns.org
   nodered:
     image: nodered/node-red:latest
     deploy:
@@ -183,7 +173,7 @@ services:
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.nodered.rule=Host(`nodered.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.nodered.rule=Host(`nodered.${DOMAIN}`)"
       - "traefik.http.routers.nodered.entrypoints=websecure"
       - "traefik.http.routers.nodered.tls.certresolver=letsencrypt"
       - "traefik.http.routers.nodered.middlewares=authelia@docker"
@@ -209,7 +199,6 @@ services:
       - "homelab.description=MQTT message broker"
 
   # Zigbee2MQTT - Zigbee to MQTT bridge (DISABLED - requires USB adapter)
-  # Access at: https://zigbee2mqtt.kelinreij.duckdns.org
   # NOTE: Requires USB Zigbee adapter (e.g., ConBee II, Sonoff ZBDongle)
   # Uncomment after connecting adapter
   # zigbee2mqtt:
@@ -233,7 +222,7 @@ services:
   #     - "homelab.category=iot"
   #     - "homelab.description=Zigbee to MQTT bridge"
   #     - "traefik.enable=true"
-  #     - "traefik.http.routers.zigbee2mqtt.rule=Host(`zigbee2mqtt.kelinreij.duckdns.org`)"
+  #     - "traefik.http.routers.zigbee2mqtt.rule=Host(`zigbee2mqtt.${DOMAIN}`)"
   #     - "traefik.http.routers.zigbee2mqtt.entrypoints=websecure"
   #     - "traefik.http.routers.zigbee2mqtt.tls.certresolver=letsencrypt"
   #     - "traefik.http.routers.zigbee2mqtt.middlewares=authelia@docker"
@@ -248,15 +237,15 @@ networks:
 x-dockge:
   urls:
     # Proxied URLs (through Traefik)
-    - https://ha.kelinreij.duckdns.org
+    - https://ha.${DOMAIN}
     - http://192.168.4.4:8123
-    - https://esphome.kelinreij.duckdns.org
+    - https://esphome.${DOMAIN}
     - http://192.168.4.4:6052
-    - https://tasmoadmin.kelinreij.duckdns.org
+    - https://tasmoadmin.${DOMAIN}
     - http://192.168.4.4:8084
-    - https://motioneye.kelinreij.duckdns.org
+    - https://motioneye.${DOMAIN}
     - http://192.168.4.4:8765
-    - https://nodered.kelinreij.duckdns.org
+    - https://nodered.${DOMAIN}
     - http://192.168.4.4:1880
     - mqtt://192.168.4.4:1883
-    - https://zigbee2mqtt.kelinreij.duckdns.org
+    - https://zigbee2mqtt.${DOMAIN}

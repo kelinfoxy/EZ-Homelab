@@ -1,6 +1,11 @@
+# Transcoder Services
+# RESTART POLICY GUIDE:
+# - unless-stopped: Core infrastructure services that should always run
+# - no: Services with Sablier lazy loading (start on-demand)
+# - See individual service comments for specific reasoning
+
 services:  
   # Tdarr Server - Distributed transcoding server
-  # Access at: https://tdarr.kelinreij.duckdns.org
   tdarr-server:
     image: ghcr.io/haveagitgat/tdarr:latest
     container_name: tdarr-server
@@ -36,7 +41,7 @@ services:
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.tdarr.rule=Host(`tdarr.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.tdarr.rule=Host(`tdarr.${DOMAIN}`)"
       - "traefik.http.routers.tdarr.entrypoints=websecure"
       - "traefik.http.routers.tdarr.tls.certresolver=letsencrypt"
       - "traefik.http.routers.tdarr.middlewares=authelia@docker"
@@ -75,7 +80,6 @@ services:
       - "sablier.start-on-demand=true"
 
   # Unmanic - Another transcoding option
-  # Access at: https://unmanic.kelinreij.duckdns.org
   unmanic:
     image: josh5/unmanic:latest
     container_name: unmanic
@@ -105,7 +109,7 @@ services:
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.unmanic.rule=Host(`unmanic.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.unmanic.rule=Host(`unmanic.${DOMAIN}`)"
       - "traefik.http.routers.unmanic.entrypoints=websecure"
       - "traefik.http.routers.unmanic.tls.certresolver=letsencrypt"
       - "traefik.http.routers.unmanic.middlewares=authelia@docker"
@@ -122,7 +126,7 @@ networks:
 
 x-dockge:
   urls:
-    - https://tdarr.kelinreij.duckdns.org
+    - https://tdarr.${DOMAIN}
     - http://192.168.4.4:8265
-    - https://unmanic.kelinreij.duckdns.org
+    - https://unmanic.${DOMAIN}
     - http://192.168.4.4:8888

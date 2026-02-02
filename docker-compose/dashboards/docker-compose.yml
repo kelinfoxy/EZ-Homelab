@@ -1,11 +1,9 @@
 # Dashboard Services
-# Homepage and Homarr for homelab dashboards
-
 # SABLIER SESSION DURATION: Set to 5m for testing. Increase to 30m for production in config-templates/traefik/dynamic/sablier.yml
-
-# Service Access URLs:
-# - Homepage: https://homepage.${DOMAIN}
-# - Homarr: https://homarr.${DOMAIN}
+# RESTART POLICY GUIDE:
+# - unless-stopped: Core infrastructure services that should always run
+# - no: Services with Sablier lazy loading (start on-demand)
+# - See individual service comments for specific reasoning
 
 services:
   # Homepage - Default Application Dashboard
@@ -61,7 +59,6 @@ services:
 
   # Homarr - Modern dashboard
   # Uses Sablier lazy loading - starts on-demand, stops after 5min inactivity
-  
   homarr:
     image: ghcr.io/ajnart/homarr:latest
     deploy:

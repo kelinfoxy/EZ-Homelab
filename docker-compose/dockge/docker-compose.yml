@@ -1,18 +1,11 @@
 # Dockge Stack
-# Docker Compose Stack Manager
-# Place in /opt/dockge/docker-compose.yml
-
 # RESTART POLICY GUIDE:
 # - unless-stopped: Core infrastructure services that should always run
 # - no: Services with Sablier lazy loading (start on-demand)
 # - See individual service comments for specific reasoning
 
-# Service Access URLs:
-# - Dockge: https://dockge.kelinreij.duckdns.org
-
 services:
-  # Dockge - Docker Compose Stack Manager (PRIMARY - preferred over Portainer)
-  # Access at: https://dockge.kelinreij.duckdns.org
+  # Dockge - Docker Compose Stack Manager
   # Stack management interface should always run for container management
   dockge:
     image: louislam/dockge:1
@@ -51,7 +44,7 @@ services:
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.dockge.rule=Host(`dockge.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.dockge.rule=Host(`dockge.${DOMAIN}`)"
       - "traefik.http.routers.dockge.entrypoints=websecure"
       - "traefik.http.routers.dockge.tls.certresolver=letsencrypt"
       - "traefik.http.routers.dockge.middlewares=authelia@docker"

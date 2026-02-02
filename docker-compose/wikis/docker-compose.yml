@@ -1,6 +1,11 @@
+# Wiki Services
+# RESTART POLICY GUIDE:
+# - unless-stopped: Core infrastructure services that should always run
+# - no: Services with Sablier lazy loading (start on-demand)
+# - See individual service comments for specific reasoning
+
 services:
   # DokuWiki - Wiki without database
-  # Access at: https://wiki.kelinreij.duckdns.org
   # Uses Sablier lazy loading - starts on-demand, stops after 5min inactivity
   dokuwiki:
     image: lscr.io/linuxserver/dokuwiki:latest
@@ -26,7 +31,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
       # Router configuration
-      - "traefik.http.routers.dokuwiki.rule=Host(`dokuwiki.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.dokuwiki.rule=Host(`dokuwiki.${DOMAIN}`)"
       - "traefik.http.routers.dokuwiki.entrypoints=websecure"
       - "traefik.http.routers.dokuwiki.tls.certresolver=letsencrypt"
       - "traefik.http.routers.dokuwiki.middlewares=authelia@docker"
@@ -38,7 +43,6 @@ services:
       - "sablier.start-on-demand=true"
 
   # BookStack - Documentation platform
-  # Access at: https://docs.kelinreij.duckdns.org
   # Uses Sablier lazy loading - starts on-demand, stops after 5min inactivity
   bookstack:
     image: lscr.io/linuxserver/bookstack:latest
@@ -54,7 +58,7 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - APP_URL=https://bookstack.kelinreij.duckdns.org
+      - APP_URL=https://bookstack.${DOMAIN}
       - DB_HOST=bookstack-db
       - DB_PORT=3306
       - DB_DATABASE=bookstack
@@ -78,7 +82,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
       # Router configuration
-      - "traefik.http.routers.bookstack.rule=Host(`bookstack.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.bookstack.rule=Host(`bookstack.${DOMAIN}`)"
       - "traefik.http.routers.bookstack.entrypoints=websecure"
       - "traefik.http.routers.bookstack.tls.certresolver=letsencrypt"
       - "traefik.http.routers.bookstack.middlewares=authelia@docker"
@@ -107,7 +111,6 @@ services:
       - "homelab.description=BookStack database"
 
   # MediaWiki - Wiki platform
-  # Access at: https://mediawiki.kelinreij.duckdns.org
   mediawiki:
     image: mediawiki:latest
     container_name: mediawiki
@@ -142,7 +145,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
       # Router configuration
-      - "traefik.http.routers.mediawiki.rule=Host(`mediawiki.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.mediawiki.rule=Host(`mediawiki.${DOMAIN}`)"
       - "traefik.http.routers.mediawiki.entrypoints=websecure"
       - "traefik.http.routers.mediawiki.tls.certresolver=letsencrypt"
       - "traefik.http.routers.mediawiki.middlewares=authelia@docker"
@@ -183,9 +186,9 @@ networks:
 x-dockge:
   urls:
     # Proxied URLs (through Traefik)
-    - https://bookstack.kelinreij.duckdns.org
+    - https://bookstack.${DOMAIN}
     - https://192.168.4.4:6875
-    - https://dokuwiki.kelinreij.duckdns.org
+    - https://dokuwiki.${DOMAIN}
     - https://192.168.4.4:8087
-    - https://mediawiki.kelinreij.duckdns.org
+    - https://mediawiki.${DOMAIN}
     - https://192.168.4.4:8086

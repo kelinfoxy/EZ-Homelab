@@ -1,9 +1,5 @@
 # Infrastructure Services
-# Core services that other services depend on
-# Place in /opt/stacks/infrastructure/docker-compose.yml
-
 # SABLIER SESSION DURATION: Set to 5m for testing. Increase to 30m for production in config-templates/traefik/dynamic/sablier.yml
-
 # RESTART POLICY GUIDE:
 # - unless-stopped: Core infrastructure services that should always run
 # - no: Services with Sablier lazy loading (start on-demand)
@@ -41,7 +37,6 @@ services:
       - homelab.description=Docker socket proxy for security
 
   # Pi-hole - Network-wide ad blocker and DNS server
-  # Access at: https://pihole.kelinreij.duckdns.org
   # DNS service must always run for network-wide ad blocking
   pihole:
     image: pihole/pihole:2024.01.0
@@ -87,15 +82,13 @@ services:
       #   - This prevents conflicts between Docker labels and file provider
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.pihole.rule=Host(`pihole.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.pihole.rule=Host(`pihole.${DOMAIN}`)"
       - "traefik.http.routers.pihole.entrypoints=websecure"
       - "traefik.http.routers.pihole.tls.certresolver=letsencrypt"
       - "traefik.http.routers.pihole.middlewares=authelia@docker"
       - "traefik.http.services.pihole.loadbalancer.server.port=80"
 
   # Watchtower - Automatic container updates
-  # Monitors and updates Docker containers to latest versions
-  # Runs daily at 4 AM
   watchtower:
     image: containrrr/watchtower:latest
     container_name: watchtower
@@ -116,7 +109,6 @@ services:
       - "homelab.description=Automatic Docker container updates"
 
   # Dozzle - Real-time Docker log viewer
-  # Access at: https://dozzle.kelinreij.duckdns.org
   # Uses Sablier lazy loading - starts on-demand, stops after 5min inactivity
   dozzle:
     image: amir20/dozzle:latest
@@ -157,7 +149,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
       # Router configuration
-      - "traefik.http.routers.dozzle.rule=Host(`dozzle.jasper.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.dozzle.rule=Host(`dozzle.jasper.${DOMAIN}`)"
       - "traefik.http.routers.dozzle.entrypoints=websecure"
       - "traefik.http.routers.dozzle.tls=true"
       - "traefik.http.routers.dozzle.middlewares=authelia@docker"
@@ -169,7 +161,6 @@ services:
       - "sablier.start-on-demand=true"
 
   # Glances - System monitoring
-  # Access at: https://glances.kelinreij.duckdns.org
   # Uses Sablier lazy loading - starts on-demand, stops after 30min inactivity
   glances:
     image: nicolargo/glances:latest-full
@@ -210,7 +201,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
       # Router configuration
-      - "traefik.http.routers.glances.rule=Host(`glances.jasper.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.glances.rule=Host(`glances.jasper.${DOMAIN}`)"
       - "traefik.http.routers.glances.entrypoints=websecure"
       - "traefik.http.routers.glances.tls=true"
       - "traefik.http.routers.glances.middlewares=authelia@docker"
@@ -222,7 +213,6 @@ services:
       - "sablier.start-on-demand=true"
 
   # Code Server - VS Code in browser
-  # Access at: https://code.kelinreij.duckdns.org
   # Uses Sablier lazy loading - starts on-demand, stops after 30min inactivity
   code-server:
     image: lscr.io/linuxserver/code-server:latest
@@ -267,7 +257,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
       # Router configuration
-      - "traefik.http.routers.code-server.rule=Host(`code.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.code-server.rule=Host(`code.${DOMAIN}`)"
       - "traefik.http.routers.code-server.entrypoints=websecure"
       - "traefik.http.routers.code-server.tls.certresolver=letsencrypt"
       - "traefik.http.routers.code-server.middlewares=authelia@docker"
@@ -280,13 +270,13 @@ services:
 
 x-dockge:
   urls:
-    - https://pihole.kelinreij.duckdns.org
+    - https://pihole.${DOMAIN}
     - https://192.168.4.4:53
-    - https://dozzle.kelinreij.duckdns.org
+    - https://dozzle.${DOMAIN}
     - https://192.168.4.4:8085
-    - https://glances.kelinreij.duckdns.org
+    - https://glances.${DOMAIN}
     - https://192.168.4.4:61208
-    - https://code.kelinreij.duckdns.org
+    - https://code.${DOMAIN}
     - https://192.168.4.4:8079
     - http://192.168.4.4:2375  # Docker Proxy
     - http://192.168.4.4:19999  # Netdata

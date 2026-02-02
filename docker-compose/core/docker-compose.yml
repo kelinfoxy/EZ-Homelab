@@ -1,7 +1,4 @@
 # Core Infrastructure Services
-# These services form the foundation of the homelab and should always be running
-# Place in /opt/stacks/core/docker-compose.yml
-
 # RESTART POLICY GUIDE:
 # - unless-stopped: Core infrastructure services that should always run
 # - no: Services with Sablier lazy loading (start on-demand)
@@ -50,11 +47,8 @@ services:
       # Service metadata
       - "homelab.category=core"
       - "homelab.description=Reverse proxy and SSL termination"
-      # Traefik reverse proxy (comment/uncomment to disable/enable)
-      # If Traefik is on a remote server: these labels are NOT USED; 
-      #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
-      - "traefik.http.routers.traefik.rule=Host(`traefik.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN}`)"
       - "traefik.http.routers.traefik.entrypoints=websecure"
       - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
       - "traefik.http.routers.traefik.middlewares=authelia@docker"
@@ -86,13 +80,13 @@ services:
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
-      - "traefik.http.routers.authelia.rule=Host(`auth.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.authelia.rule=Host(`auth.${DOMAIN}`)"
       - "traefik.http.routers.authelia.entrypoints=websecure"
       - "traefik.http.routers.authelia.tls.certresolver=letsencrypt"
       - "traefik.http.routers.authelia.service=authelia"
       - "traefik.http.services.authelia.loadbalancer.server.port=9091"
       # Authelia forward auth middleware configuration
-      - "traefik.http.middlewares.authelia.forwardauth.address=http://authelia:9091/api/verify?rd=https://auth.kelinreij.duckdns.org/"
+      - "traefik.http.middlewares.authelia.forwardauth.address=http://authelia:9091/api/verify?rd=https://auth.${DOMAIN}/"
       - "traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=X-Secret"
       - "traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true"
 
@@ -133,7 +127,7 @@ networks:
 
 x-dockge:
   urls:
-    - https://auth.kelinreij.duckdns.org
+    - https://auth.${DOMAIN}
     - http://192.168.4.11:9091
-    - https://traefik.kelinreij.duckdns.org
+    - https://traefik.${DOMAIN}
     - http://192.168.4.11:8080

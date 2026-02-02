@@ -1,10 +1,7 @@
 #!/bin/bash
 # EZ-Homelab Unified Setup & Deployment Script
 
-# Two step process required for first-time setup:
-# Run 'sudo ./ez-homelab.sh' to install Docker and perform system setup
-# Run './ez-homelab.sh' to deploy stacks after initial setup
-set -e  # Exit on error
+# Removed set -e to allow graceful error handling
 
 # Debug logging configuration
 DEBUG=${DEBUG:-false}
@@ -95,18 +92,37 @@ load_env_file_safely() {
 
     debug_log "Env file loaded successfully"
 }
-replace_env_placeholders() {
+load_env_file() {
+    load_env_file_safely "$REPO_DIR/.env"
+}
+localize_yml_file() {
     local file_path="$1"
     local fail_on_missing="${2:-false}"  # New parameter to control failure behavior
     local missing_vars=""
     local replaced_count=0
 
-    debug_log "replace_env_placeholders called for file: $file_path, fail_on_missing: $fail_on_missing"
+    debug_log "localize_yml_file called for file: $file_path, fail_on_missing: $fail_on_missing"
 
     if [ ! -f "$file_path" ]; then
-        log_warning "File $file_path does not exist, skipping placeholder replacement"
+        log_warning "File $file_path does not exist, skipping YAML localization"
         debug_log "File $file_path does not exist"
         return
+    fi
+
+    # Check if file is writable
+    if [ ! -w "$file_path" ]; then
+        log_error "File $file_path is not writable, cannot localize"
+        debug_log "Permission denied for $file_path"
+        if [ "$fail_on_missing" = true ]; then
+            exit 1
+        fi
+        return
+    fi
+
+    # Backup only if target file already exists (not for repo sources)
+    if [[ "$file_path" != "$REPO_DIR"* ]] && [ -f "$file_path" ]; then
+        cp "$file_path" "$file_path.backup.$(date +%Y%m%d_%H%M%S)"
+        debug_log "Backed up $file_path"
     fi
 
     # Find all ${VAR} patterns in the file
@@ -114,6 +130,8 @@ replace_env_placeholders() {
     debug_log "Found variables to replace: $vars"
 
     for var in $vars; do
+        # Trim whitespace from variable name
+        var=$(echo "$var" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
         # Skip derived variables that should not be replaced
         case "$var" in
             "ACME_EMAIL"|"AUTHELIA_ADMIN_EMAIL"|"SMTP_USERNAME"|"SMTP_PASSWORD")
@@ -122,23 +140,46 @@ replace_env_placeholders() {
                 ;;
         esac
 
-        if [ -z "${!var:-}" ]; then
+        if [ -z "${!var+x}" ]; then
             log_warning "Environment variable $var not found in .env file"
             debug_log "Missing variable: $var"
             missing_vars="$missing_vars $var"
         else
-            # Replace ${VAR} with the value
+            # Replace ${VAR} with the value, handling special characters
+            local escaped_value=$(printf '%s\n' "${!var}" | sed 's/[[\.*^$()+?{|]/\\&/g')
             debug_log "Replacing \${$var} with value: [HIDDEN]"  # Don't log actual secrets
-            sed -i "s|\${$var}|${!var}|g" "$file_path"
+            sed -i "s|\${[ \t]*${var}[ \t]*}|${escaped_value}|g" "$file_path"
             replaced_count=$((replaced_count + 1))
         fi
     done
 
     debug_log "Replaced $replaced_count variables in $file_path"
 
+    # Post-replacement validation: check for remaining ${VAR} (except skipped)
+    local remaining_vars=$(grep -v '^[[:space:]]*#' "$file_path" | grep -o '\${[^}]*}' | sed 's/\${//' | sed 's/}//' | sort | uniq)
+    local invalid_remaining=""
+    for rvar in $remaining_vars; do
+        rvar=$(echo "$rvar" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+        case "$rvar" in
+            "ACME_EMAIL"|"AUTHELIA_ADMIN_EMAIL"|"SMTP_USERNAME"|"SMTP_PASSWORD")
+                continue
+                ;;
+            *)
+                invalid_remaining="$invalid_remaining $rvar"
+                ;;
+        esac
+    done
+    if [ -n "$invalid_remaining" ]; then
+        log_error "Failed to replace variables in $file_path: $invalid_remaining"
+        debug_log "Unreplaced variables: $invalid_remaining"
+        if [ "$fail_on_missing" = true ]; then
+            exit 1
+        fi
+    fi
+
     # Handle missing variables
     if [ -n "$missing_vars" ]; then
-        MISSING_VARS_SUMMARY="${MISSING_VARS_SUMMARY}${missing_vars}"
+        GLOBAL_MISSING_VARS="${GLOBAL_MISSING_VARS}${missing_vars}"
         if [ "$fail_on_missing" = true ]; then
             log_error "Critical environment variables missing: $missing_vars"
             debug_log "Failing deployment due to missing critical variables: $missing_vars"
@@ -148,17 +189,18 @@ replace_env_placeholders() {
 }
 
 # Enhanced placeholder replacement for all configuration files
-enhance_placeholder_replacement() {
-    log_info "Starting enhanced placeholder replacement..."
+localize_deployment() {
+    log_info "Starting deployment localization..."
 
     local processed_files=0
+    GLOBAL_MISSING_VARS=""
 
     # Process docker-compose files
     if [ -d "$REPO_DIR/docker-compose" ]; then
         while IFS= read -r -d '' file_path; do
             if [ -f "$file_path" ]; then
                 debug_log "Processing docker-compose file: $file_path"
-                replace_env_placeholders "$file_path" false
+                localize_yml_file "$file_path" false
                 processed_files=$((processed_files + 1))
             fi
         done < <(find "$REPO_DIR/docker-compose" -name "*.yml" -o -name "*.yaml" -print0 2>/dev/null)
@@ -169,14 +211,20 @@ enhance_placeholder_replacement() {
         while IFS= read -r -d '' file_path; do
             if [ -f "$file_path" ]; then
                 debug_log "Processing config template file: $file_path"
-                replace_env_placeholders "$file_path" false
+                localize_yml_file "$file_path" false
                 processed_files=$((processed_files + 1))
             fi
         done < <(find "$REPO_DIR/config-templates" -name "*.yml" -o -name "*.yaml" -print0 2>/dev/null)
     fi
 
-    log_success "Enhanced placeholder replacement completed - processed $processed_files files"
-    debug_log "Enhanced replacement completed for $processed_files files"
+    log_success "Deployment localization completed - processed $processed_files files"
+    debug_log "Localization completed for $processed_files files"
+
+    # Report aggregated missing variables
+    if [ -n "$GLOBAL_MISSING_VARS" ]; then
+        log_warning "Aggregated missing environment variables across all files: $GLOBAL_MISSING_VARS"
+        debug_log "Global missing vars: $GLOBAL_MISSING_VARS"
+    fi
 }
 
 # Function to generate shared CA for multi-server TLS
@@ -627,9 +675,12 @@ save_env_file() {
 
     # Update HOMEPAGE_ALLOWED_HOSTS dynamically
     if [ -n "${DOMAIN:-}" ] && [ -n "${SERVER_IP:-}" ]; then
-        # Allow user to specify homepage subdomain
-        HOMEPAGE_SUBDOMAIN="${HOMEPAGE_SUBDOMAIN:-homepage}"
-        HOMEPAGE_ALLOWED_HOSTS="${HOMEPAGE_SUBDOMAIN}.${DOMAIN},${SERVER_IP}:3003"
+        # Extract Homepage port from compose file
+        HOMEPAGE_PORT=$(grep -A1 'ports:' "$REPO_DIR/docker-compose/dashboards/docker-compose.yml" | grep -o '"[0-9]*:3000"' | cut -d'"' -f2 | cut -d: -f1)
+        if [ -z "$HOMEPAGE_PORT" ]; then
+            HOMEPAGE_PORT=3003  # Fallback
+        fi
+        HOMEPAGE_ALLOWED_HOSTS="homepage.${DOMAIN},${SERVER_IP}:${HOMEPAGE_PORT}"
         sudo -u "$ACTUAL_USER" sed -i "s|HOMEPAGE_ALLOWED_HOSTS=.*|HOMEPAGE_ALLOWED_HOSTS=$HOMEPAGE_ALLOWED_HOSTS|" "$REPO_DIR/.env"
     fi
 
@@ -669,27 +720,23 @@ save_env_file() {
         sudo -u "$ACTUAL_USER" sed -i "s%AUTHELIA_ADMIN_EMAIL=.*%AUTHELIA_ADMIN_EMAIL=$ADMIN_EMAIL%" "$REPO_DIR/.env"
 
         # Generate password hash if needed
-        if [ -z "$AUTHELIA_ADMIN_PASSWORD" ]; then
+        if [ -z "$AUTHELIA_ADMIN_PASSWORD_HASH" ]; then
             log_info "Generating Authelia password hash..."
             # Pull Authelia image if needed
             if ! docker images | grep -q authelia/authelia; then
                 docker pull authelia/authelia:latest > /dev/null 2>&1
             fi
-            AUTHELIA_ADMIN_PASSWORD=$(docker run --rm authelia/authelia:latest authelia crypto hash generate argon2 --password "$ADMIN_PASSWORD" 2>&1 | grep -o '\$argon2id.*')
-            if [ -z "$AUTHELIA_ADMIN_PASSWORD" ]; then
+            AUTHELIA_ADMIN_PASSWORD_HASH=$(docker run --rm authelia/authelia:latest authelia crypto hash generate argon2 --password "$ADMIN_PASSWORD" 2>&1 | grep -o '\$argon2id.*')
+            if [ -z "$AUTHELIA_ADMIN_PASSWORD_HASH" ]; then
                 log_error "Failed to generate Authelia password hash. Please check that ADMIN_PASSWORD is set."
                 exit 1
             fi
         fi
 
         # Save password hash
-        sudo -u "$ACTUAL_USER" sed -i "s%# AUTHELIA_ADMIN_PASSWORD=.*%AUTHELIA_ADMIN_PASSWORD=\"$AUTHELIA_ADMIN_PASSWORD\"%" "$REPO_DIR/.env"
-        sudo -u "$ACTUAL_USER" sed -i "s%AUTHELIA_ADMIN_PASSWORD=.*%AUTHELIA_ADMIN_PASSWORD=\"$AUTHELIA_ADMIN_PASSWORD\"%" "$REPO_DIR/.env"
+        sudo -u "$ACTUAL_USER" sed -i "s%# AUTHELIA_ADMIN_PASSWORD_HASH=.*%AUTHELIA_ADMIN_PASSWORD_HASH=\"$AUTHELIA_ADMIN_PASSWORD_HASH\"%" "$REPO_DIR/.env"
+        sudo -u "$ACTUAL_USER" sed -i "s%AUTHELIA_ADMIN_PASSWORD_HASH=.*%AUTHELIA_ADMIN_PASSWORD_HASH=\"$AUTHELIA_ADMIN_PASSWORD_HASH\"%" "$REPO_DIR/.env"
     fi
-
-    # Update HOMEPAGE_ALLOWED_HOSTS with expanded values
-    HOMEPAGE_ALLOWED_HOSTS="homepage.${DOMAIN},${SERVER_IP}:3003"
-    sudo -u "$ACTUAL_USER" sed -i "s|HOMEPAGE_ALLOWED_HOSTS=.*|HOMEPAGE_ALLOWED_HOSTS=$HOMEPAGE_ALLOWED_HOSTS|" "$REPO_DIR/.env"
 
     debug_log "Configuration saved to .env file"
     log_success "Configuration saved to .env file"
@@ -725,9 +772,9 @@ validate_secrets() {
         debug_log "AUTHELIA_STORAGE_ENCRYPTION_KEY is missing"
     fi
 
-    if [ -z "${AUTHELIA_ADMIN_PASSWORD:-}" ]; then
-        missing_secrets="$missing_secrets AUTHELIA_ADMIN_PASSWORD"
-        debug_log "AUTHELIA_ADMIN_PASSWORD is missing"
+    if [ -z "${AUTHELIA_ADMIN_PASSWORD_HASH:-}" ]; then
+        missing_secrets="$missing_secrets AUTHELIA_ADMIN_PASSWORD_HASH"
+        debug_log "AUTHELIA_ADMIN_PASSWORD_HASH is missing"
     fi
 
     # Check other required variables
@@ -752,100 +799,42 @@ validate_secrets() {
     debug_log "Secret validation passed"
 }
 
-# System setup function (Docker, directories, etc.)
-system_setup() {
-    log_info "Performing system setup..."
+# Install NVIDIA drivers function
+install_nvidia() {
+    log_info "Installing NVIDIA drivers and Docker support..."
 
-    # Check if running as root for system setup
+    # Check if running as root
     if [ "$EUID" -ne 0 ]; then
-        log_warning "System setup requires root privileges. Running with sudo..."
+        log_warning "NVIDIA installation requires root privileges. Running with sudo..."
         exec sudo "$0" "$@"
     fi
 
-    # Get the actual user who invoked sudo
-    ACTUAL_USER=${SUDO_USER:-$USER}
-
-    # Step 1: System Update
-    log_info "Step 1/10: Updating system packages..."
-    apt-get update && apt-get upgrade -y
-    log_success "System updated successfully"
-
-    # Step 2: Install required packages
-    log_info "Step 2/10: Installing required packages..."
-    apt-get install -y curl wget git htop nano vim ufw fail2ban unattended-upgrades apt-listchanges sshpass
-
-    # Step 3: Install Docker
-    log_info "Step 3/10: Installing Docker..."
-    if command -v docker &> /dev/null && docker --version &> /dev/null; then
-        log_success "Docker is already installed ($(docker --version))"
-        # Check if user is in docker group
-        if ! groups "$ACTUAL_USER" | grep -q docker; then
-            log_info "Adding $ACTUAL_USER to docker group..."
-            usermod -aG docker "$ACTUAL_USER"
-            NEEDS_LOGOUT=true
-        fi
-        # Check if Docker service is running
-        if ! systemctl is-active --quiet docker; then
-            log_warning "Docker service is not running, starting it..."
-            systemctl start docker
-            systemctl enable docker
-            log_success "Docker service started and enabled"
-        else
-            log_info "Docker service is already running"
-        fi
-    else
-        curl -fsSL https://get.docker.com | sh
-        usermod -aG docker "$ACTUAL_USER"
-        NEEDS_LOGOUT=true
+    # Check for NVIDIA GPU
+    if ! lspci | grep -i nvidia > /dev/null; then
+        log_warning "No NVIDIA GPU detected. Skipping NVIDIA driver installation."
+        return
     fi
 
-    # Step 4: Install Docker Compose
-    log_info "Step 4/10: Installing Docker Compose..."
-    if command -v docker-compose &> /dev/null && docker-compose --version &> /dev/null; then
-        log_success "Docker Compose is already installed ($(docker-compose --version))"
-    else
-        curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-        chmod +x /usr/local/bin/docker-compose
-        log_success "Docker Compose installed ($(docker-compose --version))"
-    fi
+    # Add NVIDIA repository
+    log_info "Adding NVIDIA repository..."
+    apt-get update
+    apt-get install -y software-properties-common
+    add-apt-repository -y ppa:graphics-drivers/ppa
+    apt-get update
 
-    # Step 5: Generate shared CA for multi-server TLS
-    log_info "Step 5/10: Generating shared CA certificate for multi-server TLS..."
-    generate_shared_ca
+    # Install NVIDIA drivers (latest)
+    log_info "Installing NVIDIA drivers..."
+    apt-get install -y nvidia-driver-470  # Adjust version as needed
 
-    # Step 6: Configure Docker TLS
-    log_info "Step 6/10: Configuring Docker TLS..."
-    setup_docker_tls
+    # Install NVIDIA Docker support
+    log_info "Installing NVIDIA Docker support..."
+    distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+    curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | apt-key add -
+    curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | tee /etc/apt/sources.list.d/nvidia-docker.list
+    apt-get update && apt-get install -y nvidia-docker2
+    systemctl restart docker
 
-    # Step 7: Configure UFW firewall
-    log_info "Step 7/10: Configuring firewall..."
-    ufw --force enable
-    ufw allow ssh
-    ufw allow 80
-    ufw allow 443
-    ufw allow 2376/tcp  # Docker TLS port
-    log_success "Firewall configured"
-
-    # Step 8: Configure automatic updates
-    log_info "Step 8/10: Configuring automatic updates..."
-    dpkg-reconfigure -f noninteractive unattended-upgrades
-
-    # Step 10: Create Docker networks
-    log_info "Step 10/10: Creating Docker networks..."
-    docker network create homelab-network 2>/dev/null && log_success "Created homelab-network" || log_info "homelab-network already exists"
-    docker network create traefik-network 2>/dev/null && log_success "Created traefik-network" || log_info "traefik-network already exists"
-    docker network create media-network 2>/dev/null && log_success "Created media-network" || log_info "media-network already exists"
-
-    # Step 9: Set proper ownership
-    log_info "Step 9/10: Setting directory ownership..."
-    chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt
-
-    log_success "System setup completed!"
-    echo ""
-    if [ "$NEEDS_LOGOUT" = true ]; then
-        log_info "Please log out and back in for Docker group changes to take effect."
-        echo ""
-    fi
+    log_success "NVIDIA drivers and Docker support installed. A reboot may be required."
 }
 
 # Deploy Dockge function
@@ -861,17 +850,17 @@ deploy_dockge() {
     sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/dockge/.env
 
     # Remove sensitive variables from dockge .env (Dockge doesn't need them)
-    sed -i '/^AUTHELIA_ADMIN_PASSWORD=/d' /opt/dockge/.env
+    sed -i '/^AUTHELIA_ADMIN_PASSWORD_HASH=/d' /opt/dockge/.env
     sed -i '/^AUTHELIA_JWT_SECRET=/d' /opt/dockge/.env
     sed -i '/^AUTHELIA_SESSION_SECRET=/d' /opt/dockge/.env
     sed -i '/^AUTHELIA_STORAGE_ENCRYPTION_KEY=/d' /opt/dockge/.env
 
     # Replace placeholders in Dockge compose file
-    replace_env_placeholders "/opt/dockge/docker-compose.yml"
+    localize_yml_file "/opt/dockge/docker-compose.yml"
 
     # Deploy Dockge stack
     cd /opt/dockge
-    docker compose up -d
+    run_cmd docker compose up -d || true
     log_success "Dockge deployed"
     echo ""
 }
@@ -908,7 +897,7 @@ deploy_core() {
     sed -i '/^HOMEPAGE_VAR_/d' /opt/stacks/core/.env
 
     # Replace placeholders in core compose file (fail on missing critical vars)
-    replace_env_placeholders "/opt/stacks/core/docker-compose.yml" true
+    localize_yml_file "/opt/stacks/core/docker-compose.yml" true
 
     # Copy and configure Traefik config
     debug_log "Setting up Traefik configuration"
@@ -943,9 +932,9 @@ deploy_core() {
     find /opt/stacks/core/traefik -name "*.yml" -type f | while read -r config_file; do
         # Don't fail on missing variables for external host files (they're optional)
         if [[ "$config_file" == *external-host* ]]; then
-            replace_env_placeholders "$config_file" false
+            localize_yml_file "$config_file" false
         else
-            replace_env_placeholders "$config_file" true
+            localize_yml_file "$config_file" true
         fi
     done
 
@@ -966,7 +955,7 @@ deploy_core() {
     # Replace all placeholders in Authelia config files
     debug_log "Replacing placeholders in Authelia config files"
     find /opt/stacks/core/authelia -name "*.yml" -type f | while read -r config_file; do
-        replace_env_placeholders "$config_file" true
+        localize_yml_file "$config_file" true
     done
 
     # Remove invalid session.cookies section from Authelia config (not supported in v4.37.5)
@@ -988,7 +977,7 @@ deploy_core() {
     # Deploy core stack
     debug_log "Deploying core stack with docker compose"
     cd /opt/stacks/core
-    docker compose up -d
+    run_cmd docker compose up -d || true
     log_success "Core infrastructure deployed"
     echo ""
 }
@@ -1026,7 +1015,7 @@ deploy_infrastructure() {
     sed -i '/^HOMEPAGE_VAR_/d' /opt/stacks/infrastructure/.env
 
     # Replace placeholders in infrastructure compose file
-    replace_env_placeholders "/opt/stacks/infrastructure/docker-compose.yml"
+    localize_yml_file "/opt/stacks/infrastructure/docker-compose.yml"
 
     # Copy any additional config directories
     for config_dir in "$REPO_DIR/docker-compose/infrastructure"/*/; do
@@ -1042,11 +1031,11 @@ deploy_infrastructure() {
     fi
 
     # Replace placeholders in infrastructure compose file
-    replace_env_placeholders "/opt/stacks/infrastructure/docker-compose.yml"
+    localize_yml_file "/opt/stacks/infrastructure/docker-compose.yml"
 
     # Deploy infrastructure stack
     cd /opt/stacks/infrastructure
-    docker compose up -d
+    run_cmd docker compose up -d || true
     log_success "Infrastructure stack deployed"
     echo ""
 }
@@ -1082,7 +1071,7 @@ deploy_dashboards() {
     sed -i '/^FORMIO_/d' /opt/stacks/dashboards/.env
 
     # Replace placeholders in dashboards compose file
-    replace_env_placeholders "/opt/stacks/dashboards/docker-compose.yml"
+    localize_yml_file "/opt/stacks/dashboards/docker-compose.yml"
 
     # Copy homepage config
     if [ -d "$REPO_DIR/docker-compose/dashboards/homepage" ]; then
@@ -1091,7 +1080,7 @@ deploy_dashboards() {
         
         # Replace placeholders in homepage config files
         find /opt/stacks/dashboards/homepage -name "*.yaml" -type f | while read -r config_file; do
-            replace_env_placeholders "$config_file"
+            localize_yml_file "$config_file"
         done
         
         # Remove remote server entries from homepage services for single-server setup
@@ -1102,7 +1091,7 @@ deploy_dashboards() {
         
         # Process template files and rename them
         find /opt/stacks/dashboards/homepage -name "*.template" -type f | while read -r template_file; do
-            replace_env_placeholders "$template_file"
+            localize_yml_file "$template_file"
             # Rename template file to remove .template extension
             new_file="${template_file%.template}"
             mv "$template_file" "$new_file"
@@ -1111,11 +1100,11 @@ deploy_dashboards() {
     fi
 
     # Replace placeholders in dashboards compose file
-    replace_env_placeholders "/opt/stacks/dashboards/docker-compose.yml"
+    localize_yml_file "/opt/stacks/dashboards/docker-compose.yml"
 
     # Deploy dashboards stack
     cd /opt/stacks/dashboards
-    docker compose up -d
+    run_cmd docker compose up -d || true
     log_success "Dashboard stack deployed"
     echo ""
 }
@@ -1126,7 +1115,7 @@ perform_deployment() {
     log_info "Starting deployment..."
 
     # Initialize missing vars summary
-    MISSING_VARS_SUMMARY=""
+    GLOBAL_MISSING_VARS=""
     TLS_ISSUES_SUMMARY=""
 
     # Switch back to regular user if we were running as root
@@ -1141,6 +1130,22 @@ perform_deployment() {
     debug_log "Sourcing .env file from $REPO_DIR/.env"
     load_env_file_safely "$REPO_DIR/.env"
     debug_log "Environment loaded, DOMAIN=$DOMAIN, SERVER_IP=$SERVER_IP"
+
+    # Generate Authelia password hash if needed
+    if [ "$AUTHELIA_ADMIN_PASSWORD_HASH" = "generate-with-openssl-rand-hex-64" ] || [ -z "$AUTHELIA_ADMIN_PASSWORD_HASH" ]; then
+        log_info "Generating Authelia password hash..."
+        if ! docker images | grep -q authelia/authelia; then
+            docker pull authelia/authelia:latest > /dev/null 2>&1
+        fi
+        AUTHELIA_ADMIN_PASSWORD_HASH=$(docker run --rm authelia/authelia:latest authelia crypto hash generate argon2 --password "$DEFAULT_PASSWORD" 2>&1 | grep -o '\$argon2id.*')
+        if [ -z "$AUTHELIA_ADMIN_PASSWORD_HASH" ]; then
+            log_error "Failed to generate Authelia password hash."
+            exit 1
+        fi
+        # Save it back to .env
+        sed -i "s%AUTHELIA_ADMIN_PASSWORD_HASH=.*%AUTHELIA_ADMIN_PASSWORD_HASH=\"$AUTHELIA_ADMIN_PASSWORD_HASH\"%" "$REPO_DIR/.env"
+        log_success "Authelia password hash generated and saved"
+    fi
 
     # Step 1: Create required directories
     log_info "Step 1: Creating required directories..."
@@ -1196,9 +1201,9 @@ perform_deployment() {
     fi
 
     # Report any missing variables
-    if [ -n "$MISSING_VARS_SUMMARY" ]; then
+    if [ -n "$GLOBAL_MISSING_VARS" ]; then
         log_warning "The following environment variables were missing and may cause issues:"
-        echo "$MISSING_VARS_SUMMARY"
+        echo "$GLOBAL_MISSING_VARS"
         log_info "Please update your .env file and redeploy affected stacks."
     fi
 
@@ -1275,7 +1280,7 @@ setup_stacks_for_dockge() {
                 sudo chown "$ACTUAL_USER:$ACTUAL_USER" "$STACK_DIR/.env"
 
                 # Remove sensitive/unnecessary variables from stack .env
-                sed -i '/^AUTHELIA_ADMIN_PASSWORD=/d' "$STACK_DIR/.env"
+                sed -i '/^AUTHELIA_ADMIN_PASSWORD_HASH=/d' "$STACK_DIR/.env"
                 sed -i '/^AUTHELIA_JWT_SECRET=/d' "$STACK_DIR/.env"
                 sed -i '/^AUTHELIA_SESSION_SECRET=/d' "$STACK_DIR/.env"
                 sed -i '/^AUTHELIA_STORAGE_ENCRYPTION_KEY=/d' "$STACK_DIR/.env"
@@ -1300,13 +1305,18 @@ setup_stacks_for_dockge() {
                 sed -i '/^HOMEPAGE_VAR_/d' "$STACK_DIR/.env"
 
                 # Replace placeholders in the compose file
-                replace_env_placeholders "$STACK_DIR/docker-compose.yml"
+                localize_yml_file "$STACK_DIR/docker-compose.yml"
 
                 # Copy any additional config directories
                 for config_dir in "$REPO_STACK_DIR"/*/; do
                     if [ -d "$config_dir" ] && [ "$(basename "$config_dir")" != "." ]; then
                         cp -r "$config_dir" "$STACK_DIR/"
                         sudo chown -R "$ACTUAL_USER:$ACTUAL_USER" "$STACK_DIR/$(basename "$config_dir")"
+                        
+                        # Replace placeholders in config files
+                        find "$STACK_DIR/$(basename "$config_dir")" -name "*.yml" -o -name "*.yaml" | while read -r config_file; do
+                            localize_yml_file "$config_file"
+                        done
                     fi
                 done
 
@@ -1340,11 +1350,225 @@ show_main_menu() {
     echo ""
 }
 
+# Show help function
+show_help() {
+    echo "EZ-Homelab Setup & Deployment Script"
+    echo ""
+    echo "Usage: $0 [OPTIONS]"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help              Show this help message"
+    echo "  -d, --dry-run           Enable dry-run mode (show commands without executing)"
+    echo "  -c, --config FILE       Specify configuration file (default: .env)"
+    echo "  -t, --test              Run in test mode (validate configs without deploying)"
+    echo "  -v, --validate-only     Only validate configuration and exit"
+    echo "      --verbose           Enable verbose console logging"
+    echo ""
+    echo "If no options are provided, the interactive menu will be shown."
+    echo ""
+}
+
+# Validate configuration function
+validate_configuration() {
+    log_info "Validating configuration..."
+
+    # Check if .env file exists
+    if [ ! -f ".env" ]; then
+        log_error "Configuration file .env not found."
+        return 1
+    fi
+
+    # Load and check required environment variables
+    if ! load_env_file; then
+        log_error "Failed to load .env file."
+        return 1
+    fi
+
+    # Check for critical variables
+    local required_vars=("DOMAIN" "SERVER_IP" "DUCKDNS_TOKEN" "AUTHELIA_ADMIN_PASSWORD_HASH")
+    local missing_vars=()
+    for var in "${required_vars[@]}"; do
+        if [ -z "${!var}" ]; then
+            missing_vars+=("$var")
+        fi
+    done
+
+    if [ ${#missing_vars[@]} -gt 0 ]; then
+        log_error "Missing required environment variables: ${missing_vars[*]}"
+        return 1
+    fi
+
+    # Check Docker Compose files syntax
+    log_info "Checking Docker Compose file syntax..."
+    if command -v docker-compose &> /dev/null; then
+        if ! docker-compose -f docker-compose/core/docker-compose.yml config -q; then
+            log_error "Invalid syntax in core docker-compose.yml"
+            return 1
+        fi
+        log_success "Core docker-compose.yml syntax is valid"
+    else
+        log_warning "docker-compose not available for syntax check"
+    fi
+
+    # Check network connectivity (basic)
+    log_info "Checking network connectivity..."
+    if ! ping -c 1 google.com &> /dev/null; then
+        log_warning "No internet connectivity detected"
+    else
+        log_success "Internet connectivity confirmed"
+    fi
+
+    log_success "Configuration validation completed successfully"
+}
+
+# Parse command line arguments function
+parse_args() {
+    DRY_RUN=false
+    CONFIG_FILE=".env"
+    TEST_MODE=false
+    VALIDATE_ONLY=false
+    VERBOSE=false
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -h|--help)
+                show_help
+                exit 0
+                ;;
+            -d|--dry-run)
+                DRY_RUN=true
+                shift
+                ;;
+            -c|--config)
+                CONFIG_FILE="$2"
+                shift 2
+                ;;
+            -t|--test)
+                TEST_MODE=true
+                shift
+                ;;
+            -v|--validate-only)
+                VALIDATE_ONLY=true
+                shift
+                ;;
+            --verbose)
+                VERBOSE=true
+                shift
+                ;;
+            *)
+                echo "Unknown option: $1"
+                show_help
+                exit 1
+                ;;
+        esac
+    done
+}
+
+# Prepare deployment environment
+prepare_deployment() {
+    # Handle special menu options
+    if [ "$FORCE_SYSTEM_SETUP" = true ]; then
+        log_info "Installing prerequisites..."
+        # Run the prerequisites script as root
+        if [ "$EUID" -eq 0 ]; then
+            ./scripts/install-prerequisites.sh
+        else
+            sudo ./scripts/install-prerequisites.sh
+        fi
+        log_success "Prerequisites installed successfully."
+        exit 0
+    fi
+
+    if [ "$INSTALL_NVIDIA" = true ]; then
+        log_info "Installing NVIDIA drivers..."
+        install_nvidia
+        exit 0
+    fi
+
+    # Check if system setup is needed
+    # Only run system setup if Docker is not installed OR if running as root and Docker setup hasn't been done
+    DOCKER_INSTALLED=false
+    if command -v docker &> /dev/null && docker --version &> /dev/null; then
+        DOCKER_INSTALLED=true
+    fi
+
+    # Check if current user is in docker group (or if we're root and will add them)
+    USER_IN_DOCKER_GROUP=false
+    if groups "$USER" 2>/dev/null | grep -q docker; then
+        USER_IN_DOCKER_GROUP=true
+    fi
+
+    if [ "$EUID" -eq 0 ]; then
+        # Running as root - check if we need to do system setup
+        if [ "$DOCKER_INSTALLED" = false ] || [ "$USER_IN_DOCKER_GROUP" = false ]; then
+            log_info "Docker not fully installed or user not in docker group. Performing system setup..."
+            ./scripts/install-prerequisites.sh
+            echo ""
+            log_info "System setup complete. Please log out and back in, then run this script again."
+            exit 0
+        else
+            log_info "Docker is already installed and user is in docker group. Skipping system setup."
+        fi
+    else
+        # Not running as root
+        if [ "$DOCKER_INSTALLED" = false ]; then
+            log_error "Docker is not installed. Please run this script with sudo to perform system setup."
+            exit 1
+        fi
+        if [ "$USER_IN_DOCKER_GROUP" = false ]; then
+            log_error "Current user is not in the docker group. Please log out and back in, or run with sudo to fix group membership."
+            exit 1
+        fi
+    fi
+
+    # Ensure required directories exist
+    log_info "Ensuring required directories exist..."
+    if [ "$EUID" -eq 0 ]; then
+        ACTUAL_USER=${SUDO_USER:-$USER}
+        mkdir -p /opt/stacks /opt/dockge
+        chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt
+    else
+        mkdir -p /opt/stacks /opt/dockge
+    fi
+    log_success "Directories prepared"
+}
+
+# Run command function (handles dry-run and test modes)
+run_cmd() {
+    if [ "$DRY_RUN" = true ] || [ "$TEST_MODE" = true ]; then
+        echo "[DRY-RUN/TEST] $@"
+        return 0
+    else
+        if "$@"; then
+            return 0
+        else
+            log_error "Command failed: $@"
+            return 1
+        fi
+    fi
+}
+
 # Main logic
 main() {
     debug_log "main() called with arguments: $@"
     log_info "EZ-Homelab Unified Setup & Deployment Script"
     echo ""
+
+    # Parse command line arguments
+    parse_args "$@"
+
+    if [ "$DRY_RUN" = true ]; then
+        log_info "Dry-run mode enabled. Commands will be displayed but not executed."
+    fi
+
+    if [ "$VALIDATE_ONLY" = true ]; then
+        log_info "Validation mode enabled. Checking configuration..."
+        validate_configuration
+        exit 0
+    fi
+
+    if [ "$TEST_MODE" = true ]; then
+        log_info "Test mode enabled. Will validate and simulate deployment."
+    fi
 
     # Load existing configuration
     ENV_EXISTS=false
@@ -1381,6 +1605,18 @@ main() {
                 ;;
             3)
                 log_info "Selected: Deploy Additional Server"
+                echo ""
+                echo "⚠️  IMPORTANT: Deploying an additional server requires an existing core server to be already deployed."
+                echo "The core server provides essential services like Traefik, Authelia, and shared TLS certificates."
+                echo ""
+                read -p "Do you have an existing core server deployed? (y/N): " -n 1 -r
+                echo ""
+                if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                    log_info "Returning to main menu. Please deploy a core server first using Option 2."
+                    echo ""
+                    sleep 2
+                    continue
+                fi
                 DEPLOY_CORE=false
                 DEPLOY_INFRASTRUCTURE=true
                 DEPLOY_DASHBOARDS=false
@@ -1411,71 +1647,8 @@ main() {
 
     echo ""
 
-    # Handle special menu options
-    if [ "$FORCE_SYSTEM_SETUP" = true ]; then
-        log_info "Installing prerequisites..."
-        system_setup "$@"
-        log_success "Prerequisites installed successfully."
-        exit 0
-    fi
-
-    if [ "$INSTALL_NVIDIA" = true ]; then
-        log_info "Installing NVIDIA drivers..."
-        # TODO: Implement NVIDIA driver installation
-        log_warning "NVIDIA driver installation not yet implemented."
-        exit 0
-    fi
-
-    # Check if system setup is needed
-    # Only run system setup if Docker is not installed OR if running as root and Docker setup hasn't been done
-    DOCKER_INSTALLED=false
-    if command -v docker &> /dev/null && docker --version &> /dev/null; then
-        DOCKER_INSTALLED=true
-    fi
-
-    # Check if current user is in docker group (or if we're root and will add them)
-    USER_IN_DOCKER_GROUP=false
-    if groups "$USER" 2>/dev/null | grep -q docker; then
-        USER_IN_DOCKER_GROUP=true
-    fi
-
-    if [ "$EUID" -eq 0 ]; then
-        # Running as root - check if we need to do system setup
-        if [ "$DOCKER_INSTALLED" = false ] || [ "$USER_IN_DOCKER_GROUP" = false ]; then
-            log_info "Docker not fully installed or user not in docker group. Performing system setup..."
-            system_setup "$@"
-            echo ""
-            log_info "System setup complete. Please log out and back in, then run this script again."
-            exit 0
-        else
-            log_info "Docker is already installed and user is in docker group. Skipping system setup."
-        fi
-    else
-        # Not running as root
-        if [ "$DOCKER_INSTALLED" = false ]; then
-            log_error "Docker is not installed. Please run this script with sudo to perform system setup."
-            exit 1
-        fi
-        if [ "$USER_IN_DOCKER_GROUP" = false ]; then
-            log_error "Current user is not in the docker group. Please log out and back in, or run with sudo to fix group membership."
-            exit 1
-        fi
-    fi
-
-    # Ensure required directories exist
-    log_info "Ensuring required directories exist..."
-    if [ "$EUID" -eq 0 ]; then
-        mkdir -p /opt/stacks/core
-        mkdir -p /opt/stacks/infrastructure
-        mkdir -p /opt/stacks/dashboards
-        mkdir -p /opt/dockge
-    else
-        sudo mkdir -p /opt/stacks/core
-        sudo mkdir -p /opt/stacks/infrastructure
-        sudo mkdir -p /opt/stacks/dashboards
-        sudo mkdir -p /opt/dockge
-    fi
-    log_success "Directories ready"
+    # Prepare deployment environment
+    prepare_deployment
 
     # Prompt for configuration values
     validate_and_prompt_variables
@@ -1484,7 +1657,7 @@ main() {
     save_env_file
 
     # Perform enhanced placeholder replacement across all config files
-    enhance_placeholder_replacement
+    localize_deployment
 
     # Validate secrets for core deployment
     validate_secrets
@@ -1498,25 +1671,25 @@ main() {
     echo "║                  Deployment Complete!                       ║"
     echo "║  SSL Certificates may take a few minutes to be issued.      ║"
     echo "║                                                             ║"
-    echo "║  https://dockge.kelinreij.duckdns.org                       ║"
-    echo "║  http://192.168.4.4:5001                                    ║"
+    echo "║  https://dockge.${DOMAIN}                                   ║"
+    echo "║  http://${SERVER_IP}:5001                                   ║"
     echo "║                                                             ║"
-    echo "║  https://homepage.kelinreij.duckdns.org                     ║"
-    echo "║  http://192.168.4.4:3003                                    ║"
+    echo "║  https://homepage.${DOMAIN}                                 ║"
+    echo "║  http://${SERVER_IP}:3003                                    ║"
     echo "║                                                             ║"
     echo "╚═════════════════════════════════════════════════════════════╝"
 
     # Show consolidated warnings if any
-    if [ -n "$MISSING_VARS_SUMMARY" ] || [ -n "$TLS_ISSUES_SUMMARY" ]; then
+    if [ -n "$GLOBAL_MISSING_VARS" ] || [ -n "$TLS_ISSUES_SUMMARY" ]; then
         echo "╔═════════════════════════════════════════════════════════════╗"
         echo "║                     ⚠️  WARNING  ⚠️                        ║"
         echo "║       The following variables were not defined              ║"
         echo "║  If something isn't working as expected check these first   ║"
         echo "║                                                             ║"
         
-        if [ -n "$MISSING_VARS_SUMMARY" ]; then
+        if [ -n "$GLOBAL_MISSING_VARS" ]; then
             log_warning "Missing Environment Variables:"
-            echo "$MISSING_VARS_SUMMARY"
+            echo "$GLOBAL_MISSING_VARS"
             echo "║                                                             ║"
         fi
                 

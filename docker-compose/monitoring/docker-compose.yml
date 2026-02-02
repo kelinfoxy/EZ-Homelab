@@ -1,25 +1,11 @@
 # Monitoring and Observability Services
-# Services for monitoring your homelab infrastructure
-# Place in /opt/stacks/monitoring/docker-compose.yml
-
 # RESTART POLICY GUIDE:
 # - unless-stopped: Core infrastructure services that should always run
 # - no: Services with Sablier lazy loading (start on-demand)
 # - See individual service comments for specific reasoning
 
-# Service Access URLs:
-# - Prometheus: http://192.168.4.4:9090 (or configure Traefik)
-# - Grafana: http://192.168.4.4:3000 (or configure Traefik)
-# - Uptime Kuma: https://status.kelinreij.duckdns.org
-# - Node Exporter: http://192.168.4.4:9100/metrics
-# - cAdvisor: http://192.168.4.4:8082
-# - Loki: http://192.168.4.4:3100
-# NOTE: Prometheus, Grafana, Loki use ports because they need to be accessible to other services
-#       Add Traefik labels if you want https://prometheus.kelinreij.duckdns.org access
-
 services:
   # Prometheus - Metrics collection and storage
-  # Access at: http://192.168.4.4:9090
   prometheus:
     image: prom/prometheus:v2.48.1
     deploy:
@@ -59,7 +45,7 @@ services:
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.prometheus.rule=Host(`prometheus.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.prometheus.rule=Host(`prometheus.${DOMAIN}`)"
       - "traefik.http.routers.prometheus.entrypoints=websecure"
       - "traefik.http.routers.prometheus.tls=true"
       - "traefik.http.routers.prometheus.tls.certresolver=letsencrypt"
@@ -67,7 +53,6 @@ services:
       - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
 
   # Grafana - Metrics visualization
-  # Access at: http://192.168.4.4:3000
   # Default credentials: admin / admin (change on first login)
   grafana:
     image: grafana/grafana:10.2.3
@@ -93,7 +78,7 @@ services:
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
       - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_SERVER_ROOT_URL=https://grafana.kelinreij.duckdns.org
+      - GF_SERVER_ROOT_URL=https://grafana.${DOMAIN}
       - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource,grafana-piechart-panel
     user: "1000:1000"
     depends_on:
@@ -109,7 +94,7 @@ services:
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.grafana.rule=Host(`grafana.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.${DOMAIN}`)"
       - "traefik.http.routers.grafana.entrypoints=websecure"
       - "traefik.http.routers.grafana.tls=true"
       - "traefik.http.routers.grafana.tls.certresolver=letsencrypt"
@@ -170,7 +155,7 @@ services:
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.cadvisor.rule=Host(`cadvisor.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.cadvisor.rule=Host(`cadvisor.${DOMAIN}`)"
       - "traefik.http.routers.cadvisor.entrypoints=websecure"
       - "traefik.http.routers.cadvisor.tls=true"
       - "traefik.http.routers.cadvisor.tls.certresolver=letsencrypt"
@@ -178,7 +163,6 @@ services:
       - "traefik.http.services.cadvisor.loadbalancer.server.port=8080"
 
   # Uptime Kuma - Uptime monitoring
-  # Access at: https://uptime-kuma.kelinreij.duckdns.org
   uptime-kuma:
     image: louislam/uptime-kuma:1
     deploy:
@@ -211,7 +195,7 @@ services:
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.uptime-kuma.rule=Host(`uptime-kuma.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.uptime-kuma.rule=Host(`uptime-kuma.${DOMAIN}`)"
       - "traefik.http.routers.uptime-kuma.entrypoints=websecure"
       - "traefik.http.routers.uptime-kuma.tls=true"
       - "traefik.http.routers.uptime-kuma.tls.certresolver=letsencrypt"
@@ -253,7 +237,7 @@ services:
       #   configure external yml files in /traefik/dynamic folder instead.
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.loki.rule=Host(`loki.kelinreij.duckdns.org`)"
+      - "traefik.http.routers.loki.rule=Host(`loki.${DOMAIN}`)"
       - "traefik.http.routers.loki.entrypoints=websecure"
       - "traefik.http.routers.loki.tls=true"
       - "traefik.http.routers.loki.tls.certresolver=letsencrypt"
@@ -300,7 +284,7 @@ x-dockge:
     # Proxied URLs (through Traefik)
     - http://192.168.4.4:9090
     - http://192.168.4.4:3000
-    - https://uptime-kuma.kelinreij.duckdns.org
+    - https://uptime-kuma.${DOMAIN}
     - http://192.168.4.4:9100/metrics
     - http://192.168.4.4:8082
     - http://192.168.4.4:3100
