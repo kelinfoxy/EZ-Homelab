@@ -131,7 +131,7 @@ localize_yml_file() {
 
     for var in $vars; do
         # Trim whitespace from variable name
-        var=$(echo "$var" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+        var=$(echo "$var" | sed 's/^[ \t\n]*//;s/[ \t\n]*$//')
         # Skip derived variables that should not be replaced
         case "$var" in
             "ACME_EMAIL"|"AUTHELIA_ADMIN_EMAIL"|"SMTP_USERNAME"|"SMTP_PASSWORD")
@@ -159,7 +159,7 @@ localize_yml_file() {
     local remaining_vars=$(grep -v '^[[:space:]]*#' "$file_path" | grep -o '\${[^}]*}' | sed 's/\${//' | sed 's/}//' | sort | uniq)
     local invalid_remaining=""
     for rvar in $remaining_vars; do
-        rvar=$(echo "$rvar" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+        rvar=$(echo "$rvar" | sed 's/^[ \t\n]*//;s/[ \t\n]*$//')
         case "$rvar" in
             "ACME_EMAIL"|"AUTHELIA_ADMIN_EMAIL"|"SMTP_USERNAME"|"SMTP_PASSWORD")
                 continue
@@ -1146,6 +1146,9 @@ perform_deployment() {
         sed -i "s%AUTHELIA_ADMIN_PASSWORD_HASH=.*%AUTHELIA_ADMIN_PASSWORD_HASH=\"$AUTHELIA_ADMIN_PASSWORD_HASH\"%" "$REPO_DIR/.env"
         log_success "Authelia password hash generated and saved"
     fi
+
+    # Reload .env to get updated secrets
+    load_env_file_safely "$REPO_DIR/.env"
 
     # Step 1: Create required directories
     log_info "Step 1: Creating required directories..."
