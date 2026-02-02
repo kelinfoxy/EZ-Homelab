@@ -129,13 +129,24 @@ localize_yml_file() {
         debug_log "Backed up $file_path"
     fi
 
-    # Use envsubst to replace all ${VAR} with environment values
+    # Use envsubst to replace all ${VAR} with environment values, handling nested variables
     if command -v envsubst >/dev/null 2>&1; then
         log_info "DEBUG: DEFAULT_EMAIL=$DEFAULT_EMAIL"
-        envsubst < "$file_path" > "$file_path.tmp" && mv "$file_path.tmp" "$file_path"
-        debug_log "Replaced variables in $file_path using envsubst"
+        temp_file="$file_path.tmp"
+        cp "$file_path" "$temp_file"
+        changed=true
+        while [ "$changed" = true ]; do
+            changed=false
+            new_content=$(envsubst < "$temp_file")
+            if [ "$new_content" != "$(cat "$temp_file")" ]; then
+                changed=true
+                echo "$new_content" > "$temp_file"
+            fi
+        done
+        mv "$temp_file" "$file_path"
+        debug_log "Replaced variables in $file_path using envsubst with nested expansion"
         replaced_count=$(grep -o '\${[^}]*}' "$file_path" | wc -l)
-        replaced_count=$((replaced_count / 2))  # Approximate, since envsubst replaces all
+        replaced_count=$((replaced_count / 2))  # Approximate
     else
         log_warning "envsubst not available, cannot localize $file_path"
         if [ "$fail_on_missing" = true ]; then
@@ -1648,9 +1659,6 @@ main() {
 
     # Save configuration
     save_env_file
-
-    # Perform enhanced placeholder replacement across all config files
-    localize_deployment
 
     # Validate secrets for core deployment
     validate_secrets
