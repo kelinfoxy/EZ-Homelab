@@ -77,14 +77,8 @@ load_env_file_safely() {
             local key="${BASH_REMATCH[1]}"
             local value="${BASH_REMATCH[2]}"
 
-            # Remove surrounding quotes if present
-            if [[ $value =~ ^\'(.*)\'$ ]]; then
-                value="${BASH_REMATCH[1]}"
-            elif [[ $value =~ ^\"(.*)\"$ ]]; then
-                value="${BASH_REMATCH[1]}"
-            fi
-
-            # Trim whitespace from value
+            # Trim whitespace from key and value
+            key=$(echo "$key" | xargs)
             value=$(echo "$value" | xargs)
             debug_log "Exported $key=[HIDDEN]"  # Don't log actual values for security
         fi
@@ -619,6 +613,7 @@ validate_and_prompt_variables() {
             esac
         else
             echo ""
+            echo "Missing variables: ${missing_vars[*]}"
             echo "Some variables need configuration. Press Enter to continue or 'q' to quit."
             read -p "Press Enter to configure missing variables, or 'q' to quit: " user_choice
             
