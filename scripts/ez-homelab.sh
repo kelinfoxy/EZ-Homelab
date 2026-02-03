@@ -384,7 +384,7 @@ SERVER_IP=""
 CORE_SERVER_IP=""
 ADMIN_USER=""
 ADMIN_EMAIL=""
-ADMIN_PASSWORD=""
+AUTHELIA_ADMIN_PASSWORD=""
 DEPLOY_CORE=false
 DEPLOY_INFRASTRUCTURE=false
 DEPLOY_DASHBOARDS=false
@@ -694,9 +694,9 @@ save_env_file() {
         if [ -z "$ADMIN_EMAIL" ]; then
             ADMIN_EMAIL="${DEFAULT_EMAIL:-${ADMIN_USER}@${DOMAIN}}"
         fi
-        if [ -z "$ADMIN_PASSWORD" ]; then
-            ADMIN_PASSWORD="${DEFAULT_PASSWORD:-changeme123}"
-            if [ "$ADMIN_PASSWORD" = "changeme123" ]; then
+        if [ -z "$AUTHELIA_ADMIN_PASSWORD" ]; then
+            AUTHELIA_ADMIN_PASSWORD="${DEFAULT_PASSWORD}"
+            if [ "$AUTHELIA_ADMIN_PASSWORD" = "changeme123" ]; then
                 log_info "Using default admin password (changeme123) - please change this after setup!"
             fi
         fi
@@ -727,16 +727,16 @@ save_env_file() {
             if ! docker images | grep -q authelia/authelia; then
                 docker pull authelia/authelia:latest > /dev/null 2>&1
             fi
-            AUTHELIA_ADMIN_PASSWORD_HASH=$(docker run --rm authelia/authelia:latest authelia crypto hash generate argon2 --password "$ADMIN_PASSWORD" 2>&1 | grep -o '\$argon2id.*')
+            AUTHELIA_ADMIN_PASSWORD_HASH=$(docker run --rm authelia/authelia:latest authelia crypto hash generate argon2 --password "$AUTHELIA_ADMIN_PASSWORD")
             if [ -z "$AUTHELIA_ADMIN_PASSWORD_HASH" ]; then
-                log_error "Failed to generate Authelia password hash. Please check that ADMIN_PASSWORD is set."
+                log_error "Failed to generate Authelia password hash. Please check that AUTHELIA_ADMIN_PASSWORD is set."
                 exit 1
             fi
         fi
 
         # Save password hash
-        sudo -u "$ACTUAL_USER" sed -i "s%# AUTHELIA_ADMIN_PASSWORD_HASH=.*%AUTHELIA_ADMIN_PASSWORD_HASH=\"$AUTHELIA_ADMIN_PASSWORD_HASH\"%" "$REPO_DIR/.env"
-        sudo -u "$ACTUAL_USER" sed -i "s%AUTHELIA_ADMIN_PASSWORD_HASH=.*%AUTHELIA_ADMIN_PASSWORD_HASH=\"$AUTHELIA_ADMIN_PASSWORD_HASH\"%" "$REPO_DIR/.env"
+        sudo -u "$ACTUAL_USER" sed -i "s%# AUTHELIA_ADMIN_PASSWORD_HASH=.*%AUTHELIA_ADMIN_PASSWORD_HASH=$AUTHELIA_ADMIN_PASSWORD_HASH%" "$REPO_DIR/.env"
+        sudo -u "$ACTUAL_USER" sed -i "s%AUTHELIA_ADMIN_PASSWORD_HASH=.*%AUTHELIA_ADMIN_PASSWORD_HASH=$AUTHELIA_ADMIN_PASSWORD_HASH%" "$REPO_DIR/.env"
     fi
 
     debug_log "Configuration saved to .env file"

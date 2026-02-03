@@ -73,20 +73,20 @@ services:
       # TRAEFIK CONFIGURATION
       # ==========================================
       # Service metadata
-      - "homelab.category=infrastructure"
-      - "homelab.description=Network-wide ad blocking and DNS"
+      - 'homelab.category=infrastructure"
+      - 'homelab.description=Network-wide ad blocking and DNS"
       # Traefik reverse proxy (comment/uncomment to disable/enable)
       # IMPORTANT: On REMOTE SERVERS (where Traefik runs elsewhere):
       #   - COMMENT OUT all traefik.* labels below (don't delete them)
       #   - Routes are configured via external YAML files on the core server
       #   - This prevents conflicts between Docker labels and file provider
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.pihole.rule=Host(`pihole.${DOMAIN}`)"
-      - "traefik.http.routers.pihole.entrypoints=websecure"
-      - "traefik.http.routers.pihole.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.pihole.middlewares=authelia@docker"
-      - "traefik.http.services.pihole.loadbalancer.server.port=80"
+      - 'traefik.enable=true"
+      - 'traefik.docker.network=traefik-network"
+      - 'traefik.http.routers.pihole.rule=Host(`pihole.${DOMAIN}`)"
+      - 'traefik.http.routers.pihole.entrypoints=websecure"
+      - 'traefik.http.routers.pihole.tls.certresolver=letsencrypt"
+      - 'traefik.http.routers.pihole.middlewares=authelia@docker"
+      - 'traefik.http.services.pihole.loadbalancer.server.port=80"
 
   # Watchtower - Automatic container updates
   watchtower:
@@ -105,8 +105,8 @@ services:
       - WATCHTOWER_NOTIFICATIONS=shoutrrr
       - WATCHTOWER_NOTIFICATION_URL=${WATCHTOWER_NOTIFICATION_URL}
     labels:
-      - "homelab.category=infrastructure"
-      - "homelab.description=Automatic Docker container updates"
+      - 'homelab.category=infrastructure"
+      - 'homelab.description=Automatic Docker container updates"
 
   # Dozzle - Real-time Docker log viewer
   # Uses Sablier lazy loading - starts on-demand, stops after 5min inactivity
@@ -144,17 +144,17 @@ services:
       # TRAEFIK CONFIGURATION
       # Service metadata
       - "com.centurylinklabs.watchtower.enable=true"
-      - "homelab.category=infrastructure"
-      - "homelab.description=Real-time Docker log viewer"
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik-network"
+      - 'homelab.category=infrastructure"
+      - 'homelab.description=Real-time Docker log viewer"
+      - 'traefik.enable=true"
+      - 'traefik.docker.network=traefik-network"
       # Router configuration
-      - "traefik.http.routers.dozzle.rule=Host(`dozzle.jasper.${DOMAIN}`)"
-      - "traefik.http.routers.dozzle.entrypoints=websecure"
-      - "traefik.http.routers.dozzle.tls=true"
-      - "traefik.http.routers.dozzle.middlewares=authelia@docker"
+      - 'traefik.http.routers.dozzle.rule=Host(`dozzle.jasper.${DOMAIN}`)"
+      - 'traefik.http.routers.dozzle.entrypoints=websecure"
+      - 'traefik.http.routers.dozzle.tls=true"
+      - 'traefik.http.routers.dozzle.middlewares=authelia@docker"
       # Service configuration
-      - "traefik.http.services.dozzle.loadbalancer.server.port=8085"
+      - 'traefik.http.services.dozzle.loadbalancer.server.port=8085"
       # Sablier configuration
       - "sablier.enable=true"
       - "sablier.group=jasper-dozzle"
@@ -196,17 +196,17 @@ services:
       # TRAEFIK CONFIGURATION
       # Service metadata
       - "com.centurylinklabs.watchtower.enable=true"
-      - "homelab.category=infrastructure"
-      - "homelab.description=System and Docker monitoring"
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik-network"
+      - 'homelab.category=infrastructure"
+      - 'homelab.description=System and Docker monitoring"
+      - 'traefik.enable=true"
+      - 'traefik.docker.network=traefik-network"
       # Router configuration
-      - "traefik.http.routers.glances.rule=Host(`glances.jasper.${DOMAIN}`)"
-      - "traefik.http.routers.glances.entrypoints=websecure"
-      - "traefik.http.routers.glances.tls=true"
-      - "traefik.http.routers.glances.middlewares=authelia@docker"
+      - 'traefik.http.routers.glances.rule=Host(`glances.jasper.${DOMAIN}`)"
+      - 'traefik.http.routers.glances.entrypoints=websecure"
+      - 'traefik.http.routers.glances.tls=true"
+      - 'traefik.http.routers.glances.middlewares=authelia@docker"
       # Service configuration
-      - "traefik.http.services.glances.loadbalancer.server.port=61208"
+      - 'traefik.http.services.glances.loadbalancer.server.port=61208"
       # Sablier configuration
       - "sablier.enable=true"
       - "sablier.group=jasper-glances"
@@ -252,17 +252,17 @@ services:
       # TRAEFIK CONFIGURATION
       # Service metadata
       - "com.centurylinklabs.watchtower.enable=true"
-      - "homelab.category=infrastructure"
-      - "homelab.description=VS Code in browser"
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik-network"
+      - 'homelab.category=infrastructure"
+      - 'homelab.description=VS Code in browser"
+      - 'traefik.enable=true"
+      - 'traefik.docker.network=traefik-network"
       # Router configuration
-      - "traefik.http.routers.code-server.rule=Host(`code.${DOMAIN}`)"
-      - "traefik.http.routers.code-server.entrypoints=websecure"
-      - "traefik.http.routers.code-server.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.code-server.middlewares=authelia@docker"
+      - 'traefik.http.routers.code-server.rule=Host(`code.${DOMAIN}`)"
+      - 'traefik.http.routers.code-server.entrypoints=websecure"
+      - 'traefik.http.routers.code-server.tls.certresolver=letsencrypt"
+      - 'traefik.http.routers.code-server.middlewares=authelia@docker"
       # Service configuration
-      - "traefik.http.services.code-server.loadbalancer.server.port=8443"
+      - 'traefik.http.services.code-server.loadbalancer.server.port=8443"
       # Sablier configuration
       - "sablier.enable=true"
       - "sablier.group=jasper-code-server"

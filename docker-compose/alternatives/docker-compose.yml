@@ -26,15 +26,15 @@ services:
       # TRAEFIK CONFIGURATION
       # ==========================================
       # Service metadata
-      - "homelab.category=alternatives"
-      - "homelab.description=Docker container management UI (Alternative to Dockge)"
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.portainer.rule=Host(`portainer.${DOMAIN}`)"
-      - "traefik.http.routers.portainer.entrypoints=websecure"
-      - "traefik.http.routers.portainer.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.portainer.middlewares=authelia@docker"
-      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+      - 'homelab.category=alternatives"
+      - 'homelab.description=Docker container management UI (Alternative to Dockge)"
+      - 'traefik.enable=true"
+      - 'traefik.docker.network=traefik-network"
+      - 'traefik.http.routers.portainer.rule=Host(`portainer.${DOMAIN}`)"
+      - 'traefik.http.routers.portainer.entrypoints=websecure"
+      - 'traefik.http.routers.portainer.tls.certresolver=letsencrypt"
+      - 'traefik.http.routers.portainer.middlewares=authelia@docker"
+      - 'traefik.http.services.portainer.loadbalancer.server.port=9000"
 
   # Authentik - Alternative SSO/Identity Provider with Web UI
   # Access at: https://authentik.${DOMAIN}
@@ -66,15 +66,15 @@ services:
       # TRAEFIK CONFIGURATION
       # ==========================================
       # Service metadata
-      - "homelab.category=alternatives"
-      - "homelab.description=SSO/Identity provider with web UI (Alternative to Authelia)"
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.authentik.rule=Host(`authentik.${DOMAIN}`)"
-      - "traefik.http.routers.authentik.entrypoints=websecure"
-      - "traefik.http.routers.authentik.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.authentik.middlewares=authelia@docker"
-      - "traefik.http.services.authentik.loadbalancer.server.port=9000"
+      - 'homelab.category=alternatives"
+      - 'homelab.description=SSO/Identity provider with web UI (Alternative to Authelia)"
+      - 'traefik.enable=true"
+      - 'traefik.docker.network=traefik-network"
+      - 'traefik.http.routers.authentik.rule=Host(`authentik.${DOMAIN}`)"
+      - 'traefik.http.routers.authentik.entrypoints=websecure"
+      - 'traefik.http.routers.authentik.tls.certresolver=letsencrypt"
+      - 'traefik.http.routers.authentik.middlewares=authelia@docker"
+      - 'traefik.http.services.authentik.loadbalancer.server.port=9000"
     depends_on:
       - authentik-db
       - authentik-redis
@@ -104,8 +104,8 @@ services:
       # TRAEFIK CONFIGURATION
       # ==========================================
       # Service metadata
-      - "homelab.category=alternatives"
-      - "homelab.description=Authentik background worker"
+      - 'homelab.category=alternatives"
+      - 'homelab.description=Authentik background worker"
     depends_on:
       - authentik-db
       - authentik-redis
@@ -128,8 +128,8 @@ services:
       # TRAEFIK CONFIGURATION
       # ==========================================
       # Service metadata
-      - "homelab.category=alternatives"
-      - "homelab.description=Authentik database"
+      - 'homelab.category=alternatives"
+      - 'homelab.description=Authentik database"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${AUTHENTIK_DB_USER}"]
       interval: 10s
@@ -151,8 +151,8 @@ services:
       # TRAEFIK CONFIGURATION
       # ==========================================
       # Service metadata
-      - "homelab.category=alternatives"
-      - "homelab.description=Authentik cache and messaging"
+      - 'homelab.category=alternatives"
+      - 'homelab.description=Authentik cache and messaging"
     healthcheck:
       test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
       interval: 10s
@@ -202,15 +202,15 @@ services:
       # TRAEFIK CONFIGURATION
       # ==========================================
       # Service metadata
-      - "homelab.category=alternatives"
-      - "homelab.description=Alternative media streaming server to Jellyfin"
+      - 'homelab.category=alternatives"
+      - 'homelab.description=Alternative media streaming server to Jellyfin"
       # Traefik labels - NO Authelia for app access
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.plex.rule=Host(`plex.${DOMAIN}`)"
-      - "traefik.http.routers.plex.entrypoints=websecure"
-      - "traefik.http.routers.plex.tls.certresolver=letsencrypt"
-      - "traefik.http.services.plex.loadbalancer.server.port=32400"
+      - 'traefik.enable=true"
+      - 'traefik.docker.network=traefik-network"
+      - 'traefik.http.routers.plex.rule=Host(`plex.${DOMAIN}`)"
+      - 'traefik.http.routers.plex.entrypoints=websecure"
+      - 'traefik.http.routers.plex.tls.certresolver=letsencrypt"
+      - 'traefik.http.services.plex.loadbalancer.server.port=32400"
       - "x-dockge.url=https://plex.${DOMAIN}"
       - "x-dockge.url=https://plex.${DOMAIN}"
 

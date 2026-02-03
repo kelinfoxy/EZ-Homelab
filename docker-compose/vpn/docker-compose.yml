@@ -38,17 +38,17 @@ services:
     labels:
       # Service metadata
       - "com.centurylinklabs.watchtower.enable=true"
-      - "homelab.category=downloaders"
-      - "homelab.description=VPN client for secure downloads"
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik-network"
+      - 'homelab.category=downloaders"
+      - 'homelab.description=VPN client for secure downloads"
+      - 'traefik.enable=true"
+      - 'traefik.docker.network=traefik-network"
       # Router configuration
-      - "traefik.http.routers.qbittorrent.rule=Host(`qbit.${DOMAIN}`)"
-      - "traefik.http.routers.qbittorrent.entrypoints=websecure"
-      - "traefik.http.routers.qbittorrent.tls=true"
-      - "traefik.http.routers.qbittorrent.middlewares=authelia@docker"
+      - 'traefik.http.routers.qbittorrent.rule=Host(`qbit.${DOMAIN}`)"
+      - 'traefik.http.routers.qbittorrent.entrypoints=websecure"
+      - 'traefik.http.routers.qbittorrent.tls=true"
+      - 'traefik.http.routers.qbittorrent.middlewares=authelia@docker"
       # Service configuration
-      - "traefik.http.services.qbittorrent.loadbalancer.server.port=8081"
+      - 'traefik.http.services.qbittorrent.loadbalancer.server.port=8081"
       # Sablier configuration
       - "sablier.enable=true"
       - "sablier.group=jasper-qbittorrent"

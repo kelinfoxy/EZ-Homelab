@@ -36,17 +36,17 @@ services:
       # TRAEFIK CONFIGURATION
       # Service metadata
       - "com.centurylinklabs.watchtower.enable=true"
-      - "homelab.category=utilities"
-      - "homelab.description=Backup management with restic"
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik-network"
+      - 'homelab.category=utilities"
+      - 'homelab.description=Backup management with restic"
+      - 'traefik.enable=true"
+      - 'traefik.docker.network=traefik-network"
       # Router configuration
-      - "traefik.http.routers.backrest.rule=Host(`backrest.${DOMAIN}`)"
-      - "traefik.http.routers.backrest.entrypoints=websecure"
-      - "traefik.http.routers.backrest.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.backrest.middlewares=authelia@docker"
+      - 'traefik.http.routers.backrest.rule=Host(`backrest.${DOMAIN}`)"
+      - 'traefik.http.routers.backrest.entrypoints=websecure"
+      - 'traefik.http.routers.backrest.tls.certresolver=letsencrypt"
+      - 'traefik.http.routers.backrest.middlewares=authelia@docker"
       # Service configuration
-      - "traefik.http.services.backrest.loadbalancer.server.port=9898"
+      - 'traefik.http.services.backrest.loadbalancer.server.port=9898"
       # Sablier configuration
       - "sablier.enable=true"
       - "sablier.group=jasper-backrest"
@@ -81,17 +81,17 @@ services:
       # TRAEFIK CONFIGURATION
       # Service metadata
       - "com.centurylinklabs.watchtower.enable=true"
-      - "homelab.category=utilities"
-      - "homelab.description=Backup software with encryption"
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik-network"
+      - 'homelab.category=utilities"
+      - 'homelab.description=Backup software with encryption"
+      - 'traefik.enable=true"
+      - 'traefik.docker.network=traefik-network"
       # Router configuration
-      - "traefik.http.routers.duplicati.rule=Host(`duplicati.${DOMAIN}`)"
-      - "traefik.http.routers.duplicati.entrypoints=websecure"
-      - "traefik.http.routers.duplicati.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.duplicati.middlewares=authelia@docker"
+      - 'traefik.http.routers.duplicati.rule=Host(`duplicati.${DOMAIN}`)"
+      - 'traefik.http.routers.duplicati.entrypoints=websecure"
+      - 'traefik.http.routers.duplicati.tls.certresolver=letsencrypt"
+      - 'traefik.http.routers.duplicati.middlewares=authelia@docker"
       # Service configuration
-      - "traefik.http.services.duplicati.loadbalancer.server.port=8200"
+      - 'traefik.http.services.duplicati.loadbalancer.server.port=8200"
       # Sablier configuration
       - "sablier.enable=true"
       - "sablier.group=jasper-duplicati"
@@ -125,17 +125,17 @@ services:
       # ==========================================
       # Service metadata
       - "com.centurylinklabs.watchtower.enable=true"
-      - "homelab.category=utilities"
-      - "homelab.description=Form builder platform"
+      - 'homelab.category=utilities"
+      - 'homelab.description=Form builder platform"
       # Traefik labels
-      - "traefik.enable=true"
+      - 'traefik.enable=true"
       # Router configuration
-      - "traefik.http.routers.formio.rule=Host(`forms.${DOMAIN}`)"
-      - "traefik.http.routers.formio.entrypoints=websecure"
-      - "traefik.http.routers.formio.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.formio.middlewares=authelia@docker"
+      - 'traefik.http.routers.formio.rule=Host(`forms.${DOMAIN}`)"
+      - 'traefik.http.routers.formio.entrypoints=websecure"
+      - 'traefik.http.routers.formio.tls.certresolver=letsencrypt"
+      - 'traefik.http.routers.formio.middlewares=authelia@docker"
       # Service configuration
-      - "traefik.http.services.formio.loadbalancer.server.port=3001"
+      - 'traefik.http.services.formio.loadbalancer.server.port=3001"
       # Sablier configuration
       - "sablier.enable=true"
       - "sablier.group=jasper-formio"
@@ -148,8 +148,8 @@ services:
     networks:
       - homelab-network
     labels:
-      - "homelab.category=utilities"
-      - "homelab.description=Form.io database"
+      - 'homelab.category=utilities"
+      - 'homelab.description=Form.io database"
 
   # Bitwarden (Vaultwarden) - Password manager
   # Note: SSO disabled for browser extension and mobile app compatibility
@@ -187,19 +187,19 @@ services:
       # TRAEFIK CONFIGURATION
       # ==========================================
       # Service metadata
-      - "homelab.category=utilities"
-      - "homelab.description=Self-hosted password manager (Bitwarden)"
+      - 'homelab.category=utilities"
+      - 'homelab.description=Self-hosted password manager (Bitwarden)"
       # Traefik reverse proxy (comment/uncomment to disable/enable)
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
-      - "traefik.enable=true"
-      - "traefik.http.routers.vaultwarden.rule=Host(`vault.${DOMAIN}`)"
-      - "traefik.http.routers.vaultwarden.entrypoints=websecure"
-      - "traefik.http.routers.vaultwarden.tls=true"
-      - "traefik.http.routers.vaultwarden.tls.certresolver=letsencrypt"
+      - 'traefik.enable=true"
+      - 'traefik.http.routers.vaultwarden.rule=Host(`vault.${DOMAIN}`)"
+      - 'traefik.http.routers.vaultwarden.entrypoints=websecure"
+      - 'traefik.http.routers.vaultwarden.tls=true"
+      - 'traefik.http.routers.vaultwarden.tls.certresolver=letsencrypt"
       # SSO disabled for browser extension and mobile app compatibility
-      # - "traefik.http.routers.vaultwarden.middlewares=authelia@docker"
-      - "traefik.http.services.vaultwarden.loadbalancer.server.port=80"
+      # - 'traefik.http.routers.vaultwarden.middlewares=authelia@docker"
+      - 'traefik.http.services.vaultwarden.loadbalancer.server.port=80"
       # Sablier configuration
       - "sablier.enable=true"
       - "sablier.group=jasper-vaultwarden"

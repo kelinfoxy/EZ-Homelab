@@ -37,18 +37,18 @@ services:
       # TRAEFIK CONFIGURATION
       # ==========================================
       # Service metadata
-      - "homelab.category=infrastructure"
-      - "homelab.description=Docker Compose stack manager (PRIMARY)"
+      - 'homelab.category=infrastructure"
+      - 'homelab.description=Docker Compose stack manager (PRIMARY)"
       # Traefik reverse proxy (comment/uncomment to disable/enable)
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik-network"
-      - "traefik.http.routers.dockge.rule=Host(`dockge.${DOMAIN}`)"
-      - "traefik.http.routers.dockge.entrypoints=websecure"
-      - "traefik.http.routers.dockge.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.dockge.middlewares=authelia@docker"
-      - "traefik.http.services.dockge.loadbalancer.server.port=5001"
+      - 'traefik.enable=true"
+      - 'traefik.docker.network=traefik-network"
+      - 'traefik.http.routers.dockge.rule=Host(`dockge.${DOMAIN}`)"
+      - 'traefik.http.routers.dockge.entrypoints=websecure"
+      - 'traefik.http.routers.dockge.tls.certresolver=letsencrypt"
+      - 'traefik.http.routers.dockge.middlewares=authelia@docker"
+      - 'traefik.http.services.dockge.loadbalancer.server.port=5001"
 
 networks:
   homelab-network:

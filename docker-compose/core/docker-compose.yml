@@ -27,7 +27,7 @@ services:
     image: traefik:v3
     container_name: traefik
     restart: unless-stopped
-    command: ["--configFile=/config/traefik.yml"]
+    command: ['--configFile=/config/traefik.yml']
     environment:
       - DUCKDNS_TOKEN=41ef7faa-fc93-41d2-a32f-340fd2b75b2f
     ports:
@@ -45,14 +45,14 @@ services:
       # TRAEFIK CONFIGURATION
       # ==========================================
       # Service metadata
-      - "homelab.category=core"
-      - "homelab.description=Reverse proxy and SSL termination"
-      - "traefik.enable=true"
-      - "traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN}`)"
-      - "traefik.http.routers.traefik.entrypoints=websecure"
-      - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.traefik.middlewares=authelia@docker"
-      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+      - 'homelab.category=core'
+      - 'homelab.description=Reverse proxy and SSL termination'
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN}`)'
+      - 'traefik.http.routers.traefik.entrypoints=websecure'
+      - 'traefik.http.routers.traefik.tls.certresolver=letsencrypt'
+      - 'traefik.http.routers.traefik.middlewares=authelia@docker'
+      - 'traefik.http.services.traefik.loadbalancer.server.port=8080'
 
   authelia:
     # Single sign-on authentication service - must always run for user authentication
@@ -62,7 +62,7 @@ services:
     environment:
       - TZ=America/New_York
     ports:
-      - "9091:9091"
+      - '9091:9091'
     volumes:
       - ./authelia/config:/config
       - ./authelia/secrets:/secrets
@@ -74,21 +74,21 @@ services:
       # TRAEFIK CONFIGURATION
       # ==========================================
       # Service metadata
-      - "homelab.category=core"
-      - "homelab.description=Single sign-on authentication"
+      - 'homelab.category=core'
+      - 'homelab.description=Single sign-on authentication'
       # Traefik reverse proxy (comment/uncomment to disable/enable)
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
-      - "traefik.enable=true"
-      - "traefik.http.routers.authelia.rule=Host(`auth.${DOMAIN}`)"
-      - "traefik.http.routers.authelia.entrypoints=websecure"
-      - "traefik.http.routers.authelia.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.authelia.service=authelia"
-      - "traefik.http.services.authelia.loadbalancer.server.port=9091"
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.authelia.rule=Host(`auth.${DOMAIN}`)'
+      - 'traefik.http.routers.authelia.entrypoints=websecure'
+      - 'traefik.http.routers.authelia.tls.certresolver=letsencrypt'
+      - 'traefik.http.routers.authelia.service=authelia'
+      - 'traefik.http.services.authelia.loadbalancer.server.port=9091'
       # Authelia forward auth middleware configuration
-      - "traefik.http.middlewares.authelia.forwardauth.address=http://authelia:9091/api/verify?rd=https://auth.${DOMAIN}/"
-      - "traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=X-Secret"
-      - "traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true"
+      - 'traefik.http.middlewares.authelia.forwardauth.address=http://authelia:9091/api/verify?rd=https://auth.${DOMAIN}/'
+      - 'traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=X-Secret'
+      - 'traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true'
 
   # Sablier - Lazy loading service for Docker containers
   # Controls startup/shutdown of lazy-loaded services, must always run
@@ -118,8 +118,8 @@ services:
       - 10000:10000
     labels:
       # Service metadata
-      - "homelab.category=core"
-      - "homelab.description=Lazy loading service for Docker containers"
+      - 'homelab.category=core'
+      - 'homelab.description=Lazy loading service for Docker containers'
 
 networks:
   traefik-network:

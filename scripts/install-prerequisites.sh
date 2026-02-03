@@ -139,7 +139,7 @@ system_setup() {
             log_info "Docker service is already running"
         fi
     else
-        curl -fsSL https://get.docker.com | sh
+        curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
         usermod -aG docker "$ACTUAL_USER"
         NEEDS_LOGOUT=true
     fi

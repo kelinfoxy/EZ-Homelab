@@ -26,17 +26,17 @@ services:
       # TRAEFIK CONFIGURATION
       # Service metadata
       - "com.centurylinklabs.watchtower.enable=true"
-      - "homelab.category=productivity"
-      - "homelab.description=File-based wiki"
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik-network"
+      - 'homelab.category=productivity"
+      - 'homelab.description=File-based wiki"
+      - 'traefik.enable=true"
+      - 'traefik.docker.network=traefik-network"
       # Router configuration
-      - "traefik.http.routers.dokuwiki.rule=Host(`dokuwiki.${DOMAIN}`)"
-      - "traefik.http.routers.dokuwiki.entrypoints=websecure"
-      - "traefik.http.routers.dokuwiki.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.dokuwiki.middlewares=authelia@docker"
+      - 'traefik.http.routers.dokuwiki.rule=Host(`dokuwiki.${DOMAIN}`)"
+      - 'traefik.http.routers.dokuwiki.entrypoints=websecure"
+      - 'traefik.http.routers.dokuwiki.tls.certresolver=letsencrypt"
+      - 'traefik.http.routers.dokuwiki.middlewares=authelia@docker"
       # Service configuration
-      - "traefik.http.services.dokuwiki.loadbalancer.server.port=8087"
+      - 'traefik.http.services.dokuwiki.loadbalancer.server.port=8087"
       # Sablier configuration
       - "sablier.enable=true"
       - "sablier.group=jasper-dokuwiki"
@@ -77,17 +77,17 @@ services:
       # TRAEFIK CONFIGURATION
       # Service metadata
       - "com.centurylinklabs.watchtower.enable=true"
-      - "homelab.category=productivity"
-      - "homelab.description=Documentation and wiki platform"
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik-network"
+      - 'homelab.category=productivity"
+      - 'homelab.description=Documentation and wiki platform"
+      - 'traefik.enable=true"
+      - 'traefik.docker.network=traefik-network"
       # Router configuration
-      - "traefik.http.routers.bookstack.rule=Host(`bookstack.${DOMAIN}`)"
-      - "traefik.http.routers.bookstack.entrypoints=websecure"
-      - "traefik.http.routers.bookstack.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.bookstack.middlewares=authelia@docker"
+      - 'traefik.http.routers.bookstack.rule=Host(`bookstack.${DOMAIN}`)"
+      - 'traefik.http.routers.bookstack.entrypoints=websecure"
+      - 'traefik.http.routers.bookstack.tls.certresolver=letsencrypt"
+      - 'traefik.http.routers.bookstack.middlewares=authelia@docker"
       # Service configuration
-      - "traefik.http.services.bookstack.loadbalancer.server.port=6875"
+      - 'traefik.http.services.bookstack.loadbalancer.server.port=6875"
       # Sablier configuration
       - "sablier.enable=true"
       - "sablier.group=jasper-bookstack"
@@ -107,8 +107,8 @@ services:
       - MYSQL_USER=bookstack
       - MYSQL_PASSWORD=${BOOKSTACK_DB_PASSWORD}
     labels:
-      - "homelab.category=productivity"
-      - "homelab.description=BookStack database"
+      - 'homelab.category=productivity"
+      - 'homelab.description=BookStack database"
 
   # MediaWiki - Wiki platform
   mediawiki:
@@ -140,17 +140,17 @@ services:
       # TRAEFIK CONFIGURATION
       # Service metadata
       - "com.centurylinklabs.watchtower.enable=true"
-      - "homelab.category=productivity"
-      - "homelab.description=MediaWiki platform"
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik-network"
+      - 'homelab.category=productivity"
+      - 'homelab.description=MediaWiki platform"
+      - 'traefik.enable=true"
+      - 'traefik.docker.network=traefik-network"
       # Router configuration
-      - "traefik.http.routers.mediawiki.rule=Host(`mediawiki.${DOMAIN}`)"
-      - "traefik.http.routers.mediawiki.entrypoints=websecure"
-      - "traefik.http.routers.mediawiki.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.mediawiki.middlewares=authelia@docker"
+      - 'traefik.http.routers.mediawiki.rule=Host(`mediawiki.${DOMAIN}`)"
+      - 'traefik.http.routers.mediawiki.entrypoints=websecure"
+      - 'traefik.http.routers.mediawiki.tls.certresolver=letsencrypt"
+      - 'traefik.http.routers.mediawiki.middlewares=authelia@docker"
       # Service configuration
-      - "traefik.http.services.mediawiki.loadbalancer.server.port=8086"
+      - 'traefik.http.services.mediawiki.loadbalancer.server.port=8086"
       # Sablier configuration
       - "sablier.enable=true"
       - "sablier.group=jasper-mediawiki"
@@ -170,8 +170,8 @@ services:
       - MYSQL_USER=mediawiki
       - MYSQL_PASSWORD=${MEDIAWIKI_DB_PASSWORD}
     labels:
-      - "homelab.category=productivity"
-      - "homelab.description=MediaWiki database"
+      - 'homelab.category=productivity"
+      - 'homelab.description=MediaWiki database"
 
 volumes:
   bookstack-db-data:
