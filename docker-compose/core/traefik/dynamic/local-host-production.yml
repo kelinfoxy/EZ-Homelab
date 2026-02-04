@@ -1,101 +1,101 @@
 http:
   routers:
-# Remote Server Services (${REMOTE_SERVER_HOSTNAME})
-    dockge-${REMOTE_SERVER_HOSTNAME}:
-      rule: "Host(`dockge.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+# Remote Server Services (your-remote-server)
+    dockge-your-remote-server:
+      rule: "Host(`dockge.your-remote-server.kelinreij.duckdns.org`)"
       entryPoints:
         - websecure
-      service: dockge-${REMOTE_SERVER_HOSTNAME}
+      service: dockge-your-remote-server
       tls:
         certResolver: letsencrypt
       middlewares:
         - authelia@docker
 
-    dozzle-${REMOTE_SERVER_HOSTNAME}:
-      rule: "Host(`dozzle.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+    dozzle-your-remote-server:
+      rule: "Host(`dozzle.your-remote-server.kelinreij.duckdns.org`)"
       entryPoints:
         - websecure
-      service: dozzle-${REMOTE_SERVER_HOSTNAME}
+      service: dozzle-your-remote-server
       tls:
         certResolver: letsencrypt
       middlewares:
         - authelia@docker
 
-    glances-${REMOTE_SERVER_HOSTNAME}:
-      rule: "Host(`glances.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+    glances-your-remote-server:
+      rule: "Host(`glances.your-remote-server.kelinreij.duckdns.org`)"
       entryPoints:
         - websecure
-      service: glances-${REMOTE_SERVER_HOSTNAME}
+      service: glances-your-remote-server
       tls:
         certResolver: letsencrypt
       middlewares:
         - authelia@docker
 
-    backrest-${REMOTE_SERVER_HOSTNAME}:
-      rule: "Host(`backrest.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+    backrest-your-remote-server:
+      rule: "Host(`backrest.your-remote-server.kelinreij.duckdns.org`)"
       entryPoints:
         - websecure
-      service: backrest-${REMOTE_SERVER_HOSTNAME}
+      service: backrest-your-remote-server
       tls:
         certResolver: letsencrypt
       middlewares:
         - authelia@docker
 
-    duplicati-${REMOTE_SERVER_HOSTNAME}:
-      rule: "Host(`duplicati.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+    duplicati-your-remote-server:
+      rule: "Host(`duplicati.your-remote-server.kelinreij.duckdns.org`)"
       entryPoints:
         - websecure
-      service: duplicati-${REMOTE_SERVER_HOSTNAME}
+      service: duplicati-your-remote-server
       tls:
         certResolver: letsencrypt
       middlewares:
         - authelia@docker
 
-    homepage-${REMOTE_SERVER_HOSTNAME}:
-      rule: "Host(`homepage.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+    homepage-your-remote-server:
+      rule: "Host(`homepage.your-remote-server.kelinreij.duckdns.org`)"
       entryPoints:
         - websecure
-      service: homepage-${REMOTE_SERVER_HOSTNAME}
+      service: homepage-your-remote-server
       tls:
         certResolver: letsencrypt
       middlewares:
         - authelia@docker
 
-    homarr-${REMOTE_SERVER_HOSTNAME}:
-      rule: "Host(`homarr.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+    homarr-your-remote-server:
+      rule: "Host(`homarr.your-remote-server.kelinreij.duckdns.org`)"
       entryPoints:
         - websecure
-      service: homarr-${REMOTE_SERVER_HOSTNAME}
+      service: homarr-your-remote-server
       tls:
         certResolver: letsencrypt
       middlewares:
         - authelia@docker
 
-    grafana-${REMOTE_SERVER_HOSTNAME}:
-      rule: "Host(`grafana.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+    grafana-your-remote-server:
+      rule: "Host(`grafana.your-remote-server.kelinreij.duckdns.org`)"
       entryPoints:
         - websecure
-      service: grafana-${REMOTE_SERVER_HOSTNAME}
+      service: grafana-your-remote-server
       tls:
         certResolver: letsencrypt
       middlewares:
         - authelia@docker
 
-    prometheus-${REMOTE_SERVER_HOSTNAME}:
-      rule: "Host(`prometheus.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+    prometheus-your-remote-server:
+      rule: "Host(`prometheus.your-remote-server.kelinreij.duckdns.org`)"
       entryPoints:
         - websecure
-      service: prometheus-${REMOTE_SERVER_HOSTNAME}
+      service: prometheus-your-remote-server
       tls:
         certResolver: letsencrypt
       middlewares:
         - authelia@docker
 
-    uptime-kuma-${REMOTE_SERVER_HOSTNAME}:
-      rule: "Host(`status.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+    uptime-kuma-your-remote-server:
+      rule: "Host(`status.your-remote-server.kelinreij.duckdns.org`)"
       entryPoints:
         - websecure
-      service: uptime-kuma-${REMOTE_SERVER_HOSTNAME}
+      service: uptime-kuma-your-remote-server
       tls:
         certResolver: letsencrypt
       middlewares:
@@ -103,286 +103,286 @@ http:
 
 # Service Definitions
   services:
-    backrest-${SERVER_HOSTNAME}:
+    backrest-jasper:
       loadBalancer:
         servers:
-          - url: "http://${SERVER_IP}:9898"
+          - url: "http://192.168.4.4:9898"
         passHostHeader: true
 
-    vaultwarden-${SERVER_HOSTNAME}:
+    vaultwarden-jasper:
       loadBalancer:
         servers:
-          - url: "http://${SERVER_IP}:8091"
+          - url: "http://192.168.4.4:8091"
         passHostHeader: true
 
-    bookstack-${SERVER_HOSTNAME}:
+    bookstack-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:6875"
+          - url: "http://192.168.4.4:6875"
         passHostHeader: true
 
-    calibre-web-${SERVER_HOSTNAME}:
+    calibre-web-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:8083"
+          - url: "http://192.168.4.4:8083"
         passHostHeader: true
 
-    code-${SERVER_HOSTNAME}:
+    code-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:8079"
+          - url: "http://192.168.4.4:8079"
         passHostHeader: true
 
-    dockge-${SERVER_HOSTNAME}:
+    dockge-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:5001"
+          - url: "http://192.168.4.4:5001"
         passHostHeader: true
 
-    dockhand-${SERVER_HOSTNAME}:
+    dockhand-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:3003"
+          - url: "http://192.168.4.4:3003"
         passHostHeader: true
 
-    dokuwiki-${SERVER_HOSTNAME}:
+    dokuwiki-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:8087"
+          - url: "http://192.168.4.4:8087"
         passHostHeader: true
 
-    dozzle-${SERVER_HOSTNAME}:
+    dozzle-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:8085"
+          - url: "http://192.168.4.4:8085"
         passHostHeader: true
 
-    duplicati-${SERVER_HOSTNAME}:
+    duplicati-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:8200"
+          - url: "http://192.168.4.4:8200"
         passHostHeader: true
 
-    ez-assistant-${SERVER_HOSTNAME}:
+    ez-assistant-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:18789"  # Internal IP of ${SERVER_HOSTNAME} server
+          - url: "http://192.168.4.4:18789"  # Internal IP of jasper server
         passHostHeader: true
 
-    formio-${SERVER_HOSTNAME}:
+    formio-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:3002"
+          - url: "http://192.168.4.4:3002"
         passHostHeader: true
 
-    gitea-${SERVER_HOSTNAME}:
+    gitea-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:3010"
+          - url: "http://192.168.4.4:3010"
         passHostHeader: true
 
-    glances-${SERVER_HOSTNAME}:
+    glances-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:61208"
+          - url: "http://192.168.4.4:61208"
         passHostHeader: true
 
-    homarr-${SERVER_HOSTNAME}:
+    homarr-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:7575"
+          - url: "http://192.168.4.4:7575"
         passHostHeader: true
 
-    homepage-${SERVER_HOSTNAME}:
+    homepage-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:3000"
+          - url: "http://192.168.4.4:3000"
         passHostHeader: true
 
-    jellyfin-${SERVER_HOSTNAME}:
+    jellyfin-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:8096"
+          - url: "http://192.168.4.4:8096"
         passHostHeader: true
 
-    jupyter-${SERVER_HOSTNAME}:
+    jupyter-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:8890"
+          - url: "http://192.168.4.4:8890"
         passHostHeader: true
 
-    kopia-${SERVER_HOSTNAME}:
+    kopia-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:51515"
+          - url: "http://192.168.4.4:51515"
         passHostHeader: true
 
-    mealie-${SERVER_HOSTNAME}:
+    mealie-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:9000"
+          - url: "http://192.168.4.4:9000"
         passHostHeader: true
 
-    mediawiki-${SERVER_HOSTNAME}:
+    mediawiki-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:8086"
+          - url: "http://192.168.4.4:8086"
         passHostHeader: true
 
-    motioneye-${SERVER_HOSTNAME}:
+    motioneye-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:8081"
+          - url: "http://192.168.4.4:8081"
         passHostHeader: true
 
-    nextcloud-${SERVER_HOSTNAME}:
+    nextcloud-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:8089"
+          - url: "http://192.168.4.4:8089"
         passHostHeader: true
 
-    openkm-${SERVER_HOSTNAME}:
+    openkm-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:18080"
+          - url: "http://192.168.4.4:18080"
         passHostHeader: true
 
-    openwebui-${SERVER_HOSTNAME}:
+    openwebui-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:3000"
+          - url: "http://192.168.4.4:3000"
         passHostHeader: true
 
-    qbittorrent-${SERVER_HOSTNAME}:
+    qbittorrent-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:8081"
+          - url: "http://192.168.4.4:8081"
         passHostHeader: true
 
-    tdarr-${SERVER_HOSTNAME}:
+    tdarr-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:8265"
+          - url: "http://192.168.4.4:8265"
         passHostHeader: true
 
-    unmanic-${SERVER_HOSTNAME}:
+    unmanic-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:8889"
+          - url: "http://192.168.4.4:8889"
         passHostHeader: true
 
-    wordpress-${SERVER_HOSTNAME}:
+    wordpress-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:8088"
+          - url: "http://192.168.4.4:8088"
         passHostHeader: true
 
     # Arr Services
 
-    jellyseerr-${SERVER_HOSTNAME}:
+    jellyseerr-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:5055"
+          - url: "http://192.168.4.4:5055"
         passHostHeader: true
 
-    prowlarr-${SERVER_HOSTNAME}:
+    prowlarr-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:9696"
+          - url: "http://192.168.4.4:9696"
         passHostHeader: true
 
-    radarr-${SERVER_HOSTNAME}:
+    radarr-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:7878"
+          - url: "http://192.168.4.4:7878"
         passHostHeader: true
 
-    sonarr-${SERVER_HOSTNAME}:
+    sonarr-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:8989"
+          - url: "http://192.168.4.4:8989"
         passHostHeader: true
 
-    lidarr-${SERVER_HOSTNAME}:
+    lidarr-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:8686"
+          - url: "http://192.168.4.4:8686"
         passHostHeader: true
 
-    readarr-${SERVER_HOSTNAME}:
+    readarr-jasper:
       loadbalancer:
         servers:
-          - url: "http://${SERVER_IP}:8787"
+          - url: "http://192.168.4.4:8787"
         passHostHeader: true
 
-    mylar3-${SERVER_HOSTNAME}:
+    mylar3-jasper:
       loadBalancer:
         servers:
-          - url: "http://${SERVER_IP}:8090"
+          - url: "http://192.168.4.4:8090"
         passHostHeader: true
 
 
 
 
-# Remote Server Service Definitions (${REMOTE_SERVER_HOSTNAME})
-    dockge-${REMOTE_SERVER_HOSTNAME}:
+# Remote Server Service Definitions (your-remote-server)
+    dockge-your-remote-server:
       loadbalancer:
         servers:
-          - url: "http://${REMOTE_SERVER_IP}:5001"
+          - url: "http://your.remote.ip.address:5001"
         passHostHeader: true
 
-    dozzle-${REMOTE_SERVER_HOSTNAME}:
+    dozzle-your-remote-server:
       loadbalancer:
         servers:
-          - url: "http://${REMOTE_SERVER_IP}:8085"
+          - url: "http://your.remote.ip.address:8085"
         passHostHeader: true
 
-    glances-${REMOTE_SERVER_HOSTNAME}:
+    glances-your-remote-server:
       loadbalancer:
         servers:
-          - url: "http://${REMOTE_SERVER_IP}:61208"
+          - url: "http://your.remote.ip.address:61208"
         passHostHeader: true
 
-    backrest-${REMOTE_SERVER_HOSTNAME}:
+    backrest-your-remote-server:
       loadbalancer:
         servers:
-          - url: "http://${REMOTE_SERVER_IP}:9898"
+          - url: "http://your.remote.ip.address:9898"
         passHostHeader: true
 
-    duplicati-${REMOTE_SERVER_HOSTNAME}:
+    duplicati-your-remote-server:
       loadbalancer:
         servers:
-          - url: "http://${REMOTE_SERVER_IP}:8200"
+          - url: "http://your.remote.ip.address:8200"
         passHostHeader: true
 
-    homepage-${REMOTE_SERVER_HOSTNAME}:
+    homepage-your-remote-server:
       loadbalancer:
         servers:
-          - url: "http://${REMOTE_SERVER_IP}:3000"
+          - url: "http://your.remote.ip.address:3000"
         passHostHeader: true
 
-    homarr-${REMOTE_SERVER_HOSTNAME}:
+    homarr-your-remote-server:
       loadbalancer:
         servers:
-          - url: "http://${REMOTE_SERVER_IP}:7575"
+          - url: "http://your.remote.ip.address:7575"
         passHostHeader: true
 
-    grafana-${REMOTE_SERVER_HOSTNAME}:
+    grafana-your-remote-server:
       loadbalancer:
         servers:
-          - url: "http://${REMOTE_SERVER_IP}:3000"
+          - url: "http://your.remote.ip.address:3000"
         passHostHeader: true
 
-    prometheus-${REMOTE_SERVER_HOSTNAME}:
+    prometheus-your-remote-server:
       loadbalancer:
         servers:
-          - url: "http://${REMOTE_SERVER_IP}:9090"
+          - url: "http://your.remote.ip.address:9090"
         passHostHeader: true
 
-    uptime-kuma-${REMOTE_SERVER_HOSTNAME}:
+    uptime-kuma-your-remote-server:
       loadbalancer:
         servers:
-          - url: "http://${REMOTE_SERVER_IP}:3001"
+          - url: "http://your.remote.ip.address:3001"
         passHostHeader: true
 
 # Middleware Definitions

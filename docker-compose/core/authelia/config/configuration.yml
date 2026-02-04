@@ -11,12 +11,12 @@ log:
 
 theme: dark
 
-jwt_secret: ${AUTHELIA_JWT_SECRET}
+jwt_secret: 4f263cdfa9929d007551fd5a5a6b552f7e17127cc4bb425b375a8532631d527b6b591a560a784552a33767699391973799e7472b679e7f94fcf4aca2ce5b2efc
 
-default_redirection_url: https://auth.${DOMAIN}
+default_redirection_url: https://auth.kelinreij.duckdns.org
 
 totp:
-  issuer: ${DOMAIN}
+  issuer: kelinreij.duckdns.org
   period: 30
   skew: 1
 
@@ -36,34 +36,34 @@ access_control:
   
   rules:
     # Bypass Authelia for Jellyfin (allow app access)
-    - domain: jellyfin.${DOMAIN}
+    - domain: jellyfin.kelinreij.duckdns.org
       policy: bypass
     
     # Bypass for Plex (allow app access)
-    - domain: plex.${DOMAIN}
+    - domain: plex.kelinreij.duckdns.org
       policy: bypass
     
     # Bypass for Home Assistant (has its own auth)
-    - domain: ha.${DOMAIN}
+    - domain: ha.kelinreij.duckdns.org
       policy: bypass
     
     # Protected: All other services require authentication
-    - domain: "*.${DOMAIN}"
+    - domain: "*.kelinreij.duckdns.org"
       policy: one_factor
     
     # Two-factor for admin services (optional)
     # - domain:
-    #     - "admin.${DOMAIN}"
-    #     - "portainer.${DOMAIN}"
+    #     - "admin.kelinreij.duckdns.org"
+    #     - "portainer.kelinreij.duckdns.org"
     #   policy: two_factor
 
 session:
   name: authelia_session
-  secret: ${AUTHELIA_SESSION_SECRET}
+  secret: 3ba018547a24dfd49ae55f23b5b75377ec93f5957707e2a669b0a49966df745a5b062eee3f7356e0abae21452915bdd30a32f404ec0a2a7a957c93a2fa2a94c8
   expiration: 24h      # Session expires after 24 hours
   inactivity: 24h      # Session expires after 24 hours of inactivity
   remember_me_duration: 1M
-  domain: ${DOMAIN}
+  domain: kelinreij.duckdns.org
 
 regulation:
   max_retries: 3
@@ -71,7 +71,7 @@ regulation:
   ban_time: 5m
 
 storage:
-  encryption_key: ${AUTHELIA_STORAGE_ENCRYPTION_KEY}
+  encryption_key: dd23db430500eb630e469d5cf0f77dd597649bd4d1a90c02ad673286d8eb9aa8f55435655435d40033751003fc764a173944dbc3ad89d57330e185269792a4b7
   local:
     path: /config/db.sqlite3
 

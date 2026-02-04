@@ -6,16 +6,16 @@ set -e
 
 # Source common functions
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_DIR="/home/kelin/EZ-Homelab"  # Fixed repo path since script runs from /opt/stacks/core
+REPO_DIR="$HOME/EZ-Homelab"  
 source "$REPO_DIR/scripts/common.sh"
 
 log_info "Deploying core stack..."
 
 # Load environment
-load_env_file_safely .env
+load_env_file_safely "$REPO_DIR/.env"
 
 # Copy fresh templates
-cp "$REPO_DIR/docker-compose/core/authelia/secrets/users_database.yml" "./authelia/secrets/users_database.yml"
+# cp "$REPO_DIR/docker-compose/core/authelia/secrets/users_database.yml" "./authelia/secrets/users_database.yml"
 
 # Localize labels in compose file (only replaces variables in labels, not environment sections)
 localize_compose_labels docker-compose.yml
@@ -23,7 +23,7 @@ localize_compose_labels docker-compose.yml
 # Localize config files - Process all YAML config files (excluding docker-compose.yml)
 # This performs FULL variable replacement on config files like:
 # - authelia/config/configuration.yml
-# - authelia/secrets/users_database.yml <- HANDLED SPECIALLY to preserve password hashes
+# - authelia/config/users_database.yml <- HANDLED SPECIALLY to preserve password hashes
 # - traefik/dynamic/*.yml
 #
 # Why exclude docker-compose.yml?
@@ -35,10 +35,13 @@ localize_compose_labels docker-compose.yml
 # nested variables like ${AUTHELIA_ADMIN_PASSWORD_HASH} or ${SERVICE_NAME}.${DOMAIN}
 # The localize_users_database_file function handles password hashes specially to avoid corruption
 for config_file in $(find . -name "*.yml" -o -name "*.yaml" | grep -v docker-compose.yml); do
-    if [[ "$config_file" == *"users_database.yml" ]]; then
-        localize_users_database_file "$config_file"
-    else
-        localize_config_file "$config_file"
+    # Only process files that contain variables (have ${ in them)
+    if grep -q '\${' "$config_file"; then
+        if [[ "$config_file" == *"users_database.yml" ]]; then
+            localize_users_database_file "$config_file"
+        else
+            localize_config_file "$config_file"
+        fi
     fi
 done
 

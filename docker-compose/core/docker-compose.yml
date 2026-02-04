@@ -48,7 +48,7 @@ services:
       - 'homelab.category=core'
       - 'homelab.description=Reverse proxy and SSL termination'
       - 'traefik.enable=true'
-      - 'traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN}`)'
+      - 'traefik.http.routers.traefik.rule=Host(`traefik.kelinreij.duckdns.org`)'
       - 'traefik.http.routers.traefik.entrypoints=websecure'
       - 'traefik.http.routers.traefik.tls.certresolver=letsencrypt'
       - 'traefik.http.routers.traefik.middlewares=authelia@docker'
@@ -80,13 +80,13 @@ services:
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
       - 'traefik.enable=true'
-      - 'traefik.http.routers.authelia.rule=Host(`auth.${DOMAIN}`)'
+      - 'traefik.http.routers.authelia.rule=Host(`auth.kelinreij.duckdns.org`)'
       - 'traefik.http.routers.authelia.entrypoints=websecure'
       - 'traefik.http.routers.authelia.tls.certresolver=letsencrypt'
       - 'traefik.http.routers.authelia.service=authelia'
       - 'traefik.http.services.authelia.loadbalancer.server.port=9091'
       # Authelia forward auth middleware configuration
-      - 'traefik.http.middlewares.authelia.forwardauth.address=http://authelia:9091/api/verify?rd=https://auth.${DOMAIN}/'
+      - 'traefik.http.middlewares.authelia.forwardauth.address=http://authelia:9091/api/verify?rd=https://auth.kelinreij.duckdns.org/'
       - 'traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=X-Secret'
       - 'traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true'
 
@@ -127,7 +127,7 @@ networks:
 
 x-dockge:
   urls:
-    - https://auth.${DOMAIN}
+    - https://auth.kelinreij.duckdns.org
     - http://192.168.4.11:9091
-    - https://traefik.${DOMAIN}
+    - https://traefik.kelinreij.duckdns.org
     - http://192.168.4.11:8080

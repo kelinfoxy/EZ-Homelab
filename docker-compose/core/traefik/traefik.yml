@@ -27,7 +27,7 @@ entryPoints:
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: ${ACME_EMAIL}  # Your email for Let's Encrypt notifications
+      email: kelinshomelab@gmail.com  # Your email for Let's Encrypt notifications
       caServer: https://acme-v02.api.letsencrypt.org/directory  # Use staging for testing
       storage: /letsencrypt/acme.json
       # DNS challenge - For wildcard certificates (*.yourdomain.duckdns.org)

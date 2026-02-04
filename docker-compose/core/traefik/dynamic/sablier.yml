@@ -3,16 +3,16 @@ http:
   middlewares:
     authelia:
       forwardauth:
-        address: http://authelia:9091/api/verify?rd=https://auth.${DOMAIN}/
+        address: http://authelia:9091/api/verify?rd=https://auth.kelinreij.duckdns.org/
         authResponseHeaders:
           - X-Secret
         trustForwardHeader: true
 
-    sablier-${SERVER_HOSTNAME}-arr:
+    sablier-jasper-arr:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-arr
+          group: jasper-arr
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
@@ -20,11 +20,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-backrest:
+    sablier-jasper-backrest:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-backrest
+          group: jasper-backrest
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
@@ -32,11 +32,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-vaultwarden:
+    sablier-jasper-vaultwarden:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-vaultwarden
+          group: jasper-vaultwarden
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
@@ -44,11 +44,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-bookstack:
+    sablier-jasper-bookstack:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-bookstack
+          group: jasper-bookstack
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
@@ -56,11 +56,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-calibre-web:
+    sablier-jasper-calibre-web:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-calibre-web
+          group: jasper-calibre-web
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
@@ -68,11 +68,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-code-server:
+    sablier-jasper-code-server:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-code-server
+          group: jasper-code-server
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
@@ -80,11 +80,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-dozzle:
+    sablier-jasper-dozzle:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-dozzle
+          group: jasper-dozzle
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
@@ -92,11 +92,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-dokuwiki:
+    sablier-jasper-dokuwiki:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-dokuwiki
+          group: jasper-dokuwiki
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
@@ -104,11 +104,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-duplicati:
+    sablier-jasper-duplicati:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-duplicati
+          group: jasper-duplicati
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
@@ -116,11 +116,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-assistant:
+    sablier-jasper-assistant:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-assistant
+          group: jasper-assistant
           sessionDuration: 30m
           ignoreUserAgent: curl
           dynamic:
@@ -128,11 +128,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-formio:
+    sablier-jasper-formio:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-formio
+          group: jasper-formio
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
@@ -140,11 +140,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-gitea:
+    sablier-jasper-gitea:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-gitea
+          group: jasper-gitea
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
@@ -152,11 +152,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-glances:
+    sablier-jasper-glances:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-glances
+          group: jasper-glances
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
@@ -164,11 +164,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-homarr:
+    sablier-jasper-homarr:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-homarr
+          group: jasper-homarr
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
@@ -176,11 +176,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-jellyfin:
+    sablier-jasper-jellyfin:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-jellyfin
+          group: jasper-jellyfin
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
@@ -188,11 +188,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-jupyter:
+    sablier-jasper-jupyter:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-jupyter
+          group: jasper-jupyter
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
@@ -200,11 +200,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-komodo:
+    sablier-jasper-komodo:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-komodo
+          group: jasper-komodo
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
@@ -212,11 +212,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-kopia:
+    sablier-jasper-kopia:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-kopia
+          group: jasper-kopia
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
@@ -224,11 +224,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-mealie:
+    sablier-jasper-mealie:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-mealie
+          group: jasper-mealie
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
@@ -236,11 +236,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-mediawiki:
+    sablier-jasper-mediawiki:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-mediawiki
+          group: jasper-mediawiki
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
@@ -248,11 +248,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-nextcloud:
+    sablier-jasper-nextcloud:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-nextcloud
+          group: jasper-nextcloud
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
@@ -260,11 +260,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-openkm:
+    sablier-jasper-openkm:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-openkm
+          group: jasper-openkm
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
@@ -272,11 +272,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-openwebui:
+    sablier-jasper-openwebui:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-openwebui
+          group: jasper-openwebui
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
@@ -284,11 +284,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-pulse:
+    sablier-jasper-pulse:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-pulse
+          group: jasper-pulse
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
@@ -296,11 +296,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-tdarr:
+    sablier-jasper-tdarr:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-tdarr
+          group: jasper-tdarr
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
@@ -308,11 +308,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-unmanic:
+    sablier-jasper-unmanic:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-unmanic
+          group: jasper-unmanic
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
@@ -320,11 +320,11 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    sablier-${SERVER_HOSTNAME}-wordpress:
+    sablier-jasper-wordpress:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${SERVER_HOSTNAME}-wordpress
+          group: jasper-wordpress
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
@@ -332,123 +332,123 @@ http:
             theme: ghost
             show-details-by-default: true
 
-    # Remote Server (${REMOTE_SERVER_HOSTNAME}) Sablier Middlewares
-    sablier-${REMOTE_SERVER_HOSTNAME}-dockge:
+    # Remote Server (your-remote-server) Sablier Middlewares
+    sablier-your-remote-server-dockge:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${REMOTE_SERVER_HOSTNAME}-dockge
+          group: your-remote-server-dockge
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
-            displayName: Dockge (${REMOTE_SERVER_HOSTNAME})
+            displayName: Dockge (your-remote-server)
             theme: ghost
             show-details-by-default: true
 
-    sablier-${REMOTE_SERVER_HOSTNAME}-dozzle:
+    sablier-your-remote-server-dozzle:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${REMOTE_SERVER_HOSTNAME}-dozzle
+          group: your-remote-server-dozzle
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
-            displayName: Dozzle (${REMOTE_SERVER_HOSTNAME})
+            displayName: Dozzle (your-remote-server)
             theme: ghost
             show-details-by-default: true
 
-    sablier-${REMOTE_SERVER_HOSTNAME}-glances:
+    sablier-your-remote-server-glances:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${REMOTE_SERVER_HOSTNAME}-glances
+          group: your-remote-server-glances
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
-            displayName: Glances (${REMOTE_SERVER_HOSTNAME})
+            displayName: Glances (your-remote-server)
             theme: ghost
             show-details-by-default: true
 
-    sablier-${REMOTE_SERVER_HOSTNAME}-backrest:
+    sablier-your-remote-server-backrest:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${REMOTE_SERVER_HOSTNAME}-backrest
+          group: your-remote-server-backrest
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
-            displayName: Backrest (${REMOTE_SERVER_HOSTNAME})
+            displayName: Backrest (your-remote-server)
             theme: ghost
             show-details-by-default: true
 
-    sablier-${REMOTE_SERVER_HOSTNAME}-duplicati:
+    sablier-your-remote-server-duplicati:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${REMOTE_SERVER_HOSTNAME}-duplicati
+          group: your-remote-server-duplicati
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
-            displayName: Duplicati (${REMOTE_SERVER_HOSTNAME})
+            displayName: Duplicati (your-remote-server)
             theme: ghost
             show-details-by-default: true
 
-    sablier-${REMOTE_SERVER_HOSTNAME}-homepage:
+    sablier-your-remote-server-homepage:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${REMOTE_SERVER_HOSTNAME}-homepage
+          group: your-remote-server-homepage
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
-            displayName: Homepage (${REMOTE_SERVER_HOSTNAME})
+            displayName: Homepage (your-remote-server)
             theme: ghost
             show-details-by-default: true
 
-    sablier-${REMOTE_SERVER_HOSTNAME}-homarr:
+    sablier-your-remote-server-homarr:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${REMOTE_SERVER_HOSTNAME}-homarr
+          group: your-remote-server-homarr
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
-            displayName: Homarr (${REMOTE_SERVER_HOSTNAME})
+            displayName: Homarr (your-remote-server)
             theme: ghost
             show-details-by-default: true
 
-    sablier-${REMOTE_SERVER_HOSTNAME}-grafana:
+    sablier-your-remote-server-grafana:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${REMOTE_SERVER_HOSTNAME}-grafana
+          group: your-remote-server-grafana
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
-            displayName: Grafana (${REMOTE_SERVER_HOSTNAME})
+            displayName: Grafana (your-remote-server)
             theme: ghost
             show-details-by-default: true
 
-    sablier-${REMOTE_SERVER_HOSTNAME}-prometheus:
+    sablier-your-remote-server-prometheus:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${REMOTE_SERVER_HOSTNAME}-prometheus
+          group: your-remote-server-prometheus
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
-            displayName: Prometheus (${REMOTE_SERVER_HOSTNAME})
+            displayName: Prometheus (your-remote-server)
             theme: ghost
             show-details-by-default: true
 
-    sablier-${REMOTE_SERVER_HOSTNAME}-uptime-kuma:
+    sablier-your-remote-server-uptime-kuma:
       plugin:
         sablier:
           sablierUrl: http://sablier-service:10000
-          group: ${REMOTE_SERVER_HOSTNAME}-uptime-kuma
+          group: your-remote-server-uptime-kuma
           sessionDuration: 5m
           ignoreUserAgent: curl
           dynamic:
-            displayName: Uptime Kuma (${REMOTE_SERVER_HOSTNAME})
+            displayName: Uptime Kuma (your-remote-server)
             theme: ghost
             show-details-by-default: true

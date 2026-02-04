@@ -2,7 +2,7 @@ http:
   routers:
     # Individual Services
     homeassistant:
-      rule: "Host(`hass.${DOMAIN}`)"
+      rule: "Host(`hass.kelinreij.duckdns.org`)"
       entryPoints:
         - websecure
       service: homeassistant
@@ -15,5 +15,5 @@ http:
     homeassistant:
       loadBalancer:
         servers:
-          - url: "http://${HOMEASSISTANT_IP}:8123"
+          - url: "http://:8123"
         passHostHeader: true

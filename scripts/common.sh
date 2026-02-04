@@ -154,7 +154,7 @@ localize_users_database_file() {
     # Resolve nested variables first
     local resolved_user="${AUTHELIA_ADMIN_USER}"
     local resolved_email=$(eval echo "${AUTHELIA_ADMIN_EMAIL}")
-    local resolved_password="${AUTHELIA_ADMIN_PASSWORD_HASH}"
+    local resolved_password="${AUTHELIA_ADMIN_PASSWORD_HASH}"  # Don't eval - password hash contains $ that would be interpreted
 
     # Escape $ in password hash for sed
     local escaped_password=$(printf '%s\n' "$resolved_password" | sed 's/\$/\\$/g')
