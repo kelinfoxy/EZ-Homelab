@@ -33,22 +33,22 @@ services:
       # TRAEFIK CONFIGURATION
       # ==========================================
       # Service metadata
-      - 'homelab.category=media"
-      - 'homelab.description=Distributed transcoding server"
-      - "com.centurylinklabs.watchtower.enable=true"
+      - 'homelab.category=media'
+      - 'homelab.description=Distributed transcoding server'
+      - 'com.centurylinklabs.watchtower.enable=true'
       # Traefik reverse proxy (comment/uncomment to disable/enable)
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
-      - 'traefik.enable=true"
-      - 'traefik.docker.network=traefik-network"
-      - 'traefik.http.routers.tdarr.rule=Host(`tdarr.${DOMAIN}`)"
-      - 'traefik.http.routers.tdarr.entrypoints=websecure"
-      - 'traefik.http.routers.tdarr.tls.certresolver=letsencrypt"
-      - 'traefik.http.routers.tdarr.middlewares=authelia@docker"
-      - 'traefik.http.services.tdarr.loadbalancer.server.port=8265"
-      - "sablier.enable=true"
-      - "sablier.group=jasper-tdarr"
-      - "sablier.start-on-demand=true"
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik-network'
+      - 'traefik.http.routers.tdarr.rule=Host(`tdarr.${DOMAIN}`)'
+      - 'traefik.http.routers.tdarr.entrypoints=websecure'
+      - 'traefik.http.routers.tdarr.tls.certresolver=letsencrypt'
+      - 'traefik.http.routers.tdarr.middlewares=authelia@docker'
+      - 'traefik.http.services.tdarr.loadbalancer.server.port=8265'
+      - 'sablier.enable=true'
+      - 'sablier.group=jasper-tdarr'
+      - 'sablier.start-on-demand=true'
 
   # Tdarr Node - Transcoding worker
   # No web UI - controlled by server
@@ -75,9 +75,9 @@ services:
     labels:
       - homelab.category=media
       - homelab.description=Tdarr transcoding worker node
-      - "sablier.enable=true"
-      - "sablier.group=jasper-tdarr"
-      - "sablier.start-on-demand=true"
+      - 'sablier.enable=true'
+      - 'sablier.group=jasper-tdarr'
+      - 'sablier.start-on-demand=true'
 
   # Unmanic - Another transcoding option
   unmanic:
@@ -88,7 +88,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "8889:8888"
+      - '8889:8888'
     volumes:
       - ./unmanic/config:/config
       - /mnt/media:/library
@@ -101,22 +101,22 @@ services:
       # TRAEFIK CONFIGURATION
       # ==========================================
       # Service metadata
-      - 'homelab.category=media"
-      - 'homelab.description=Library optimization and transcoding"
-      - "com.centurylinklabs.watchtower.enable=true"
+      - 'homelab.category=media'
+      - 'homelab.description=Library optimization and transcoding'
+      - 'com.centurylinklabs.watchtower.enable=true'
       # Traefik reverse proxy (comment/uncomment to disable/enable)
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
-      - 'traefik.enable=true"
-      - 'traefik.docker.network=traefik-network"
-      - 'traefik.http.routers.unmanic.rule=Host(`unmanic.${DOMAIN}`)"
-      - 'traefik.http.routers.unmanic.entrypoints=websecure"
-      - 'traefik.http.routers.unmanic.tls.certresolver=letsencrypt"
-      - 'traefik.http.routers.unmanic.middlewares=authelia@docker"
-      - 'traefik.http.services.unmanic.loadbalancer.server.port=8889"
-      - "sablier.enable=true"
-      - "sablier.group=jasper-unmanic"
-      - "sablier.start-on-demand=true"
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik-network'
+      - 'traefik.http.routers.unmanic.rule=Host(`unmanic.${DOMAIN}`)'
+      - 'traefik.http.routers.unmanic.entrypoints=websecure'
+      - 'traefik.http.routers.unmanic.tls.certresolver=letsencrypt'
+      - 'traefik.http.routers.unmanic.middlewares=authelia@docker'
+      - 'traefik.http.services.unmanic.loadbalancer.server.port=8889'
+      - 'sablier.enable=true'
+      - 'sablier.group=jasper-unmanic'
+      - 'sablier.start-on-demand=true'
 
 networks:
   homelab-network:

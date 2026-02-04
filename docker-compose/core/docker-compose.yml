@@ -56,7 +56,7 @@ services:
 
   authelia:
     # Single sign-on authentication service - must always run for user authentication
-    image: authelia/authelia:latest
+    image: authelia/authelia:4.37.5
     container_name: authelia
     restart: unless-stopped
     environment:

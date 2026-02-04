@@ -15,7 +15,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "9898:9898"
+      - '9898:9898'
     volumes:
       - ./backrest/data:/data
       - ./backrest/config:/config
@@ -27,7 +27,7 @@ services:
       - BACKREST_CONFIG=/config/config.json
       - TZ=America/New_York
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9898/"]
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:9898/']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -35,22 +35,22 @@ services:
     labels:
       # TRAEFIK CONFIGURATION
       # Service metadata
-      - "com.centurylinklabs.watchtower.enable=true"
-      - 'homelab.category=utilities"
-      - 'homelab.description=Backup management with restic"
-      - 'traefik.enable=true"
-      - 'traefik.docker.network=traefik-network"
+      - 'com.centurylinklabs.watchtower.enable=true'
+      - 'homelab.category=utilities'
+      - 'homelab.description=Backup management with restic'
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik-network'
       # Router configuration
-      - 'traefik.http.routers.backrest.rule=Host(`backrest.${DOMAIN}`)"
-      - 'traefik.http.routers.backrest.entrypoints=websecure"
-      - 'traefik.http.routers.backrest.tls.certresolver=letsencrypt"
-      - 'traefik.http.routers.backrest.middlewares=authelia@docker"
+      - 'traefik.http.routers.backrest.rule=Host(`backrest.${DOMAIN}`)'
+      - 'traefik.http.routers.backrest.entrypoints=websecure'
+      - 'traefik.http.routers.backrest.tls.certresolver=letsencrypt'
+      - 'traefik.http.routers.backrest.middlewares=authelia@docker'
       # Service configuration
-      - 'traefik.http.services.backrest.loadbalancer.server.port=9898"
+      - 'traefik.http.services.backrest.loadbalancer.server.port=9898'
       # Sablier configuration
-      - "sablier.enable=true"
-      - "sablier.group=jasper-backrest"
-      - "sablier.start-on-demand=true"
+      - 'sablier.enable=true'
+      - 'sablier.group=jasper-backrest'
+      - 'sablier.start-on-demand=true'
   
   # Duplicati - Backup solution
   duplicati:
@@ -61,7 +61,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "8200:8200"
+      - '8200:8200'
     volumes:
       - ./duplicati/config:/config
       - /opt/stacks:/source/stacks:ro
@@ -72,7 +72,7 @@ services:
       - PGID=1000
       - TZ=America/New_York
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8200/"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:8200/']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -80,22 +80,22 @@ services:
     labels:
       # TRAEFIK CONFIGURATION
       # Service metadata
-      - "com.centurylinklabs.watchtower.enable=true"
-      - 'homelab.category=utilities"
-      - 'homelab.description=Backup software with encryption"
-      - 'traefik.enable=true"
-      - 'traefik.docker.network=traefik-network"
+      - 'com.centurylinklabs.watchtower.enable=true'
+      - 'homelab.category=utilities'
+      - 'homelab.description=Backup software with encryption'
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik-network'
       # Router configuration
-      - 'traefik.http.routers.duplicati.rule=Host(`duplicati.${DOMAIN}`)"
-      - 'traefik.http.routers.duplicati.entrypoints=websecure"
-      - 'traefik.http.routers.duplicati.tls.certresolver=letsencrypt"
-      - 'traefik.http.routers.duplicati.middlewares=authelia@docker"
+      - 'traefik.http.routers.duplicati.rule=Host(`duplicati.${DOMAIN}`)'
+      - 'traefik.http.routers.duplicati.entrypoints=websecure'
+      - 'traefik.http.routers.duplicati.tls.certresolver=letsencrypt'
+      - 'traefik.http.routers.duplicati.middlewares=authelia@docker'
       # Service configuration
-      - 'traefik.http.services.duplicati.loadbalancer.server.port=8200"
+      - 'traefik.http.services.duplicati.loadbalancer.server.port=8200'
       # Sablier configuration
-      - "sablier.enable=true"
-      - "sablier.group=jasper-duplicati"
-      - "sablier.start-on-demand=true"
+      - 'sablier.enable=true'
+      - 'sablier.group=jasper-duplicati'
+      - 'sablier.start-on-demand=true'
   
   # Form.io - Form builder
   # Uncomment and configure if formio/formio image becomes available
@@ -107,13 +107,13 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "3002:3001"
+      - '3002:3001'
     environment:
       - MONGO=mongodb://formio-mongo:27017/formio
       - JWT_SECRET=${FORMIO_JWT_SECRET}
       - DB_SECRET=${FORMIO_DB_SECRET}
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/"]
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:3001/']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -124,22 +124,22 @@ services:
       # TRAEFIK CONFIGURATION
       # ==========================================
       # Service metadata
-      - "com.centurylinklabs.watchtower.enable=true"
-      - 'homelab.category=utilities"
-      - 'homelab.description=Form builder platform"
+      - 'com.centurylinklabs.watchtower.enable=true'
+      - 'homelab.category=utilities'
+      - 'homelab.description=Form builder platform'
       # Traefik labels
-      - 'traefik.enable=true"
+      - 'traefik.enable=true'
       # Router configuration
-      - 'traefik.http.routers.formio.rule=Host(`forms.${DOMAIN}`)"
-      - 'traefik.http.routers.formio.entrypoints=websecure"
-      - 'traefik.http.routers.formio.tls.certresolver=letsencrypt"
-      - 'traefik.http.routers.formio.middlewares=authelia@docker"
+      - 'traefik.http.routers.formio.rule=Host(`forms.${DOMAIN}`)'
+      - 'traefik.http.routers.formio.entrypoints=websecure'
+      - 'traefik.http.routers.formio.tls.certresolver=letsencrypt'
+      - 'traefik.http.routers.formio.middlewares=authelia@docker'
       # Service configuration
-      - 'traefik.http.services.formio.loadbalancer.server.port=3001"
+      - 'traefik.http.services.formio.loadbalancer.server.port=3001'
       # Sablier configuration
-      - "sablier.enable=true"
-      - "sablier.group=jasper-formio"
-      - "sablier.start-on-demand=true"
+      - 'sablier.enable=true'
+      - 'sablier.group=jasper-formio'
+      - 'sablier.start-on-demand=true'
   
   formio-mongo:
     image: mongo:4.4
@@ -148,8 +148,8 @@ services:
     networks:
       - homelab-network
     labels:
-      - 'homelab.category=utilities"
-      - 'homelab.description=Form.io database"
+      - 'homelab.category=utilities'
+      - 'homelab.description=Form.io database'
 
   # Bitwarden (Vaultwarden) - Password manager
   # Note: SSO disabled for browser extension and mobile app compatibility
@@ -162,7 +162,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "8091:80"
+      - '8091:80'
     volumes:
       - ./vaultwarden/data:/data
     environment:
@@ -178,7 +178,7 @@ services:
       # - SMTP_USERNAME=${SMTP_USERNAME}
       # - SMTP_PASSWORD=${SMTP_PASSWORD}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:80/']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -187,23 +187,23 @@ services:
       # TRAEFIK CONFIGURATION
       # ==========================================
       # Service metadata
-      - 'homelab.category=utilities"
-      - 'homelab.description=Self-hosted password manager (Bitwarden)"
+      - 'homelab.category=utilities'
+      - 'homelab.description=Self-hosted password manager (Bitwarden)'
       # Traefik reverse proxy (comment/uncomment to disable/enable)
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
-      - 'traefik.enable=true"
-      - 'traefik.http.routers.vaultwarden.rule=Host(`vault.${DOMAIN}`)"
-      - 'traefik.http.routers.vaultwarden.entrypoints=websecure"
-      - 'traefik.http.routers.vaultwarden.tls=true"
-      - 'traefik.http.routers.vaultwarden.tls.certresolver=letsencrypt"
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.vaultwarden.rule=Host(`vault.${DOMAIN}`)'
+      - 'traefik.http.routers.vaultwarden.entrypoints=websecure'
+      - 'traefik.http.routers.vaultwarden.tls=true'
+      - 'traefik.http.routers.vaultwarden.tls.certresolver=letsencrypt'
       # SSO disabled for browser extension and mobile app compatibility
-      # - 'traefik.http.routers.vaultwarden.middlewares=authelia@docker"
-      - 'traefik.http.services.vaultwarden.loadbalancer.server.port=80"
+      # - 'traefik.http.routers.vaultwarden.middlewares=authelia@docker'
+      - 'traefik.http.services.vaultwarden.loadbalancer.server.port=80'
       # Sablier configuration
-      - "sablier.enable=true"
-      - "sablier.group=jasper-vaultwarden"
-      - "sablier.start-on-demand=true"
+      - 'sablier.enable=true'
+      - 'sablier.group=jasper-vaultwarden'
+      - 'sablier.start-on-demand=true'
 
   # Authelia Redis - Session storage for Authelia
   # No web UI - backend service

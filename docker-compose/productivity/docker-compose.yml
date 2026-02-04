@@ -25,7 +25,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "8089:80"
+      - '8089:80'
     volumes:
       - ./nextcloud/html:/var/www/html
       - /mnt/nextcloud-data:/var/www/html/data  # Large data on separate drive
@@ -41,7 +41,7 @@ services:
       - OVERWRITEPROTOCOL=https
       - OVERWRITEHOST=nextcloud.${DOMAIN}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/status.php"]
+      test: ['CMD', 'curl', '-f', 'http://localhost/status.php']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -51,22 +51,22 @@ services:
     labels:
       # TRAEFIK CONFIGURATION
       # Service metadata
-      - "com.centurylinklabs.watchtower.enable=true"
-      - 'homelab.category=productivity"
-      - 'homelab.description=File sync and collaboration"
-      - 'traefik.enable=true"
-      - 'traefik.docker.network=traefik-network"
+      - 'com.centurylinklabs.watchtower.enable=true'
+      - 'homelab.category=productivity'
+      - 'homelab.description=File sync and collaboration'
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik-network'
       # Router configuration
-      - 'traefik.http.routers.nextcloud.rule=Host(`nextcloud.${DOMAIN}`)"
-      - 'traefik.http.routers.nextcloud.entrypoints=websecure"
-      - 'traefik.http.routers.nextcloud.tls.certresolver=letsencrypt"
-      - 'traefik.http.routers.nextcloud.middlewares=authelia@docker"
+      - 'traefik.http.routers.nextcloud.rule=Host(`nextcloud.${DOMAIN}`)'
+      - 'traefik.http.routers.nextcloud.entrypoints=websecure'
+      - 'traefik.http.routers.nextcloud.tls.certresolver=letsencrypt'
+      - 'traefik.http.routers.nextcloud.middlewares=authelia@docker'
       # Service configuration
-      - 'traefik.http.services.nextcloud.loadbalancer.server.port=8089"
+      - 'traefik.http.services.nextcloud.loadbalancer.server.port=8089'
       # Sablier configuration
-      - "sablier.enable=true"
-      - "sablier.group=jasper-nextcloud"
-      - "sablier.start-on-demand=true"
+      - 'sablier.enable=true'
+      - 'sablier.group=jasper-nextcloud'
+      - 'sablier.start-on-demand=true'
 
   nextcloud-db:
     image: mariadb:10.11
@@ -83,8 +83,8 @@ services:
       - MYSQL_PASSWORD=${NEXTCLOUD_DB_PASSWORD}
     command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
     labels:
-      - 'homelab.category=productivity"
-      - 'homelab.description=Nextcloud database"
+      - 'homelab.category=productivity'
+      - 'homelab.description=Nextcloud database'
 
   # Mealie - Recipe manager
   mealie:
@@ -95,7 +95,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "9000:9000"
+      - '9000:9000'
     volumes:
       - ./mealie/data:/app/data
     environment:
@@ -107,22 +107,22 @@ services:
     labels:
       # TRAEFIK CONFIGURATION
       # Service metadata
-      - "com.centurylinklabs.watchtower.enable=true"
-      - 'homelab.category=productivity"
-      - 'homelab.description=Recipe manager and meal planner"
-      - 'traefik.enable=true"
-      - 'traefik.docker.network=traefik-network"
+      - 'com.centurylinklabs.watchtower.enable=true'
+      - 'homelab.category=productivity'
+      - 'homelab.description=Recipe manager and meal planner'
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik-network'
       # Router configuration
-      - 'traefik.http.routers.mealie.rule=Host(`mealie.${DOMAIN}`)"
-      - 'traefik.http.routers.mealie.entrypoints=websecure"
-      - 'traefik.http.routers.mealie.tls.certresolver=letsencrypt"
-      - 'traefik.http.routers.mealie.middlewares=authelia@docker"
+      - 'traefik.http.routers.mealie.rule=Host(`mealie.${DOMAIN}`)'
+      - 'traefik.http.routers.mealie.entrypoints=websecure'
+      - 'traefik.http.routers.mealie.tls.certresolver=letsencrypt'
+      - 'traefik.http.routers.mealie.middlewares=authelia@docker'
       # Service configuration
-      - 'traefik.http.services.mealie.loadbalancer.server.port=9000"
+      - 'traefik.http.services.mealie.loadbalancer.server.port=9000'
       # Sablier configuration
-      - "sablier.enable=true"
-      - "sablier.group=jasper-mealie"
-      - "sablier.start-on-demand=true"
+      - 'sablier.enable=true'
+      - 'sablier.group=jasper-mealie'
+      - 'sablier.start-on-demand=true'
 
   # WordPress - Blog/website platform
   wordpress:
@@ -133,7 +133,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "8088:80"
+      - '8088:80'
     volumes:
       - ./wordpress/html:/var/www/html
     environment:
@@ -142,7 +142,7 @@ services:
       - WORDPRESS_DB_PASSWORD=${WORDPRESS_DB_PASSWORD}
       - WORDPRESS_DB_NAME=wordpress
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/"]
+      test: ['CMD', 'curl', '-f', 'http://localhost/']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -152,22 +152,22 @@ services:
     labels:
       # TRAEFIK CONFIGURATION
       # Service metadata
-      - "com.centurylinklabs.watchtower.enable=true"
-      - 'homelab.category=productivity"
-      - 'homelab.description=Blog and website platform"
-      - 'traefik.enable=true"
-      - 'traefik.docker.network=traefik-network"
+      - 'com.centurylinklabs.watchtower.enable=true'
+      - 'homelab.category=productivity'
+      - 'homelab.description=Blog and website platform'
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik-network'
       # Router configuration
-      - 'traefik.http.routers.wordpress.rule=Host(`wordpress.${DOMAIN}`)"
-      - 'traefik.http.routers.wordpress.entrypoints=websecure"
-      - 'traefik.http.routers.wordpress.tls.certresolver=letsencrypt"
-      - 'traefik.http.routers.wordpress.middlewares=authelia@docker"
+      - 'traefik.http.routers.wordpress.rule=Host(`wordpress.${DOMAIN}`)'
+      - 'traefik.http.routers.wordpress.entrypoints=websecure'
+      - 'traefik.http.routers.wordpress.tls.certresolver=letsencrypt'
+      - 'traefik.http.routers.wordpress.middlewares=authelia@docker'
       # Service configuration
-      - 'traefik.http.services.wordpress.loadbalancer.server.port=8088"
+      - 'traefik.http.services.wordpress.loadbalancer.server.port=8088'
       # Sablier configuration
-      - "sablier.enable=true"
-      - "sablier.group=jasper-wordpress"
-      - "sablier.start-on-demand=true"
+      - 'sablier.enable=true'
+      - 'sablier.group=jasper-wordpress'
+      - 'sablier.start-on-demand=true'
 
   wordpress-db:
     image: mariadb:10.11
@@ -183,8 +183,8 @@ services:
       - MYSQL_USER=wordpress
       - MYSQL_PASSWORD=${WORDPRESS_DB_PASSWORD}
     labels:
-      - 'homelab.category=productivity"
-      - 'homelab.description=WordPress database"
+      - 'homelab.category=productivity'
+      - 'homelab.description=WordPress database'
 
   # Gitea - Self-hosted Git service
   gitea:
@@ -204,7 +204,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "3010:3000"
+      - '3010:3000'
     volumes:
       - ./gitea/data:/data
       - /etc/timezone:/etc/timezone:ro
@@ -218,7 +218,7 @@ services:
       - GITEA__database__USER=gitea
       - GITEA__database__PASSWD=${GITEA_DB_PASSWORD}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -228,22 +228,22 @@ services:
     labels:
       # TRAEFIK CONFIGURATION
       # Service metadata
-      - "com.centurylinklabs.watchtower.enable=true"
-      - 'homelab.category=productivity"
-      - 'homelab.description=Self-hosted Git service"
-      - 'traefik.enable=true"
-      - 'traefik.docker.network=traefik-network"
+      - 'com.centurylinklabs.watchtower.enable=true'
+      - 'homelab.category=productivity'
+      - 'homelab.description=Self-hosted Git service'
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik-network'
       # Router configuration
-      - 'traefik.http.routers.gitea.rule=Host(`gitea.${DOMAIN}`)"
-      - 'traefik.http.routers.gitea.entrypoints=websecure"
-      - 'traefik.http.routers.gitea.tls.certresolver=letsencrypt"
-      - 'traefik.http.routers.gitea.middlewares=authelia@docker"
+      - 'traefik.http.routers.gitea.rule=Host(`gitea.${DOMAIN}`)'
+      - 'traefik.http.routers.gitea.entrypoints=websecure'
+      - 'traefik.http.routers.gitea.tls.certresolver=letsencrypt'
+      - 'traefik.http.routers.gitea.middlewares=authelia@docker'
       # Service configuration
-      - 'traefik.http.services.gitea.loadbalancer.server.port=3010"
+      - 'traefik.http.services.gitea.loadbalancer.server.port=3010'
       # Sablier configuration
-      - "sablier.enable=true"
-      - "sablier.group=jasper-gitea"
-      - "sablier.start-on-demand=true"
+      - 'sablier.enable=true'
+      - 'sablier.group=jasper-gitea'
+      - 'sablier.start-on-demand=true'
 
   gitea-db:
     image: postgres:14-alpine
@@ -258,8 +258,8 @@ services:
       - POSTGRES_PASSWORD=${GITEA_DB_PASSWORD}
       - POSTGRES_DB=gitea
     labels:
-      - 'homelab.category=productivity"
-      - 'homelab.description=Gitea database"
+      - 'homelab.category=productivity'
+      - 'homelab.description=Gitea database'
 
 
   # Jupyter Lab - Interactive computing notebooks
@@ -272,7 +272,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "8890:8888"
+      - '8890:8888'
     volumes:
       - ./config/jupyter:/home/jovyan/work
     environment:
@@ -292,22 +292,22 @@ services:
       # TRAEFIK CONFIGURATION
       # ==========================================
       # Service metadata
-      - 'homelab.category=productivity"
-      - 'homelab.description=Jupyter Lab for data science and ML"
+      - 'homelab.category=productivity'
+      - 'homelab.description=Jupyter Lab for data science and ML'
       # Traefik reverse proxy (comment/uncomment to disable/enable)
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
-      - 'traefik.enable=true"
-      - 'traefik.docker.network=traefik-network"
-      - 'traefik.http.routers.jupyter.rule=Host(`jupyter.${DOMAIN}`)"
-      - 'traefik.http.routers.jupyter.entrypoints=websecure"
-      - 'traefik.http.routers.jupyter.tls.certresolver=letsencrypt"
-      - 'traefik.http.routers.jupyter.middlewares=authelia@docker"
-      - 'traefik.http.services.jupyter.loadbalancer.server.port=8890"
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik-network'
+      - 'traefik.http.routers.jupyter.rule=Host(`jupyter.${DOMAIN}`)'
+      - 'traefik.http.routers.jupyter.entrypoints=websecure'
+      - 'traefik.http.routers.jupyter.tls.certresolver=letsencrypt'
+      - 'traefik.http.routers.jupyter.middlewares=authelia@docker'
+      - 'traefik.http.services.jupyter.loadbalancer.server.port=8890'
       # Sablier configuration
-      - "sablier.enable=true"
-      - "sablier.group=jasper-jupyter"
-      - "sablier.start-on-demand=true"
+      - 'sablier.enable=true'
+      - 'sablier.group=jasper-jupyter'
+      - 'sablier.start-on-demand=true'
 
 volumes:
   nextcloud-db-data:

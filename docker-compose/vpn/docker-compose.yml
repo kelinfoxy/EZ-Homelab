@@ -19,12 +19,12 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "8888:8888/tcp"  # HTTP proxy
-      - "8388:8388/tcp"  # Shadowsocks
-      - "8388:8388/udp"  # Shadowsocks
-      - "8081:8080"      # qBittorrent web UI
-      - "6881:6881"      # qBittorrent
-      - "6881:6881/udp"  # qBittorrent
+      - '8888:8888/tcp'  # HTTP proxy
+      - '8388:8388/tcp'  # Shadowsocks
+      - '8388:8388/udp'  # Shadowsocks
+      - '8081:8080'      # qBittorrent web UI
+      - '6881:6881'      # qBittorrent
+      - '6881:6881/udp'  # qBittorrent
     volumes:
       - ./gluetun:/gluetun
     environment:
@@ -37,22 +37,22 @@ services:
     # TRAEFIK CONFIGURATION
     labels:
       # Service metadata
-      - "com.centurylinklabs.watchtower.enable=true"
-      - 'homelab.category=downloaders"
-      - 'homelab.description=VPN client for secure downloads"
-      - 'traefik.enable=true"
-      - 'traefik.docker.network=traefik-network"
+      - 'com.centurylinklabs.watchtower.enable=true'
+      - 'homelab.category=downloaders'
+      - 'homelab.description=VPN client for secure downloads'
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik-network'
       # Router configuration
-      - 'traefik.http.routers.qbittorrent.rule=Host(`qbit.${DOMAIN}`)"
-      - 'traefik.http.routers.qbittorrent.entrypoints=websecure"
-      - 'traefik.http.routers.qbittorrent.tls=true"
-      - 'traefik.http.routers.qbittorrent.middlewares=authelia@docker"
+      - 'traefik.http.routers.qbittorrent.rule=Host(`qbit.${DOMAIN}`)'
+      - 'traefik.http.routers.qbittorrent.entrypoints=websecure'
+      - 'traefik.http.routers.qbittorrent.tls=true'
+      - 'traefik.http.routers.qbittorrent.middlewares=authelia@docker'
       # Service configuration
-      - 'traefik.http.services.qbittorrent.loadbalancer.server.port=8081"
+      - 'traefik.http.services.qbittorrent.loadbalancer.server.port=8081'
       # Sablier configuration
-      - "sablier.enable=true"
-      - "sablier.group=jasper-qbittorrent"
-      - "sablier.sessionDuration=1h"
+      - 'sablier.enable=true'
+      - 'sablier.group=jasper-qbittorrent'
+      - 'sablier.sessionDuration=1h'
 
   # qBittorrent - Torrent client
   qbittorrent:
@@ -68,7 +68,7 @@ services:
           memory: 256M
     container_name: qbittorrent
     restart: unless-stopped
-    network_mode: "service:gluetun"  # Routes through VPN in same compose file
+    network_mode: 'service:gluetun'  # Routes through VPN in same compose file
     volumes:
       - ./qbittorrent/config:/config
       - /mnt/downloads:/downloads

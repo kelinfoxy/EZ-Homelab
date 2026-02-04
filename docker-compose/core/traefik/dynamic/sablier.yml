@@ -1,0 +1,454 @@
+# Session duration set to 5m for testing. Increase to 30m for production.
+http:
+  middlewares:
+    authelia:
+      forwardauth:
+        address: http://authelia:9091/api/verify?rd=https://auth.${DOMAIN}/
+        authResponseHeaders:
+          - X-Secret
+        trustForwardHeader: true
+
+    sablier-${SERVER_HOSTNAME}-arr:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-arr
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Arr Apps
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-backrest:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-backrest
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Backrest
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-vaultwarden:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-vaultwarden
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Vaultwarden
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-bookstack:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-bookstack
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Bookstack
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-calibre-web:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-calibre-web
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Calibre Web
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-code-server:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-code-server
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Code Server
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-dozzle:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-dozzle
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: dozzle
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-dokuwiki:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-dokuwiki
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: DokuWiki
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-duplicati:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-duplicati
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Duplicati
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-assistant:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-assistant
+          sessionDuration: 30m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: EZ-Assistant
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-formio:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-formio
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: FormIO
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-gitea:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-gitea
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Gitea
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-glances:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-glances
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Glances
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-homarr:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-homarr
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Homarr
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-jellyfin:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-jellyfin
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Jellyfin
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-jupyter:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-jupyter
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Jupyter
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-komodo:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-komodo
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Komodo
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-kopia:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-kopia
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Kopia
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-mealie:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-mealie
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Mealie
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-mediawiki:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-mediawiki
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: mediawiki
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-nextcloud:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-nextcloud
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: NextCloud
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-openkm:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-openkm
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: OpenKM
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-openwebui:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-openwebui
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: OpenWebUI
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-pulse:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-pulse
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Pulse
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-tdarr:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-tdarr
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Tdarr
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-unmanic:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-unmanic
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Unmanic
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${SERVER_HOSTNAME}-wordpress:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${SERVER_HOSTNAME}-wordpress
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: wordpress
+            theme: ghost
+            show-details-by-default: true
+
+    # Remote Server (${REMOTE_SERVER_HOSTNAME}) Sablier Middlewares
+    sablier-${REMOTE_SERVER_HOSTNAME}-dockge:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${REMOTE_SERVER_HOSTNAME}-dockge
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Dockge (${REMOTE_SERVER_HOSTNAME})
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${REMOTE_SERVER_HOSTNAME}-dozzle:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${REMOTE_SERVER_HOSTNAME}-dozzle
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Dozzle (${REMOTE_SERVER_HOSTNAME})
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${REMOTE_SERVER_HOSTNAME}-glances:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${REMOTE_SERVER_HOSTNAME}-glances
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Glances (${REMOTE_SERVER_HOSTNAME})
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${REMOTE_SERVER_HOSTNAME}-backrest:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${REMOTE_SERVER_HOSTNAME}-backrest
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Backrest (${REMOTE_SERVER_HOSTNAME})
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${REMOTE_SERVER_HOSTNAME}-duplicati:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${REMOTE_SERVER_HOSTNAME}-duplicati
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Duplicati (${REMOTE_SERVER_HOSTNAME})
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${REMOTE_SERVER_HOSTNAME}-homepage:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${REMOTE_SERVER_HOSTNAME}-homepage
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Homepage (${REMOTE_SERVER_HOSTNAME})
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${REMOTE_SERVER_HOSTNAME}-homarr:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${REMOTE_SERVER_HOSTNAME}-homarr
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Homarr (${REMOTE_SERVER_HOSTNAME})
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${REMOTE_SERVER_HOSTNAME}-grafana:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${REMOTE_SERVER_HOSTNAME}-grafana
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Grafana (${REMOTE_SERVER_HOSTNAME})
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${REMOTE_SERVER_HOSTNAME}-prometheus:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${REMOTE_SERVER_HOSTNAME}-prometheus
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Prometheus (${REMOTE_SERVER_HOSTNAME})
+            theme: ghost
+            show-details-by-default: true
+
+    sablier-${REMOTE_SERVER_HOSTNAME}-uptime-kuma:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: ${REMOTE_SERVER_HOSTNAME}-uptime-kuma
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Uptime Kuma (${REMOTE_SERVER_HOSTNAME})
+            theme: ghost
+            show-details-by-default: true

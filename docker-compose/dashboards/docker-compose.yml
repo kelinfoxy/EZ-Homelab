@@ -24,7 +24,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "3003:3000"
+      - '3003:3000'
     volumes:
       - ./homepage:/app/config
       - /var/run/docker.sock:/var/run/docker.sock # For Docker integration do not mount RO
@@ -38,24 +38,24 @@ services:
       # TRAEFIK CONFIGURATION
       # ==========================================
       # Service metadata
-      - 'homelab.category=dashboard"
-      - 'homelab.description=Application dashboard"
+      - 'homelab.category=dashboard'
+      - 'homelab.description=Application dashboard'
       # Traefik reverse proxy (comment/uncomment to disable/enable)
       # IMPORTANT: On REMOTE SERVERS (where Traefik runs elsewhere):
       #   - COMMENT OUT all traefik.* labels below (don't delete them)
       #   - Routes are configured via external YAML files on the core server
       #   - This prevents conflicts between Docker labels and file provider
-      - 'traefik.enable=true"
-      - 'traefik.docker.network=traefik-network"
-      - 'traefik.http.routers.homepage.rule=Host(`homepage.${DOMAIN}`)"
-      - 'traefik.http.routers.homepage.entrypoints=websecure"
-      - 'traefik.http.routers.homepage.tls=true"
-      - 'traefik.http.routers.homepage.middlewares=authelia@docker"
-      - 'traefik.http.services.homepage.loadbalancer.server.port=3000"
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik-network'
+      - 'traefik.http.routers.homepage.rule=Host(`homepage.${DOMAIN}`)'
+      - 'traefik.http.routers.homepage.entrypoints=websecure'
+      - 'traefik.http.routers.homepage.tls=true'
+      - 'traefik.http.routers.homepage.middlewares=authelia@docker'
+      - 'traefik.http.services.homepage.loadbalancer.server.port=3000'
       # Sablier lazy loading (disabled by default - uncomment to enable)
-      # - "sablier.enable=true"
-      # - "sablier.group=jasper-homarr"
-      # - "sablier.start-on-demand=true"
+      # - 'sablier.enable=true'
+      # - 'sablier.group=jasper-homarr'
+      # - 'sablier.start-on-demand=true'
 
   # Homarr - Modern dashboard
   # Uses Sablier lazy loading - starts on-demand, stops after 5min inactivity
@@ -76,7 +76,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "7575:7575"
+      - '7575:7575'
     volumes:
       - ./homarr/config:/app/config/configs
       - ./homarr/data:/data
@@ -85,7 +85,7 @@ services:
     environment:
       - TZ=America/New_York
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:7575/"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:7575/']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -93,21 +93,21 @@ services:
     labels:
       # TRAEFIK CONFIGURATION
       # Service metadata
-      - "com.centurylinklabs.watchtower.enable=true"
-      - 'homelab.category=dashboard"
-      - 'homelab.description=Modern homelab dashboard"
-      - 'traefik.enable=true"
+      - 'com.centurylinklabs.watchtower.enable=true'
+      - 'homelab.category=dashboard'
+      - 'homelab.description=Modern homelab dashboard'
+      - 'traefik.enable=true'
       # Router configuration
-      - 'traefik.http.routers.homarr.rule=Host(`homarr.${DOMAIN}`)"
-      - 'traefik.http.routers.homarr.entrypoints=websecure"
-      - 'traefik.http.routers.homarr.tls=true"
-      - 'traefik.http.routers.homarr.middlewares=authelia@docker"
+      - 'traefik.http.routers.homarr.rule=Host(`homarr.${DOMAIN}`)'
+      - 'traefik.http.routers.homarr.entrypoints=websecure'
+      - 'traefik.http.routers.homarr.tls=true'
+      - 'traefik.http.routers.homarr.middlewares=authelia@docker'
       # Service configuration
-      - 'traefik.http.services.homarr.loadbalancer.server.port=7575"
+      - 'traefik.http.services.homarr.loadbalancer.server.port=7575'
       # Sablier configuration
-      - "sablier.enable=true"
-      - "sablier.group=jasper-homarr"
-      - "sablier.start-on-demand=true"
+      - 'sablier.enable=true'
+      - 'sablier.group=jasper-homarr'
+      - 'sablier.start-on-demand=true'
 
 # DOCKGE URL CONFIGURATION
 x-dockge:

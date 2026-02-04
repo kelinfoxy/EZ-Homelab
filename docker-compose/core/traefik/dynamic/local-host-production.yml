@@ -1,0 +1,399 @@
+http:
+  routers:
+# Remote Server Services (${REMOTE_SERVER_HOSTNAME})
+    dockge-${REMOTE_SERVER_HOSTNAME}:
+      rule: "Host(`dockge.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: dockge-${REMOTE_SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - authelia@docker
+
+    dozzle-${REMOTE_SERVER_HOSTNAME}:
+      rule: "Host(`dozzle.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: dozzle-${REMOTE_SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - authelia@docker
+
+    glances-${REMOTE_SERVER_HOSTNAME}:
+      rule: "Host(`glances.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: glances-${REMOTE_SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - authelia@docker
+
+    backrest-${REMOTE_SERVER_HOSTNAME}:
+      rule: "Host(`backrest.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: backrest-${REMOTE_SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - authelia@docker
+
+    duplicati-${REMOTE_SERVER_HOSTNAME}:
+      rule: "Host(`duplicati.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: duplicati-${REMOTE_SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - authelia@docker
+
+    homepage-${REMOTE_SERVER_HOSTNAME}:
+      rule: "Host(`homepage.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: homepage-${REMOTE_SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - authelia@docker
+
+    homarr-${REMOTE_SERVER_HOSTNAME}:
+      rule: "Host(`homarr.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: homarr-${REMOTE_SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - authelia@docker
+
+    grafana-${REMOTE_SERVER_HOSTNAME}:
+      rule: "Host(`grafana.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: grafana-${REMOTE_SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - authelia@docker
+
+    prometheus-${REMOTE_SERVER_HOSTNAME}:
+      rule: "Host(`prometheus.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: prometheus-${REMOTE_SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - authelia@docker
+
+    uptime-kuma-${REMOTE_SERVER_HOSTNAME}:
+      rule: "Host(`status.${REMOTE_SERVER_HOSTNAME}.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: uptime-kuma-${REMOTE_SERVER_HOSTNAME}
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - authelia@docker
+
+# Service Definitions
+  services:
+    backrest-${SERVER_HOSTNAME}:
+      loadBalancer:
+        servers:
+          - url: "http://${SERVER_IP}:9898"
+        passHostHeader: true
+
+    vaultwarden-${SERVER_HOSTNAME}:
+      loadBalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8091"
+        passHostHeader: true
+
+    bookstack-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:6875"
+        passHostHeader: true
+
+    calibre-web-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8083"
+        passHostHeader: true
+
+    code-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8079"
+        passHostHeader: true
+
+    dockge-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:5001"
+        passHostHeader: true
+
+    dockhand-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:3003"
+        passHostHeader: true
+
+    dokuwiki-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8087"
+        passHostHeader: true
+
+    dozzle-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8085"
+        passHostHeader: true
+
+    duplicati-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8200"
+        passHostHeader: true
+
+    ez-assistant-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:18789"  # Internal IP of ${SERVER_HOSTNAME} server
+        passHostHeader: true
+
+    formio-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:3002"
+        passHostHeader: true
+
+    gitea-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:3010"
+        passHostHeader: true
+
+    glances-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:61208"
+        passHostHeader: true
+
+    homarr-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:7575"
+        passHostHeader: true
+
+    homepage-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:3000"
+        passHostHeader: true
+
+    jellyfin-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8096"
+        passHostHeader: true
+
+    jupyter-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8890"
+        passHostHeader: true
+
+    kopia-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:51515"
+        passHostHeader: true
+
+    mealie-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:9000"
+        passHostHeader: true
+
+    mediawiki-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8086"
+        passHostHeader: true
+
+    motioneye-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8081"
+        passHostHeader: true
+
+    nextcloud-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8089"
+        passHostHeader: true
+
+    openkm-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:18080"
+        passHostHeader: true
+
+    openwebui-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:3000"
+        passHostHeader: true
+
+    qbittorrent-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8081"
+        passHostHeader: true
+
+    tdarr-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8265"
+        passHostHeader: true
+
+    unmanic-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8889"
+        passHostHeader: true
+
+    wordpress-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8088"
+        passHostHeader: true
+
+    # Arr Services
+
+    jellyseerr-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:5055"
+        passHostHeader: true
+
+    prowlarr-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:9696"
+        passHostHeader: true
+
+    radarr-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:7878"
+        passHostHeader: true
+
+    sonarr-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8989"
+        passHostHeader: true
+
+    lidarr-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8686"
+        passHostHeader: true
+
+    readarr-${SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8787"
+        passHostHeader: true
+
+    mylar3-${SERVER_HOSTNAME}:
+      loadBalancer:
+        servers:
+          - url: "http://${SERVER_IP}:8090"
+        passHostHeader: true
+
+
+
+
+# Remote Server Service Definitions (${REMOTE_SERVER_HOSTNAME})
+    dockge-${REMOTE_SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${REMOTE_SERVER_IP}:5001"
+        passHostHeader: true
+
+    dozzle-${REMOTE_SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${REMOTE_SERVER_IP}:8085"
+        passHostHeader: true
+
+    glances-${REMOTE_SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${REMOTE_SERVER_IP}:61208"
+        passHostHeader: true
+
+    backrest-${REMOTE_SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${REMOTE_SERVER_IP}:9898"
+        passHostHeader: true
+
+    duplicati-${REMOTE_SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${REMOTE_SERVER_IP}:8200"
+        passHostHeader: true
+
+    homepage-${REMOTE_SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${REMOTE_SERVER_IP}:3000"
+        passHostHeader: true
+
+    homarr-${REMOTE_SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${REMOTE_SERVER_IP}:7575"
+        passHostHeader: true
+
+    grafana-${REMOTE_SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${REMOTE_SERVER_IP}:3000"
+        passHostHeader: true
+
+    prometheus-${REMOTE_SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${REMOTE_SERVER_IP}:9090"
+        passHostHeader: true
+
+    uptime-kuma-${REMOTE_SERVER_HOSTNAME}:
+      loadbalancer:
+        servers:
+          - url: "http://${REMOTE_SERVER_IP}:3001"
+        passHostHeader: true
+
+# Middleware Definitions
+  middlewares:
+    ez-assistant-websocket:
+      headers:
+        accessControlAllowHeaders:
+          - "Connection"
+          - "Upgrade"
+        accessControlAllowMethods:
+          - "GET"
+          - "POST"
+          - "OPTIONS"
+        accessControlMaxAge: 86400

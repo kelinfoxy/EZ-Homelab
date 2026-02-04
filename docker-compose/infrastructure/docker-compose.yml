@@ -11,7 +11,7 @@ services:
     # REQUIREMENTS FOR SABLIER INTEGRATION:
     # 1. Docker daemon must be configured to listen on TCP port 2375 (not just unix socket)
     # 2. Firewall must allow access to port 2375 from Sablier service
-    # 3. Docker daemon config should include: "hosts": ["tcp://0.0.0.0:2375", "unix:///var/run/docker.sock"]
+    # 3. Docker daemon config should include: 'hosts': ['tcp://0.0.0.0:2375', 'unix:///var/run/docker.sock']
     # 4. For security, consider restricting access to specific IP ranges or using TLS
     # 5. dockerproxy runs for additional security but doesn't expose port 2375 (handled by Docker daemon)
     image: tecnativa/docker-socket-proxy:latest
@@ -55,8 +55,8 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "53:53/tcp"    # DNS TCP
-      - "53:53/udp"    # DNS UDP
+      - '53:53/tcp'    # DNS TCP
+      - '53:53/udp'    # DNS UDP
     volumes:
       - ./pihole/etc-pihole:/etc/pihole
       - ./pihole/etc-dnsmasq.d:/etc/dnsmasq.d
@@ -73,20 +73,20 @@ services:
       # TRAEFIK CONFIGURATION
       # ==========================================
       # Service metadata
-      - 'homelab.category=infrastructure"
-      - 'homelab.description=Network-wide ad blocking and DNS"
+      - 'homelab.category=infrastructure'
+      - 'homelab.description=Network-wide ad blocking and DNS'
       # Traefik reverse proxy (comment/uncomment to disable/enable)
       # IMPORTANT: On REMOTE SERVERS (where Traefik runs elsewhere):
       #   - COMMENT OUT all traefik.* labels below (don't delete them)
       #   - Routes are configured via external YAML files on the core server
       #   - This prevents conflicts between Docker labels and file provider
-      - 'traefik.enable=true"
-      - 'traefik.docker.network=traefik-network"
-      - 'traefik.http.routers.pihole.rule=Host(`pihole.${DOMAIN}`)"
-      - 'traefik.http.routers.pihole.entrypoints=websecure"
-      - 'traefik.http.routers.pihole.tls.certresolver=letsencrypt"
-      - 'traefik.http.routers.pihole.middlewares=authelia@docker"
-      - 'traefik.http.services.pihole.loadbalancer.server.port=80"
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik-network'
+      - 'traefik.http.routers.pihole.rule=Host(`pihole.${DOMAIN}`)'
+      - 'traefik.http.routers.pihole.entrypoints=websecure'
+      - 'traefik.http.routers.pihole.tls.certresolver=letsencrypt'
+      - 'traefik.http.routers.pihole.middlewares=authelia@docker'
+      - 'traefik.http.services.pihole.loadbalancer.server.port=80'
 
   # Watchtower - Automatic container updates
   watchtower:
@@ -105,8 +105,8 @@ services:
       - WATCHTOWER_NOTIFICATIONS=shoutrrr
       - WATCHTOWER_NOTIFICATION_URL=${WATCHTOWER_NOTIFICATION_URL}
     labels:
-      - 'homelab.category=infrastructure"
-      - 'homelab.description=Automatic Docker container updates"
+      - 'homelab.category=infrastructure'
+      - 'homelab.description=Automatic Docker container updates'
 
   # Dozzle - Real-time Docker log viewer
   # Uses Sablier lazy loading - starts on-demand, stops after 5min inactivity
@@ -127,7 +127,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "8085:8080"
+      - '8085:8080'
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
@@ -135,7 +135,7 @@ services:
       - DOZZLE_TAILSIZE=300
       - DOZZLE_FILTER=status=running
     healthcheck:
-      test: ["CMD", "/dozzle", "healthcheck"]
+      test: ['CMD', '/dozzle', 'healthcheck']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -143,22 +143,22 @@ services:
     labels:
       # TRAEFIK CONFIGURATION
       # Service metadata
-      - "com.centurylinklabs.watchtower.enable=true"
-      - 'homelab.category=infrastructure"
-      - 'homelab.description=Real-time Docker log viewer"
-      - 'traefik.enable=true"
-      - 'traefik.docker.network=traefik-network"
+      - 'com.centurylinklabs.watchtower.enable=true'
+      - 'homelab.category=infrastructure'
+      - 'homelab.description=Real-time Docker log viewer'
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik-network'
       # Router configuration
-      - 'traefik.http.routers.dozzle.rule=Host(`dozzle.jasper.${DOMAIN}`)"
-      - 'traefik.http.routers.dozzle.entrypoints=websecure"
-      - 'traefik.http.routers.dozzle.tls=true"
-      - 'traefik.http.routers.dozzle.middlewares=authelia@docker"
+      - 'traefik.http.routers.dozzle.rule=Host(`dozzle.jasper.${DOMAIN}`)'
+      - 'traefik.http.routers.dozzle.entrypoints=websecure'
+      - 'traefik.http.routers.dozzle.tls=true'
+      - 'traefik.http.routers.dozzle.middlewares=authelia@docker'
       # Service configuration
-      - 'traefik.http.services.dozzle.loadbalancer.server.port=8085"
+      - 'traefik.http.services.dozzle.loadbalancer.server.port=8085'
       # Sablier configuration
-      - "sablier.enable=true"
-      - "sablier.group=jasper-dozzle"
-      - "sablier.start-on-demand=true"
+      - 'sablier.enable=true'
+      - 'sablier.group=jasper-dozzle'
+      - 'sablier.start-on-demand=true'
 
   # Glances - System monitoring
   # Uses Sablier lazy loading - starts on-demand, stops after 30min inactivity
@@ -179,7 +179,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "61208:61208"
+      - '61208:61208'
     pid: host
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -187,7 +187,7 @@ services:
     environment:
       - GLANCES_OPT=-w
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:61208/"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:61208/']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -195,22 +195,22 @@ services:
     labels:
       # TRAEFIK CONFIGURATION
       # Service metadata
-      - "com.centurylinklabs.watchtower.enable=true"
-      - 'homelab.category=infrastructure"
-      - 'homelab.description=System and Docker monitoring"
-      - 'traefik.enable=true"
-      - 'traefik.docker.network=traefik-network"
+      - 'com.centurylinklabs.watchtower.enable=true'
+      - 'homelab.category=infrastructure'
+      - 'homelab.description=System and Docker monitoring'
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik-network'
       # Router configuration
-      - 'traefik.http.routers.glances.rule=Host(`glances.jasper.${DOMAIN}`)"
-      - 'traefik.http.routers.glances.entrypoints=websecure"
-      - 'traefik.http.routers.glances.tls=true"
-      - 'traefik.http.routers.glances.middlewares=authelia@docker"
+      - 'traefik.http.routers.glances.rule=Host(`glances.jasper.${DOMAIN}`)'
+      - 'traefik.http.routers.glances.entrypoints=websecure'
+      - 'traefik.http.routers.glances.tls=true'
+      - 'traefik.http.routers.glances.middlewares=authelia@docker'
       # Service configuration
-      - 'traefik.http.services.glances.loadbalancer.server.port=61208"
+      - 'traefik.http.services.glances.loadbalancer.server.port=61208'
       # Sablier configuration
-      - "sablier.enable=true"
-      - "sablier.group=jasper-glances"
-      - "sablier.start-on-demand=true"
+      - 'sablier.enable=true'
+      - 'sablier.group=jasper-glances'
+      - 'sablier.start-on-demand=true'
 
   # Code Server - VS Code in browser
   # Uses Sablier lazy loading - starts on-demand, stops after 30min inactivity
@@ -231,7 +231,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "8079:8443"
+      - '8079:8443'
     volumes:
       - ./code-server/config:/config
       - /opt/stacks:/opt/stacks  # Access to all stacks
@@ -243,7 +243,7 @@ services:
       - PASSWORD=${CODE_SERVER_PASSWORD}
       - SUDO_PASSWORD=${CODE_SERVER_SUDO_PASSWORD}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8443/"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:8443/']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -251,22 +251,22 @@ services:
     labels:
       # TRAEFIK CONFIGURATION
       # Service metadata
-      - "com.centurylinklabs.watchtower.enable=true"
-      - 'homelab.category=infrastructure"
-      - 'homelab.description=VS Code in browser"
-      - 'traefik.enable=true"
-      - 'traefik.docker.network=traefik-network"
+      - 'com.centurylinklabs.watchtower.enable=true'
+      - 'homelab.category=infrastructure'
+      - 'homelab.description=VS Code in browser'
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik-network'
       # Router configuration
-      - 'traefik.http.routers.code-server.rule=Host(`code.${DOMAIN}`)"
-      - 'traefik.http.routers.code-server.entrypoints=websecure"
-      - 'traefik.http.routers.code-server.tls.certresolver=letsencrypt"
-      - 'traefik.http.routers.code-server.middlewares=authelia@docker"
+      - 'traefik.http.routers.code-server.rule=Host(`code.${DOMAIN}`)'
+      - 'traefik.http.routers.code-server.entrypoints=websecure'
+      - 'traefik.http.routers.code-server.tls.certresolver=letsencrypt'
+      - 'traefik.http.routers.code-server.middlewares=authelia@docker'
       # Service configuration
-      - 'traefik.http.services.code-server.loadbalancer.server.port=8443"
+      - 'traefik.http.services.code-server.loadbalancer.server.port=8443'
       # Sablier configuration
-      - "sablier.enable=true"
-      - "sablier.group=jasper-code-server"
-      - "sablier.start-on-demand=true"
+      - 'sablier.enable=true'
+      - 'sablier.group=jasper-code-server'
+      - 'sablier.start-on-demand=true'
 
 x-dockge:
   urls:

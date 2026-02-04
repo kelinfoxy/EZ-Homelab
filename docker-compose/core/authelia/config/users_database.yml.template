@@ -4,8 +4,8 @@
 
 users:
   ${DEFAULT_USER}:
-    displayname: "Admin User"
-    password: "${AUTHELIA_ADMIN_PASSWORD_HASH}"
+    displayname: "Administrator"
+    password: "${DEFAULT_PASSWORD_HASH}"  # Generate with: docker run authelia/authelia:latest authelia crypto hash generate pbkdf2 --password 'yourpassword'
     email: ${DEFAULT_EMAIL}
     groups:
       - admins

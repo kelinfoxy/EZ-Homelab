@@ -28,7 +28,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "8096:8096"
+      - '8096:8096'
     volumes:
       - ./jellyfin/config:/config
       - ./jellyfin/cache:/cache
@@ -38,7 +38,7 @@ services:
       - PGID=1000
       - TZ=America/New_York
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8096/"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:8096/']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -49,23 +49,23 @@ services:
     # TRAEFIK CONFIGURATION
     labels:
       # Service metadata
-      - "com.centurylinklabs.watchtower.enable=true"
-      - 'homelab.category=media"
-      - 'homelab.description=Open-source media streaming server"
-      - 'traefik.enable=true"
-      - 'traefik.docker.network=traefik-network"
+      - 'com.centurylinklabs.watchtower.enable=true'
+      - 'homelab.category=media'
+      - 'homelab.description=Open-source media streaming server'
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik-network'
       # Router configuration
-      - 'traefik.http.routers.jellyfin.rule=Host(`jellyfin.${DOMAIN}`)"
-      - 'traefik.http.routers.jellyfin.entrypoints=websecure"
-      - 'traefik.http.routers.jellyfin.tls=true"
-      - 'traefik.http.routers.jellyfin.tls.certresolver=letsencrypt"
+      - 'traefik.http.routers.jellyfin.rule=Host(`jellyfin.${DOMAIN}`)'
+      - 'traefik.http.routers.jellyfin.entrypoints=websecure'
+      - 'traefik.http.routers.jellyfin.tls=true'
+      - 'traefik.http.routers.jellyfin.tls.certresolver=letsencrypt'
       # Service configuration
-      - 'traefik.http.services.jellyfin.loadbalancer.server.port=8096"
+      - 'traefik.http.services.jellyfin.loadbalancer.server.port=8096'
       # Sablier configuration
-      - "sablier.enable=true"
-      - "sablier.group=jasper-jellyfin"
-      - "sablier.start-on-demand=true"
-      - "sablier.theme=hacker-terminal"
+      - 'sablier.enable=true'
+      - 'sablier.group=jasper-jellyfin'
+      - 'sablier.start-on-demand=true'
+      - 'sablier.theme=hacker-terminal'
 
   # Calibre-Web - Ebook reader and server
   calibre-web:
@@ -85,7 +85,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "8083:8083"
+      - '8083:8083'
     volumes:
       - ./calibre-web/config:/config
       - /mnt/media/books:/books
@@ -97,22 +97,22 @@ services:
     # TRAEFIK CONFIGURATION
     labels:
       # Service metadata
-      - "com.centurylinklabs.watchtower.enable=true"
-      - 'homelab.category=media"
-      - 'homelab.description=Ebook reader and library management"
-      - 'traefik.enable=true"
-      - 'traefik.docker.network=traefik-network"
+      - 'com.centurylinklabs.watchtower.enable=true'
+      - 'homelab.category=media'
+      - 'homelab.description=Ebook reader and library management'
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik-network'
       # Router configuration
-      - 'traefik.http.routers.calibre.rule=Host(`calibre.${DOMAIN}`)"
-      - 'traefik.http.routers.calibre.entrypoints=websecure"
-      - 'traefik.http.routers.calibre.tls.certresolver=letsencrypt"
-      - 'traefik.http.routers.calibre.middlewares=authelia@docker"
+      - 'traefik.http.routers.calibre.rule=Host(`calibre.${DOMAIN}`)'
+      - 'traefik.http.routers.calibre.entrypoints=websecure'
+      - 'traefik.http.routers.calibre.tls.certresolver=letsencrypt'
+      - 'traefik.http.routers.calibre.middlewares=authelia@docker'
       # Service configuration
-      - 'traefik.http.services.calibre.loadbalancer.server.port=8083"
+      - 'traefik.http.services.calibre.loadbalancer.server.port=8083'
       # Sablier configuration (disabled by default)
-      - "sablier.enable=true"
-      - "sablier.group=jasper-calibre-web"
-      - "sablier.start-on-demand=true"
+      - 'sablier.enable=true'
+      - 'sablier.group=jasper-calibre-web'
+      - 'sablier.start-on-demand=true'
 
 x-dockge:
   urls:

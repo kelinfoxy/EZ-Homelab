@@ -28,8 +28,8 @@ services:
       - TZ=America/New_York
     privileged: true
     labels:
-      - 'homelab.category=iot"
-      - 'homelab.description=Home automation platform"
+      - 'homelab.category=iot'
+      - 'homelab.description=Home automation platform'
       # Note: network_mode: host means Traefik can't proxy this directly
       # Use Traefik's file provider or external host routing
 
@@ -51,7 +51,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "6052:6052"
+      - '6052:6052'
     volumes:
       - ./esphome/config:/config
       - /etc/localtime:/etc/localtime:ro
@@ -63,18 +63,18 @@ services:
       # TRAEFIK CONFIGURATION
       # ==========================================
       # Service metadata
-      - 'homelab.category=iot"
-      - 'homelab.description=ESP8266/ESP32 firmware manager"
+      - 'homelab.category=iot'
+      - 'homelab.description=ESP8266/ESP32 firmware manager'
       # Traefik reverse proxy (comment/uncomment to disable/enable)
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
-      - 'traefik.enable=true"
-      - 'traefik.docker.network=traefik-network"
-      - 'traefik.http.routers.esphome.rule=Host(`esphome.${DOMAIN}`)"
-      - 'traefik.http.routers.esphome.entrypoints=websecure"
-      - 'traefik.http.routers.esphome.tls.certresolver=letsencrypt"
-      - 'traefik.http.routers.esphome.middlewares=authelia@docker"
-      - 'traefik.http.services.esphome.loadbalancer.server.port=6052"
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik-network'
+      - 'traefik.http.routers.esphome.rule=Host(`esphome.${DOMAIN}`)'
+      - 'traefik.http.routers.esphome.entrypoints=websecure'
+      - 'traefik.http.routers.esphome.tls.certresolver=letsencrypt'
+      - 'traefik.http.routers.esphome.middlewares=authelia@docker'
+      - 'traefik.http.services.esphome.loadbalancer.server.port=6052'
 
   # TasmoAdmin - Tasmota device manager
   tasmoadmin:
@@ -85,7 +85,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "8084:80"
+      - '8084:80'
     volumes:
       - /opt/stacks/tasmoadmin/data:/data
     environment:
@@ -94,18 +94,18 @@ services:
       # TRAEFIK CONFIGURATION
       # ==========================================
       # Service metadata
-      - 'homelab.category=iot"
-      - 'homelab.description=Tasmota device management"
+      - 'homelab.category=iot'
+      - 'homelab.description=Tasmota device management'
       # Traefik reverse proxy (comment/uncomment to disable/enable)
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
-      - 'traefik.enable=true"
-      - 'traefik.docker.network=traefik-network"
-      - 'traefik.http.routers.tasmoadmin.rule=Host(`tasmoadmin.${DOMAIN}`)"
-      - 'traefik.http.routers.tasmoadmin.entrypoints=websecure"
-      - 'traefik.http.routers.tasmoadmin.tls.certresolver=letsencrypt"
-      - 'traefik.http.routers.tasmoadmin.middlewares=authelia@docker"
-      - 'traefik.http.services.tasmoadmin.loadbalancer.server.port=80"
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik-network'
+      - 'traefik.http.routers.tasmoadmin.rule=Host(`tasmoadmin.${DOMAIN}`)'
+      - 'traefik.http.routers.tasmoadmin.entrypoints=websecure'
+      - 'traefik.http.routers.tasmoadmin.tls.certresolver=letsencrypt'
+      - 'traefik.http.routers.tasmoadmin.middlewares=authelia@docker'
+      - 'traefik.http.services.tasmoadmin.loadbalancer.server.port=80'
 
   # MotionEye - Video surveillance
   motioneye:
@@ -116,7 +116,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "8765:8765"  
+      - '8765:8765'  
     volumes:
       - ./$(basename $file .yml)/config:/etc/motioneye
       - /mnt/surveillance:/var/lib/motioneye  # Large video files on separate drive
@@ -126,18 +126,18 @@ services:
       # TRAEFIK CONFIGURATION
       # ==========================================
       # Service metadata
-      - 'homelab.category=iot"
-      - 'homelab.description=Video surveillance system"
+      - 'homelab.category=iot'
+      - 'homelab.description=Video surveillance system'
       # Traefik reverse proxy (comment/uncomment to disable/enable)
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
-      - 'traefik.enable=true"
-      - 'traefik.docker.network=traefik-network"
-      - 'traefik.http.routers.motioneye.rule=Host(`motioneye.${DOMAIN}`)"
-      - 'traefik.http.routers.motioneye.entrypoints=websecure"
-      - 'traefik.http.routers.motioneye.tls.certresolver=letsencrypt"
-      - 'traefik.http.routers.motioneye.middlewares=authelia@docker"
-      - 'traefik.http.services.motioneye.loadbalancer.server.port=8765"
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik-network'
+      - 'traefik.http.routers.motioneye.rule=Host(`motioneye.${DOMAIN}`)'
+      - 'traefik.http.routers.motioneye.entrypoints=websecure'
+      - 'traefik.http.routers.motioneye.tls.certresolver=letsencrypt'
+      - 'traefik.http.routers.motioneye.middlewares=authelia@docker'
+      - 'traefik.http.services.motioneye.loadbalancer.server.port=8765'
 
   # Node-RED - Flow-based automation (Home Assistant addon alternative)
   nodered:
@@ -157,7 +157,7 @@ services:
       - homelab-network
       - traefik-network
     ports:
-      - "1880:1880"
+      - '1880:1880'
     volumes:
       - /opt/stacks/nodered/data:/data
     environment:
@@ -166,18 +166,18 @@ services:
       # TRAEFIK CONFIGURATION
       # ==========================================
       # Service metadata
-      - 'homelab.category=iot"
-      - 'homelab.description=Flow-based automation programming"
+      - 'homelab.category=iot'
+      - 'homelab.description=Flow-based automation programming'
       # Traefik reverse proxy (comment/uncomment to disable/enable)
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
-      - 'traefik.enable=true"
-      - 'traefik.docker.network=traefik-network"
-      - 'traefik.http.routers.nodered.rule=Host(`nodered.${DOMAIN}`)"
-      - 'traefik.http.routers.nodered.entrypoints=websecure"
-      - 'traefik.http.routers.nodered.tls.certresolver=letsencrypt"
-      - 'traefik.http.routers.nodered.middlewares=authelia@docker"
-      - 'traefik.http.services.nodered.loadbalancer.server.port=1880"
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik-network'
+      - 'traefik.http.routers.nodered.rule=Host(`nodered.${DOMAIN}`)'
+      - 'traefik.http.routers.nodered.entrypoints=websecure'
+      - 'traefik.http.routers.nodered.tls.certresolver=letsencrypt'
+      - 'traefik.http.routers.nodered.middlewares=authelia@docker'
+      - 'traefik.http.services.nodered.loadbalancer.server.port=1880'
 
   # Mosquitto - MQTT broker (Home Assistant addon alternative)
   # Used by: Home Assistant, ESPHome, Tasmota devices
@@ -188,15 +188,15 @@ services:
     networks:
       - homelab-network
     ports:
-      - "1883:1883"  # MQTT
-      - "9001:9001"  # Websockets
+      - '1883:1883'  # MQTT
+      - '9001:9001'  # Websockets
     volumes:
       - ./mosquitto/config:/mosquitto/config
       - ./mosquitto/data:/mosquitto/data
       - ./mosquitto/log:/mosquitto/log
     labels:
-      - 'homelab.category=iot"
-      - 'homelab.description=MQTT message broker"
+      - 'homelab.category=iot'
+      - 'homelab.description=MQTT message broker'
 
   # Zigbee2MQTT - Zigbee to MQTT bridge (DISABLED - requires USB adapter)
   # NOTE: Requires USB Zigbee adapter (e.g., ConBee II, Sonoff ZBDongle)
@@ -219,14 +219,14 @@ services:
   #   environment:
   #     - TZ=America/New_York
   #   labels:
-  #     - 'homelab.category=iot"
-  #     - 'homelab.description=Zigbee to MQTT bridge"
-  #     - 'traefik.enable=true"
-  #     - 'traefik.http.routers.zigbee2mqtt.rule=Host(`zigbee2mqtt.${DOMAIN}`)"
-  #     - 'traefik.http.routers.zigbee2mqtt.entrypoints=websecure"
-  #     - 'traefik.http.routers.zigbee2mqtt.tls.certresolver=letsencrypt"
-  #     - 'traefik.http.routers.zigbee2mqtt.middlewares=authelia@docker"
-  #     - 'traefik.http.services.zigbee2mqtt.loadbalancer.server.port=8080"
+  #     - 'homelab.category=iot'
+  #     - 'homelab.description=Zigbee to MQTT bridge'
+  #     - 'traefik.enable=true'
+  #     - 'traefik.http.routers.zigbee2mqtt.rule=Host(`zigbee2mqtt.${DOMAIN}`)'
+  #     - 'traefik.http.routers.zigbee2mqtt.entrypoints=websecure'
+  #     - 'traefik.http.routers.zigbee2mqtt.tls.certresolver=letsencrypt'
+  #     - 'traefik.http.routers.zigbee2mqtt.middlewares=authelia@docker'
+  #     - 'traefik.http.services.zigbee2mqtt.loadbalancer.server.port=8080'
 
 networks:
   homelab-network:
