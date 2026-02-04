@@ -371,6 +371,9 @@ setup_multi_server_tls() {
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 REPO_DIR="$( cd "$SCRIPT_DIR/.." && pwd )"
 
+# Source common functions
+source "$REPO_DIR/scripts/common.sh"
+
 # Get actual user
 if [ "$EUID" -eq 0 ]; then
     ACTUAL_USER=${SUDO_USER:-$USER}
@@ -882,6 +885,9 @@ deploy_core() {
     sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/core/docker-compose.yml
     sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/core/.env
 
+    # Escape $ characters in password hashes to prevent Docker Compose variable substitution
+    sed -i '/^AUTHELIA_ADMIN_PASSWORD_HASH=/ s/\$/\\$/g' /opt/stacks/core/.env
+
     # Remove variables that core stack doesn't need
     sed -i '/^QBITTORRENT_/d' /opt/stacks/core/.env
     sed -i '/^GRAFANA_/d' /opt/stacks/core/.env
@@ -956,7 +962,11 @@ deploy_core() {
     # Replace all placeholders in Authelia config files
     debug_log "Replacing placeholders in Authelia config files"
     for config_file in $(find /opt/stacks/core/authelia -name "*.yml" -type f); do
-        localize_yml_file "$config_file" true
+        if [[ "$config_file" == *"users_database.yml" ]]; then
+            localize_users_database_file "$config_file"
+        else
+            localize_yml_file "$config_file" true
+        fi
     done
 
     # Remove invalid session.cookies section from Authelia config (not supported in v4.37.5)
