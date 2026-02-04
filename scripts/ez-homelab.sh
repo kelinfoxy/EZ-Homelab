@@ -730,7 +730,7 @@ save_env_file() {
             if ! docker images | grep -q authelia/authelia; then
                 docker pull authelia/authelia:latest > /dev/null 2>&1
             fi
-            AUTHELIA_ADMIN_PASSWORD_HASH=$(docker run --rm authelia/authelia:latest authelia crypto hash generate argon2 --password "$AUTHELIA_ADMIN_PASSWORD")
+            AUTHELIA_ADMIN_PASSWORD_HASH=$(docker run --rm authelia/authelia:latest authelia crypto hash generate argon2 --password "$AUTHELIA_ADMIN_PASSWORD" 2>&1 | awk '/\$argon2id/ {print $NF}')
             if [ -z "$AUTHELIA_ADMIN_PASSWORD_HASH" ]; then
                 log_error "Failed to generate Authelia password hash. Please check that AUTHELIA_ADMIN_PASSWORD is set."
                 exit 1
@@ -1148,7 +1148,7 @@ perform_deployment() {
         if ! docker images | grep -q authelia/authelia; then
             docker pull authelia/authelia:latest > /dev/null 2>&1
         fi
-        AUTHELIA_ADMIN_PASSWORD_HASH=$(docker run --rm authelia/authelia:latest authelia crypto hash generate argon2 --password "$DEFAULT_PASSWORD" 2>&1 | grep -o '\$argon2id.*')
+        AUTHELIA_ADMIN_PASSWORD_HASH=$(docker run --rm authelia/authelia:latest authelia crypto hash generate argon2 --password "$DEFAULT_PASSWORD" 2>&1 | awk '/\$argon2id/ {print $NF}')
         if [ -z "$AUTHELIA_ADMIN_PASSWORD_HASH" ]; then
             log_error "Failed to generate Authelia password hash."
             exit 1
