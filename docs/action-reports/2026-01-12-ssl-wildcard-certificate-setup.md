@@ -15,14 +15,14 @@ Services were showing "not secure" warnings in browsers despite Traefik being co
 ### 1. **Multiple Simultaneous Certificate Requests**
 - **Issue:** Each service (dockge, dozzle, glances, pihole, authelia) had `traefik.http.routers.*.tls.certresolver=letsencrypt` labels
 - **Impact:** Traefik attempted to request individual certificates for each subdomain simultaneously
-- **Consequence:** DuckDNS DNS challenge can only handle ONE TXT record at `_acme-challenge.kelin-hass.duckdns.org` at a time
+- **Consequence:** DuckDNS DNS challenge can only handle ONE TXT record at `_acme-challenge.yourdomain.duckdns.org` at a time
 - **Result:** All certificate requests failed with "Incorrect TXT record" errors
 
 ### 2. **DNS TXT Record Conflicts**
 - **Issue:** Multiple services tried to create different TXT records at the same DNS location
 - **Example:** 
-  - Service A creates: `_acme-challenge.kelin-hass.duckdns.org` = "token1"
-  - Service B overwrites: `_acme-challenge.kelin-hass.duckdns.org` = "token2"
+  - Service A creates: `_acme-challenge.yourdomain.duckdns.org` = "token1"
+  - Service B overwrites: `_acme-challenge.yourdomain.duckdns.org` = "token2"
   - Let's Encrypt validates Service A but finds "token2" → validation fails
 - **DuckDNS Limitation:** Can only maintain ONE TXT record per domain
 
@@ -98,7 +98,7 @@ pihole:
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: kelinfoxy@gmail.com
+      email: your-email@example.com
       storage: /acme.json
       dnsChallenge:
         provider: duckdns
@@ -129,7 +129,7 @@ chown kelin:kelin /opt/stacks/core/traefik/acme.json
 
 # Wait for DNS to clear
 sleep 60
-dig +short TXT _acme-challenge.kelin-hass.duckdns.org  # Verified empty
+dig +short TXT _acme-challenge.yourdomain.duckdns.org  # Verified empty
 
 # Deploy updated configuration
 cp /home/kelin/AI-Homelab/docker-compose/core.yml /opt/stacks/core/docker-compose.yml
@@ -189,21 +189,21 @@ cd /opt/stacks/infrastructure && docker compose -f infrastructure.yml up -d
 {
   "letsencrypt": {
     "Account": {
-      "Email": "kelinfoxy@gmail.com",
+      "Email": "your-email@example.com",
       "Registration": {
-        "uri": "https://acme-v02.api.letsencrypt.org/acme/acct/2958966636"
+        "uri": "https://acme-v02.api.letsencrypt.org/acme/acct/XXXXXXXXXX"
       }
     },
     "Certificates": [
       {
         "domain": {
-          "main": "dockge.kelin-hass.duckdns.org"
+          "main": "dockge.yourdomain.duckdns.org"
         }
       },
       {
         "domain": {
-          "main": "kelin-hass.duckdns.org",
-          "sans": ["*.kelin-hass.duckdns.org"]
+          "main": "yourdomain.duckdns.org",
+          "sans": ["*.yourdomain.duckdns.org"]
         }
       }
     ]
@@ -212,7 +212,7 @@ cd /opt/stacks/infrastructure && docker compose -f infrastructure.yml up -d
 ```
 
 **Certificate Details:**
-- **Subject:** CN=kelin-hass.duckdns.org
+- **Subject:** CN=yourdomain.duckdns.org
 - **Issuer:** C=US, O=Let's Encrypt, CN=R12
 - **Coverage:** Wildcard certificate covering all subdomains
 - **File Size:** 23KB (up from 0 bytes)
@@ -223,12 +223,12 @@ All services running with valid SSL certificates:
 
 | Service | Status | URL | Certificate |
 |---------|--------|-----|-------------|
-| Traefik | ✅ Up | https://traefik.kelin-hass.duckdns.org | Valid |
-| Authelia | ✅ Up | https://auth.kelin-hass.duckdns.org | Valid |
-| Dockge | ✅ Up | https://dockge.kelin-hass.duckdns.org | Valid |
-| Dozzle | ✅ Up | https://dozzle.kelin-hass.duckdns.org | Valid |
-| Glances | ✅ Up | https://glances.kelin-hass.duckdns.org | Valid |
-| Pi-hole | ✅ Up | https://pihole.kelin-hass.duckdns.org | Valid |
+| Traefik | ✅ Up | https://traefik.yourdomain.duckdns.org | Valid |
+| Authelia | ✅ Up | https://auth.yourdomain.duckdns.org | Valid |
+| Dockge | ✅ Up | https://dockge.yourdomain.duckdns.org | Valid |
+| Dozzle | ✅ Up | https://dozzle.yourdomain.duckdns.org | Valid |
+| Glances | ✅ Up | https://glances.yourdomain.duckdns.org | Valid |
+| Pi-hole | ✅ Up | https://pihole.yourdomain.duckdns.org | Valid |
 
 ## Best Practices & Prevention
 
@@ -259,7 +259,7 @@ other-service:
 ### 2. ✅ DuckDNS DNS Challenge Limitations
 
 **Understand the Constraint:**
-- DuckDNS can only maintain ONE TXT record at `_acme-challenge.kelin-hass.duckdns.org`
+- DuckDNS can only maintain ONE TXT record at `_acme-challenge.yourdomain.duckdns.org`
 - Multiple simultaneous challenges WILL fail
 - Use wildcard certificate to avoid this limitation
 
@@ -292,7 +292,7 @@ docker exec traefik tail -f /var/log/traefik/traefik.log | grep -E "acme|certifi
 docker exec traefik tail -100 /var/log/traefik/traefik.log | grep -E "error|Unable"
 
 # View specific domain
-docker exec traefik tail -200 /var/log/traefik/traefik.log | grep "kelin-hass.duckdns.org"
+docker exec traefik tail -200 /var/log/traefik/traefik.log | grep "yourdomain.duckdns.org"
 ```
 
 ### 4. ✅ Certificate Troubleshooting Workflow
@@ -307,10 +307,10 @@ cat /opt/stacks/core/traefik/acme.json | python3 -m json.tool | grep -A5 "Certif
 python3 -c "import json; d=json.load(open('/opt/stacks/core/traefik/acme.json')); print(f'Certificates: {len(d[\"letsencrypt\"][\"Certificates\"])}')"
 
 # 3. Test certificate being served
-echo | openssl s_client -connect auth.kelin-hass.duckdns.org:443 -servername auth.kelin-hass.duckdns.org 2>/dev/null | openssl x509 -noout -subject -issuer
+echo | openssl s_client -connect auth.yourdomain.duckdns.org:443 -servername auth.yourdomain.duckdns.org 2>/dev/null | openssl x509 -noout -subject -issuer
 
 # 4. Check DNS TXT records
-dig +short TXT _acme-challenge.kelin-hass.duckdns.org
+dig +short TXT _acme-challenge.yourdomain.duckdns.org
 
 # 5. Check Traefik logs
 docker exec traefik tail -50 /var/log/traefik/traefik.log
@@ -457,15 +457,15 @@ docker exec traefik tail -f /var/log/traefik/traefik.log
 ### Verify Certificate Command
 
 ```bash
-echo | openssl s_client -connect ${SUBDOMAIN}.kelin-hass.duckdns.org:443 -servername ${SUBDOMAIN}.kelin-hass.duckdns.org 2>/dev/null | openssl x509 -noout -subject -issuer -dates
+echo | openssl s_client -connect ${SUBDOMAIN}.yourdomain.duckdns.org:443 -servername ${SUBDOMAIN}.yourdomain.duckdns.org 2>/dev/null | openssl x509 -noout -subject -issuer -dates
 ```
 
 ### Check All Service Certificates
 
 ```bash
 for subdomain in auth traefik dockge dozzle glances pihole; do
-  echo "=== $subdomain.kelin-hass.duckdns.org ==="
-  echo | openssl s_client -connect $subdomain.kelin-hass.duckdns.org:443 -servername $subdomain.kelin-hass.duckdns.org 2>/dev/null | openssl x509 -noout -subject -issuer
+  echo "=== $subdomain.yourdomain.duckdns.org ==="
+  echo | openssl s_client -connect $subdomain.yourdomain.duckdns.org:443 -servername $subdomain.yourdomain.duckdns.org 2>/dev/null | openssl x509 -noout -subject -issuer
   echo
 done
 ```

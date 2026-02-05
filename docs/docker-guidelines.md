@@ -1402,7 +1402,7 @@ Homepage configuration must be kept synchronized with deployed services. The AI 
 
 1. **Hard-Coded URLs Required**: Homepage does NOT support variables in href links
    - Template uses `{{HOMEPAGE_VAR_DOMAIN}}` as placeholder
-   - Active config uses `kelin-hass.duckdns.org` hard-coded
+   - Active config uses `yourdomain.duckdns.org` hard-coded
    - AI must replace placeholders when deploying configs
 
 2. **No Container Restart Needed**: Homepage picks up config changes instantly
@@ -1427,7 +1427,7 @@ Homepage configuration must be kept synchronized with deployed services. The AI 
 - Stack Name (compose-file.yml):
     - Service Name:
         icon: service.png
-        href: https://subdomain.kelin-hass.duckdns.org  # Hard-coded!
+        href: https://subdomain.yourdomain.duckdns.org  # Hard-coded!
         description: Service description
 ```
 
@@ -1436,7 +1436,7 @@ Homepage configuration must be kept synchronized with deployed services. The AI 
 ```bash
 # When deploying from template:
 cp /home/kelin/AI-Homelab/config-templates/homepage/*.yaml /opt/stacks/homepage/config/
-sed -i 's/{{HOMEPAGE_VAR_DOMAIN}}/kelin-hass.duckdns.org/g' /opt/stacks/homepage/config/services.yaml
+sed -i 's/{{HOMEPAGE_VAR_DOMAIN}}/yourdomain.duckdns.org/g' /opt/stacks/homepage/config/services.yaml
 
 # No restart needed - configs load instantly
 ```
