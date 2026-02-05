@@ -2,7 +2,7 @@ http:
   routers:
     # Individual Services
     homeassistant:
-      rule: "Host(`hass.kelinreij.duckdns.org`)"
+      rule: "Host(`hass.yourdomain.duckdns.org`)"
       entryPoints:
         - websecure
       service: homeassistant

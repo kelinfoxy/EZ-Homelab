@@ -31,16 +31,16 @@ echo "╔═══════════════════════�
 echo "║                  Deployment Complete!                       ║
 echo "║  SSL Certificates may take a few minutes to be issued.      ║
 echo "║                                                             ║
-echo "║  https://dockge.kelinreij.duckdns.org                       ║
+echo "║  https://dockge.yourdomain.duckdns.org                       ║
 echo "║  http://192.168.4.4:5001                                    ║
 echo "║                                                             ║
-echo "║  https://homepage.kelinreij.duckdns.org                     ║
+echo "║  https://homepage.yourdomain.duckdns.org                     ║
 echo "║  http://192.168.4.4:3003                                    ║
 echo "║                                                             ║
-echo "║  https://authelia.kelinreij.duckdns.org                     ║
+echo "║  https://authelia.yourdomain.duckdns.org                     ║
 echo "║  http://192.168.4.4:9091                                    ║
 echo "║                                                             ║
-echo "║  https://traefik.kelinreij.duckdns.org                      ║
+echo "║  https://traefik.yourdomain.duckdns.org                      ║
 echo "║  http://192.168.4.4:8080                                    ║
 echo "║                                                             ║
 echo "╚═════════════════════════════════════════════════════════════╝
