@@ -874,6 +874,26 @@ deploy_core() {
     sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/core/docker-compose.yml
     sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/core/.env
 
+    # Fix multi-line secrets in .env file (merge split lines)
+    debug_log "Fixing multi-line secrets in .env file"
+    python3 << 'PYFIX'
+import sys
+with open('/opt/stacks/core/.env', 'r') as f:
+    lines = f.readlines()
+new_lines = []
+i = 0
+while i < len(lines):
+    if any(k in lines[i] for k in ['AUTHELIA_JWT_SECRET=', 'AUTHELIA_SESSION_SECRET=', 'AUTHELIA_STORAGE_ENCRYPTION_KEY=']):
+        if i + 1 < len(lines) and '=' not in lines[i+1] and lines[i+1].strip() and not lines[i+1].strip().startswith('#'):
+            new_lines.append(lines[i].rstrip('\n') + lines[i+1].lstrip())
+            i += 2
+            continue
+    new_lines.append(lines[i])
+    i += 1
+with open('/opt/stacks/core/.env', 'w') as f:
+    f.writelines(new_lines)
+PYFIX
+
     # Escape $ characters in password hashes to prevent Docker Compose variable substitution
     sed -i '/^AUTHELIA_ADMIN_PASSWORD_HASH=/ s/\$/\\$/g' /opt/stacks/core/.env
 
