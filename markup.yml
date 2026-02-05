@@ -15,12 +15,12 @@ echo "╚═══════════════════════�
 echo "╔═════════════════════════════════════════════════════════════╗
 echo "║  ✅ SERVER_IP: 192.168.4.4                                 ║
 echo "║  ✅ SERVER_HOSTNAME: jasper                                ║
-echo "║  ✅ DUCKDNS_SUBDOMAINS: kelinreij                          ║
-echo "║  ✅ DUCKDNS_TOKEN: 41ef7faa-fc93-41d2-a32f-340fd2b75b2f    ║
-echo "║  ✅ DOMAIN: kelinreij.duckdns.org                          ║
-echo "║  ✅ DEFAULT_USER: kelin                                    ║
-echo "║  ✅ DEFAULT_PASSWORD: Tiberi0u$                            ║
-echo "║  ✅ DEFAULT_EMAIL: kelinshomelab@gmail.com                 ║
+echo "║  ✅ DUCKDNS_SUBDOMAINS: yourdomain                         ║
+echo "║  ✅ DUCKDNS_TOKEN: your-duckdns-token                      ║
+echo "║  ✅ DOMAIN: yourdomain.duckdns.org                         ║
+echo "║  ✅ DEFAULT_USER: admin                                    ║
+echo "║  ✅ DEFAULT_PASSWORD: changeme                             ║
+echo "║  ✅ DEFAULT_EMAIL: admin@example.com                       ║
 echo "╚═════════════════════════════════════════════════════════════╝
 
 echo "╔═════════════════════════════════════════════════════════════╗
@@ -31,16 +31,16 @@ echo "╔═══════════════════════�
 echo "║                  Deployment Complete!                       ║
 echo "║  SSL Certificates may take a few minutes to be issued.      ║
 echo "║                                                             ║
-echo "║  https://dockge.kelinreij.duckdns.org                       ║
+echo "║  https://dockge.yourdomain.duckdns.org                       ║
 echo "║  http://192.168.4.4:5001                                    ║
 echo "║                                                             ║
-echo "║  https://homepage.kelinreij.duckdns.org                     ║
+echo "║  https://homepage.yourdomain.duckdns.org                     ║
 echo "║  http://192.168.4.4:3003                                    ║
 echo "║                                                             ║
-echo "║  https://authelia.kelinreij.duckdns.org                     ║
+echo "║  https://authelia.yourdomain.duckdns.org                     ║
 echo "║  http://192.168.4.4:9091                                    ║
 echo "║                                                             ║
-echo "║  https://traefik.kelinreij.duckdns.org                      ║
+echo "║  https://traefik.yourdomain.duckdns.org                      ║
 echo "║  http://192.168.4.4:8080                                    ║
 echo "║                                                             ║
 echo "╚═════════════════════════════════════════════════════════════╝

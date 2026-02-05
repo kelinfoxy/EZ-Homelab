@@ -2,7 +2,7 @@ http:
   routers:
 # Remote Server Services (your-remote-server)
     dockge-your-remote-server:
-      rule: "Host(`dockge.your-remote-server.kelinreij.duckdns.org`)"
+      rule: "Host(`dockge.your-remote-server.yourdomain.duckdns.org`)"
       entryPoints:
         - websecure
       service: dockge-your-remote-server
@@ -12,7 +12,7 @@ http:
         - authelia@docker
 
     dozzle-your-remote-server:
-      rule: "Host(`dozzle.your-remote-server.kelinreij.duckdns.org`)"
+      rule: "Host(`dozzle.your-remote-server.yourdomain.duckdns.org`)"
       entryPoints:
         - websecure
       service: dozzle-your-remote-server
@@ -22,7 +22,7 @@ http:
         - authelia@docker
 
     glances-your-remote-server:
-      rule: "Host(`glances.your-remote-server.kelinreij.duckdns.org`)"
+      rule: "Host(`glances.your-remote-server.yourdomain.duckdns.org`)"
       entryPoints:
         - websecure
       service: glances-your-remote-server
@@ -32,7 +32,7 @@ http:
         - authelia@docker
 
     backrest-your-remote-server:
-      rule: "Host(`backrest.your-remote-server.kelinreij.duckdns.org`)"
+      rule: "Host(`backrest.your-remote-server.yourdomain.duckdns.org`)"
       entryPoints:
         - websecure
       service: backrest-your-remote-server
@@ -42,7 +42,7 @@ http:
         - authelia@docker
 
     duplicati-your-remote-server:
-      rule: "Host(`duplicati.your-remote-server.kelinreij.duckdns.org`)"
+      rule: "Host(`duplicati.your-remote-server.yourdomain.duckdns.org`)"
       entryPoints:
         - websecure
       service: duplicati-your-remote-server
@@ -52,7 +52,7 @@ http:
         - authelia@docker
 
     homepage-your-remote-server:
-      rule: "Host(`homepage.your-remote-server.kelinreij.duckdns.org`)"
+      rule: "Host(`homepage.your-remote-server.yourdomain.duckdns.org`)"
       entryPoints:
         - websecure
       service: homepage-your-remote-server
@@ -62,7 +62,7 @@ http:
         - authelia@docker
 
     homarr-your-remote-server:
-      rule: "Host(`homarr.your-remote-server.kelinreij.duckdns.org`)"
+      rule: "Host(`homarr.your-remote-server.yourdomain.duckdns.org`)"
       entryPoints:
         - websecure
       service: homarr-your-remote-server
@@ -72,7 +72,7 @@ http:
         - authelia@docker
 
     grafana-your-remote-server:
-      rule: "Host(`grafana.your-remote-server.kelinreij.duckdns.org`)"
+      rule: "Host(`grafana.your-remote-server.yourdomain.duckdns.org`)"
       entryPoints:
         - websecure
       service: grafana-your-remote-server
@@ -82,7 +82,7 @@ http:
         - authelia@docker
 
     prometheus-your-remote-server:
-      rule: "Host(`prometheus.your-remote-server.kelinreij.duckdns.org`)"
+      rule: "Host(`prometheus.your-remote-server.yourdomain.duckdns.org`)"
       entryPoints:
         - websecure
       service: prometheus-your-remote-server
@@ -92,7 +92,7 @@ http:
         - authelia@docker
 
     uptime-kuma-your-remote-server:
-      rule: "Host(`status.your-remote-server.kelinreij.duckdns.org`)"
+      rule: "Host(`status.your-remote-server.yourdomain.duckdns.org`)"
       entryPoints:
         - websecure
       service: uptime-kuma-your-remote-server

@@ -7,8 +7,8 @@ Wildcard SSL certificate acquisition via DuckDNS DNS-01 challenge consistently f
 
 ### Why Both Domain and Wildcard are Required
 Let's Encrypt requires validation of BOTH domains when using SAN (Subject Alternative Name) certificates:
-- `kelin-hass.duckdns.org` (apex domain)
-- `*.kelin-hass.duckdns.org` (wildcard)
+- `yourdomain.duckdns.org` (apex domain)
+- `*.yourdomain.duckdns.org` (wildcard)
 
 This is a Let's Encrypt policy - you cannot obtain just the wildcard certificate. Both must be validated simultaneously.
 
@@ -23,13 +23,13 @@ ping -c 2 ns1.duckdns.org  # FAIL: 100% packet loss
 ping -c 2 99.79.143.35     # FAIL: 100% packet loss (direct IP)
 
 # DNS queries to authoritative servers - timeout
-dig @99.79.143.35 kelin-hass.duckdns.org  # FAIL: timeout
-dig @35.182.183.211 kelin-hass.duckdns.org  # FAIL: timeout
-dig @3.97.58.28 kelin-hass.duckdns.org  # FAIL: timeout
+dig @99.79.143.35 yourdomain.duckdns.org  # FAIL: timeout
+dig @35.182.183.211 yourdomain.duckdns.org  # FAIL: timeout
+dig @3.97.58.28 yourdomain.duckdns.org  # FAIL: timeout
 
 # Queries to recursive resolvers - SUCCESS
-dig @8.8.8.8 kelin-hass.duckdns.org  # SUCCESS
-dig @1.1.1.1 kelin-hass.duckdns.org  # SUCCESS
+dig @8.8.8.8 yourdomain.duckdns.org  # SUCCESS
+dig @1.1.1.1 yourdomain.duckdns.org  # SUCCESS
 
 # Traceroute analysis
 traceroute 99.79.143.35
@@ -83,15 +83,15 @@ The lego library **must** also query the authoritative nameservers directly to v
 ```
 propagation: time limit exceeded: last error: authoritative nameservers: 
 DNS call error: read udp 172.19.0.2:53666->3.97.58.28:53: i/o timeout 
-[ns=ns6.duckdns.org.:53, question='_acme-challenge.kelin-hass.duckdns.org. IN TXT']
+[ns=ns6.duckdns.org.:53, question='_acme-challenge.yourdomain.duckdns.org. IN TXT']
 ```
 
 **Phase 2: SOA record query failure**
 ```
 propagation: time limit exceeded: last error: could not find zone: 
-[fqdn=_acme-challenge.kelin-hass.duckdns.org.] 
-unexpected response for 'kelin-hass.duckdns.org.' 
-[question='kelin-hass.duckdns.org. IN SOA', code=SERVFAIL]
+[fqdn=_acme-challenge.yourdomain.duckdns.org.] 
+unexpected response for 'yourdomain.duckdns.org.' 
+[question='yourdomain.duckdns.org. IN SOA', code=SERVFAIL]
 ```
 
 ## Working Configuration (Self-Signed Certificates)

@@ -3,7 +3,7 @@ http:
   middlewares:
     authelia:
       forwardauth:
-        address: http://authelia:9091/api/verify?rd=https://auth.kelinreij.duckdns.org/
+        address: http://authelia:9091/api/verify?rd=https://auth.yourdomain.duckdns.org/
         authResponseHeaders:
           - X-Secret
         trustForwardHeader: true
