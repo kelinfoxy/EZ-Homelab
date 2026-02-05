@@ -1,0 +1,24 @@
+services:
+  sablier:
+    image: acouvreur/sablier:1.7.0
+    container_name: sablier
+    restart: unless-stopped
+    networks:
+      - traefik-network
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sablier.rule=Host(`sablier.{{DUCKDNS_DOMAIN}}`)"
+      - "traefik.http.routers.sablier.entrypoints=websecure"
+      - "traefik.http.routers.sablier.tls=true"
+      - "traefik.http.routers.sablier.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.sablier.middlewares=authelia@file"
+      - "traefik.http.services.sablier.loadbalancer.server.port=10000"
+    command:
+      - start
+      - --provider.name=docker
+
+networks:
+  traefik-network:
+    external: true

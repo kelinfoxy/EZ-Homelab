@@ -206,17 +206,6 @@ localize_deployment() {
         done < <(find "$REPO_DIR/docker-compose" -name "*.yml" -o -name "*.yaml" -print0 2>/dev/null)
     fi
 
-    # Process config-templates files
-    if [ -d "$REPO_DIR/config-templates" ]; then
-        while IFS= read -r -d '' file_path; do
-            if [ -f "$file_path" ]; then
-                debug_log "Processing config template file: $file_path"
-                localize_yml_file "$file_path" false
-                processed_files=$((processed_files + 1))
-            fi
-        done < <(find "$REPO_DIR/config-templates" -name "*.yml" -o -name "*.yaml" -print0 2>/dev/null)
-    fi
-
     log_success "Deployment localization completed - processed $processed_files files"
     debug_log "Localization completed for $processed_files files"
 
@@ -909,9 +898,9 @@ deploy_core() {
     # Copy and configure Traefik config
     debug_log "Setting up Traefik configuration"
     if [ -d "/opt/stacks/core/traefik" ]; then
-        mv /opt/stacks/core/traefik /opt/stacks/core/traefik.backup.$(date +%Y%m%d_%H%M%S)
+        mv /opt/stacks/core/traefik /opt/stacks/core/traefik.backup.$(date +%y_%m_%d_%H_%M)
     fi
-    cp -r "$REPO_DIR/config-templates/traefik" /opt/stacks/core/
+    cp -r "$REPO_DIR/docker-compose/core/traefik" /opt/stacks/core/
     sudo chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/core/traefik
 
     # Move Traefik config file to the correct location for Docker mount
@@ -954,9 +943,9 @@ deploy_core() {
     # Copy and configure Authelia config
     debug_log "Setting up Authelia configuration"
     if [ -d "/opt/stacks/core/authelia" ]; then
-        mv /opt/stacks/core/authelia /opt/stacks/core/authelia.backup.$(date +%Y%m%d_%H%M%S)
+        mv /opt/stacks/core/authelia /opt/stacks/core/authelia.backup.$(date +%y_%m_%d_%H_%M)
     fi
-    cp -r "$REPO_DIR/config-templates/authelia" /opt/stacks/core/
+    cp -r "$REPO_DIR/docker-compose/core/authelia" /opt/stacks/core/
     sudo chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/core/authelia
 
     # Replace all placeholders in Authelia config files
@@ -990,6 +979,11 @@ deploy_core() {
     cd /opt/stacks/core
     run_cmd docker compose up -d || true
     log_success "Core infrastructure deployed"
+    echo ""
+    
+    # Deploy Sablier stack for lazy loading
+    log_info "Deploying Sablier stack for lazy loading..."
+    deploy_sablier_stack
     echo ""
 }
 
@@ -1363,6 +1357,154 @@ show_main_menu() {
     echo ""
 }
 
+# =============================================
+# MULTI-SERVER DEPLOYMENT FUNCTIONS
+# =============================================
+
+# Check if Docker is installed and accessible
+check_docker_installed() {
+    debug_log "Checking if Docker is installed"
+    
+    if ! command -v docker &> /dev/null; then
+        log_error "Docker is not installed on this system"
+        log_info "Please run Option 1 (Install Prerequisites) first"
+        return 1
+    fi
+    
+    if ! docker ps &> /dev/null; then
+        log_error "Docker is installed but not accessible"
+        log_info "Current user may not be in docker group. Try logging out and back in."
+        return 1
+    fi
+    
+    debug_log "Docker is installed and accessible"
+    return 0
+}
+
+# Set required variables based on deployment type
+set_required_vars_for_deployment() {
+    local deployment_type="$1"
+    debug_log "Setting required vars for deployment type: $deployment_type"
+    
+    case "$deployment_type" in
+        "core")
+            REQUIRED_VARS=("SERVER_IP" "SERVER_HOSTNAME" "DUCKDNS_SUBDOMAINS" "DUCKDNS_TOKEN" "DOMAIN" "DEFAULT_USER" "DEFAULT_PASSWORD" "DEFAULT_EMAIL")
+            debug_log "Set REQUIRED_VARS for core deployment"
+            ;;
+        "remote")
+            REQUIRED_VARS=("SERVER_IP" "SERVER_HOSTNAME" "DUCKDNS_DOMAIN" "DEFAULT_USER" "REMOTE_SERVER_IP" "REMOTE_SERVER_HOSTNAME" "REMOTE_SERVER_USER")
+            debug_log "Set REQUIRED_VARS for remote deployment"
+            ;;
+        *)
+            log_error "Unknown deployment type: $deployment_type"
+            return 1
+            ;;
+    esac
+}
+
+# Deploy remote server
+deploy_remote_server() {
+    log_info "Deploying Remote Server Configuration"
+    echo ""
+    
+    # Check Docker is installed
+    if ! check_docker_installed; then
+        log_error "Docker must be installed before deploying remote server"
+        return 1
+    fi
+    
+    # Ensure we have core server information
+    if [ -z "$REMOTE_SERVER_IP" ] || [ -z "$REMOTE_SERVER_HOSTNAME" ]; then
+        log_error "Remote server IP and hostname are required"
+        return 1
+    fi
+    
+    log_info "Configuring Docker TLS for remote API access..."
+    setup_docker_tls
+    
+    log_info "Fetching shared CA from core server..."
+    setup_multi_server_tls "$REMOTE_SERVER_IP" "$REMOTE_SERVER_USER"
+    
+    log_info "Deploying Sablier stack for local lazy loading..."
+    deploy_sablier_stack
+    
+    log_info "Registering this remote server with core Traefik..."
+    register_remote_server_with_core
+    
+    log_success "Remote server deployment complete!"
+    echo ""
+    echo "This server is now configured to:"
+    echo "  - Accept Docker API connections via TLS (port 2376)"
+    echo "  - Run Sablier for local container lazy loading"
+    echo "  - Have its containers discovered by core Traefik"
+    echo ""
+    echo "Services deployed on this server will automatically:"
+    echo "  - Be discovered by Traefik on the core server"
+    echo "  - Get SSL certificates via core Traefik"
+    echo "  - Be accessible at: https://servicename.${DUCKDNS_DOMAIN}"
+    echo ""
+}
+
+# Register remote server with core Traefik
+register_remote_server_with_core() {
+    debug_log "Registering remote server with core Traefik via SSH"
+    
+    if [ -z "$REMOTE_SERVER_IP" ] || [ -z "$REMOTE_SERVER_USER" ]; then
+        log_error "REMOTE_SERVER_IP and REMOTE_SERVER_USER are required"
+        return 1
+    fi
+    
+    log_info "Connecting to core server to register this remote server..."
+    
+    # SSH to core server and run registration function
+    ssh -o ConnectTimeout=10 "${REMOTE_SERVER_USER}@${REMOTE_SERVER_IP}" bash <<EOF
+        # Source common.sh to get registration function
+        source ~/EZ-Homelab/scripts/common.sh
+        
+        # Register this remote server
+        add_remote_server_to_traefik "${SERVER_IP}" "${SERVER_HOSTNAME}"
+        
+        # Restart Traefik to reload configs
+        cd /opt/stacks/core
+        docker compose restart traefik
+EOF
+    
+    if [ $? -eq 0 ]; then
+        log_success "Successfully registered with core server"
+    else
+        log_error "Failed to register with core server via SSH"
+        return 1
+    fi
+}
+
+# Deploy Sablier stack
+deploy_sablier_stack() {
+    debug_log "Deploying Sablier stack"
+    
+    local sablier_dir="/opt/stacks/sablier"
+    
+    # Create sablier stack directory
+    if [ ! -d "$sablier_dir" ]; then
+        mkdir -p "$sablier_dir"
+        sudo chown -R "$ACTUAL_USER:$ACTUAL_USER" "$sablier_dir"
+    fi
+    
+    # Copy stack files
+    cp "$REPO_DIR/docker-compose/sablier/docker-compose.yml" "$sablier_dir/"
+    cp "$REPO_DIR/.env" "$sablier_dir/"
+    sudo chown "$ACTUAL_USER:$ACTUAL_USER" "$sablier_dir/docker-compose.yml"
+    sudo chown "$ACTUAL_USER:$ACTUAL_USER" "$sablier_dir/.env"
+    
+    # Localize the docker-compose file
+    localize_compose_labels "$sablier_dir/docker-compose.yml"
+    
+    # Deploy
+    cd "$sablier_dir"
+    run_cmd docker compose up -d
+    
+    log_success "Sablier stack deployed at $sablier_dir"
+}
+
 # Show help function
 show_help() {
     echo "EZ-Homelab Setup & Deployment Script"
@@ -1611,15 +1753,42 @@ main() {
                 ;;
             2)
                 log_info "Selected: Deploy Core Server"
+                
+                # Check Docker first
+                if ! check_docker_installed; then
+                    echo ""
+                    log_error "Docker must be installed before deploying core server"
+                    log_info "Please run Option 1 (Install Prerequisites) first"
+                    echo ""
+                    read -p "Press Enter to return to main menu..."
+                    continue
+                fi
+                
                 DEPLOY_CORE=true
                 DEPLOY_INFRASTRUCTURE=true
                 DEPLOY_DASHBOARDS=true
                 SETUP_STACKS=true
+                DEPLOY_REMOTE_SERVER=false
+                
+                # Set required variables for core deployment
+                set_required_vars_for_deployment "core"
+                
                 break
                 ;;
             3)
                 log_info "Selected: Deploy Additional Server"
                 echo ""
+                
+                # Check Docker first
+                if ! check_docker_installed; then
+                    echo ""
+                    log_error "Docker must be installed before deploying remote server"
+                    log_info "Please run Option 1 (Install Prerequisites) first"
+                    echo ""
+                    read -p "Press Enter to return to main menu..."
+                    continue
+                fi
+                
                 echo "⚠️  IMPORTANT: Deploying an additional server requires an existing core server to be already deployed."
                 echo "The core server provides essential services like Traefik, Authelia, and shared TLS certificates."
                 echo ""
@@ -1632,9 +1801,14 @@ main() {
                     continue
                 fi
                 DEPLOY_CORE=false
-                DEPLOY_INFRASTRUCTURE=true
+                DEPLOY_INFRASTRUCTURE=false
                 DEPLOY_DASHBOARDS=false
-                SETUP_STACKS=true
+                SETUP_STACKS=false
+                DEPLOY_REMOTE_SERVER=true
+                
+                # Set required variables for remote deployment
+                set_required_vars_for_deployment "remote"
+                
                 break
                 ;;
             4)
@@ -1663,6 +1837,22 @@ main() {
 
     # Prepare deployment environment
     prepare_deployment
+
+    # Handle remote server deployment separately
+    if [ "$DEPLOY_REMOTE_SERVER" = true ]; then
+        # Prompt for configuration values
+        validate_and_prompt_variables
+        
+        # Save configuration
+        save_env_file
+        
+        # Deploy remote server
+        deploy_remote_server
+        
+        echo ""
+        log_success "Remote server deployment complete!"
+        exit 0
+    fi
 
     # Prompt for configuration values
     validate_and_prompt_variables

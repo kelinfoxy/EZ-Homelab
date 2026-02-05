@@ -36,6 +36,9 @@ tmp/
 temp/
 *.tmp
 
+# Test/debug files with hardcoded values
+markup.yml
+
 # Docker volumes (if locally mounted)
 volumes/
 

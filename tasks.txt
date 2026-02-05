@@ -1,6 +1,0 @@
-Info
-
-I am developing the EZ-Homelab repository. The focus is on the repo not the test system.
-I'm troubleshooting the ez-homelab.sh setup process. 
-
-Install notes

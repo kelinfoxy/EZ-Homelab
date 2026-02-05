@@ -3,10 +3,10 @@
 ###############################################################
 
 users:
-  kelin:
-    displayname: "kelin"
-    password: "$argon2id$v=19$m=65536,t=3,p=4$e97MzVuvteD5VfHT+Kw9Ew$NnK63ABYKRm5d8nWG7Z8dbRBJfhhHjaf71zQ354KSN4"
-    email: kelinshomelab@gmail.com
+  admin:
+    displayname: "admin"
+    password: "generate-with-openssl-rand-hex-64"
+    email: admin@example.com
     groups:
       - admins
       - users
