@@ -960,13 +960,9 @@ deploy_core() {
 
     # Remove invalid session.cookies section from Authelia config (not supported in v4.37.5)
     debug_log "Removing invalid session.cookies section from Authelia config"
-    sed -i '/^  cookies:/,/^$/d' /opt/stacks/core/authelia/configuration.yml
+    sed -i '/^  cookies:/,/^$/d' /opt/stacks/core/authelia/config/configuration.yml
 
-    # Move config files to the correct location for Docker mount
-    debug_log "Moving Authelia config files to config directory"
-    mkdir -p /opt/stacks/core/authelia/config
-    mv /opt/stacks/core/authelia/configuration.yml /opt/stacks/core/authelia/config/
-    mv /opt/stacks/core/authelia/users_database.yml /opt/stacks/core/authelia/config/
+    # Ensure proper ownership of Authelia files
     sudo chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/core/authelia
 
     # Generate shared CA for multi-server TLS
