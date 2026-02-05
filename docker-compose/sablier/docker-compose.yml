@@ -9,7 +9,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.sablier.rule=Host(`sablier.{{DUCKDNS_DOMAIN}}`)"
+      - "traefik.http.routers.sablier.rule=Host(`sablier.${DOMAIN}`)"
       - "traefik.http.routers.sablier.entrypoints=websecure"
       - "traefik.http.routers.sablier.tls=true"
       - "traefik.http.routers.sablier.tls.certresolver=letsencrypt"

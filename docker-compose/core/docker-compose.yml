@@ -15,8 +15,8 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=America/New_York
-      - SUBDOMAINS=yourdomain
-      - TOKEN=your-duckdns-token
+      - SUBDOMAINS=${DUCKDNS_SUBDOMAINS}
+      - TOKEN=${DUCKDNS_TOKEN}
     volumes:
       - ./duckdns/config:/config
     networks:
@@ -29,7 +29,7 @@ services:
     restart: unless-stopped
     command: ['--configFile=/config/traefik.yml']
     environment:
-      - DUCKDNS_TOKEN=your-duckdns-token
+      - DUCKDNS_TOKEN=${DUCKDNS_TOKEN}
     ports:
       - 80:80
       - 443:443
@@ -48,7 +48,7 @@ services:
       - 'homelab.category=core'
       - 'homelab.description=Reverse proxy and SSL termination'
       - 'traefik.enable=true'
-      - 'traefik.http.routers.traefik.rule=Host(`traefik.yourdomain.duckdns.org`)'
+      - 'traefik.http.routers.traefik.rule=Host(`traefik.${DOMAIN}`)'
       - 'traefik.http.routers.traefik.entrypoints=websecure'
       - 'traefik.http.routers.traefik.tls.certresolver=letsencrypt'
       - 'traefik.http.routers.traefik.middlewares=authelia@docker'
@@ -80,13 +80,13 @@ services:
       # If Traefik is on a remote server: these labels are NOT USED; 
       #   configure external yml files in /traefik/dynamic folder instead.
       - 'traefik.enable=true'
-      - 'traefik.http.routers.authelia.rule=Host(`auth.yourdomain.duckdns.org`)'
+      - 'traefik.http.routers.authelia.rule=Host(`auth.${DOMAIN}`)'
       - 'traefik.http.routers.authelia.entrypoints=websecure'
       - 'traefik.http.routers.authelia.tls.certresolver=letsencrypt'
       - 'traefik.http.routers.authelia.service=authelia'
       - 'traefik.http.services.authelia.loadbalancer.server.port=9091'
       # Authelia forward auth middleware configuration
-      - 'traefik.http.middlewares.authelia.forwardauth.address=http://authelia:9091/api/verify?rd=https://auth.yourdomain.duckdns.org/'
+      - 'traefik.http.middlewares.authelia.forwardauth.address=http://authelia:9091/api/verify?rd=https://auth.${DOMAIN}/'
       - 'traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=X-Secret'
       - 'traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true'
 
@@ -96,7 +96,7 @@ networks:
 
 x-dockge:
   urls:
-    - https://auth.yourdomain.duckdns.org
-    - http://192.168.1.100:9091
-    - https://traefik.yourdomain.duckdns.org
-    - http://192.168.1.100:8080
+    - https://auth.${DOMAIN}
+    - http://${SERVER_IP}:9091
+    - https://traefik.${DOMAIN}
+    - http://${SERVER_IP}:8080

@@ -3,10 +3,10 @@
 ###############################################################
 
 users:
-  admin:
-    displayname: "admin"
-    password: "generate-with-openssl-rand-hex-64"
-    email: admin@example.com
+  ${AUTHELIA_ADMIN_USER}:
+    displayname: "${AUTHELIA_ADMIN_USER}"
+    password: "${AUTHELIA_ADMIN_PASSWORD_HASH}"
+    email: ${AUTHELIA_ADMIN_EMAIL}
     groups:
       - admins
       - users
