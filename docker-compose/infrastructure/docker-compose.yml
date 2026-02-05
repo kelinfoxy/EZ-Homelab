@@ -154,7 +154,7 @@ services:
       - 'traefik.http.routers.dozzle.tls=true'
       - 'traefik.http.routers.dozzle.middlewares=authelia@docker'
       # Service configuration
-      - 'traefik.http.services.dozzle.loadbalancer.server.port=8085'
+      - 'traefik.http.services.dozzle.loadbalancer.server.port=8080'
       # Sablier configuration
       - 'sablier.enable=true'
       - 'sablier.group=jasper-dozzle'
