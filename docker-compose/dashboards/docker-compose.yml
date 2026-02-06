@@ -60,7 +60,7 @@ services:
   # Homarr - Modern dashboard
   # Uses Sablier lazy loading - starts on-demand, stops after 5min inactivity
   homarr:
-    image: ghcr.io/ajnart/homarr:latest
+    image:  ghcr.io/homarr-labs/homarr:latest
     deploy:
       resources:
         limits:
@@ -84,6 +84,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - TZ=America/New_York
+      - SECRET_ENCRYPTION_KEY=8830c9434b05ebfe3e31340c685fea63446ab3f635c4fad68370006949ed30df
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:7575/']
       interval: 30s
