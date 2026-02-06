@@ -15,9 +15,11 @@
 
 **Category:** Core Infrastructure  
 **Docker Image:** [linuxserver/duckdns](https://hub.docker.com/r/linuxserver/duckdns)  
-**Default Stack:** `core.yml`  
+**Default Stack:** `core` (deployed on core server only)  
 **Web UI:** No web interface (runs silently)  
 **Authentication:** Not applicable
+
+**Multi-Server Note:** DuckDNS runs only on the core server where Traefik generates the wildcard SSL certificate. This single certificate is used for all services across all servers in your homelab.
 
 ## What is DuckDNS?
 

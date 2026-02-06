@@ -4,6 +4,21 @@
 
 This document provides comprehensive guidelines for managing Docker services in your AI-powered homelab using Dockge, Traefik, and Authelia. These guidelines ensure consistency, maintainability, and reliability across your entire infrastructure.
 
+## Multi-Server Architecture Support
+
+EZ-Homelab supports two deployment models:
+
+1. **Single Server**: All services on one server with Traefik and Sablier managing local containers
+2. **Multi-Server**: Core server handles external traffic; remote servers run their own Traefik/Sablier instances
+
+### Multi-Server Architecture Overview
+
+- **Core Server**: DuckDNS, Traefik (multi-provider), Authelia, ports 80/443 forwarded
+- **Remote Servers**: Traefik (local discovery only), Sablier (local containers only)
+- **Routing**: Core Traefik uses external YAML files to route traffic to remote servers
+- **Security**: Each server independently manages SSO and lazy loading for its services
+- **No Docker API**: Servers communicate via HTTP/HTTPS, not Docker API TLS
+
 ## Table of Contents
 
 1. [Philosophy](#philosophy)
@@ -99,6 +114,12 @@ volumes:
 AI will suggest `/mnt/` when data may exceed 50GB or grow continuously.
 
 ## Traefik and Authelia Integration
+
+### Routing Decision Tree
+
+**Is Traefik running on the SAME server as your service?**
+- **YES**: Use Docker labels in the service's compose file (see below)
+- **NO**: Comment out labels; add route to Traefik's external YAML file on the core server
 
 ### Every Local (on the same server) Service Needs Traefik Labels
 
@@ -564,9 +585,13 @@ networks:
     external: true
 ```
 
-If Traefik & Sablier are on a remote server:
+### Multi-Server Configuration
+
+If Traefik is on a DIFFERENT server (e.g., service on remote server, Traefik on core):
   * Comment out the traefik labels since they won't be used, don't delete them.
-  * Notify user to add the service and middleware to the traefic external host yml file, and the sablier.yml file.
+  * Keep Sablier labels (each server has its own Sablier for local containers)
+  * Add route to Traefik's external YAML file on the core server
+  * Authelia SSO is handled by core server (no need for Authelia on remote servers)
 
 **Example: Comment out Traefik labels in docker-compose.yml:**
 ```yaml

@@ -1,5 +1,28 @@
 # Multi-Server Traefik and Sablier Implementation Plan
 
+> **⚠️ IMPLEMENTATION STATUS: COMPLETED (with modified approach)**
+> 
+> **Date**: December 2024  
+> **Status**: The multi-server architecture has been successfully implemented, but with a **simplified approach** that differs from this original plan.
+>
+> **What Changed:**
+> - ❌ **Traefik Multi-Docker Provider**: NOT implemented (complexity, Docker API security concerns)
+> - ✅ **Per-Server Traefik**: Each server runs its own Traefik for LOCAL discovery only
+> - ✅ **Per-Server Sablier**: Each server runs its own Sablier for LOCAL lazy loading
+> - ✅ **Core Routing**: Core Traefik uses file provider (YAML) to route to remote services
+> - ✅ **No Docker API TLS**: Servers communicate via HTTP/HTTPS, not Docker API
+>
+> **Current Documentation:**
+> - **Architecture**: See [Ondemand-Remote-Services.md](Ondemand-Remote-Services.md) for the implemented approach
+> - **Service Creation**: See [docker-guidelines.md](docker-guidelines.md) for multi-server patterns
+> - **How It Works**: See [how-it-works.md](how-it-works.md) for architecture overview
+>
+> **This Document**: Preserved for historical reference and future consideration. The original plan's centralized Traefik approach may be revisited in the future if label-based remote discovery becomes a priority.
+
+---
+
+# Original Implementation Plan (Historical Reference)
+
 ## Executive Summary
 
 This document outlines the implementation plan for enabling label-based automatic routing and lazy loading across multiple servers in the EZ-Homelab infrastructure. The goals are to:

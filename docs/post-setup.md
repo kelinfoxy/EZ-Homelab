@@ -4,6 +4,8 @@ Congratulations! Your AI-powered homelab is now running. Here's what to do next.
 
 ## Access Your Services
 
+### Single Server Deployment
+
 - **Homepage**: `https://homepage.yourdomain.duckdns.org`
   - Great place to start exploring your services
   - After configuring your services, come back and add widgets with API keys (optional)
@@ -22,11 +24,34 @@ Congratulations! Your AI-powered homelab is now running. Here's what to do next.
 
 - **VS Code**: `https://code.yourdomain.duckdns.org`
    - Install GitHub Copilot Chat extension
-   - Open the AI-Homelab repository
+   - Open the EZ-Homelab repository
    - Use AI assistance for:
       - Adding new services
       - Configuring Traefik routing
       - Managing Docker stacks
+
+### Multi-Server Deployment
+
+If you deployed across multiple servers:
+
+**Core Server Services** (accessed from anywhere):
+- All services above (Homepage, Dockge, Authelia, Traefik, code-server)
+- Access these through your domain: `service.yourdomain.duckdns.org`
+
+**Remote Server Services** (accessed through core):
+- Remote services automatically routed through core Traefik
+- Example: `https://sonarr.yourdomain.duckdns.org` → Core → Remote Server
+- SSO protection applied by core Authelia
+
+**Direct Local Access** (on remote server network):
+- Services also accessible via local IP: `http://192.168.1.100:8989`
+- Useful for troubleshooting or local management
+- No SSO protection on local access
+
+**Management Tips:**
+- Use core Dockge to manage all servers (if configured)
+- Each server has its own local Traefik/Sablier for container management
+- All services appear under unified domain through core routing
 
 ## Monitoring Services
 

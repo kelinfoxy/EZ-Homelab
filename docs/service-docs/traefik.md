@@ -16,9 +16,11 @@
 
 **Category:** Core Infrastructure  
 **Docker Image:** [traefik](https://hub.docker.com/_/traefik)  
-**Default Stack:** `core.yml`  
+**Default Stack:** `core` (multi-provider on core server), `infrastructure` or separate (local-only on remote servers)  
 **Web UI:** `https://traefik.${DOMAIN}`  
 **Authentication:** Protected by Authelia (SSO)
+
+**Multi-Server Note:** The core server runs a multi-provider Traefik instance that discovers services across all servers. Remote servers run their own local Traefik instances for container discovery only.
 
 ## What is Traefik?
 
@@ -45,12 +47,25 @@ Traefik is a modern HTTP reverse proxy and load balancer designed for microservi
 
 ## How It Works
 
+**Single Server Architecture:**
 ```
 Internet → Your Domain → Router (Port 80/443) → Traefik
                                                    ├→ Plex (plex.domain.com)
                                                    ├→ Sonarr (sonarr.domain.com)
                                                    ├→ Radarr (radarr.domain.com)
                                                    └→ [Other Services]
+```
+
+**Multi-Server Architecture:**
+```
+Internet → Router (Port 80/443) → Core Server Traefik (Multi-Provider)
+                                           ├→ Local Services (plex.domain.com)
+                                           ├→ Remote Server 1 via Docker TLS :2376
+                                           │   ├→ Remote Traefik (discovery only)
+                                           │   └→ Services (pi-service.domain.com)
+                                           └→ Remote Server 2 via Docker TLS :2376
+                                               ├→ Remote Traefik (discovery only)
+                                               └→ Services (nas-service.domain.com)
 ```
 
 ### Request Flow
@@ -83,6 +98,20 @@ Traefik automatically:
 
 ## Configuration in AI-Homelab
 
+### Multi-Server Deployment
+
+**Core Server (Primary Traefik):**
+- Multi-provider configuration discovers services on all servers
+- Receives all external traffic (ports 80/443 forwarded)
+- Manages SSL certificates for all services
+- Routes traffic to local and remote services
+
+**Remote Servers (Secondary Traefik):**
+- Local Docker provider only (discovers containers on same server)
+- No external ports exposed
+- Services use labels for local discovery
+- Core Traefik connects via Docker TLS (port 2376)
+
 ### Directory Structure
 
 ```
@@ -95,6 +124,8 @@ Traefik automatically:
 ```
 
 ### Static Configuration (`traefik.yml`)
+
+**Core Server Configuration (Multi-Provider):**
 
 ```yaml
 api:
@@ -119,20 +150,46 @@ certificatesResolvers:
     acme:
       email: your-email@example.com
       storage: /acme.json
-      # For testing environments: Use Let's Encrypt staging to avoid rate limits
-      # caServer: https://acme-staging-v02.api.letsencrypt.org/directory
       dnsChallenge:
         provider: duckdns
-        # Note: Explicit resolvers can cause DNS propagation check failures
-        # Remove resolvers to use system's DNS for better DuckDNS TXT record resolution
+
+providers:
+  docker:
+    # Local Docker provider
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: traefik-network
+  
+  # Optional: Additional Docker providers for remote servers
+  # Uncomment and configure for multi-server setup
+  # docker:
+  #   endpoint: "tcp://remote-server-ip:2376"
+  #   tls:
+  #     ca: /path/to/ca.pem
+  #     cert: /path/to/cert.pem
+  #     key: /path/to/key.pem
+  #   exposedByDefault: false
+  
+  file:
+    directory: /dynamic
+    watch: true
+```
+
+**Remote Server Configuration (Local Only):**
+
+```yaml
+api:
+  dashboard: false  # Disable dashboard on remote servers
+
+entryPoints:
+  websecure:
+    address: ":443"  # Internal only, not exposed
 
 providers:
   docker:
     endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false
-  file:
-    directory: /dynamic
-    watch: true
+    network: traefik-network
 ```
 
 ### Environment Variables
@@ -144,10 +201,48 @@ ACME_EMAIL=your-email@example.com
 
 ### Service Labels Example
 
+**For Local Services (same server as Traefik):**
+
 ```yaml
 services:
   myservice:
     image: myapp:latest
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.myservice.rule=Host(`myservice.${DOMAIN}`)"
+      - "traefik.http.routers.myservice.entrypoints=websecure"
+      - "traefik.http.routers.myservice.tls=true"  # Uses wildcard cert automatically
+      - "traefik.http.routers.myservice.middlewares=authelia@docker"
+      - "traefik.http.services.myservice.loadbalancer.server.port=8080"
+    networks:
+      - traefik-network
+```
+
+**For Remote Services (different server):**
+
+Don't use Traefik labels. Instead, create an external host file on the core server:
+
+```yaml
+# /opt/stacks/core/traefik/dynamic/external-host-remoteserver.yml
+http:
+  routers:
+    myservice-remote:
+      rule: "Host(`myservice.${DOMAIN}`)"
+      entryPoints:
+        - websecure
+      service: myservice-remote
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - authelia@docker
+  
+  services:
+    myservice-remote:
+      loadBalancer:
+        servers:
+          - url: "http://remote-server-ip:8080"
+        passHostHeader: true
+```
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.myservice.rule=Host(`myservice.${DOMAIN}`)"

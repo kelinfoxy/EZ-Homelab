@@ -1,27 +1,65 @@
 # Core Infrastructure Services
 
-This directory contains the core infrastructure services that form the foundation of the homelab. These services should always be running and are critical for the operation of other services.
+This directory contains the core infrastructure services that form the foundation of the homelab. These services should be deployed **on the main server only** and are critical for the operation of all other services across all servers.
 
 ## Services
 
+### DuckDNS
+- **Purpose**: Dynamic DNS service for domain resolution and wildcard SSL certificates
+- **Subdomain**: Configurable via environment variables
+- **Token**: Configured in environment variables
+- **SSL Certificates**: Generates wildcard cert used by all services on all servers
+- **Deploy**: Core server only
+
 ### Traefik (v3)
-- **Purpose**: Reverse proxy and SSL termination
+- **Purpose**: Reverse proxy and SSL termination with multi-server routing
 - **Ports**: 80 (HTTP), 443 (HTTPS), 8080 (Dashboard)
 - **Configuration**: Located in `traefik/config/traefik.yml`
-- **SSL**: Let's Encrypt with DNS-01 challenge (configurable provider)
+- **Multi-Server**: Discovers services on all servers via Docker providers
+- **SSL**: Let's Encrypt with DNS-01 challenge (wildcard certificate)
 - **Dashboard**: Available at configured domain
+- **Deploy**: Core server (multi-provider), Remote servers (local-only)
+
+**Note**: Sablier has been moved to its own stack (`/opt/stacks/sablier/`) and should be deployed on each server individually. See [Sablier documentation](../../docs/service-docs/sablier.md) for details.
 
 ### Authelia (v4.37.5)
-- **Purpose**: Single sign-on authentication service
+- **Purpose**: Single sign-on authentication service for all services across all servers
 - **Port**: 9091 (internal)
 - **Access**: Configured authentication domain
 - **Configuration**: Located in `authelia/config/`
 - **Database**: SQLite database in `authelia/config/db.sqlite3`
+- **Deploy**: Core server only
 
 ### DuckDNS
-- **Purpose**: Dynamic DNS service for domain resolution
+- **Purpose**: Dynamic DNS service for domain resolution and wildcard SSL certificates
 - **Subdomain**: Configurable via environment variables
 - **Token**: Configured in environment variables
+- **SSL Certificates**: Generates wildcard cert used by all services on all servers
+- **Deploy**: Core server only
+
+## Multi-Server Architecture
+
+The core stack on the main server provides centralized services for the entire homelab:
+
+**Core Server Responsibilities:**
+- Receives all external traffic (ports 80/443 forwarded from router)
+- Runs DuckDNS for domain management and SSL certificates
+- Runs Authelia for centralized authentication
+- Runs multi-provider Traefik that discovers services on all servers
+- Generates shared CA for Docker TLS communication
+
+**Remote Server Setup:**
+- Remote servers run their own Traefik instance (local Docker provider only)
+- Remote servers run their own Sablier instance (local container management)
+- Remote servers expose Docker API on port 2376 with TLS
+- Core server Traefik connects to remote Docker APIs to discover services
+- No port forwarding needed on remote servers
+
+**Service Access:**
+- All services accessible via: `https://service.yourdomain.duckdns.org`
+- Core Traefik routes to appropriate server (local or remote)
+- Single wildcard SSL certificate used for all services
+- Authelia provides SSO for all protected services
 
 ## ⚠️ Version Pinning & Breaking Changes
 
@@ -64,15 +102,22 @@ core/
 │       ├── configuration.yml   # Authelia main config
 │       ├── users_database.yml  # User credentials
 │       └── db.sqlite3          # SQLite database
-└── traefik/
-    ├── config/
-    │   └── traefik.yml         # Traefik static config
-    ├── dynamic/                # Dynamic configurations
-    │   ├── routes.yml
-    │   ├── sablier.yml
-    │   └── external-host-*.yml
-    └── letsencrypt/
-        └── acme.json           # SSL certificates
+├── duckdns/
+│   └── config/                 # DuckDNS configuration
+├── traefik/
+│   ├── config/
+│   │   └── traefik.yml         # Traefik static config
+│   ├── dynamic/                # Dynamic configurations
+│   │   ├── routes.yml
+│   │   ├── sablier.yml
+│   │   └── external-host-*.yml # Remote server routing
+│   └── letsencrypt/
+│       └── acme.json           # SSL certificates
+└── shared-ca/                  # TLS certificates for multi-server
+    ├── ca.pem                  # Certificate Authority
+    ├── ca-key.pem              # CA private key
+    ├── cert.pem                # Client certificate
+    └── key.pem                 # Client key
 ```
 
 ### Environment Variables (.env)
@@ -100,9 +145,11 @@ PGID=1000
 4. Domain configured in DuckDNS
 
 ### Startup Order
-1. `duckdns` - For DNS updates
-2. `traefik` - Reverse proxy
+1. `duckdns` - For DNS updates and SSL certificate generation
+2. `traefik` - Reverse proxy (waits for SSL certificates)
 3. `authelia` - Authentication service
+
+**Note**: Sablier is now deployed separately in `/opt/stacks/sablier/` after core stack is running.
 
 ### Commands
 ```bash

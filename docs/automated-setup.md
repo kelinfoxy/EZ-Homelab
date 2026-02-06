@@ -6,8 +6,10 @@ For most users, the automated setup script handles everything from system prepar
 - **Fresh Debian/Ubuntu server** (or existing system)
 - **Root/sudo access**
 - **Internet connection**
-- **Ports 80 and 443 forwarded** from your router to your server (required for SSL certificates)
+- **Ports 80 and 443 forwarded** from your router to your **core server only** (required for SSL certificates)
 - **VS Code with GitHub Copilot** (for AI assistance)
+
+**Note**: For multi-server setups, only the core server needs ports forwarded. Remote servers connect via Docker TLS (port 2376).
 
 ## Simple Setup
 
@@ -17,11 +19,13 @@ For most users, the automated setup script handles everything from system prepar
 
 2. **Install git if needed**
    ```bash
-      sudo apt update && sudo apt upgrade -y && sudo apt install git
+   sudo apt update && sudo apt upgrade -y && sudo apt install git
+   ```
 3. **Clone the repository**:
    ```bash
-   git clone https://github.com/kelinfoxy/AI-Homelab.git
-   cd AI-Homelab
+   git clone https://github.com/kelinfoxy/EZ-Homelab.git
+   cd EZ-Homelab
+   ```
 4. **Configure environment**:
    ```bash
    cp .env.example .env
@@ -57,6 +61,78 @@ For most users, the automated setup script handles everything from system prepar
 **That's it!** Your homelab is ready.
 **Access Dockge at `https://dockge.yourdomain.duckdns.org`**
 
+## Multi-Server Setup
+
+To deploy services across multiple servers (e.g., Raspberry Pi, mini PCs):
+
+### Core Server Setup (First)
+1. Follow the main setup above (steps 1-5)
+2. This server gets ports 80/443 forwarded from your router
+3. This server generates the shared CA for Docker TLS communication
+
+### Remote Server Setup (After Core)
+1. **Clone repository on remote server**:
+   ```bash
+   git clone https://github.com/kelinfoxy/EZ-Homelab.git
+   cd EZ-Homelab
+   ```
+
+2. **Copy `.env` from core server**:
+   ```bash
+   # On core server
+   cd ~/EZ-Homelab
+   cat .env  # Copy the contents
+   
+   # On remote server
+   nano ~/EZ-Homelab/.env  # Paste and save
+   ```
+
+3. **Run setup with Infrastructure-Only option**:
+   ```bash
+   ./scripts/ez-homelab.sh
+   # Select option 3: "Deploy Infrastructure Only (Remote Server)"
+   ```
+
+4. **When prompted, provide core server IP** for CA import
+
+5. **Script automatically**:
+   - Copies shared CA from core server via SSH
+   - Configures Docker TLS with shared certificates
+   - Generates server certificates signed by shared CA
+   - Sets up Docker daemon for TLS on port 2376
+   - Deploys Traefik for local container discovery
+   - Deploys Sablier for local lazy loading
+
+### What Gets Deployed Where
+| Component | Core Server | Remote Servers |
+|-----------|-------------|----------------|
+| DuckDNS | ✅ Yes | ❌ No |
+| Authelia | ✅ Yes | ❌ No |
+| Traefik | ✅ Yes (multi-provider) | ✅ Yes (local only) |
+| Sablier | ✅ Yes (own stack) | ✅ Yes (own stack) |
+| Dockge | ✅ Yes | ✅ Yes |
+| Services | ✅ Any | ✅ Any |
+
+### Architecture Benefits
+- **Single Domain**: All services accessible via core server's domain
+- **No Port Forwarding**: Remote servers don't need router configuration
+- **Automatic Discovery**: Core Traefik finds services on all servers
+- **Local Control**: Each Sablier manages its own server's containers
+- **Secure Communication**: All inter-server traffic uses TLS encryption
+
+### Troubleshooting Multi-Server Setup
+
+If remote server setup fails:
+1. **Check SSH access** from remote to core server
+2. **Verify firewall** allows port 2376 on remote servers
+3. **Test TLS connection** from core:
+   ```bash
+   cd /opt/stacks/core/shared-ca
+   docker --tlsverify --tlscacert=ca.pem --tlscert=cert.pem \
+     --tlskey=key.pem --host=tcp://REMOTE_IP:2376 ps
+   ```
+4. **Check logs**: See setup script output for specific errors
+
 ## What the Unified Setup Script Does
 
 The `ez-homelab.sh` script is a comprehensive guided setup and deployment tool:
@@ -81,8 +157,10 @@ The `ez-homelab.sh` script is a comprehensive guided setup and deployment tool:
 **Infrastructure Setup & Deployment:**
 - ✅ Creates directory structure (`/opt/stacks/`)
 - ✅ Sets up Docker networks (homelab, traefik, dockerproxy, media)
-- ✅ Deploys selected service stacks
+- ✅ Deploys selected service stacks with individual deployment scripts
 - ✅ Obtains wildcard SSL certificate (*.yourdomain.duckdns.org)
+- ✅ Configures Traefik for multi-server support (if applicable)
+- ✅ Generates and distributes TLS certificates for Docker API (multi-server)
 - ✅ Detects NVIDIA GPU and offers driver installation
 - ✅ Opens Dockge when ready
 
@@ -94,7 +172,8 @@ The `ez-homelab.sh` script is a comprehensive guided setup and deployment tool:
 - Confirmation prompts for destructive actions
 
 ## Release-Specific Notes
-- **Version**: Based on v0.1.0—ensure you're using the latest scripts.
-- **Stacks**: Core, Infrastructure, and Dashboards deploy automatically. Others are inactive by default.
-- **Dashboards**: Homepage is preconfigured at `homepage.yoursubdomain.duckdns.org`.
-- **Known Limitations**: Options 1 & 2 require additional testing; use Option 3 for production.
+- **Current Version**: Production-ready with comprehensive multi-server support
+- **Stacks**: Core, Infrastructure, Sablier, and Dashboards deploy automatically
+- **Dashboards**: Homepage is preconfigured at `homepage.yourdomain.duckdns.org`
+- **Multi-Server**: Use option 3 for remote server infrastructure deployment
+- **Modular Deployment**: Individual scripts in `docker-compose/*/deploy-*.sh` called by ez-homelab.sh

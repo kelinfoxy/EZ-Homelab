@@ -15,16 +15,24 @@
 
 ## Overview
 
-**Category:** Core Infrastructure
-**Docker Image:** [sablierapp/sablier](https://hub.docker.com/r/sablierapp/sablier)
-**Default Stack:** `core.yml`
-**Web UI:** No web UI (API only)
-**Authentication:** None required
+**Category:** Resource Management
+**Docker Image:** [acouvreur/sablier](https://hub.docker.com/r/acouvreur/sablier)
+**Default Stack:** `sablier` (separate stack, deployed on each server)
+**Web UI:** `https://sablier.${DOMAIN}` (on core server)
+**Authentication:** Protected by Authelia (SSO)
 **Purpose:** On-demand container startup and resource management
+
+**Multi-Server Note:** Each server runs its own Sablier instance that only manages local containers. This eliminates the need for remote Docker API connections and creates a more resilient architecture.
 
 ## What is Sablier?
 
 Sablier is a lightweight service that enables lazy loading for Docker containers. It automatically starts containers when they're accessed through Traefik and stops them after a period of inactivity, helping to conserve system resources and reduce power consumption.
+
+**In EZ-Homelab's multi-server architecture**, each server runs its own Sablier instance managing only local containers, providing:
+- **Decentralized Control**: No single point of failure
+- **Simplified Networking**: No remote Docker API connections needed
+- **Better Security**: Each Sablier only accesses local Docker socket
+- **Independent Operation**: Remote servers function even if core server is down
 
 ### Key Features
 - **On-Demand Startup:** Containers start automatically when accessed
@@ -63,11 +71,24 @@ When a request comes in for a service with Sablier enabled:
 
 ## Configuration in AI-Homelab
 
-Sablier is deployed as part of the core infrastructure stack and requires no additional configuration for basic operation. It automatically discovers services with the appropriate labels.
+Sablier is deployed as a **separate stack** (`/opt/stacks/sablier/`) on each server and requires no additional configuration for basic operation. It automatically discovers services with the appropriate labels.
+
+### Deployment Location
+
+**Core Server:** `/opt/stacks/sablier/docker-compose.yml`  
+**Remote Servers:** `/opt/stacks/sablier/docker-compose.yml`  
+
+Each Sablier instance:
+- Runs independently on its server
+- Connects only to local Docker socket (`/var/run/docker.sock`)
+- Manages containers on the same server only
+- Has its own web dashboard (if enabled)
 
 ### Service Integration
 
 Add these labels to any service that should use lazy loading:
+
+**Local Service (same server as Sablier):**
 
 ```yaml
 services:
@@ -75,11 +96,17 @@ services:
     # ... other configuration ...
     labels:
       - "sablier.enable=true"
-      - "sablier.group=core-myservice"  # Optional: group related services
+      - "sablier.group=${SERVER_HOSTNAME}-myservice"  # Include server hostname
+      - "sablier.start-on-demand=true"
       - "traefik.enable=true"
       - "traefik.http.routers.myservice.rule=Host(`myservice.${DOMAIN}`)"
       # ... other Traefik labels ...
 ```
+
+**Note on Group Naming:** Always prefix group names with `${SERVER_HOSTNAME}` to avoid conflicts between servers:
+- Core server: `core-myservice`
+- Remote Pi: `pi-myservice`
+- Remote NAS: `nas-myservice`
 
 ### Advanced Configuration
 

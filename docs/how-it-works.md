@@ -11,43 +11,67 @@ Your homelab is a **Docker-based infrastructure** that automatically:
 - Updates itself
 - Backs up your data
 - Monitors system health
+- **Scales across multiple servers**
 
 Everything runs in **containers** - like lightweight virtual machines - that are orchestrated by **Docker Compose** and managed through the **Dockge** web interface.
 
+## Single-Server vs Multi-Server
+
+EZ-Homelab supports two deployment architectures:
+
+### Single Server
+- All services run on one machine
+- Traefik and Sablier manage local services only
+- Simplest setup for homelab beginners
+- Ideal for: Single desktop/server, all services in one place
+
+### Multi-Server
+- **Core Server**: Handles external traffic (ports 80/443), runs DuckDNS/Traefik/Authelia
+- **Remote Servers**: Run their own Traefik/Sablier for local container management
+- Unified domain access: All services through `service.yourdomain.com`
+- Servers communicate via HTTP/HTTPS (no Docker API TLS needed)
+- Ideal for: Raspberry Pi clusters, NAS + desktop, distributed workloads
+
+**This guide covers both architectures**, with multi-server notes where relevant.
+
 ## Core Components
 
-### 🏠 **Homepage Dashboard** (`https://home.yourdomain.duckdns.org`)
+### 🏠 **Homepage Dashboard** (`https://homepage.yourdomain.duckdns.org`)
 Your central hub for accessing all services. Think of it as the "start menu" for your homelab.
 - **What it does**: Shows all your deployed services with quick links
 - **AI Integration**: The AI can automatically add new services and configure widgets
 - **Customization**: Add weather, system stats, and service-specific widgets
 - **Configuration**: [docker-compose/dashboards/](docker-compose/dashboards/) | [service-docs/homepage.md](service-docs/homepage.md)
 
-### 🐳 **Dockge** (`https://dockge.yourdomain.duckdns.org`)
+### 🐳 **Dockge** (`https://dockge.servername.yourdomain.duckdns.org`)
 Your primary management interface for deploying and managing services.
 - **What it does**: Web-based Docker Compose manager
 - **Stacks**: Groups services into logical units (media, monitoring, productivity)
 - **One-Click Deploy**: Upload compose files and deploy instantly
-- **Configuration**: [docker-compose/infrastructure/](docker-compose/infrastructure/) | [service-docs/dockge.md](service-docs/dockge.md)
+- **Multi-Server**: Deploy on core or remote servers from one interface
+- **Configuration**: [docker-compose/dockge/](docker-compose/dockge/) | [service-docs/dockge.md](service-docs/dockge.md)
 
 ### 🔐 **Authelia** (`https://auth.yourdomain.duckdns.org`)
 Your security gatekeeper that protects sensitive services.
 - **What it does**: Single sign-on (SSO) authentication
 - **Security**: Two-factor authentication, session management
 - **Smart Bypass**: Automatically bypasses auth for media apps (Plex, Jellyfin)
+- **Multi-Server**: Core server only; protects all services across all servers
 - **Configuration**: [docker-compose/core/](docker-compose/core/) | [service-docs/authelia.md](service-docs/authelia.md)
 
-### 🌐 **Traefik** (`https://traefik.yourdomain.duckdns.org`)
+### 🌐 **Traefik** (`https://traefik.servername.yourdomain.duckdns.org`)
 Your intelligent traffic director and SSL certificate manager.
 - **What it does**: Reverse proxy that routes web traffic to the right services
 - **SSL**: Automatically obtains and renews free HTTPS certificates
 - **Labels**: Services "advertise" themselves to Traefik via Docker labels
+- **Multi-Server**: Core uses multi-provider (labels + YAML files); remote servers use labels only
 - **Configuration**: [docker-compose/core/](docker-compose/core/) | [service-docs/traefik.md](service-docs/traefik.md)
 
 ### 🦆 **DuckDNS**
 Your dynamic DNS service that gives your homelab a consistent domain name.
 - **What it does**: Updates `yourdomain.duckdns.org` to point to your home IP
 - **Integration**: Works with Traefik to get wildcard SSL certificates
+- **Multi-Server**: Core server only (one domain for all servers)
 - **Configuration**: [docker-compose/core/](docker-compose/core/) | [service-docs/duckdns.md](service-docs/duckdns.md)
 
 ### 🛡️ **Gluetun (VPN)**
@@ -75,16 +99,25 @@ Your download traffic protector.
 
 ## Network Architecture
 
-### Internal Networks
+### Internal Networks (Per Server)
 - **`traefik-network`**: All web-facing services connect here
 - **`homelab-network`**: Internal service communication
 - **`media-network`**: Media services (Plex, Jellyfin, etc.)
 - **VPN Networks**: Download services route through Gluetun
 
 ### External Access
+
+**Single Server:**
 - **Port 80/443**: Only Traefik exposes these to the internet
 - **Domain**: `*.yourdomain.duckdns.org` points to your home
 - **SSL**: Wildcard certificate covers all subdomains automatically
+
+**Multi-Server:**
+- **Core Server Ports**: Only core forwards 80/443 to internet
+- **Remote Servers**: No port forwarding needed; accessed through core
+- **Traffic Flow**: Internet → Core Traefik → Remote Traefik → Service
+- **SSL**: Core handles all SSL termination
+- **Unified Domain**: `service.yourdomain.com` works for all servers
 
 ## Storage Strategy
 
@@ -123,6 +156,44 @@ Some services start **on-demand** to save resources:
 - **How it works**: Service starts when you first access it
 - **Benefits**: Saves RAM and CPU when services aren't in use
 - **Configuration**: AI manages the lazy loading rules
+- **Multi-Server**: Each server runs its own Sablier for LOCAL container management
+
+## Multi-Server Architecture (Optional)
+
+If you deploy across multiple servers:
+
+### Core Server Responsibilities
+- **External Traffic**: Only server with ports 80/443 forwarded
+- **SSL Termination**: Handles all HTTPS certificates
+- **SSO Gateway**: Authelia protects all services across servers
+- **DNS Updates**: DuckDNS points domain to this server
+- **Route Configuration**: Traefik YAML files route to remote servers
+
+### Remote Server Responsibilities
+- **Local Services**: Runs media, downloads, or specialized workloads
+- **Local Management**: Own Traefik and Sablier instances
+- **Internal Access**: Services listen on Docker networks only
+- **Lazy Loading**: Sablier starts/stops containers locally
+
+### Traffic Flow Example
+```
+User requests: https://sonarr.yourdomain.com
+    ↓
+1. Internet → Core Server (ports 80/443)
+2. Core Traefik → Authelia (check login)
+3. Core Traefik → Remote Server (http://192.168.1.100:8989)
+4. Remote Traefik → Sablier (is service running?)
+5. Remote Sablier → Starts Container (if needed)
+6. Service Response → Back through chain to user
+```
+
+### Setup Process
+1. **Core**: Deploy with `ez-homelab.sh` option 1 or 2
+2. **Remote**: Deploy with `ez-homelab.sh` option 3 per server
+3. **Configure**: Add external YAML files on core for remote services
+4. **Access**: All services available through core domain
+
+See [Ondemand-Remote-Services.md](Ondemand-Remote-Services.md) for detailed setup.
 
 ## Monitoring & Maintenance
 
@@ -154,53 +225,19 @@ Some services start **on-demand** to save resources:
 ## Scaling & Customization
 
 ### Adding Services
+
+**Single Server:**
 - **Pre-built**: [50+ services](services-overview.md) ready to deploy
 - **Custom**: AI can create configurations for any Docker service
-- **External**: Proxy services on other devices (Raspberry Pi, NAS)
+- **External Devices**: Proxy services on Raspberry Pi, NAS via Traefik YAML files
+
+**Multi-Server:**
+- **Remote Services**: Deploy on any server with Traefik labels
+- **Core Routing**: Add external YAML file on core to route traffic
+- **Unified Access**: All services appear under same domain
+- **See**: [Ondemand-Remote-Services.md](Ondemand-Remote-Services.md) for patterns
 
 ### Resource Management
 - **Limits**: CPU, memory, and I/O limits prevent resource exhaustion
 - **Reservations**: Guaranteed minimum resources
 - **GPU Support**: Automatic NVIDIA GPU detection and configuration
-
-## Troubleshooting Philosophy
-
-- **Logs First**: Every service provides detailed logs. The AI can help analyze them.
-- **Isolation Testing**: Deploy services one at a time to identify conflicts.
-- **Configuration Validation**: AI validates Docker Compose syntax before deployment.
-- **Rollback Ready**: Previous configurations are preserved for quick recovery.
-
-## Getting Help
-
-### Documentation Links
-- **[Automated Setup](automated-setup.md)**: Step-by-step deployment
-- **[SSL Certificates](ssl-certificates.md)**: HTTPS configuration details
-- **[Post-Setup](post-setup.md)**: What to do after deployment
-- **[AI VS Code Setup](ai-vscode-setup.md)**: Configure AI assistance
-- **[AI Management Prompts](ai-management-prompts.md)**: Example commands for AI assistant
-- **[Services Overview](../docs/services-overview.md)**: All available services
-- **[Docker Guidelines](../docs/docker-guidelines.md)**: Technical details
-
-### AI Assistance
-- **In VS Code**: Use GitHub Copilot Chat for instant help
-- **Examples**:
-  - "Add a new service to my homelab"
-  - "Fix SSL certificate issues"
-  - "Configure backup for my data"
-  - "Set up monitoring dashboard"
-
-### Community Resources
-- **GitHub Issues**: Report bugs or request features
-- **Discussions**: Ask questions and share configurations
-- **Wiki**: Community-contributed guides and tutorials
-
-## Architecture Summary
-
-Your homelab follows these principles:
-- **Infrastructure as Code**: Everything defined in files
-- **GitOps**: Version control for all configurations
-- **Security First**: SSO protection by default
-- **AI-Assisted**: Intelligent management and troubleshooting
-- **Production Ready**: Monitoring, backups, and high availability
-
-The result is a powerful, secure, and easy-to-manage homelab that grows with your needs!

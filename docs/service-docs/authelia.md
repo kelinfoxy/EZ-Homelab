@@ -17,9 +17,11 @@
 
 **Category:** Core Infrastructure  
 **Docker Image:** [authelia/authelia](https://hub.docker.com/r/authelia/authelia)  
-**Default Stack:** `core.yml`  
+**Default Stack:** `core` (deployed on core server only)  
 **Web UI:** `https://auth.${DOMAIN}`  
 **Authentication:** Self-authenticating (login portal)
+
+**Multi-Server Note:** Authelia runs only on the core server and provides centralized SSO authentication for all services across all servers. Remote server services use the `authelia@docker` middleware to authenticate against the core server's Authelia instance.
 
 ## What is Authelia?
 

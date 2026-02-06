@@ -31,6 +31,12 @@ cd EZ-Homelab
 ./scripts/ez-homelab.sh
 ```
 
+**Multi-Server Support:**
+- **Core Server**: Full deployment with ports 80/443 forwarded from router
+- **Remote Servers**: Infrastructure-only setup (option 3 in script)
+- Each server runs its own Traefik and Sablier for local container management
+- Core server Traefik routes to all servers via Docker TLS providers
+
 **What the script does:**
 - Installs Docker and required system packages
 - Guides you through configuration (domain, admin credentials, etc.)
@@ -44,41 +50,56 @@ cd EZ-Homelab
 
 ## 📚 Documentation
 
-For comprehensive documentation, see the [GitHub Wiki](https://github.com/kelinfoxy/EZ-Homelab/wiki):
-
-- **[Getting Started Guide](https://github.com/kelinfoxy/EZ-Homelab/wiki/Getting-Started-Guide)** - Step-by-step deployment and configuration
-- **[Docker Guidelines](https://github.com/kelinfoxy/EZ-Homelab/wiki/Docker-Guidelines)** - Service management patterns and best practices
-- **[Quick Reference](https://github.com/kelinfoxy/EZ-Homelab/wiki/Quick-Reference)** - Command cheat sheet and troubleshooting
-- **[Services Reference](https://github.com/kelinfoxy/EZ-Homelab/wiki/Services-Overview)** - All 70+ available services
-- **[Proxying External Hosts](https://github.com/kelinfoxy/EZ-Homelab/wiki/Proxying-External-Hosts)** - Connect non-Docker services (Raspberry Pi, NAS, etc.)
+- **[Getting Started Guide](docs/getting-started.md)** - Step-by-step deployment and configuration
+- **[Automated Setup](docs/automated-setup.md)** - Guided installation with ez-homelab.sh script
+- **[Manual Setup](docs/manual-setup.md)** - Step-by-step manual installation
+- **[Docker Guidelines](docs/docker-guidelines.md)** - Service management patterns and best practices
+- **[Services Reference](docs/services-overview.md)** - All 50+ available services
+- **[Quick Reference](docs/quick-reference.md)** - Command cheat sheet and troubleshooting
+- **[Proxying External Hosts](docs/proxying-external-hosts.md)** - Connect non-Docker services (Raspberry Pi, NAS, etc.)
+- **[Multi-Server Setup](docs/Ondemand-Remote-Services.md)** - Deploy services across multiple servers
 
 ## 🚀 Quick Navigation
 
-**New to EZ-Homelab?** → [Getting Started Guide](https://github.com/kelinfoxy/EZ-Homelab/wiki/Getting-Started-Guide)
+**New to EZ-Homelab?** → [Getting Started Guide](docs/getting-started.md)
 
-**Need Help Deploying?** → [Automated Setup](https://github.com/kelinfoxy/EZ-Homelab/wiki/Getting-Started-Guide#automated-setup)
+**Need Help Deploying?** → [Automated Setup](docs/automated-setup.md)
 
-**Want to Add Services?** → [Service Creation Guide](https://github.com/kelinfoxy/EZ-Homelab/wiki/Docker-Guidelines#service-creation-guidelines)
+**Want to Add Services?** → [Service Creation Guide](docs/docker-guidelines.md)
 
-**Having Issues?** → [Troubleshooting](https://github.com/kelinfoxy/EZ-Homelab/wiki/Quick-Reference#troubleshooting)
+**Having Issues?** → [Troubleshooting](docs/quick-reference.md)
 
-**Managing Services?** → [Dockge Dashboard](https://dockge.yourdomain.duckdns.org)
+**Multi-Server Setup?** → [Remote Services Guide](docs/Ondemand-Remote-Services.md)
+
+**Managing Services?** → Dockge Dashboard at `https://dockge.yourdomain.duckdns.org`
 
 ### Service Documentation
-Individual service documentation is available in the [GitHub Wiki](https://github.com/kelinfoxy/EZ-Homelab/wiki):
-- [Authelia](https://github.com/kelinfoxy/EZ-Homelab/wiki/Authelia) - SSO authentication
-- [Traefik](https://github.com/kelinfoxy/EZ-Homelab/wiki/Traefik) - Reverse proxy and SSL
-- [Dockge](https://github.com/kelinfoxy/EZ-Homelab/wiki/Dockge) - Stack management
-- [Homepage](https://github.com/kelinfoxy/EZ-Homelab/wiki/Homepage) - Service dashboard
-- And 50+ more services...
+Individual service documentation is available in [docs/service-docs/](docs/service-docs/):
+- [Authelia](docs/service-docs/authelia.md) - SSO authentication
+- [Traefik](docs/service-docs/traefik.md) - Reverse proxy and SSL
+- [Sablier](docs/service-docs/sablier.md) - Lazy loading for on-demand containers
+- [DuckDNS](docs/service-docs/duckdns.md) - Dynamic DNS
+- [Dockge](docs/service-docs/dockge.md) - Stack management
+- [Homepage](docs/service-docs/homepage.md) - Service dashboard
+- And 50+ more services in the docs/service-docs/ folder
 
 ## 🏗️ Architecture
 
-### Core Infrastructure
-- **Traefik** - Reverse proxy with automatic HTTPS termination
-- **Authelia** - Single sign-on (SSO) authentication
+### Core Infrastructure (Deploy on Main Server)
 - **DuckDNS** - Dynamic DNS with wildcard SSL certificates
-- **Sablier** - Lazy loading service for on-demand containers
+- **Traefik** - Reverse proxy with automatic HTTPS termination and multi-server routing
+- **Authelia** - Single sign-on (SSO) authentication
+
+### Per-Server Infrastructure (Deploy on Each Server)
+- **Traefik** - Local reverse proxy instance for container discovery
+- **Sablier** - Lazy loading service for on-demand local container startup
+
+### Multi-Server Architecture
+- **Core Server**: Only server with ports 80/443 forwarded from router
+- **Remote Servers**: Connect to core via Docker TLS (port 2376)
+- **Unified Access**: All services accessible through core server's domain
+- **Automatic Routing**: Core Traefik discovers services on all servers
+- **Lazy Loading**: Each server's Sablier manages local containers only
 
 ### VPN Services
 - **Gluetun** - VPN client for secure downloads
@@ -94,11 +115,13 @@ Individual service documentation is available in the [GitHub Wiki](https://githu
 
 ### Key Features
 - **File-based configuration** - AI-manageable YAML files
+- **Multi-server support** - Scale across multiple machines with unified access
 - **Automated SSL** - Wildcard certificates via Let's Encrypt
+- **Automatic routing** - Traefik discovers services across all servers
 - **VPN routing** - Secure download clients through Gluetun
 - **Resource limits** - Prevent resource exhaustion
 - **SSO protection** - Authelia integration with bypass options
-- **Lazy loading** - Sablier enables on-demand container startup
+- **Lazy loading** - Per-server Sablier enables on-demand container startup
 - **Automated backups** - Restic + Backrest for comprehensive data protection
 
 ## 🤖 AI Management
@@ -121,8 +144,8 @@ This homelab is designed to be managed by AI agents through VS Code with GitHub 
 ## 🔧 Manual Setup
 
 If automated scripts fail, see:
-- **[Manual Setup Guide](https://github.com/kelinfoxy/EZ-Homelab/wiki/Manual-Setup)** - Step-by-step manual installation
-- **[Troubleshooting](https://github.com/kelinfoxy/EZ-Homelab/wiki/Troubleshooting)** - Common issues and solutions
+- **[Manual Setup Guide](docs/manual-setup.md)** - Step-by-step manual installation
+- **[Troubleshooting](docs/quick-reference.md)** - Common issues and solutions
 
 ## 🤝 Contributing
 
