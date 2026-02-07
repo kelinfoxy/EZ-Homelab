@@ -1703,9 +1703,9 @@ deploy_remote_server() {
     copy_all_stacks_for_remote
     echo ""
     
-    # Step 5.5: Disable Traefik on remote services (accessed via core)
-    log_info "Step 5.5: Configuring remote services for core Traefik access..."
-    disable_traefik_on_remote_services
+    # Step 5.5: Configure remote services with server-specific subdomains
+    log_info "Step 5.5: Configuring server-specific routing..."
+    configure_remote_server_routing
     echo ""
     
     # Step 6: Deploy Dockge
@@ -1893,35 +1893,39 @@ deploy_sablier_stack() {
 
 # Disable Traefik routing on remote server services
 # Remote services are accessed through core Traefik via docker provider
-disable_traefik_on_remote_services() {
-    debug_log "Disabling Traefik routing on remote server services"
+configure_remote_server_routing() {
+    debug_log "Configuring server-specific routing for remote services"
     
-    log_info "Configuring services for remote server access..."
+    log_info "Setting up server-specific subdomains for infrastructure services..."
     
-    # Stacks that should NOT route through local Traefik
-    local config_files=(
-        "/opt/stacks/sablier/docker-compose.yml"
-        "/opt/stacks/infrastructure/docker-compose.yml"
-        "/opt/dockge/docker-compose.yml"
-    )
+    local server_name="$SERVER_HOSTNAME"
     
-    local modified_count=0
-    for config_file in "${config_files[@]}"; do
-        if [ -f "$config_file" ]; then
-            # Disable traefik.enable on all services
-            if sed -i "s/'traefik.enable=true'/'traefik.enable=false'/g" "$config_file" 2>/dev/null; then
-                modified_count=$((modified_count + 1))
-                debug_log "Disabled Traefik on $(basename $(dirname $config_file))"
-            fi
-        fi
-    done
-    
-    if [ $modified_count -gt 0 ]; then
-        log_success "Disabled local Traefik routing on $modified_count service stacks"
-        log_info "Services will be accessed through core Traefik at https://service.${DOMAIN}"
-    else
-        log_warning "No service configurations were modified"
+    # Update dockge with server-specific subdomain
+    if [ -f "/opt/dockge/docker-compose.yml" ]; then
+        sed -i "s/Host(\`dockge\.kelinreij\.duckdns\.org\`)/Host(\`dockge.${server_name}.kelinreij.duckdns.org\`)/" /opt/dockge/docker-compose.yml 2>/dev/null
+        sed -i "s/'traefik.enable=false'/'traefik.enable=true'/" /opt/dockge/docker-compose.yml 2>/dev/null
+        log_info "✓ Dockge: dockge.${server_name}.kelinreij.duckdns.org"
     fi
+    
+    # Update infrastructure services (dozzle, glances)
+    if [ -f "/opt/stacks/infrastructure/docker-compose.yml" ]; then
+        sed -i "s/Host(\`dozzle\.[^.]*\.kelinreij\.duckdns\.org\`)/Host(\`dozzle.${server_name}.kelinreij.duckdns.org\`)/" /opt/stacks/infrastructure/docker-compose.yml 2>/dev/null
+        sed -i "s/Host(\`glances\.[^.]*\.kelinreij\.duckdns\.org\`)/Host(\`glances.${server_name}.kelinreij.duckdns.org\`)/" /opt/stacks/infrastructure/docker-compose.yml 2>/dev/null
+        log_info "✓ Dozzle: dozzle.${server_name}.kelinreij.duckdns.org"
+        log_info "✓ Glances: glances.${server_name}.kelinreij.duckdns.org"
+        
+        # Disable sablier routing (no web UI)
+        sed -i "s/'traefik.enable=true'/'traefik.enable=false'/g" /opt/stacks/sablier/docker-compose.yml 2>/dev/null
+        log_info "✓ Sablier: Traefik disabled (no web UI)"
+    fi
+    
+    # Update Traefik dashboard route
+    if [ -f "/opt/stacks/traefik/dynamic/routes.yml" ]; then
+        sed -i "s/Host(\`traefik\.[^.]*\.kelinreij\.duckdns\.org\`)/Host(\`traefik.${server_name}.kelinreij.duckdns.org\`)/" /opt/stacks/traefik/dynamic/routes.yml 2>/dev/null
+        log_info "✓ Traefik Dashboard: traefik.${server_name}.kelinreij.duckdns.org"
+    fi
+    
+    log_success "Server-specific routing configured"
 }
 
 # Copy all stacks for remote server (except core)
