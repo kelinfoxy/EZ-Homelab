@@ -94,6 +94,30 @@ load_env_file_safely() {
         fi
     done < "$env_file"
 
+    # Second pass: expand any ${VAR} references in loaded variables
+    while IFS= read -r line || [ -n "$line" ]; do
+        # Skip comments and empty lines
+        [[ $line =~ ^[[:space:]]*# ]] && continue
+        [[ -z "$line" ]] && continue
+
+        # Parse KEY=VALUE
+        if [[ $line =~ ^([^=]+)=(.*)$ ]]; then
+            local key="${BASH_REMATCH[1]}"
+            key=$(echo "$key" | xargs)
+            
+            # Get current value
+            local current_value="${!key}"
+            
+            # Check if value contains ${...} and expand it
+            if [[ "$current_value" =~ \$\{[^}]+\} ]]; then
+                # Use eval to expand the variable reference safely within quotes
+                local expanded_value=$(eval echo "\"$current_value\"")
+                export "$key"="$expanded_value"
+                debug_log "Expanded $key variable reference"
+            fi
+        fi
+    done < "$env_file"
+
     debug_log "Env file loaded successfully"
 }
 load_env_file() {
@@ -226,134 +250,197 @@ generate_shared_ca() {
     log_success "Shared CA generated"
 }
 
+# Setup SSH key authentication to core server
+setup_ssh_key_to_core() {
+    local key_name="id_rsa_${SERVER_HOSTNAME}_to_core"
+    local key_path="/home/$ACTUAL_USER/.ssh/$key_name"
+    
+    log_info "Setting up SSH key authentication to core server..."
+    
+    # Ensure .ssh directory exists
+    mkdir -p "/home/$ACTUAL_USER/.ssh"
+    chmod 700 "/home/$ACTUAL_USER/.ssh"
+    
+    # Check if key already exists
+    if [ -f "$key_path" ]; then
+        log_info "SSH key already exists: $key_path"
+        
+        # Test if key works with aggressive timeout
+        log_info "Testing existing SSH key..."
+        if timeout 3 bash -c "LC_ALL=C ssh -i '$key_path' -o BatchMode=yes -o ConnectTimeout=2 -o StrictHostKeyChecking=no \
+            -o ServerAliveInterval=1 -o ServerAliveCountMax=1 -o LogLevel=ERROR \
+            '${CORE_SERVER_USER}@${CORE_SERVER_IP}' 'echo test' 2>&1 | grep -v 'locale\|LC_ALL\|setlocale' | grep -q 'test'"; then
+            log_success "Existing SSH key works, skipping key setup"
+            export SSH_KEY_PATH="$key_path"
+            return 0
+        else
+            log_warning "Existing key doesn't work or connection failed, will regenerate and install"
+            rm -f "$key_path" "$key_path.pub"
+        fi
+    fi
+    
+    # Generate new SSH key
+    log_info "Generating SSH key: $key_path"
+    ssh-keygen -t rsa -b 4096 -f "$key_path" -N "" \
+        -C "${SERVER_HOSTNAME}-to-core-${CORE_SERVER_HOSTNAME}" 2>&1 | grep -v "^Generating\|^Your identification\|^Your public key"
+    
+    if [ ${PIPESTATUS[0]} -ne 0 ]; then
+        log_error "Failed to generate SSH key"
+        return 1
+    fi
+    
+    log_success "SSH key generated"
+    
+    # Install key on core server using password
+    log_info "Installing SSH key on core server ${CORE_SERVER_IP}..."
+    
+    if ! command -v sshpass &> /dev/null; then
+        log_info "sshpass is not installed. Installing now..."
+        sudo apt-get update -qq && sudo apt-get install -y sshpass >/dev/null 2>&1
+    fi
+    
+    # Debug: Check if password is set
+    if [ -z "$CORE_SERVER_PASSWORD" ]; then
+        log_error "CORE_SERVER_PASSWORD is empty!"
+        log_error "Check your .env file - ensure CORE_SERVER_PASSWORD is set correctly"
+        return 1
+    fi
+    
+    # Show password length for debugging (not actual password)
+    log_info "Password length: ${#CORE_SERVER_PASSWORD} characters"
+    
+    # Test SSH connection with password first
+    log_info "Testing SSH connection with password..."
+    if ! LC_ALL=C sshpass -p "$CORE_SERVER_PASSWORD" ssh \
+        -o StrictHostKeyChecking=no \
+        -o ConnectTimeout=10 \
+        -o LogLevel=ERROR \
+        "${CORE_SERVER_USER}@${CORE_SERVER_IP}" "echo 'SSH connection successful'" 2>&1 | grep -v "locale\|LC_ALL\|setlocale" | grep -q "successful"; then
+        log_error "SSH password authentication failed"
+        log_error "Please verify the password in your .env file is correct"
+        log_error "You can test manually: sshpass -p 'YOUR_PASSWORD' ssh ${CORE_SERVER_USER}@${CORE_SERVER_IP}"
+        return 1
+    fi
+    
+    log_success "SSH password authentication works"
+    
+    # Read the public key
+    local pub_key=$(cat "${key_path}.pub")
+    
+    # Copy key to core server using direct SSH command (more reliable than ssh-copy-id)
+    log_info "Adding public key to authorized_keys on core server..."
+    LC_ALL=C sshpass -p "$CORE_SERVER_PASSWORD" ssh \
+        -o StrictHostKeyChecking=no \
+        -o ConnectTimeout=10 \
+        -o LogLevel=ERROR \
+        "${CORE_SERVER_USER}@${CORE_SERVER_IP}" \
+        "mkdir -p ~/.ssh && chmod 700 ~/.ssh && echo '$pub_key' >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys" 2>&1 | grep -v "locale\|LC_ALL\|setlocale"
+    
+    if [ $? -ne 0 ]; then
+        log_error "Failed to copy SSH key to core server"
+        log_error "Please verify:"
+        echo "  1. Core server IP is correct: ${CORE_SERVER_IP}"
+        echo "  2. Username is correct: ${CORE_SERVER_USER}"
+        echo "  3. Password is correct"
+        echo "  4. SSH server is running on core server"
+        return 1
+    fi
+    
+    # Verify key works
+    log_info "Verifying SSH key authentication..."
+    if LC_ALL=C ssh -i "$key_path" -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=no -o LogLevel=ERROR \
+        "${CORE_SERVER_USER}@${CORE_SERVER_IP}" "echo 'SSH key authentication successful'" 2>&1 | grep -v "locale\|LC_ALL\|setlocale" | grep -q "successful"; then
+        log_success "SSH key authentication verified"
+        
+        # Export key path for use by other functions
+        export SSH_KEY_PATH="$key_path"
+        return 0
+    else
+        log_error "SSH key verification failed"
+        return 1
+    fi
+}
+
 # Function to setup multi-server TLS for remote servers
 setup_multi_server_tls() {
     local ca_dir="/opt/stacks/core/shared-ca"
+    
+    # Use the SSH key path that was exported by setup_ssh_key_to_core
+    if [ -z "$SSH_KEY_PATH" ]; then
+        log_error "SSH_KEY_PATH not set. Please run setup_ssh_key_to_core first."
+        return 1
+    fi
+    
+    local key_path="$SSH_KEY_PATH"
+    
+    log_info "Using SSH key: $key_path"
+    
     sudo mkdir -p "$ca_dir"
     sudo chown "$ACTUAL_USER:$ACTUAL_USER" "$ca_dir"
 
-    if [ -n "$CORE_SERVER_IP" ]; then
-        log_info "Setting up multi-server TLS using shared CA from core server $CORE_SERVER_IP..."
-    else
-        # Prompt for core server IP if not set
-        read -p "Enter the IP address of your core server: " CORE_SERVER_IP
-        while [ -z "$CORE_SERVER_IP" ]; do
-            log_warning "Core server IP is required for shared TLS"
-            read -p "Enter the IP address of your core server: " CORE_SERVER_IP
-        done
-        log_info "Setting up multi-server TLS using shared CA from core server $CORE_SERVER_IP..."
+    log_info "Fetching shared CA from core server ${CORE_SERVER_IP}..."
+
+    # Check if shared CA exists on core server
+    log_info "Checking for shared CA on core server..."
+    
+    SHARED_CA_PATH=""
+    
+    # Test for shared-ca directory (preferred location)
+    if LC_ALL=C ssh -i "$key_path" -o StrictHostKeyChecking=no -o LogLevel=ERROR "${CORE_SERVER_USER}@${CORE_SERVER_IP}" \
+        "test -f /opt/stacks/core/shared-ca/ca.pem && test -f /opt/stacks/core/shared-ca/ca-key.pem && echo 'EXISTS'" 2>/dev/null | grep -q "EXISTS"; then
+        SHARED_CA_PATH="/opt/stacks/core/shared-ca"
+        log_success "Found shared CA in: $SHARED_CA_PATH"
+    # Test for docker-tls directory (alternative location)
+    elif LC_ALL=C ssh -i "$key_path" -o StrictHostKeyChecking=no -o LogLevel=ERROR "${CORE_SERVER_USER}@${CORE_SERVER_IP}" \
+        "test -f /opt/stacks/core/docker-tls/ca.pem && test -f /opt/stacks/core/docker-tls/ca-key.pem && echo 'EXISTS'" 2>/dev/null | grep -q "EXISTS"; then
+        SHARED_CA_PATH="/opt/stacks/core/docker-tls"
+        log_success "Found shared CA in: $SHARED_CA_PATH"
     fi
 
-    # Prompt for SSH username if not set
-    if [ -z "$SSH_USER" ]; then
-        DEFAULT_SSH_USER="${DEFAULT_USER:-$USER}"
-        read -p "SSH username for core server [$DEFAULT_SSH_USER]: " SSH_USER
-        SSH_USER="${SSH_USER:-$DEFAULT_SSH_USER}"
-    fi
-
-    # Test SSH connection - try key authentication first
-    log_info "Testing SSH connection to core server ($SSH_USER@$CORE_SERVER_IP)..."
-    if ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no -o BatchMode=yes "$SSH_USER@$CORE_SERVER_IP" "echo 'SSH connection successful'" 2>/dev/null; then
-        log_success "SSH connection established using key authentication"
-        USE_SSHPASS=false
-    else
-        # Key authentication failed, try password authentication
-        log_info "Key authentication failed, trying password authentication..."
-        read -s -p "Enter SSH password for $SSH_USER@$CORE_SERVER_IP: " SSH_PASSWORD
-        echo ""
-
-        if sshpass -p "$SSH_PASSWORD" ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP" "echo 'SSH connection successful'" 2>/dev/null; then
-            log_success "SSH connection established using password authentication"
-            USE_SSHPASS=true
-        else
-            log_error "Cannot connect to core server via SSH. Please check:"
-            echo "  1. SSH is running on the core server"
-            echo "  2. SSH keys are properly configured, or username/password are correct"
-            echo "  3. The core server IP is correct"
-            echo ""
-            TLS_ISSUES_SUMMARY="⚠️  TLS Configuration Issue: Cannot connect to core server $CORE_SERVER_IP via SSH
-   This will prevent Sablier from connecting to remote Docker daemons.
+    if [ -z "$SHARED_CA_PATH" ]; then
+        log_error "Shared CA not found on core server"
+        log_error "Please ensure core server is fully deployed with Option 2 first"
+        log_info "Checking what exists on core server..."
+        LC_ALL=C ssh -i "$key_path" -o StrictHostKeyChecking=no "${CORE_SERVER_USER}@${CORE_SERVER_IP}" \
+            "ls -la /opt/stacks/core/shared-ca/ /opt/stacks/core/docker-tls/ 2>&1" | grep -v "locale\|LC_ALL\|setlocale"
+        TLS_ISSUES_SUMMARY="⚠️  TLS Configuration Issue: Shared CA not found on core server ${CORE_SERVER_IP}
    
    To fix this:
-   1. Ensure SSH is running on the core server
-   2. Configure SSH keys or provide correct password
-   3. Verify the core server IP is correct
-   4. Test SSH connection: ssh $SSH_USER@$CORE_SERVER_IP
-   
-   Without SSH access, shared CA cannot be fetched for secure multi-server TLS."
-            return
-        fi
+   1. Deploy core server first using Option 2
+   2. Verify CA exists: ssh ${CORE_SERVER_USER}@${CORE_SERVER_IP} 'ls -la /opt/stacks/core/shared-ca/'
+   3. Re-run Option 3 deployment"
+        return 1
     fi
 
-    # Fetch shared CA certificates from core server
-    log_info "Fetching shared CA certificates from core server..."
-    SHARED_CA_EXISTS=false
-
-    # Check if shared CA exists on core server (check both old and new locations)
-    if [ "$USE_SSHPASS" = true ] && [ -n "$SSH_PASSWORD" ]; then
-        if sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP" "[ -f /opt/stacks/core/shared-ca/ca.pem ] && [ -f /opt/stacks/core/shared-ca/ca-key.pem ] && [ -r /opt/stacks/core/shared-ca/ca.pem ] && [ -r /opt/stacks/core/shared-ca/ca-key.pem ]" 2>/dev/null; then
-            SHARED_CA_EXISTS=true
-            SHARED_CA_PATH="/opt/stacks/core/shared-ca"
-            log_info "Detected CA certificate and key in shared-ca location"
-        elif sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP" "[ -f /opt/stacks/core/docker-tls/ca.pem ] && [ -f /opt/stacks/core/docker-tls/ca-key.pem ] && [ -r /opt/stacks/core/docker-tls/ca.pem ] && [ -r /opt/stacks/core/docker-tls/ca-key.pem ]" 2>/dev/null; then
-            SHARED_CA_EXISTS=true
-            SHARED_CA_PATH="/opt/stacks/core/docker-tls"
-            log_info "Detected CA certificate and key in docker-tls location"
-        fi
-    else
-        if ssh -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP" "[ -f /opt/stacks/core/shared-ca/ca.pem ] && [ -f /opt/stacks/core/shared-ca/ca-key.pem ] && [ -r /opt/stacks/core/shared-ca/ca.pem ] && [ -r /opt/stacks/core/shared-ca/ca-key.pem ]" 2>/dev/null; then
-            SHARED_CA_EXISTS=true
-            SHARED_CA_PATH="/opt/stacks/core/shared-ca"
-            log_info "Detected CA certificate and key in shared-ca location"
-        elif ssh -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP" "[ -f /opt/stacks/core/docker-tls/ca.pem ] && [ -f /opt/stacks/core/docker-tls/ca-key.pem ] && [ -r /opt/stacks/core/docker-tls/ca.pem ] && [ -r /opt/stacks/core/docker-tls/ca-key.pem ]" 2>/dev/null; then
-            SHARED_CA_EXISTS=true
-            SHARED_CA_PATH="/opt/stacks/core/docker-tls"
-            log_info "Detected CA certificate and key in docker-tls location"
-        fi
-    fi
-
-    if [ "$SHARED_CA_EXISTS" = true ]; then
-        # Copy existing shared CA from core server
-        set +e
-        scp_output=$(scp -o StrictHostKeyChecking=no "$SSH_USER@$CORE_SERVER_IP:$SHARED_CA_PATH/ca.pem" "$SSH_USER@$CORE_SERVER_IP:$SHARED_CA_PATH/ca-key.pem" "$ca_dir/" 2>&1)
-        scp_exit_code=$?
-        set -e
-        if [ $scp_exit_code -eq 0 ]; then
-            log_success "Shared CA certificate and key fetched from core server"
-            setup_docker_tls
-        else
-            log_error "Failed to fetch shared CA certificate and key from core server"
-            TLS_ISSUES_SUMMARY="⚠️  TLS Configuration Issue: Could not copy shared CA from core server $CORE_SERVER_IP
-   SCP Error: $scp_output
+    # Copy shared CA from core server using SCP
+    log_info "Copying shared CA certificates..."
+    
+    # Copy ca.pem
+    if ! LC_ALL=C scp -i "$key_path" -o StrictHostKeyChecking=no -o LogLevel=ERROR \
+        "${CORE_SERVER_USER}@${CORE_SERVER_IP}:${SHARED_CA_PATH}/ca.pem" \
+        "$ca_dir/" 2>/dev/null; then
+        log_error "Failed to copy ca.pem from core server"
+        TLS_ISSUES_SUMMARY="⚠️  TLS Configuration Issue: Could not copy shared CA from ${CORE_SERVER_IP}
    
    To fix this:
-   1. Ensure SSH key authentication works: ssh $ACTUAL_USER@$CORE_SERVER_IP
-   2. Verify core server has: $SHARED_CA_PATH/ca.pem and ca-key.pem
-   3. Check file permissions on core server: ls -la $SHARED_CA_PATH/
-   4. Manually copy CA: scp $ACTUAL_USER@$CORE_SERVER_IP:$SHARED_CA_PATH/ca.pem $ca_dir/
-      scp $ACTUAL_USER@$CORE_SERVER_IP:$SHARED_CA_PATH/ca-key.pem $ca_dir/
-   5. Regenerate server certificates: run setup_docker_tls after copying
-   6. Restart Docker: sudo systemctl restart docker
-   
-   Then restart Sablier on the core server to reconnect."
-            return
-        fi
-    else
-        log_warning "Shared CA certificates not found on core server."
-        log_info "Please ensure the core server has been set up first and has generated the shared CA certificates."
-        TLS_ISSUES_SUMMARY="⚠️  TLS Configuration Issue: Shared CA certificates not found on core server $CORE_SERVER_IP
-   This will prevent Sablier from connecting to remote Docker daemons.
-   
-   To fix this:
-   1. Ensure the core server is set up and has generated shared CA certificates
-   2. Verify SSH access: ssh $ACTUAL_USER@$CORE_SERVER_IP
-   3. Check core server locations: /opt/stacks/core/shared-ca/ or /opt/stacks/core/docker-tls/
-   4. Manually copy CA certificates if needed
-   5. Re-run the infrastructure deployment
-   
-   Without shared CA, remote Docker access will not work securely."
-        return
+   1. Verify SSH key works: ssh -i $key_path ${CORE_SERVER_USER}@${CORE_SERVER_IP}
+   2. Check file permissions: ssh ${CORE_SERVER_USER}@${CORE_SERVER_IP} 'ls -la ${SHARED_CA_PATH}/'
+   3. Manually copy if needed: scp -i $key_path ${CORE_SERVER_USER}@${CORE_SERVER_IP}:${SHARED_CA_PATH}/ca* $ca_dir/"
+        return 1
     fi
+    
+    # Copy ca-key.pem
+    if ! LC_ALL=C scp -i "$key_path" -o StrictHostKeyChecking=no -o LogLevel=ERROR \
+        "${CORE_SERVER_USER}@${CORE_SERVER_IP}:${SHARED_CA_PATH}/ca-key.pem" \
+        "$ca_dir/" 2>/dev/null; then
+        log_error "Failed to copy ca-key.pem from core server"
+        return 1
+    fi
+
+    log_success "Shared CA copied successfully"
+    
+    # Now setup Docker TLS using the shared CA
+    setup_docker_tls
 }
 
 # Get script directory and repo directory
@@ -373,7 +460,6 @@ fi
 # Default values
 DOMAIN=""
 SERVER_IP=""
-CORE_SERVER_IP=""
 ADMIN_USER=""
 ADMIN_EMAIL=""
 AUTHELIA_ADMIN_PASSWORD=""
@@ -381,7 +467,13 @@ DEPLOY_CORE=false
 DEPLOY_INFRASTRUCTURE=false
 DEPLOY_DASHBOARDS=false
 SETUP_STACKS=false
+DEPLOY_REMOTE_SERVER=false
 TLS_ISSUES_SUMMARY=""
+CORE_SERVER_IP=""
+CORE_SERVER_HOSTNAME=""
+CORE_SERVER_USER=""
+CORE_SERVER_PASSWORD=""
+SSH_KEY_PATH=""
 
 # Required variables for configuration
 REQUIRED_VARS=("SERVER_IP" "SERVER_HOSTNAME" "DUCKDNS_SUBDOMAINS" "DUCKDNS_TOKEN" "DOMAIN" "DEFAULT_USER" "DEFAULT_PASSWORD" "DEFAULT_EMAIL")
@@ -1408,7 +1500,7 @@ set_required_vars_for_deployment() {
             debug_log "Set REQUIRED_VARS for core deployment"
             ;;
         "remote")
-            REQUIRED_VARS=("SERVER_IP" "SERVER_HOSTNAME" "DUCKDNS_DOMAIN" "DEFAULT_USER" "REMOTE_SERVER_IP" "REMOTE_SERVER_HOSTNAME" "REMOTE_SERVER_USER")
+            REQUIRED_VARS=("SERVER_IP" "SERVER_HOSTNAME" "DOMAIN" "DEFAULT_USER" "CORE_SERVER_IP" "CORE_SERVER_HOSTNAME" "CORE_SERVER_USER" "CORE_SERVER_PASSWORD")
             debug_log "Set REQUIRED_VARS for remote deployment"
             ;;
         *)
@@ -1420,8 +1512,22 @@ set_required_vars_for_deployment() {
 
 # Deploy remote server
 deploy_remote_server() {
+    # Enable verbose mode for remote deployment
+    VERBOSE=true
+    
     log_info "Deploying Remote Server Configuration"
     echo ""
+    
+    # Set ACTUAL_USER if not already set (needed for SSH key paths)
+    if [ -z "$ACTUAL_USER" ]; then
+        if [ "$EUID" -eq 0 ]; then
+            ACTUAL_USER=${SUDO_USER:-$USER}
+        else
+            ACTUAL_USER=$USER
+        fi
+        export ACTUAL_USER
+        debug_log "Set ACTUAL_USER=$ACTUAL_USER"
+    fi
     
     # Check Docker is installed
     if ! check_docker_installed; then
@@ -1430,34 +1536,91 @@ deploy_remote_server() {
     fi
     
     # Ensure we have core server information
-    if [ -z "$REMOTE_SERVER_IP" ] || [ -z "$REMOTE_SERVER_HOSTNAME" ]; then
-        log_error "Remote server IP and hostname are required"
+    if [ -z "$CORE_SERVER_IP" ] || [ -z "$CORE_SERVER_HOSTNAME" ]; then
+        log_error "Core server IP and hostname are required"
         return 1
     fi
     
-    log_info "Configuring Docker TLS for remote API access..."
-    setup_docker_tls
+    # Step 1: Setup SSH key authentication to core server
+    log_info "Step 1: Setting up SSH key authentication to core server..."
+    log_info "Using ACTUAL_USER=$ACTUAL_USER for SSH key path"
+    log_info "Target: ${CORE_SERVER_USER}@${CORE_SERVER_IP}"
+    if ! setup_ssh_key_to_core; then
+        log_error "Failed to setup SSH key authentication"
+        return 1
+    fi
+    log_success "SSH key authentication setup complete"
+    echo ""
     
-    log_info "Fetching shared CA from core server..."
-    setup_multi_server_tls "$REMOTE_SERVER_IP" "$REMOTE_SERVER_USER"
+    # Step 2: Fetch shared CA and setup Docker TLS
+    log_info "Step 2: Fetching shared CA from core server..."
+    log_info "Using SSH key: $SSH_KEY_PATH"
+    if ! setup_multi_server_tls; then
+        log_error "Failed to setup multi-server TLS"
+        return 1
+    fi
+    echo ""
     
-    log_info "Deploying Sablier stack for local lazy loading..."
+    # Step 3: Create required Docker networks
+    log_info "Step 3: Creating required Docker networks..."
+    docker network create traefik-network 2>/dev/null && log_success "Created traefik-network" || log_info "traefik-network already exists"
+    docker network create homelab-network 2>/dev/null && log_success "Created homelab-network" || log_info "homelab-network already exists"
+    echo ""
+    
+    # Step 4: Install envsubst if not present
+    if ! command -v envsubst &> /dev/null; then
+        log_info "Installing envsubst (gettext-base)..."
+        sudo apt-get update -qq && sudo apt-get install -y gettext-base >/dev/null 2>&1
+        log_success "envsubst installed"
+    fi
+    
+    # Step 5: Copy all stacks to remote server
+    log_info "Step 5: Copying all stacks to remote server..."
+    copy_all_stacks_for_remote
+    echo ""
+    
+    # Step 6: Deploy Dockge
+    log_info "Step 6: Deploying Dockge..."
+    deploy_dockge
+    echo ""
+    
+    # Step 7: Deploy Traefik (local instance for container discovery)
+    log_info "Step 7: Deploying local Traefik..."
+    deploy_traefik_stack
+    echo ""
+    
+    # Step 8: Deploy Sablier stack for local lazy loading
+    log_info "Step 8: Deploying Sablier stack..."
     deploy_sablier_stack
+    echo ""
     
-    log_info "Registering this remote server with core Traefik..."
+    # Step 9: Deploy Infrastructure stack
+    log_info "Step 9: Deploying Infrastructure stack..."
+    deploy_infrastructure
+    echo ""
+    
+    # Step 10: Register this remote server with core Traefik
+    log_info "Step 10: Registering with core Traefik..."
     register_remote_server_with_core
+    echo ""
     
     log_success "Remote server deployment complete!"
     echo ""
     echo "This server is now configured to:"
     echo "  - Accept Docker API connections via TLS (port 2376)"
+    echo "  - Run local Traefik for container discovery"
     echo "  - Run Sablier for local container lazy loading"
+    echo "  - Run infrastructure services"
     echo "  - Have its containers discovered by core Traefik"
     echo ""
     echo "Services deployed on this server will automatically:"
     echo "  - Be discovered by Traefik on the core server"
     echo "  - Get SSL certificates via core Traefik"
-    echo "  - Be accessible at: https://servicename.${DUCKDNS_DOMAIN}"
+    echo "  - Be accessible at: https://servicename.${DOMAIN}"
+    echo ""
+    echo "Additional stacks available in /opt/stacks/ (not started):"
+    echo "  - dashboards, media, media-management, monitoring, productivity"
+    echo "  - transcoders, utilities, vpn, wikis, homeassistant, alternatives"
     echo ""
 }
 
@@ -1465,15 +1628,19 @@ deploy_remote_server() {
 register_remote_server_with_core() {
     debug_log "Registering remote server with core Traefik via SSH"
     
-    if [ -z "$REMOTE_SERVER_IP" ] || [ -z "$REMOTE_SERVER_USER" ]; then
-        log_error "REMOTE_SERVER_IP and REMOTE_SERVER_USER are required"
+    local key_name="id_rsa_${SERVER_HOSTNAME}_to_core"
+    local key_path="/home/$ACTUAL_USER/.ssh/$key_name"
+    
+    if [ -z "$CORE_SERVER_IP" ] || [ -z "$CORE_SERVER_USER" ]; then
+        log_error "CORE_SERVER_IP and CORE_SERVER_USER are required"
         return 1
     fi
     
     log_info "Connecting to core server to register this remote server..."
     
     # SSH to core server and run registration function
-    ssh -o ConnectTimeout=10 "${REMOTE_SERVER_USER}@${REMOTE_SERVER_IP}" bash <<EOF
+    LC_ALL=C ssh -i "$key_path" -o ConnectTimeout=10 -o StrictHostKeyChecking=no -o LogLevel=ERROR \
+        "${CORE_SERVER_USER}@${CORE_SERVER_IP}" bash <<EOF 2>&1 | grep -v "locale\|LC_ALL\|setlocale"
         # Source common.sh to get registration function
         source ~/EZ-Homelab/scripts/common.sh
         
@@ -1499,26 +1666,135 @@ deploy_sablier_stack() {
     
     local sablier_dir="/opt/stacks/sablier"
     
-    # Create sablier stack directory
+    # Create sablier stack directory with sudo
     if [ ! -d "$sablier_dir" ]; then
-        mkdir -p "$sablier_dir"
+        sudo mkdir -p "$sablier_dir" || { log_error "Failed to create $sablier_dir"; return 1; }
         sudo chown -R "$ACTUAL_USER:$ACTUAL_USER" "$sablier_dir"
+        log_success "Created $sablier_dir"
+    fi
+    
+    # Check if source files exist
+    if [ ! -f "$REPO_DIR/docker-compose/sablier/docker-compose.yml" ]; then
+        log_error "Sablier docker-compose.yml not found in repo at $REPO_DIR/docker-compose/sablier/"
+        return 1
     fi
     
     # Copy stack files
-    cp "$REPO_DIR/docker-compose/sablier/docker-compose.yml" "$sablier_dir/"
-    cp "$REPO_DIR/.env" "$sablier_dir/"
+    log_info "Copying Sablier stack files from $REPO_DIR/docker-compose/sablier/..."
+    cp "$REPO_DIR/docker-compose/sablier/docker-compose.yml" "$sablier_dir/" || { log_error "Failed to copy docker-compose.yml"; return 1; }
+    cp "$REPO_DIR/.env" "$sablier_dir/" || { log_error "Failed to copy .env"; return 1; }
     sudo chown "$ACTUAL_USER:$ACTUAL_USER" "$sablier_dir/docker-compose.yml"
     sudo chown "$ACTUAL_USER:$ACTUAL_USER" "$sablier_dir/.env"
+    log_success "Stack files copied"
+    
+    # Remove Authelia and other unnecessary variables from sablier .env
+    sed -i '/^AUTHELIA_/d' "$sablier_dir/.env"
+    sed -i '/^DEFAULT_PASSWORD=/d' "$sablier_dir/.env"
+    sed -i '/^CORE_SERVER_PASSWORD=/d' "$sablier_dir/.env"
     
     # Localize the docker-compose file
     localize_compose_labels "$sablier_dir/docker-compose.yml"
     
     # Deploy
+    log_info "Starting Sablier container..."
     cd "$sablier_dir"
-    run_cmd docker compose up -d
+    if ! docker compose up -d; then
+        log_error "Failed to start Sablier stack"
+        return 1
+    fi
     
     log_success "Sablier stack deployed at $sablier_dir"
+}
+
+# Copy all stacks for remote server (except core)
+copy_all_stacks_for_remote() {
+    debug_log "Copying all stacks for remote server"
+    
+    # Create base stacks directory
+    sudo mkdir -p /opt/stacks
+    sudo mkdir -p /opt/dockge
+    sudo chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks
+    sudo chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/dockge
+    
+    # List of stacks to copy (all except core and dockge - dockge is handled separately)
+    local stacks=(
+        "alternatives"
+        "dashboards"
+        "homeassistant"
+        "infrastructure"
+        "media"
+        "media-management"
+        "monitoring"
+        "productivity"
+        "sablier"
+        "traefik"
+        "transcoders"
+        "utilities"
+        "vpn"
+        "wikis"
+    )
+    
+    local copied_count=0
+    for stack in "${stacks[@]}"; do
+        local src_dir="$REPO_DIR/docker-compose/$stack"
+        local dest_dir="/opt/stacks/$stack"
+        
+        # Skip if source doesn't exist
+        if [ ! -d "$src_dir" ]; then
+            debug_log "Skipping $stack - source not found"
+            continue
+        fi
+        
+        # Create destination directory
+        mkdir -p "$dest_dir"
+        
+        # Copy docker-compose.yml and any config directories
+        if [ -f "$src_dir/docker-compose.yml" ]; then
+            cp "$src_dir/docker-compose.yml" "$dest_dir/"
+            cp "$REPO_DIR/.env" "$dest_dir/"
+            
+            # Copy any subdirectories (config, etc.)
+            for item in "$src_dir"/*; do
+                if [ -d "$item" ]; then
+                    cp -r "$item" "$dest_dir/"
+                fi
+            done
+            
+            # Clean up sensitive data from .env
+            sed -i '/^AUTHELIA_/d' "$dest_dir/.env"
+            sed -i '/^DEFAULT_PASSWORD=/d' "$dest_dir/.env"
+            sed -i '/^CORE_SERVER_PASSWORD=/d' "$dest_dir/.env"
+            
+            # Localize compose file
+            localize_compose_labels "$dest_dir/docker-compose.yml" || true
+            
+            copied_count=$((copied_count + 1))
+            debug_log "Copied $stack to $dest_dir"
+        fi
+    done
+    
+    log_success "Copied $copied_count stacks to /opt/stacks/"
+}
+
+# Deploy Traefik stack (standalone for remote servers)
+deploy_traefik_stack() {
+    debug_log "Deploying Traefik stack"
+    
+    local traefik_dir="/opt/stacks/traefik"
+    
+    # Create required directories
+    mkdir -p "$traefik_dir/config"
+    mkdir -p "$traefik_dir/dynamic"
+    
+    # Deploy
+    log_info "Starting Traefik container..."
+    cd "$traefik_dir"
+    if ! docker compose up -d; then
+        log_error "Failed to start Traefik stack"
+        return 1
+    fi
+    
+    log_success "Traefik stack deployed at $traefik_dir"
 }
 
 # Show help function
@@ -1808,14 +2084,7 @@ main() {
                 echo "⚠️  IMPORTANT: Deploying an additional server requires an existing core server to be already deployed."
                 echo "The core server provides essential services like Traefik, Authelia, and shared TLS certificates."
                 echo ""
-                read -p "Do you have an existing core server deployed? (y/N): " -n 1 -r
-                echo ""
-                if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-                    log_info "Returning to main menu. Please deploy a core server first using Option 2."
-                    echo ""
-                    sleep 2
-                    continue
-                fi
+                
                 DEPLOY_CORE=false
                 DEPLOY_INFRASTRUCTURE=false
                 DEPLOY_DASHBOARDS=false
@@ -1851,9 +2120,6 @@ main() {
 
     echo ""
 
-    # Prepare deployment environment
-    prepare_deployment
-
     # Handle remote server deployment separately
     if [ "$DEPLOY_REMOTE_SERVER" = true ]; then
         # Prompt for configuration values
@@ -1861,6 +2127,9 @@ main() {
         
         # Save configuration
         save_env_file
+        
+        # Reload .env file to get all variables including expanded ones
+        load_env_file
         
         # Deploy remote server
         deploy_remote_server
