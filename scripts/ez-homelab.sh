@@ -1703,6 +1703,11 @@ deploy_remote_server() {
     copy_all_stacks_for_remote
     echo ""
     
+    # Step 5.5: Disable Traefik on remote services (accessed via core)
+    log_info "Step 5.5: Configuring remote services for core Traefik access..."
+    disable_traefik_on_remote_services
+    echo ""
+    
     # Step 6: Deploy Dockge
     log_info "Step 6: Deploying Dockge..."
     deploy_dockge
@@ -1884,6 +1889,39 @@ deploy_sablier_stack() {
     fi
     
     log_success "Sablier stack deployed at $sablier_dir"
+}
+
+# Disable Traefik routing on remote server services
+# Remote services are accessed through core Traefik via docker provider
+disable_traefik_on_remote_services() {
+    debug_log "Disabling Traefik routing on remote server services"
+    
+    log_info "Configuring services for remote server access..."
+    
+    # Stacks that should NOT route through local Traefik
+    local config_files=(
+        "/opt/stacks/sablier/docker-compose.yml"
+        "/opt/stacks/infrastructure/docker-compose.yml"
+        "/opt/dockge/docker-compose.yml"
+    )
+    
+    local modified_count=0
+    for config_file in "${config_files[@]}"; do
+        if [ -f "$config_file" ]; then
+            # Disable traefik.enable on all services
+            if sed -i "s/'traefik.enable=true'/'traefik.enable=false'/g" "$config_file" 2>/dev/null; then
+                modified_count=$((modified_count + 1))
+                debug_log "Disabled Traefik on $(basename $(dirname $config_file))"
+            fi
+        fi
+    done
+    
+    if [ $modified_count -gt 0 ]; then
+        log_success "Disabled local Traefik routing on $modified_count service stacks"
+        log_info "Services will be accessed through core Traefik at https://service.${DOMAIN}"
+    else
+        log_warning "No service configurations were modified"
+    fi
 }
 
 # Copy all stacks for remote server (except core)
