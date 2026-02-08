@@ -10,11 +10,11 @@ Traefik can proxy services that aren't running in Docker, such as:
 - Services running on different machines
 - Any HTTP/HTTPS service accessible via IP:PORT
 
-## Method 1: Using Traefik File Provider (Recommended)
+## Quick Start
 
-### Step 1: Create External Service Configuration
+### Step 1: Create Configuration File
 
-Create a file in `/opt/stacks/traefik/dynamic/` with the format 'external-host-servername.yml'
+Create a YAML file in `/opt/stacks/traefik/dynamic/` named `external-hosts.yml`:
 
 ```yaml
 http:
@@ -50,11 +50,11 @@ http:
 
 ### Step 2: Reload Traefik
 
-Traefik watches the `/opt/stacks/traefik/dynamic/` directory automatically and reloads configurations:
+Traefik automatically detects and loads new configuration files:
 
 ```bash
 # Verify configuration is loaded
-docker logs traefik | grep external-hosts
+docker logs traefik | grep homeassistant
 
 # If needed, restart Traefik
 cd /opt/stacks/traefik
@@ -68,49 +68,6 @@ Visit `https://ha.yourdomain.duckdns.org` - Traefik will:
 2. Proxy the request to `http://192.168.1.50:8123`
 3. Return the response with proper SSL
 4. (Optionally) Require Authelia login if middleware is configured
-
-## Method 2: Using Docker Labels (Dummy Container)
-
-If you prefer managing routes via Docker labels, create a dummy container:
-
->This can be resource intensive with serveral services running.  
-Not recomended due to unnecessary resource/power consumption.  
-Don't try it on a Raspberry Pi
-
-### Create a Label Container
-
-In `/opt/stacks/external-proxies/docker-compose.yml`:
-
-```yaml
-services:
-  # Dummy container for Raspberry Pi Home Assistant
-  homeassistant-proxy-labels:
-    image: alpine:latest
-    container_name: homeassistant-proxy-labels
-    command: tail -f /dev/null  # Keep container running
-    restart: unless-stopped
-    networks:
-      - traefik-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.ha-external.rule=Host(`ha.${DOMAIN}`)"
-      - "traefik.http.routers.ha-external.entrypoints=websecure"
-      - "traefik.http.routers.ha-external.tls.certresolver=letsencrypt"
-      # Point to external service
-      - "traefik.http.services.ha-external.loadbalancer.server.url=http://192.168.1.50:8123"
-      # Optional: Add Authelia (usually not for HA)
-      # - "traefik.http.routers.ha-external.middlewares=authelia@docker"
-
-networks:
-  traefik-network:
-    external: true
-```
-
-Deploy:
-```bash
-cd /opt/stacks/external-proxies
-docker compose up -d
-```
 
 ## Common External Services to Proxy
 
@@ -260,9 +217,9 @@ The AI can manage external host proxying by:
 
 1. **Reading existing configurations**: Parse `/opt/stacks/traefik/dynamic/*.yml`
 2. **Adding new routes**: Create/update YAML files in dynamic directory
-3. **Modifying Docker labels**: Update dummy container labels
-4. **Configuring Authelia rules**: Edit `configuration.yml` for bypass/require auth
-5. **Testing connectivity**: Suggest verification steps
+3. **Configuring Authelia rules**: Edit `configuration.yml` for bypass/require auth
+4. **Testing connectivity**: Suggest verification steps
+5. **Adding Homepage entries**: Update dashboard configuration
 
 Example AI prompt:
 > "Add proxying for my Unifi Controller at 192.168.1.5:8443 with Authelia protection"
