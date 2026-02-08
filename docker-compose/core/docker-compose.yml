@@ -90,6 +90,56 @@ services:
       - 'traefik.http.middlewares.authelia.forwardauth.authResponseHeaders=X-Secret'
       - 'traefik.http.middlewares.authelia.forwardauth.trustForwardHeader=true'
 
+  pihole:
+    image: pihole/pihole:2024.01.0
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+          pids: 256
+        reservations:
+          cpus: '0.10'
+          memory: 64M
+    container_name: pihole
+    restart: unless-stopped
+    networks:
+      - homelab-network
+      - traefik-network
+    ports:
+      - '53:53/tcp'    # DNS TCP
+      - '53:53/udp'    # DNS UDP
+    volumes:
+      - ./pihole/etc-pihole:/etc/pihole
+      - ./pihole/etc-dnsmasq.d:/etc/dnsmasq.d
+    environment:
+      - TZ=America/New_York
+      - WEBPASSWORD=${PIHOLE_PASSWORD}
+      - FTLCONF_LOCAL_IPV4=192.168.4.4
+    dns:
+      - 127.0.0.1
+      - 1.1.1.1
+    cap_add:
+      - NET_ADMIN
+    labels:
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
+      - 'homelab.category=infrastructure'
+      - 'homelab.description=Network-wide ad blocking and DNS'
+      # Traefik reverse proxy (comment/uncomment to disable/enable)
+      # IMPORTANT: On REMOTE SERVERS (where Traefik runs elsewhere):
+      #   - COMMENT OUT all traefik.* labels below (don't delete them)
+      #   - Routes are configured via external YAML files on the core server
+      #   - This prevents conflicts between Docker labels and file provider
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik-network'
+      - 'traefik.http.routers.pihole.rule=Host(`pihole.${DOMAIN}`)'
+      - 'traefik.http.routers.pihole.entrypoints=websecure'
+      - 'traefik.http.routers.pihole.tls.certresolver=letsencrypt'
+      - 'traefik.http.routers.pihole.middlewares=authelia@docker'
+      - 'traefik.http.services.pihole.loadbalancer.server.port=80'
+
 networks:
   traefik-network:
     external: true
@@ -100,3 +150,5 @@ x-dockge:
     - http://${SERVER_IP}:9091
     - https://traefik.${DOMAIN}
     - http://${SERVER_IP}:8080
+    - https://pihole.${DOMAIN}
+    - http://${SERVER_IP}:53
