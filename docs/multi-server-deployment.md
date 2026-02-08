@@ -14,6 +14,12 @@ This guide explains the **current multi-server architecture** where:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
+│                    🌐 PUBLIC INTERNET                            │
+│  HTTPS Traffic (Ports 80/443 forwarded from router)             │
+└─────────────────────┬───────────────────────────────────────────┘
+                      │
+                      ▼ HTTPS (SSL/TLS)
+┌─────────────────────────────────────────────────────────────────┐
 │                         CORE SERVER                              │
 │  ┌────────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────┐ │
 │  │  DuckDNS   │  │ Traefik  │  │ Authelia │  │ Core Services │ │
@@ -27,8 +33,8 @@ This guide explains the **current multi-server architecture** where:
 │          │  • Remote    │  (YAML files)│                        │
 └──────────┼──────────────┼──────────────┼────────────────────────┘
            │              │              │
-    Ports  │  HTTP/HTTPS  │              │
-    80/443 │              │              │
+           │ HTTP (internal network)     │
+           │ No SSL/TLS encryption       │
            ▼              ▼              ▼
     ┌─────────────────────────────────────────┐
     │       ADDITIONAL SERVER (e.g., Pi)      │
@@ -42,6 +48,12 @@ This guide explains the **current multi-server architecture** where:
                     Direct port access
                     (no local reverse proxy)
 ```
+
+### Traffic Flow Summary
+
+1. **Internet → Core**: HTTPS (ports 80/443 forwarded from router)
+2. **Core → Additional**: HTTP (internal network, no encryption needed)
+3. **Additional → Core**: HTTP (direct response to core Traefik)
 
 # Deployment Process
 
@@ -71,21 +83,26 @@ From Dockge you can start/stop any of the stacks or containers.
 
 **No Port Forwarding Required**:
 - Services are accessed through core server
-- Additional servers are "headless" - no external ports needed
 
 ## How It Works
 
 ### Traffic Flow
 
-1. **User accesses** `https://sonarr.yourdomain.duckdns.org`
-2. **Core Traefik** receives request:
+1. **User accesses** `https://sonarr.yourdomain.duckdns.org` (HTTPS from internet)
+2. **Core Traefik** receives HTTPS request:
    - Checks Authelia for authentication (SSO)
-   - Routes to additional server: `http://192.168.1.100:8989` (via YAML config)
+   - Routes to additional server: `http://192.168.1.100:8989` (HTTP internally)
 3. **Additional server** receives direct HTTP request:
    - Service container receives request on exposed port
    - If stopped, Sablier starts the container
    - Shows loading page while container starts
-4. **Service responds** directly back to core Traefik, then to user
+4. **Service responds** directly back to core Traefik via HTTP, then HTTPS to user
+
+### Key Points
+
+- **External Traffic**: Always HTTPS (SSL/TLS encrypted)
+- **Internal Traffic**: Always HTTP (no encryption needed on local network)
+- **No Double Encryption**: Core Traefik terminates SSL, forwards plain HTTP internally
 
 ### Service Registration
 
