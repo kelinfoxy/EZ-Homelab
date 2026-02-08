@@ -10,7 +10,7 @@ services:
     restart: unless-stopped
     command:
       - '--api.dashboard=true'
-      - '--api.insecure=false'
+      - '--api.insecure=true'  # Allow API access on port 8080
       - '--providers.docker=true'
       - '--providers.docker.exposedbydefault=false'
       - '--providers.docker.network=traefik-network'
@@ -23,6 +23,8 @@ services:
     environment:
       - TZ=America/New_York
     ports:
+      - '80:80'    # HTTP entrypoint
+      - '443:443'  # HTTPS entrypoint
       - '8080:8080'  # Dashboard (optional, for debugging)
     volumes:
       - ./config:/config
