@@ -1676,76 +1676,54 @@ deploy_remote_server() {
     log_success "SSH key authentication setup complete"
     echo ""
     
-    # Step 2: Fetch shared CA and setup Docker TLS
-    log_info "Step 2: Fetching shared CA from core server..."
-    log_info "Using SSH key: $SSH_KEY_PATH"
-    if ! setup_multi_server_tls; then
-        log_error "Failed to setup multi-server TLS"
-        return 1
-    fi
-    echo ""
-    
-    # Step 3: Create required Docker networks
-    log_info "Step 3: Creating required Docker networks..."
-    docker network create traefik-network 2>/dev/null && log_success "Created traefik-network" || log_info "traefik-network already exists"
+    # Step 2: Create required Docker networks
+    log_info "Step 2: Creating required Docker networks..."
     docker network create homelab-network 2>/dev/null && log_success "Created homelab-network" || log_info "homelab-network already exists"
     echo ""
     
-    # Step 4: Install envsubst if not present
+    # Step 3: Install envsubst if not present
     if ! command -v envsubst &> /dev/null; then
         log_info "Installing envsubst (gettext-base)..."
         sudo apt-get update -qq && sudo apt-get install -y gettext-base >/dev/null 2>&1
         log_success "envsubst installed"
     fi
     
-    # Step 5: Copy all stacks to remote server
-    log_info "Step 5: Copying all stacks to remote server..."
+    # Step 4: Copy all stacks to remote server
+    log_info "Step 4: Copying all stacks to remote server..."
     copy_all_stacks_for_remote
     echo ""
     
-    # Step 5.5: Configure remote services with server-specific subdomains
-    log_info "Step 5.5: Configuring server-specific routing..."
-    configure_remote_server_routing
-    echo ""
-    
-    # Step 6: Deploy Dockge
-    log_info "Step 6: Deploying Dockge..."
+    # Step 5: Deploy Dockge
+    log_info "Step 5: Deploying Dockge..."
     deploy_dockge
     echo ""
     
-    # Step 7: Deploy Traefik (local instance for container discovery)
-    log_info "Step 7: Deploying local Traefik..."
-    deploy_traefik_stack
-    echo ""
-    
-    # Step 8: Deploy Sablier stack for local lazy loading
-    log_info "Step 8: Deploying Sablier stack..."
+    # Step 6: Deploy Sablier stack for local lazy loading
+    log_info "Step 6: Deploying Sablier stack..."
     deploy_sablier_stack
     echo ""
     
-    # Step 9: Deploy Infrastructure stack
-    log_info "Step 9: Deploying Infrastructure stack..."
+    # Step 7: Deploy Infrastructure stack
+    log_info "Step 7: Deploying Infrastructure stack..."
     deploy_infrastructure
     echo ""
     
-    # Step 10: Register this remote server with core Traefik
-    log_info "Step 10: Registering with core Traefik..."
+    # Step 8: Register this remote server with core Traefik
+    log_info "Step 8: Registering with core Traefik..."
     register_remote_server_with_core
     echo ""
     
     log_success "Remote server deployment complete!"
     echo ""
     echo "This server is now configured to:"
-    echo "  - Accept Docker API connections via TLS (port 2376)"
-    echo "  - Run local Traefik for container discovery"
+    echo "  - Run Dockge for local stack management"
     echo "  - Run Sablier for local container lazy loading"
-    echo "  - Run infrastructure services"
-    echo "  - Have its containers discovered by core Traefik"
+    echo "  - Run infrastructure services with exposed ports"
+    echo "  - Be accessible via core Traefik routes"
     echo ""
-    echo "Services deployed on this server will automatically:"
-    echo "  - Be discovered by Traefik on the core server"
-    echo "  - Get SSL certificates via core Traefik"
-    echo "  - Be accessible at: https://servicename.${DOMAIN}"
+    echo "Services deployed on this server are accessible at:"
+    echo "  - Via core Traefik: https://servicename.${SERVER_HOSTNAME}.${DOMAIN}"
+    echo "  - Via direct IP: http://${SERVER_IP}:PORT"
     echo ""
     echo "Additional stacks available in /opt/stacks/ (not started):"
     echo "  - dashboards, media, media-management, monitoring, productivity"
@@ -1968,7 +1946,7 @@ copy_all_stacks_for_remote() {
     sudo chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks
     sudo chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/dockge
     
-    # List of stacks to copy (all except core and dockge - dockge is handled separately)
+    # List of stacks to copy (all except core, dockge, and traefik)
     local stacks=(
         "alternatives"
         "dashboards"
@@ -1979,7 +1957,6 @@ copy_all_stacks_for_remote() {
         "monitoring"
         "productivity"
         "sablier"
-        "traefik"
         "transcoders"
         "utilities"
         "vpn"
