@@ -1,6 +1,6 @@
-# How Your AI Homelab Works
+# How Your EZ Homelab Works
 
-Welcome to your AI-powered homelab! This guide explains how all the components work together to create a production-ready, self-managing infrastructure. Don't worry if it seems complex at first - the AI assistant handles most of the technical details for you.
+This guide explains how all the components work together to create your homelab infrastructure. 
 
 ## Quick Overview
 
@@ -29,8 +29,7 @@ EZ-Homelab supports two deployment architectures:
 - **Core Server**: Handles external traffic (ports 80/443), runs DuckDNS/Traefik/Authelia
 - **Remote Servers**: Run their own Traefik/Sablier for local container management
 - Unified domain access: All services through `service.yourdomain.com`
-- Servers communicate via HTTP/HTTPS (no Docker API TLS needed)
-- Ideal for: Raspberry Pi clusters, NAS + desktop, distributed workloads
+- Servers communicate via HTTP/HTTPS
 
 **This guide covers both architectures**, with multi-server notes where relevant.
 
@@ -40,7 +39,6 @@ EZ-Homelab supports two deployment architectures:
 Your central hub for accessing all services. Think of it as the "start menu" for your homelab.
 - **What it does**: Shows all your deployed services with quick links
 - **AI Integration**: The AI can automatically add new services and configure widgets
-- **Customization**: Add weather, system stats, and service-specific widgets
 - **Configuration**: [docker-compose/dashboards/](docker-compose/dashboards/) | [service-docs/homepage.md](service-docs/homepage.md)
 
 ### 🐳 **Dockge** (`https://dockge.servername.yourdomain.duckdns.org`)
@@ -48,14 +46,14 @@ Your primary management interface for deploying and managing services.
 - **What it does**: Web-based Docker Compose manager
 - **Stacks**: Groups services into logical units (media, monitoring, productivity)
 - **One-Click Deploy**: Upload compose files and deploy instantly
-- **Multi-Server**: Deploy on core or remote servers from one interface
+- **Dockge Agents**: Deploy on core or remote servers from one interface
 - **Configuration**: [docker-compose/dockge/](docker-compose/dockge/) | [service-docs/dockge.md](service-docs/dockge.md)
 
 ### 🔐 **Authelia** (`https://auth.yourdomain.duckdns.org`)
 Your security gatekeeper that protects sensitive services.
 - **What it does**: Single sign-on (SSO) authentication
 - **Security**: Two-factor authentication, session management
-- **Smart Bypass**: Automatically bypasses auth for media apps (Plex, Jellyfin)
+- **Smart Bypass**: Bypasses auth for select apps (Plex, Jellyfin)
 - **Multi-Server**: Core server only; protects all services across all servers
 - **Configuration**: [docker-compose/core/](docker-compose/core/) | [service-docs/authelia.md](service-docs/authelia.md)
 
@@ -63,8 +61,8 @@ Your security gatekeeper that protects sensitive services.
 Your intelligent traffic director and SSL certificate manager.
 - **What it does**: Reverse proxy that routes web traffic to the right services
 - **SSL**: Automatically obtains and renews free HTTPS certificates
-- **Labels**: Services "advertise" themselves to Traefik via Docker labels
-- **Multi-Server**: Core uses multi-provider (labels + YAML files); remote servers use labels only
+- **Labels**: Services on core server "advertise" themselves to Traefik via Docker labels
+- **Multi-Server**: Remote servers use yaml (on the core server) only
 - **Configuration**: [docker-compose/core/](docker-compose/core/) | [service-docs/traefik.md](service-docs/traefik.md)
 
 ### 🦆 **DuckDNS**
@@ -115,7 +113,7 @@ Your download traffic protector.
 **Multi-Server:**
 - **Core Server Ports**: Only core forwards 80/443 to internet
 - **Remote Servers**: No port forwarding needed; accessed through core
-- **Traffic Flow**: Internet → Core Traefik → Remote Traefik → Service
+- **Traffic Flow**: Internet → Core Traefik → Service
 - **SSL**: Core handles all SSL termination
 - **Unified Domain**: `service.yourdomain.com` works for all servers
 
@@ -127,6 +125,9 @@ Your download traffic protector.
 - **Backup**: Included in automatic backups
 
 ### Media & Large Data
+
+>You may want additional drives for large downloads & media libraries
+
 - **Location**: `/mnt/media/`, `/mnt/downloads/`
 - **Purpose**: Movies, TV shows, music, downloads
 - **Performance**: Direct mounted drives for speed

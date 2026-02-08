@@ -5,7 +5,7 @@ This guide explains how to use Traefik and Authelia to proxy external services (
 ## Overview
 
 Traefik can proxy services that aren't running in Docker, such as:
-- Home Assistant on a Raspberry Pi
+Yea- Home Assistant on a Raspberry Pi
 - Other physical servers on your network
 - Services running on different machines
 - Any HTTP/HTTPS service accessible via IP:PORT
@@ -14,7 +14,7 @@ Traefik can proxy services that aren't running in Docker, such as:
 
 ### Step 1: Create Configuration File
 
-Create a YAML file in `/opt/stacks/traefik/dynamic/` named `external-hosts.yml`:
+Create a YAML file in `/opt/stacks/traefik/dynamic/` named `external-host-servername.yml` where servername is the remove server's host name:
 
 ```yaml
 http:
@@ -68,26 +68,7 @@ Visit `https://ha.yourdomain.duckdns.org` - Traefik will:
 2. Proxy the request to `http://192.168.1.50:8123`
 3. Return the response with proper SSL
 4. (Optionally) Require Authelia login if middleware is configured
-
-## Common External Services to Proxy
-
-### Home Assistant (Raspberry Pi)
-```yaml
-homeassistant-pi:
-  rule: "Host(`ha.yourdomain.duckdns.org`)"
-  service: http://192.168.1.50:8123
-  # No Authelia - HA has its own auth
-```
-
-### Router/Firewall Admin Panel
-```yaml
-router-admin:
-  rule: "Host(`router.yourdomain.duckdns.org`)"
-  service: http://192.168.1.1:80
-  middlewares:
-    - authelia@docker  # Add SSO protection
-```
-
+``
 ## Advanced Configuration
 
 ### WebSocket Support
@@ -170,47 +151,6 @@ access_control:
       policy: two_factor
 ```
 
-## DNS Configuration
-
-Ensure your DuckDNS domain points to your public IP:
-
-1. DuckDNS container automatically updates your IP
-2. Port forward 80 and 443 to your Traefik server
-3. All subdomains (`*.yourdomain.duckdns.org`) point to same IP
-4. Traefik routes based on Host header
-
-## Troubleshooting
-
-### Check Traefik Routing
-```bash
-# View active routes
-docker logs traefik | grep "Creating router"
-
-# Check if external host route is loaded
-docker logs traefik | grep homeassistant
-
-# View Traefik dashboard
-# Visit: https://traefik.yourdomain.duckdns.org
-```
-
-### Test Without SSL
-```bash
-# Temporarily test direct connection
-curl -H "Host: ha.yourdomain.duckdns.org" http://localhost/
-```
-
-### Check Authelia Logs
-```bash
-cd /opt/stacks/authelia
-docker compose logs -f authelia
-```
-
-### Verify External Service
-```bash
-# Test that external service is reachable
-curl http://192.168.1.50:8123
-```
-
 ## AI Management
 
 The AI can manage external host proxying by:
@@ -218,8 +158,7 @@ The AI can manage external host proxying by:
 1. **Reading existing configurations**: Parse `/opt/stacks/traefik/dynamic/*.yml`
 2. **Adding new routes**: Create/update YAML files in dynamic directory
 3. **Configuring Authelia rules**: Edit `configuration.yml` for bypass/require auth
-4. **Testing connectivity**: Suggest verification steps
-5. **Adding Homepage entries**: Update dashboard configuration
+4. **Adding Homepage entries**: Update dashboard configuration
 
 Example AI prompt:
 > "Add proxying for my Unifi Controller at 192.168.1.5:8443 with Authelia protection"
@@ -231,25 +170,16 @@ AI will:
 4. Add to Homepage dashboard
 5. Provide testing instructions
 
-## Security Best Practices
-
-1. **Always use Authelia** for admin interfaces (routers, NAS, etc.)
-2. **Bypass Authelia** only for services with their own auth (HA, Plex)
-3. **Use IP whitelist** for highly sensitive services
-4. **Enable two-factor** for critical infrastructure
-5. **Monitor access logs** in Traefik and Authelia
-6. **Keep services updated** - Traefik, Authelia, and external services
-
 ## Example: Complete External Host Setup
 
 Let's proxy a Raspberry Pi Home Assistant:
 
-1. **Traefik configuration** (`/opt/stacks/traefik/dynamic/raspberry-pi.yml`):
+1. **Traefik configuration** (`/opt/stacks/traefik/dynamic/extarnal-host-homeassistant.yml`):
 ```yaml
 http:
   routers:
     ha-pi:
-      rule: "Host(`ha.yourdomain.duckdns.org`)"
+      rule: "Host(`homeassistant.yourdomain.duckdns.org`)"
       entryPoints:
         - websecure
       service: ha-pi
@@ -275,7 +205,7 @@ http:
 ```yaml
 access_control:
   rules:
-    - domain: ha.yourdomain.duckdns.org
+    - domain: homeassistant.yourdomain.duckdns.org
       policy: bypass
 ```
 
@@ -284,7 +214,7 @@ access_control:
 - Home Automation:
     - Home Assistant (Pi):
         icon: home-assistant.png
-        href: https://ha.yourdomain.duckdns.org
+        href: https://homeassistant.yourdomain.duckdns.org
         description: HA on Raspberry Pi
         ping: 192.168.1.50
         widget:
