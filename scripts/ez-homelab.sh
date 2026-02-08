@@ -1693,23 +1693,28 @@ deploy_remote_server() {
     copy_all_stacks_for_remote
     echo ""
     
-    # Step 5: Deploy Dockge
-    log_info "Step 5: Deploying Dockge..."
+    # Step 5: Configure services for additional server (remove Traefik labels)
+    log_info "Step 5: Configuring services for additional server..."
+    configure_remote_server_routing
+    echo ""
+    
+    # Step 6: Deploy Dockge
+    log_info "Step 6: Deploying Dockge..."
     deploy_dockge
     echo ""
     
-    # Step 6: Deploy Sablier stack for local lazy loading
-    log_info "Step 6: Deploying Sablier stack..."
+    # Step 7: Deploy Sablier stack for local lazy loading
+    log_info "Step 7: Deploying Sablier stack..."
     deploy_sablier_stack
     echo ""
     
-    # Step 7: Deploy Infrastructure stack
-    log_info "Step 7: Deploying Infrastructure stack..."
+    # Step 8: Deploy Infrastructure stack
+    log_info "Step 8: Deploying Infrastructure stack..."
     deploy_infrastructure
     echo ""
     
-    # Step 8: Register this remote server with core Traefik
-    log_info "Step 8: Registering with core Traefik..."
+    # Step 9: Register this remote server with core Traefik
+    log_info "Step 9: Registering with core Traefik..."
     register_remote_server_with_core
     echo ""
     
@@ -1869,71 +1874,37 @@ deploy_sablier_stack() {
     log_success "Sablier stack deployed at $sablier_dir"
 }
 
-# Disable Traefik routing on remote server services
-# Remote services are accessed through core Traefik via docker provider
+# Remove Traefik configuration from additional server services
+# Additional servers don't run local Traefik - routing is handled by core server
 configure_remote_server_routing() {
-    debug_log "Configuring server-specific routing for remote services"
+    debug_log "Removing Traefik labels from additional server services"
     
-    log_info "Setting up server-specific subdomains for infrastructure services..."
+    log_info "Configuring services for additional server (removing Traefik labels)..."
     
-    local server_name="$SERVER_HOSTNAME"
-    
-    # Update dockge with server-specific subdomain and HTTP-only configuration
+    # Remove Traefik labels and traefik-network from dockge
     if [ -f "/opt/dockge/docker-compose.yml" ]; then
-        sed -i "s/Host(\`dockge\.\${DOMAIN}\`)/Host(\`dockge.${server_name}.kelinreij.duckdns.org\`)/" /opt/dockge/docker-compose.yml 2>/dev/null
-        sed -i "s/'traefik.enable=false'/'traefik.enable=true'/" /opt/dockge/docker-compose.yml 2>/dev/null
-        # Change to web entrypoint (HTTP-only for remote servers)
-        sed -i "s/entrypoints=websecure/entrypoints=web/" /opt/dockge/docker-compose.yml 2>/dev/null
-        # Remove TLS cert resolver (not needed for remote)
-        sed -i "/traefik.http.routers.dockge.tls.certresolver/d" /opt/dockge/docker-compose.yml 2>/dev/null
-        # Remove authelia middleware (not available on remote)
-        sed -i "/traefik.http.routers.dockge.middlewares=authelia@docker/d" /opt/dockge/docker-compose.yml 2>/dev/null
-        log_info "✓ Dockge: dockge.${server_name}.kelinreij.duckdns.org (HTTP)"
+        # Remove all traefik.* labels
+        sed -i "/- 'traefik\./d" /opt/dockge/docker-compose.yml 2>/dev/null
+        # Remove traefik-network from networks section
+        sed -i "/- traefik-network/d" /opt/dockge/docker-compose.yml 2>/dev/null
+        # Remove traefik-network from external networks
+        sed -i "/traefik-network:/,/external: true/d" /opt/dockge/docker-compose.yml 2>/dev/null
+        log_info "✓ Dockge: Traefik labels removed (accessible via port 5001)"
     fi
     
-    # Update infrastructure services (dozzle, glances) with HTTP-only configuration
+    # Remove Traefik labels and traefik-network from infrastructure services
     if [ -f "/opt/stacks/infrastructure/docker-compose.yml" ]; then
-        # Update hostnames
-        sed -i "s/Host(\`dozzle\.\${DOMAIN}\`)/Host(\`dozzle.${server_name}.kelinreij.duckdns.org\`)/" /opt/stacks/infrastructure/docker-compose.yml 2>/dev/null
-        sed -i "s/Host(\`glances\.\${DOMAIN}\`)/Host(\`glances.${server_name}.kelinreij.duckdns.org\`)/" /opt/stacks/infrastructure/docker-compose.yml 2>/dev/null
-        
-        # Change to web entrypoint (HTTP-only for remote servers)
-        sed -i "s/traefik.http.routers.dozzle.entrypoints=websecure/traefik.http.routers.dozzle.entrypoints=web/" /opt/stacks/infrastructure/docker-compose.yml 2>/dev/null
-        sed -i "s/traefik.http.routers.glances.entrypoints=websecure/traefik.http.routers.glances.entrypoints=web/" /opt/stacks/infrastructure/docker-compose.yml 2>/dev/null
-        
-        # Remove TLS configuration
-        sed -i "/traefik.http.routers.dozzle.tls=/d" /opt/stacks/infrastructure/docker-compose.yml 2>/dev/null
-        sed -i "/traefik.http.routers.glances.tls=/d" /opt/stacks/infrastructure/docker-compose.yml 2>/dev/null
-        
-        log_info "✓ Dozzle: dozzle.${server_name}.kelinreij.duckdns.org (HTTP)"
-        log_info "✓ Glances: glances.${server_name}.kelinreij.duckdns.org (HTTP)"
-        
-        # Disable sablier routing (no web UI)
-        sed -i "s/'traefik.enable=true'/'traefik.enable=false'/g" /opt/stacks/sablier/docker-compose.yml 2>/dev/null
-        log_info "✓ Sablier: Traefik disabled (no web UI)"
+        # Remove all traefik.* and sablier.* labels
+        sed -i "/- 'traefik\./d" /opt/stacks/infrastructure/docker-compose.yml 2>/dev/null
+        sed -i "/- 'sablier\./d" /opt/stacks/infrastructure/docker-compose.yml 2>/dev/null
+        # Remove traefik-network from networks sections
+        sed -i "/- traefik-network/d" /opt/stacks/infrastructure/docker-compose.yml 2>/dev/null
+        # Remove traefik-network from external networks (last occurrence)
+        sed -i "/traefik-network:/,/external: true/d" /opt/stacks/infrastructure/docker-compose.yml 2>/dev/null
+        log_info "✓ Infrastructure: Traefik labels removed (accessible via direct ports)"
     fi
     
-    # Update Traefik dashboard route to use HTTP
-    if [ -f "/opt/stacks/traefik/dynamic/routes.yml" ]; then
-        cat > "/opt/stacks/traefik/dynamic/routes.yml" <<EOF
-# Traefik Dynamic Routes for Remote Server
-# Auto-generated by EZ-Homelab
-#
-# This file is watched by Traefik and reloaded automatically
-# Add custom routes here if needed
-
-http:
-  routers:
-    traefik-dashboard:
-      rule: "Host(\`traefik.${server_name}.kelinreij.duckdns.org\`)"
-      entryPoints:
-        - web
-      service: api@internal
-EOF
-        log_info "✓ Traefik Dashboard: traefik.${server_name}.kelinreij.duckdns.org (HTTP)"
-    fi
-    
-    log_success "Server-specific routing configured (HTTP-only for remote servers)"
+    log_success "Services configured for additional server - routing via core Traefik"
 }
 
 # Copy all stacks for remote server (except core)

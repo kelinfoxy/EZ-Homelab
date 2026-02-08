@@ -22,6 +22,7 @@ services:
     restart: unless-stopped
     networks:
       - homelab-network
+      - traefik-network
     ports:
       - '5001:5001'  # Optional: direct access
     volumes:
@@ -35,7 +36,16 @@ services:
     labels:
       - 'homelab.category=infrastructure'
       - 'homelab.description=Docker Compose stack manager'
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=traefik-network'
+      - 'traefik.http.routers.dockge.rule=Host(`dockge.${DOMAIN}`)'
+      - 'traefik.http.routers.dockge.entrypoints=websecure'
+      - 'traefik.http.routers.dockge.tls.certresolver=letsencrypt'
+      - 'traefik.http.routers.dockge.middlewares=authelia@docker'
+      - 'traefik.http.services.dockge.loadbalancer.server.port=5001'
 
 networks:
   homelab-network:
+    external: true
+  traefik-network:
     external: true
