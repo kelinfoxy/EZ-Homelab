@@ -1679,6 +1679,7 @@ deploy_remote_server() {
     # Step 2: Create required Docker networks
     log_info "Step 2: Creating required Docker networks..."
     docker network create homelab-network 2>/dev/null && log_success "Created homelab-network" || log_info "homelab-network already exists"
+    docker network create traefik-network 2>/dev/null && log_success "Created traefik-network" || log_info "traefik-network already exists"
     echo ""
     
     # Step 3: Install envsubst if not present
@@ -1883,12 +1884,12 @@ configure_remote_server_routing() {
     
     # Remove Traefik labels and traefik-network from dockge
     if [ -f "/opt/dockge/docker-compose.yml" ]; then
-        # Remove all traefik.* labels
+        # Remove all traefik.* labels (lines containing "- 'traefik.")
         sed -i "/- 'traefik\./d" /opt/dockge/docker-compose.yml 2>/dev/null
-        # Remove traefik-network from networks section
-        sed -i "/- traefik-network/d" /opt/dockge/docker-compose.yml 2>/dev/null
-        # Remove traefik-network from external networks
-        sed -i "/traefik-network:/,/external: true/d" /opt/dockge/docker-compose.yml 2>/dev/null
+        # Remove traefik-network from service networks section (line with "- traefik-network")
+        sed -i "/^      - traefik-network$/d" /opt/dockge/docker-compose.yml 2>/dev/null
+        # Remove external network definition (traefik-network: and next line)
+        sed -i '/^  traefik-network:$/,/^    external: true$/d' /opt/dockge/docker-compose.yml 2>/dev/null
         log_info "✓ Dockge: Traefik labels removed (accessible via port 5001)"
     fi
     
@@ -1897,10 +1898,10 @@ configure_remote_server_routing() {
         # Remove all traefik.* and sablier.* labels
         sed -i "/- 'traefik\./d" /opt/stacks/infrastructure/docker-compose.yml 2>/dev/null
         sed -i "/- 'sablier\./d" /opt/stacks/infrastructure/docker-compose.yml 2>/dev/null
-        # Remove traefik-network from networks sections
-        sed -i "/- traefik-network/d" /opt/stacks/infrastructure/docker-compose.yml 2>/dev/null
-        # Remove traefik-network from external networks (last occurrence)
-        sed -i "/traefik-network:/,/external: true/d" /opt/stacks/infrastructure/docker-compose.yml 2>/dev/null
+        # Remove traefik-network from service networks sections
+        sed -i "/^      - traefik-network$/d" /opt/stacks/infrastructure/docker-compose.yml 2>/dev/null
+        # Remove external network definition
+        sed -i '/^  traefik-network:$/,/^    external: true$/d' /opt/stacks/infrastructure/docker-compose.yml 2>/dev/null
         log_info "✓ Infrastructure: Traefik labels removed (accessible via direct ports)"
     fi
     

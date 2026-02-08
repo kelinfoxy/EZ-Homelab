@@ -38,7 +38,7 @@ services:
       - 'homelab.description=Docker Compose stack manager'
       - 'traefik.enable=true'
       - 'traefik.docker.network=traefik-network'
-      - 'traefik.http.routers.dockge.rule=Host(`dockge.${DOMAIN}`)'
+      - 'traefik.http.routers.dockge.rule=Host(`dockge.${SERVER_HOSTNAME}.${DOMAIN}`)'
       - 'traefik.http.routers.dockge.entrypoints=websecure'
       - 'traefik.http.routers.dockge.tls.certresolver=letsencrypt'
       - 'traefik.http.routers.dockge.middlewares=authelia@docker'
