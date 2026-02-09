@@ -1828,10 +1828,10 @@ register_remote_server_with_core() {
         add_remote_server_to_traefik "${SERVER_IP}" "${SERVER_HOSTNAME}"
         
         # Verify files were created
-        if [ -f "/opt/stacks/core/traefik/dynamic/docker-provider-${SERVER_HOSTNAME}.yml" ]; then
-            echo "SUCCESS: docker-provider file created"
+        if [ -f "/opt/stacks/core/traefik/dynamic/${SERVER_HOSTNAME}-server-routes.yml" ]; then
+            echo "SUCCESS: server routes file created"
         else
-            echo "ERROR: docker-provider file not created"
+            echo "ERROR: server routes file not created"
             exit 1
         fi
         
@@ -1858,7 +1858,7 @@ EOF
     if [ $ssh_exit_code -eq 0 ] && echo "$ssh_output" | grep -q "SUCCESS: Registration complete"; then
         log_success "Successfully registered with core server"
         log_info "Files created on core server:"
-        echo "  - /opt/stacks/core/traefik/dynamic/docker-provider-${SERVER_HOSTNAME}.yml"
+        echo "  - /opt/stacks/core/traefik/dynamic/${SERVER_HOSTNAME}-server-routes.yml"
         echo "  - /opt/stacks/core/traefik/dynamic/sablier-middleware-${SERVER_HOSTNAME}.yml"
         return 0
     else

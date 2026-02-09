@@ -286,6 +286,16 @@ add_remote_server_to_traefik() {
         return 1
     fi
     
+    # Load environment to get DOMAIN variable
+    if [ -f "$HOME/EZ-Homelab/.env" ]; then
+        source "$HOME/EZ-Homelab/.env" || load_env_file_safely "$HOME/EZ-Homelab/.env"
+    elif [ -f "/opt/stacks/core/.env" ]; then
+        source "/opt/stacks/core/.env" || load_env_file_safely "/opt/stacks/core/.env"
+    fi
+    
+    # Use DOMAIN variable or fallback to a default
+    local domain="${DOMAIN:-example.com}"
+    
     local traefik_dynamic_dir="/opt/stacks/core/traefik/dynamic"
     
     # Create dynamic directory if it doesn't exist
@@ -308,7 +318,7 @@ add_remote_server_to_traefik() {
 http:
   routers:
     dockge-${server_hostname}:
-      rule: "Host(\`dockge.${server_hostname}.kelinreij.duckdns.org\`)"
+      rule: "Host(\`dockge.${server_hostname}.${domain}\`)"
       service: dockge-${server_hostname}-service
       entrypoints:
         - websecure
@@ -316,7 +326,7 @@ http:
         certResolver: letsencrypt
     
     glances-${server_hostname}:
-      rule: "Host(\`glances.${server_hostname}.kelinreij.duckdns.org\`)"
+      rule: "Host(\`glances.${server_hostname}.${domain}\`)"
       service: glances-${server_hostname}-service
       entrypoints:
         - websecure
@@ -324,7 +334,7 @@ http:
         certResolver: letsencrypt
     
     dozzle-${server_hostname}:
-      rule: "Host(\`dozzle.${server_hostname}.kelinreij.duckdns.org\`)"
+      rule: "Host(\`dozzle.${server_hostname}.${domain}\`)"
       service: dozzle-${server_hostname}-service
       entrypoints:
         - websecure
@@ -332,7 +342,7 @@ http:
         certResolver: letsencrypt
     
     traefik-${server_hostname}:
-      rule: "Host(\`traefik.${server_hostname}.kelinreij.duckdns.org\`)"
+      rule: "Host(\`traefik.${server_hostname}.${domain}\`)"
       service: traefik-${server_hostname}-service
       entrypoints:
         - websecure
