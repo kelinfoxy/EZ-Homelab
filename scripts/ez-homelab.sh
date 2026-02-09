@@ -2355,6 +2355,9 @@ main() {
 
     echo ""
 
+    # Prepare deployment environment (handles special cases like prerequisites installation)
+    prepare_deployment
+
     # Handle remote server deployment separately
     if [ "$DEPLOY_REMOTE_SERVER" = true ]; then
         # Prompt for configuration values
