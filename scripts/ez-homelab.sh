@@ -1669,12 +1669,52 @@ deploy_remote_server() {
     log_info "Step 1: Setting up SSH key authentication to core server..."
     log_info "Using ACTUAL_USER=$ACTUAL_USER for SSH key path"
     log_info "Target: ${CORE_SERVER_USER}@${CORE_SERVER_IP}"
-    if ! setup_ssh_key_to_core; then
-        log_error "Failed to setup SSH key authentication"
-        return 1
-    fi
-    log_success "SSH key authentication setup complete"
-    echo ""
+    
+    # Retry loop for SSH setup
+    while true; do
+        if setup_ssh_key_to_core; then
+            log_success "SSH key authentication setup complete"
+            echo ""
+            break
+        else
+            log_error "Failed to setup SSH key authentication"
+            echo ""
+            echo "Options:"
+            echo "  1) Retry SSH setup"
+            echo "  2) Skip SSH setup (manual configuration required)"
+            echo "  3) Return to main menu"
+            echo ""
+            read -p "Choose an option (1-3): " ssh_retry_choice
+            
+            case $ssh_retry_choice in
+                1)
+                    echo ""
+                    log_info "Retrying SSH setup..."
+                    continue
+                    ;;
+                2)
+                    echo ""
+                    log_warning "Skipping SSH setup. You will need to manually configure SSH keys."
+                    log_info "Manual steps:"
+                    echo "  1. Generate SSH key: ssh-keygen -t ed25519 -f ~/.ssh/ez-homelab-${SERVER_HOSTNAME}"
+                    echo "  2. Copy to core: ssh-copy-id -i ~/.ssh/ez-homelab-${SERVER_HOSTNAME}.pub ${CORE_SERVER_USER}@${CORE_SERVER_IP}"
+                    echo "  3. Test: ssh -i ~/.ssh/ez-homelab-${SERVER_HOSTNAME} ${CORE_SERVER_USER}@${CORE_SERVER_IP}"
+                    echo ""
+                    read -p "Press Enter to continue deployment (or Ctrl+C to exit)..."
+                    # Set a minimal SSH_KEY_PATH for functions that need it
+                    export SSH_KEY_PATH="/home/$ACTUAL_USER/.ssh/ez-homelab-${SERVER_HOSTNAME}"
+                    break
+                    ;;
+                3)
+                    log_info "Returning to main menu..."
+                    return 1
+                    ;;
+                *)
+                    log_error "Invalid option. Please choose 1, 2, or 3."
+                    ;;
+            esac
+        fi
+    done
     
     # Step 2: Create required Docker networks
     log_info "Step 2: Creating required Docker networks..."
