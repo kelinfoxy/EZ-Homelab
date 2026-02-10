@@ -232,12 +232,12 @@ localize_yml_file() {
         fi
         
         # Use Python to process only labels and x-dockge sections
-        python3 << 'PYEOF' "$file_path"
+        COMPOSE_FILE_PATH="$file_path" python3 << 'PYEOF'
 import sys
 import re
 import os
 
-file_path = sys.argv[1]
+file_path = os.environ.get('COMPOSE_FILE_PATH')
 
 with open(file_path, 'r') as f:
     lines = f.readlines()
