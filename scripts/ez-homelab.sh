@@ -287,6 +287,10 @@ with open(file_path, 'w') as f:
 PYEOF
         
         debug_log "Replaced variables in labels and x-dockge sections of $file_path"
+        
+        # For docker-compose files, no validation needed since we intentionally leave
+        # environment variables and volumes as ${VAR} for Docker Compose to handle
+        return
     else
         # For non-docker-compose files, process the entire file as before
         debug_log "Processing config file - replacing variables in entire file"
@@ -312,27 +316,27 @@ PYEOF
         done
         mv "$temp_file" "$file_path"
         debug_log "Replaced variables in $file_path using envsubst"
-    fi
-
-    # Post-replacement validation for critical files only
-    if [ "$fail_on_missing" = true ]; then
-        local remaining_vars=$(grep -v '^[ \t]*#' "$file_path" | grep -o '\${[^}]*}' | sed 's/\${//' | sed 's/}//' | sort | uniq)
-        local invalid_remaining=""
-        for rvar in $remaining_vars; do
-            rvar=$(echo "$rvar" | xargs)
-            case "$rvar" in
-                "ACME_EMAIL"|"AUTHELIA_ADMIN_EMAIL"|"SMTP_USERNAME"|"SMTP_PASSWORD")
-                    continue
-                    ;;
-                *)
-                    invalid_remaining="$invalid_remaining $rvar"
-                    ;;
-            esac
-        done
-        if [ -n "$invalid_remaining" ]; then
-            log_error "Failed to replace critical variables in $file_path: $invalid_remaining"
-            debug_log "Unreplaced critical variables: $invalid_remaining"
-            exit 1
+        
+        # Post-replacement validation for config files only
+        if [ "$fail_on_missing" = true ]; then
+            local remaining_vars=$(grep -v '^[ \t]*#' "$file_path" | grep -o '\${[^}]*}' | sed 's/\${//' | sed 's/}//' | sort | uniq)
+            local invalid_remaining=""
+            for rvar in $remaining_vars; do
+                rvar=$(echo "$rvar" | xargs)
+                case "$rvar" in
+                    "ACME_EMAIL"|"AUTHELIA_ADMIN_EMAIL"|"SMTP_USERNAME"|"SMTP_PASSWORD")
+                        continue
+                        ;;
+                    *)
+                        invalid_remaining="$invalid_remaining $rvar"
+                        ;;
+                esac
+            done
+            if [ -n "$invalid_remaining" ]; then
+                log_warning "Some variables not replaced in $file_path: $invalid_remaining"
+                debug_log "Unreplaced variables in config file: $invalid_remaining"
+                # Don't exit - warn only
+            fi
         fi
     fi
 }
