@@ -104,7 +104,6 @@ services:
     container_name: pihole
     restart: unless-stopped
     networks:
-      - homelab-network
       - traefik-network
     ports:
       - '53:53/tcp'    # DNS TCP
