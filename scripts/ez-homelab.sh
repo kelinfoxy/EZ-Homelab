@@ -123,11 +123,82 @@ load_env_file_safely() {
 load_env_file() {
     load_env_file_safely "$REPO_DIR/.env"
 }
+
+# Generate .env.global file without comments and blank lines
+generate_env_global() {
+    local source_env="$1"
+    local target_env="$2"
+    
+    debug_log "Generating .env.global from $source_env to $target_env"
+    
+    if [ ! -f "$source_env" ]; then
+        log_error "Source .env file not found: $source_env"
+        return 1
+    fi
+    
+    # Remove comments and blank lines, keep only KEY=VALUE lines
+    grep -v "^[[:space:]]*#" "$source_env" | grep -v "^[[:space:]]*$" > "$target_env"
+    
+    debug_log ".env.global created at $target_env"
+}
+
+# Process stack .env.example file and populate with values from main .env
+process_stack_env() {
+    local stack_dir="$1"
+    local repo_stack_dir="$2"
+    
+    debug_log "Processing stack .env for $stack_dir"
+    
+    # Check if .env.example exists in repo
+    if [ ! -f "$repo_stack_dir/.env.example" ]; then
+        debug_log "No .env.example found for stack, skipping"
+        return 0
+    fi
+    
+    # Copy .env.example to stack directory
+    cp "$repo_stack_dir/.env.example" "$stack_dir/.env"
+    debug_log "Copied .env.example to $stack_dir/.env"
+    
+    # Replace values in the .env file using values from loaded environment
+    local temp_file="$stack_dir/.env.tmp"
+    
+    while IFS= read -r line || [ -n "$line" ]; do
+        # Skip comments and empty lines
+        if [[ $line =~ ^[[:space:]]*# ]] || [[ -z "$line" ]]; then
+            echo "$line" >> "$temp_file"
+            continue
+        fi
+        
+        # Parse KEY=VALUE
+        if [[ $line =~ ^([^=]+)=(.*)$ ]]; then
+            local key="${BASH_REMATCH[1]}"
+            local example_value="${BASH_REMATCH[2]}"
+            
+            # Trim whitespace from key
+            key=$(echo "$key" | xargs)
+            
+            # Get actual value from environment
+            local actual_value="${!key}"
+            
+            # If we have a value, use it; otherwise keep the example
+            if [ -n "$actual_value" ]; then
+                echo "$key=$actual_value" >> "$temp_file"
+            else
+                echo "$line" >> "$temp_file"
+            fi
+        else
+            echo "$line" >> "$temp_file"
+        fi
+    done < "$stack_dir/.env"
+    
+    mv "$temp_file" "$stack_dir/.env"
+    debug_log "Populated .env values for $stack_dir"
+}
+
+# Localize only labels and x-dockge sections in docker-compose files
 localize_yml_file() {
     local file_path="$1"
-    local fail_on_missing="${2:-false}"  # New parameter to control failure behavior
-    local missing_vars=""
-    local replaced_count=0
+    local fail_on_missing="${2:-false}"
 
     debug_log "localize_yml_file called for file: $file_path, fail_on_missing: $fail_on_missing"
 
@@ -147,11 +218,87 @@ localize_yml_file() {
         return
     fi
 
-    # Backup logic removed - handled before file copy in deploy functions
+    # Only process labels and x-dockge sections in docker-compose files
+    # For other config files (traefik, authelia), process the entire file
+    if [[ "$file_path" == */docker-compose.yml ]] || [[ "$file_path" == */docker-compose.yaml ]]; then
+        debug_log "Processing docker-compose file - replacing variables only in labels and x-dockge sections"
+        
+        if ! command -v python3 >/dev/null 2>&1; then
+            log_error "python3 is required for selective variable replacement"
+            if [ "$fail_on_missing" = true ]; then
+                exit 1
+            fi
+            return
+        fi
+        
+        # Use Python to process only labels and x-dockge sections
+        python3 << 'PYEOF' "$file_path"
+import sys
+import re
+import os
 
-    # Use envsubst to replace all ${VAR} with environment values, handling nested variables
-    if command -v envsubst >/dev/null 2>&1; then
-        # log_info "DEBUG: DEFAULT_EMAIL=$DEFAULT_EMAIL"
+file_path = sys.argv[1]
+
+with open(file_path, 'r') as f:
+    lines = f.readlines()
+
+output_lines = []
+in_labels = False
+in_xdockge = False
+indent_level = 0
+
+for i, line in enumerate(lines):
+    # Check if we're entering a labels section
+    if re.match(r'^(\s*)labels:\s*$', line):
+        in_labels = True
+        indent_level = len(re.match(r'^(\s*)', line).group(1))
+        output_lines.append(line)
+        continue
+    
+    # Check if we're entering x-dockge section
+    if re.match(r'^x-dockge:\s*$', line):
+        in_xdockge = True
+        indent_level = 0
+        output_lines.append(line)
+        continue
+    
+    # Check if we're exiting labels or x-dockge section
+    if in_labels or in_xdockge:
+        current_indent = len(re.match(r'^(\s*)', line).group(1))
+        
+        # Exit if we've dedented or hit a new top-level key
+        if (current_indent <= indent_level and line.strip() and not line.strip().startswith('#')):
+            in_labels = False
+            in_xdockge = False
+    
+    # Replace variables only in labels or x-dockge sections
+    if in_labels or in_xdockge:
+        # Replace ${VAR} with environment variable values
+        def replace_var(match):
+            var_name = match.group(1)
+            return os.environ.get(var_name, match.group(0))
+        
+        line = re.sub(r'\$\{([^}]+)\}', replace_var, line)
+    
+    output_lines.append(line)
+
+with open(file_path, 'w') as f:
+    f.writelines(output_lines)
+PYEOF
+        
+        debug_log "Replaced variables in labels and x-dockge sections of $file_path"
+    else
+        # For non-docker-compose files, process the entire file as before
+        debug_log "Processing config file - replacing variables in entire file"
+        
+        if ! command -v envsubst >/dev/null 2>&1; then
+            log_warning "envsubst not available, cannot localize $file_path"
+            if [ "$fail_on_missing" = true ]; then
+                exit 1
+            fi
+            return
+        fi
+        
         temp_file="$file_path.tmp"
         cp "$file_path" "$temp_file"
         changed=true
@@ -164,45 +311,27 @@ localize_yml_file() {
             fi
         done
         mv "$temp_file" "$file_path"
-        debug_log "Replaced variables in $file_path using envsubst with nested expansion"
-        replaced_count=$(grep -o '\${[^}]*}' "$file_path" | wc -l)
-        replaced_count=$((replaced_count / 2))  # Approximate
-    else
-        log_warning "envsubst not available, cannot localize $file_path"
-        if [ "$fail_on_missing" = true ]; then
-            exit 1
-        fi
-        return
+        debug_log "Replaced variables in $file_path using envsubst"
     fi
 
-    # Post-replacement validation: check for remaining ${VAR} (except skipped)
-    local remaining_vars=$(grep -v '^[ \t]*#' "$file_path" | grep -o '\${[^}]*}' | sed 's/\${//' | sed 's/}//' | sort | uniq)
-    local invalid_remaining=""
-    for rvar in $remaining_vars; do
-        rvar=$(echo "$rvar" | xargs)
-        case "$rvar" in
-            "ACME_EMAIL"|"AUTHELIA_ADMIN_EMAIL"|"SMTP_USERNAME"|"SMTP_PASSWORD")
-                continue
-                ;;
-            *)
-                invalid_remaining="$invalid_remaining $rvar"
-                ;;
-        esac
-    done
-    if [ -n "$invalid_remaining" ]; then
-        log_error "Failed to replace variables in $file_path: $invalid_remaining"
-        debug_log "Unreplaced variables: $invalid_remaining"
-        if [ "$fail_on_missing" = true ]; then
-            exit 1
-        fi
-    fi
-
-    # Handle missing variables
-    if [ -n "$missing_vars" ]; then
-        GLOBAL_MISSING_VARS="${GLOBAL_MISSING_VARS}${missing_vars}"
-        if [ "$fail_on_missing" = true ]; then
-            log_error "Critical environment variables missing: $missing_vars"
-            debug_log "Failing deployment due to missing critical variables: $missing_vars"
+    # Post-replacement validation for critical files only
+    if [ "$fail_on_missing" = true ]; then
+        local remaining_vars=$(grep -v '^[ \t]*#' "$file_path" | grep -o '\${[^}]*}' | sed 's/\${//' | sed 's/}//' | sort | uniq)
+        local invalid_remaining=""
+        for rvar in $remaining_vars; do
+            rvar=$(echo "$rvar" | xargs)
+            case "$rvar" in
+                "ACME_EMAIL"|"AUTHELIA_ADMIN_EMAIL"|"SMTP_USERNAME"|"SMTP_PASSWORD")
+                    continue
+                    ;;
+                *)
+                    invalid_remaining="$invalid_remaining $rvar"
+                    ;;
+            esac
+        done
+        if [ -n "$invalid_remaining" ]; then
+            log_error "Failed to replace critical variables in $file_path: $invalid_remaining"
+            debug_log "Unreplaced critical variables: $invalid_remaining"
             exit 1
         fi
     fi
@@ -974,17 +1103,13 @@ deploy_dockge() {
 
     # Copy Dockge stack files
     sudo cp "$REPO_DIR/docker-compose/dockge/docker-compose.yml" /opt/dockge/docker-compose.yml
-    sudo cp "$REPO_DIR/.env" /opt/dockge/.env
     sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/dockge/docker-compose.yml
+
+    # Process .env file from .env.example
+    process_stack_env "/opt/dockge" "$REPO_DIR/docker-compose/dockge"
     sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/dockge/.env
 
-    # Remove sensitive variables from dockge .env (Dockge doesn't need them)
-    sed -i '/^AUTHELIA_ADMIN_PASSWORD_HASH=/d' /opt/dockge/.env
-    sed -i '/^AUTHELIA_JWT_SECRET=/d' /opt/dockge/.env
-    sed -i '/^AUTHELIA_SESSION_SECRET=/d' /opt/dockge/.env
-    sed -i '/^AUTHELIA_STORAGE_ENCRYPTION_KEY=/d' /opt/dockge/.env
-
-    # Replace placeholders in Dockge compose file
+    # Replace placeholders in Dockge compose file (labels and x-dockge only)
     localize_yml_file "/opt/dockge/docker-compose.yml"
 
     # Deploy Dockge stack
@@ -1012,8 +1137,10 @@ deploy_core() {
     fi
     
     sudo cp "$REPO_DIR/docker-compose/core/docker-compose.yml" /opt/stacks/core/docker-compose.yml
-    sudo cp "$REPO_DIR/.env" /opt/stacks/core/.env
     sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/core/docker-compose.yml
+
+    # Process .env file from .env.example
+    process_stack_env "/opt/stacks/core" "$REPO_DIR/docker-compose/core"
     sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/core/.env
 
     # Fix multi-line secrets in .env file (merge split lines)
@@ -1039,22 +1166,7 @@ PYFIX
     # Escape $ characters in password hashes to prevent Docker Compose variable substitution
     sed -i '/^AUTHELIA_ADMIN_PASSWORD_HASH=/ s/\$/\\$/g' /opt/stacks/core/.env
 
-    # Remove variables that core stack doesn't need
-    sed -i '/^QBITTORRENT_/d' /opt/stacks/core/.env
-    sed -i '/^GRAFANA_/d' /opt/stacks/core/.env
-    sed -i '/^CODE_SERVER_/d' /opt/stacks/core/.env
-    sed -i '/^JUPYTER_/d' /opt/stacks/core/.env
-    sed -i '/^POSTGRES_/d' /opt/stacks/core/.env
-    sed -i '/^NEXTCLOUD_/d' /opt/stacks/core/.env
-    sed -i '/^GITEA_/d' /opt/stacks/core/.env
-    sed -i '/^WORDPRESS_/d' /opt/stacks/core/.env
-    sed -i '/^BOOKSTACK_/d' /opt/stacks/core/.env
-    sed -i '/^MEDIAWIKI_/d' /opt/stacks/core/.env
-    sed -i '/^BITWARDEN_/d' /opt/stacks/core/.env
-    sed -i '/^FORMIO_/d' /opt/stacks/core/.env
-    sed -i '/^HOMEPAGE_VAR_/d' /opt/stacks/core/.env
-
-    # Replace placeholders in core compose file (fail on missing critical vars)
+    # Replace placeholders in core compose file (labels and x-dockge only, fail on missing critical vars)
     localize_yml_file "/opt/stacks/core/docker-compose.yml" true
 
     # Copy and configure Traefik config
@@ -1162,27 +1274,13 @@ deploy_infrastructure() {
 
     # Copy infrastructure stack
     cp "$REPO_DIR/docker-compose/infrastructure/docker-compose.yml" /opt/stacks/infrastructure/docker-compose.yml
-    cp "$REPO_DIR/.env" /opt/stacks/infrastructure/.env
     sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/infrastructure/docker-compose.yml
+
+    # Process .env file from .env.example
+    process_stack_env "/opt/stacks/infrastructure" "$REPO_DIR/docker-compose/infrastructure"
     sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/infrastructure/.env
 
-    # Remove variables that infrastructure stack doesn't need
-    sed -i '/^AUTHELIA_/d' /opt/stacks/infrastructure/.env
-    sed -i '/^QBITTORRENT_/d' /opt/stacks/infrastructure/.env
-    sed -i '/^GRAFANA_/d' /opt/stacks/infrastructure/.env
-    sed -i '/^CODE_SERVER_/d' /opt/stacks/infrastructure/.env
-    sed -i '/^JUPYTER_/d' /opt/stacks/infrastructure/.env
-    sed -i '/^POSTGRES_/d' /opt/stacks/infrastructure/.env
-    sed -i '/^NEXTCLOUD_/d' /opt/stacks/infrastructure/.env
-    sed -i '/^GITEA_/d' /opt/stacks/infrastructure/.env
-    sed -i '/^WORDPRESS_/d' /opt/stacks/infrastructure/.env
-    sed -i '/^BOOKSTACK_/d' /opt/stacks/infrastructure/.env
-    sed -i '/^MEDIAWIKI_/d' /opt/stacks/infrastructure/.env
-    sed -i '/^BITWARDEN_/d' /opt/stacks/infrastructure/.env
-    sed -i '/^FORMIO_/d' /opt/stacks/infrastructure/.env
-    sed -i '/^HOMEPAGE_VAR_/d' /opt/stacks/infrastructure/.env
-
-    # Replace placeholders in infrastructure compose file
+    # Replace placeholders in infrastructure compose file (labels and x-dockge only)
     localize_yml_file "/opt/stacks/infrastructure/docker-compose.yml"
 
     # Copy any additional config directories
@@ -1225,25 +1323,13 @@ deploy_dashboards() {
 
     # Copy dashboards compose file
     cp "$REPO_DIR/docker-compose/dashboards/docker-compose.yml" /opt/stacks/dashboards/docker-compose.yml
-    cp "$REPO_DIR/.env" /opt/stacks/dashboards/.env
     sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/dashboards/docker-compose.yml
+
+    # Process .env file from .env.example
+    process_stack_env "/opt/stacks/dashboards" "$REPO_DIR/docker-compose/dashboards"
     sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/dashboards/.env
 
-    # Remove variables that dashboards stack doesn't need
-    sed -i '/^AUTHELIA_/d' /opt/stacks/dashboards/.env
-    sed -i '/^QBITTORRENT_/d' /opt/stacks/dashboards/.env
-    sed -i '/^CODE_SERVER_/d' /opt/stacks/dashboards/.env
-    sed -i '/^JUPYTER_/d' /opt/stacks/dashboards/.env
-    sed -i '/^POSTGRES_/d' /opt/stacks/dashboards/.env
-    sed -i '/^NEXTCLOUD_/d' /opt/stacks/dashboards/.env
-    sed -i '/^GITEA_/d' /opt/stacks/dashboards/.env
-    sed -i '/^WORDPRESS_/d' /opt/stacks/dashboards/.env
-    sed -i '/^BOOKSTACK_/d' /opt/stacks/dashboards/.env
-    sed -i '/^MEDIAWIKI_/d' /opt/stacks/dashboards/.env
-    sed -i '/^BITWARDEN_/d' /opt/stacks/dashboards/.env
-    sed -i '/^FORMIO_/d' /opt/stacks/dashboards/.env
-
-    # Replace placeholders in dashboards compose file
+    # Replace placeholders in dashboards compose file (labels and x-dockge only)
     localize_yml_file "/opt/stacks/dashboards/docker-compose.yml"
 
     # Copy homepage config
@@ -1297,27 +1383,13 @@ deploy_arcane() {
 
     # Copy arcane compose file
     sudo cp "$REPO_DIR/docker-compose/arcane/docker-compose.yml" /opt/arcane/docker-compose.yml
-    sudo cp "$REPO_DIR/.env" /opt/arcane/.env
     sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/arcane/docker-compose.yml
+
+    # Process .env file from .env.example
+    process_stack_env "/opt/arcane" "$REPO_DIR/docker-compose/arcane"
     sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/arcane/.env
 
-    # Remove variables that arcane stack doesn't need
-    sed -i '/^AUTHELIA_/d' /opt/arcane/.env
-    sed -i '/^QBITTORRENT_/d' /opt/arcane/.env
-    sed -i '/^GRAFANA_/d' /opt/arcane/.env
-    sed -i '/^CODE_SERVER_/d' /opt/arcane/.env
-    sed -i '/^JUPYTER_/d' /opt/arcane/.env
-    sed -i '/^POSTGRES_/d' /opt/arcane/.env
-    sed -i '/^NEXTCLOUD_/d' /opt/arcane/.env
-    sed -i '/^GITEA_/d' /opt/arcane/.env
-    sed -i '/^WORDPRESS_/d' /opt/arcane/.env
-    sed -i '/^BOOKSTACK_/d' /opt/arcane/.env
-    sed -i '/^MEDIAWIKI_/d' /opt/arcane/.env
-    sed -i '/^BITWARDEN_/d' /opt/arcane/.env
-    sed -i '/^FORMIO_/d' /opt/arcane/.env
-    sed -i '/^HOMEPAGE_VAR_/d' /opt/arcane/.env
-
-    # Replace placeholders in arcane compose file
+    # Replace placeholders in arcane compose file (labels and x-dockge only)
     localize_yml_file "/opt/arcane/docker-compose.yml"
 
     # Deploy arcane stack
@@ -1379,6 +1451,12 @@ perform_deployment() {
     sudo chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/dockge
     sudo chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/arcane
     log_success "Directories created"
+
+    # Generate .env.global file for all stacks (without comments and blank lines)
+    log_info "Generating .env.global for all stacks..."
+    generate_env_global "$REPO_DIR/.env" "/opt/stacks/.env.global"
+    sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/.env.global
+    log_success ".env.global created"
 
     # Step 2: Setup multi-server TLS if needed
     if [ "$DEPLOY_CORE" = false ]; then
@@ -1977,18 +2055,15 @@ deploy_sablier_stack() {
     # Copy stack files
     log_info "Copying Sablier stack files from $REPO_DIR/docker-compose/sablier/..."
     cp "$REPO_DIR/docker-compose/sablier/docker-compose.yml" "$sablier_dir/" || { log_error "Failed to copy docker-compose.yml"; return 1; }
-    cp "$REPO_DIR/.env" "$sablier_dir/" || { log_error "Failed to copy .env"; return 1; }
     sudo chown "$ACTUAL_USER:$ACTUAL_USER" "$sablier_dir/docker-compose.yml"
-    sudo chown "$ACTUAL_USER:$ACTUAL_USER" "$sablier_dir/.env"
     log_success "Stack files copied"
     
-    # Remove Authelia and other unnecessary variables from sablier .env
-    sed -i '/^AUTHELIA_/d' "$sablier_dir/.env"
-    sed -i '/^DEFAULT_PASSWORD=/d' "$sablier_dir/.env"
-    sed -i '/^CORE_SERVER_PASSWORD=/d' "$sablier_dir/.env"
+    # Process .env file from .env.example
+    process_stack_env "$sablier_dir" "$REPO_DIR/docker-compose/sablier"
+    sudo chown "$ACTUAL_USER:$ACTUAL_USER" "$sablier_dir/.env"
     
-    # Localize the docker-compose file
-    localize_compose_labels "$sablier_dir/docker-compose.yml"
+    # Localize the docker-compose file (labels and x-dockge only)
+    localize_yml_file "$sablier_dir/docker-compose.yml"
     
     # Deploy
     log_info "Starting Sablier container..."
