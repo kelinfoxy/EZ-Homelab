@@ -835,7 +835,9 @@ save_env_file() {
         sudo -u "$ACTUAL_USER" sed -i "s%AUTHELIA_STORAGE_ENCRYPTION_KEY=.*%AUTHELIA_STORAGE_ENCRYPTION_KEY=$AUTHELIA_STORAGE_ENCRYPTION_KEY%" "$REPO_DIR/.env"
         
         # Save Arcane settings to .env
+        sudo -u "$ACTUAL_USER" sed -i "s%# ARCANE_ENCRYPTION_KEY=.*%ARCANE_ENCRYPTION_KEY=$ARCANE_ENCRYPTION_KEY%" "$REPO_DIR/.env"
         sudo -u "$ACTUAL_USER" sed -i "s%ARCANE_ENCRYPTION_KEY=.*%ARCANE_ENCRYPTION_KEY=$ARCANE_ENCRYPTION_KEY%" "$REPO_DIR/.env"
+        sudo -u "$ACTUAL_USER" sed -i "s%# ARCANE_JWT_SECRET=.*%ARCANE_JWT_SECRET=$ARCANE_JWT_SECRET%" "$REPO_DIR/.env"
         sudo -u "$ACTUAL_USER" sed -i "s%ARCANE_JWT_SECRET=.*%ARCANE_JWT_SECRET=$ARCANE_JWT_SECRET%" "$REPO_DIR/.env"
         sudo -u "$ACTUAL_USER" sed -i "s%# AUTHELIA_ADMIN_USER=.*%AUTHELIA_ADMIN_USER=$ADMIN_USER%" "$REPO_DIR/.env"
         sudo -u "$ACTUAL_USER" sed -i "s%AUTHELIA_ADMIN_USER=.*%AUTHELIA_ADMIN_USER=$ADMIN_USER%" "$REPO_DIR/.env"
@@ -1266,35 +1268,35 @@ deploy_arcane() {
     echo ""
 
     # Create arcane directory
-    sudo mkdir -p /opt/stacks/arcane
+    sudo mkdir -p /opt/arcane
 
     # Copy arcane compose file
-    cp "$REPO_DIR/docker-compose/arcane/docker-compose.yml" /opt/stacks/arcane/docker-compose.yml
-    cp "$REPO_DIR/.env" /opt/stacks/arcane/.env
-    sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/arcane/docker-compose.yml
-    sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/arcane/.env
+    sudo cp "$REPO_DIR/docker-compose/arcane/docker-compose.yml" /opt/arcane/docker-compose.yml
+    sudo cp "$REPO_DIR/.env" /opt/arcane/.env
+    sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/arcane/docker-compose.yml
+    sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/arcane/.env
 
     # Remove variables that arcane stack doesn't need
-    sed -i '/^AUTHELIA_/d' /opt/stacks/arcane/.env
-    sed -i '/^QBITTORRENT_/d' /opt/stacks/arcane/.env
-    sed -i '/^GRAFANA_/d' /opt/stacks/arcane/.env
-    sed -i '/^CODE_SERVER_/d' /opt/stacks/arcane/.env
-    sed -i '/^JUPYTER_/d' /opt/stacks/arcane/.env
-    sed -i '/^POSTGRES_/d' /opt/stacks/arcane/.env
-    sed -i '/^NEXTCLOUD_/d' /opt/stacks/arcane/.env
-    sed -i '/^GITEA_/d' /opt/stacks/arcane/.env
-    sed -i '/^WORDPRESS_/d' /opt/stacks/arcane/.env
-    sed -i '/^BOOKSTACK_/d' /opt/stacks/arcane/.env
-    sed -i '/^MEDIAWIKI_/d' /opt/stacks/arcane/.env
-    sed -i '/^BITWARDEN_/d' /opt/stacks/arcane/.env
-    sed -i '/^FORMIO_/d' /opt/stacks/arcane/.env
-    sed -i '/^HOMEPAGE_VAR_/d' /opt/stacks/arcane/.env
+    sed -i '/^AUTHELIA_/d' /opt/arcane/.env
+    sed -i '/^QBITTORRENT_/d' /opt/arcane/.env
+    sed -i '/^GRAFANA_/d' /opt/arcane/.env
+    sed -i '/^CODE_SERVER_/d' /opt/arcane/.env
+    sed -i '/^JUPYTER_/d' /opt/arcane/.env
+    sed -i '/^POSTGRES_/d' /opt/arcane/.env
+    sed -i '/^NEXTCLOUD_/d' /opt/arcane/.env
+    sed -i '/^GITEA_/d' /opt/arcane/.env
+    sed -i '/^WORDPRESS_/d' /opt/arcane/.env
+    sed -i '/^BOOKSTACK_/d' /opt/arcane/.env
+    sed -i '/^MEDIAWIKI_/d' /opt/arcane/.env
+    sed -i '/^BITWARDEN_/d' /opt/arcane/.env
+    sed -i '/^FORMIO_/d' /opt/arcane/.env
+    sed -i '/^HOMEPAGE_VAR_/d' /opt/arcane/.env
 
     # Replace placeholders in arcane compose file
-    localize_yml_file "/opt/stacks/arcane/docker-compose.yml"
+    localize_yml_file "/opt/arcane/docker-compose.yml"
 
     # Deploy arcane stack
-    cd /opt/stacks/arcane
+    cd /opt/arcane
     run_cmd docker compose up -d || true
     log_success "Arcane stack deployed"
     echo ""
@@ -1347,8 +1349,10 @@ perform_deployment() {
     sudo mkdir -p /opt/stacks/infrastructure || { log_error "Failed to create /opt/stacks/infrastructure"; exit 1; }
     sudo mkdir -p /opt/stacks/dashboards || { log_error "Failed to create /opt/stacks/dashboards"; exit 1; }
     sudo mkdir -p /opt/dockge || { log_error "Failed to create /opt/dockge"; exit 1; }
+    sudo mkdir -p /opt/arcane || { log_error "Failed to create /opt/arcane"; exit 1; }
     sudo chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks
     sudo chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/dockge
+    sudo chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/arcane
     log_success "Directories created"
 
     # Step 2: Setup multi-server TLS if needed
