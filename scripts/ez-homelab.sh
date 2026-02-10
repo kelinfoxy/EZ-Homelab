@@ -151,7 +151,7 @@ localize_yml_file() {
 
     # Use envsubst to replace all ${VAR} with environment values, handling nested variables
     if command -v envsubst >/dev/null 2>&1; then
-        log_info "DEBUG: DEFAULT_EMAIL=$DEFAULT_EMAIL"
+        # log_info "DEBUG: DEFAULT_EMAIL=$DEFAULT_EMAIL"
         temp_file="$file_path.tmp"
         cp "$file_path" "$temp_file"
         changed=true
@@ -800,7 +800,7 @@ save_env_file() {
         if [ -z "$ADMIN_EMAIL" ]; then
             ADMIN_EMAIL="${DEFAULT_EMAIL:-${ADMIN_USER}@${DOMAIN}}"
         fi
-        if [ -z "$AUTHELIA_ADMIN_PASSWORD" ]; then
+        if [ -z "$AUTHELIA_ADMIN_PASSWORD" ] || [ "$AUTHELIA_ADMIN_PASSWORD" = "generate-with-openssl-rand-hex-64" ]; then
             AUTHELIA_ADMIN_PASSWORD="${DEFAULT_PASSWORD}"
             if [ "$AUTHELIA_ADMIN_PASSWORD" = "changeme123" ]; then
                 log_info "Using default admin password (changeme123) - please change this after setup!"
@@ -840,6 +840,8 @@ save_env_file() {
         sudo -u "$ACTUAL_USER" sed -i "s%AUTHELIA_ADMIN_USER=.*%AUTHELIA_ADMIN_USER=$ADMIN_USER%" "$REPO_DIR/.env"
         sudo -u "$ACTUAL_USER" sed -i "s%# AUTHELIA_ADMIN_EMAIL=.*%AUTHELIA_ADMIN_EMAIL=$ADMIN_EMAIL%" "$REPO_DIR/.env"
         sudo -u "$ACTUAL_USER" sed -i "s%AUTHELIA_ADMIN_EMAIL=.*%AUTHELIA_ADMIN_EMAIL=$ADMIN_EMAIL%" "$REPO_DIR/.env"
+        sudo -u "$ACTUAL_USER" sed -i "s%# AUTHELIA_ADMIN_PASSWORD=.*%AUTHELIA_ADMIN_PASSWORD=$AUTHELIA_ADMIN_PASSWORD%" "$REPO_DIR/.env"
+        sudo -u "$ACTUAL_USER" sed -i "s%AUTHELIA_ADMIN_PASSWORD=.*%AUTHELIA_ADMIN_PASSWORD=$AUTHELIA_ADMIN_PASSWORD%" "$REPO_DIR/.env"
 
         # Generate password hash if needed
         if [ -z "$AUTHELIA_ADMIN_PASSWORD_HASH" ]; then
