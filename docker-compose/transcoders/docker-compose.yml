@@ -20,12 +20,12 @@ services:
       - ./tdarr/server:/app/server
       - ./tdarr/configs:/app/configs
       - ./tdarr/logs:/app/logs
-      - /mnt/media:/media
-      - /mnt/tdarr-transcode:/temp # Transcode cache on separate drive
+      - ${MEDIA_DIR}:/media
+      - ${TDARR_TRANSCODE_DIR}:/temp # Transcode cache on separate drive
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
       - serverIP=0.0.0.0
       - serverPort=8266
       - webUIPort=8265
@@ -61,12 +61,12 @@ services:
     volumes:
       - ./tdarr/configs:/app/configs
       - ./tdarr/logs:/app/logs
-      - /mnt/media:/media
-      - /mnt/tdarr-transcode:/temp
+      - ${MEDIA_DIR}:/media
+      - ${TDARR_TRANSCODE_DIR}:/temp
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
       - nodeID=MainNode
       - nodeIP=0.0.0.0
       - nodePort=8267
@@ -91,12 +91,12 @@ services:
       - '8889:8888'
     volumes:
       - ./unmanic/config:/config
-      - /mnt/media:/library
-      - /mnt/unmanic-cache:/tmp/unmanic # Transcode cache on separate drive
+      - ${MEDIA_DIR}:/library
+      - ${UNMANIC_TRANSCODE_DIR}:/tmp/unmanic # Transcode cache on separate drive
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     labels:
       # TRAEFIK CONFIGURATION
       # ==========================================

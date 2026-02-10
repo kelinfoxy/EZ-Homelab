@@ -25,8 +25,8 @@ services:
     ports:
       - '9090:9090'
     volumes:
-      - ./config/prometheus:/etc/prometheus
-      - prometheus-data:/prometheus
+      - ./prometheus/config:/etc/prometheus
+      - ./prometheus/data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -73,14 +73,14 @@ services:
     ports:
       - '3000:3000'
     volumes:
-      - grafana-data:/var/lib/grafana
-      - ./config/grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_SERVER_ROOT_URL=https://grafana.${DOMAIN}
       - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource,grafana-piechart-panel
-    user: '1000:1000'
+    user: '${PUID}:${PGID}'
     depends_on:
       - prometheus
     labels:
@@ -112,8 +112,8 @@ services:
     ports:
       - '9100:9100'
     volumes:
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
+      - ./node-exporter/proc:/host/proc:ro
+      - ./node-exporter/sys:/host/sys:ro
       - /:/rootfs:ro
     command:
       - '--path.procfs=/host/proc'
@@ -182,7 +182,7 @@ services:
     ports:
       - '3001:3001'
     volumes:
-      - uptime-kuma-data:/app/data
+      - ./uptime-kuma:/app/data
       - /var/run/docker.sock:/var/run/docker.sock:ro
     labels:
       # TRAEFIK CONFIGURATION
@@ -219,12 +219,11 @@ services:
     restart: unless-stopped
     networks:
       - homelab-network
-      - traefik-network
     ports:
       - '3100:3100'
     volumes:
-      - ./config/loki:/etc/loki
-      - loki-data:/loki
+      - ./loki/config:/etc/loki
+      - ./loki/data:/loki
     command: -config.file=/etc/loki/loki-config.yml
     labels:
       # TRAEFIK CONFIGURATION
@@ -253,7 +252,7 @@ services:
     networks:
       - homelab-network
     volumes:
-      - ./config/promtail:/etc/promtail
+      - ./promtail/config:/etc/promtail
       - /var/log:/var/log:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
     command: -config.file=/etc/promtail/promtail-config.yml
@@ -262,16 +261,6 @@ services:
     labels:
       - 'homelab.category=monitoring'
       - 'homelab.description=Log collector for Loki'
-
-volumes:
-  prometheus-data:
-    driver: local
-  grafana-data:
-    driver: local
-  uptime-kuma-data:
-    driver: local
-  loki-data:
-    driver: local
 
 networks:
   homelab-network:

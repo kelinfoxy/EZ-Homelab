@@ -27,11 +27,11 @@ services:
       - '5001:5001'  # Optional: direct access
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /opt/stacks:/opt/stacks  # Dockge manages stacks in this directory
+      - ${STACKS_DIR}:${STACKS_DIR}  # Dockge manages stacks in this directory
       - ./data:/app/data
       - /usr/bin/docker:/usr/bin/docker:ro  # Mount docker binary for CLI access
     environment:
-      - DOCKGE_STACKS_DIR=/opt/stacks
+      - DOCKGE_STACKS_DIR=${STACKS_DIR}
       - DOCKGE_ENABLE_CONSOLE=true
     labels:
       - 'homelab.category=infrastructure'

@@ -17,12 +17,12 @@ services:
       - '8989:8989'
     volumes:
       - ./sonarr/config:/config
-      - /mnt/media:/media
-      - /mnt/downloads:/downloads # Large downloads on separate drive
+      - ${MEDIA_DIR}:/media
+      - ${DOWNLOADS_DIR}:/downloads # Large downloads on separate drive
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PUID}
+      - TZ=${TZ}
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:8989/']
       interval: 30s
@@ -62,12 +62,12 @@ services:
       - '7878:7878'
     volumes:
       - ./radarr/config:/config
-      - /mnt/media:/media
-      - /mnt/downloads:/downloads # Large downloads on separate drive
+      - ${MEDIA_DIR}:/media
+      - ${DOWNLOADS_DIR}:/downloads # Large downloads on separate drive
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PUID}
+      - TZ=${TZ}
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:7878/']
       interval: 30s
@@ -109,9 +109,9 @@ services:
     volumes:
       - ./prowlarr/config:/config
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PUID}
+      - TZ=${TZ}
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9696/']
       interval: 30s
@@ -151,12 +151,12 @@ services:
       - '8787:8787'
     volumes:
       - ./readarr/config:/config
-      - /mnt/media/books:/books
-      - /mnt/downloads:/downloads
+      - ${MEDIA_DIR}/books:/books
+      - ${DOWNLOADS_DIR}:/downloads
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PUID}
+      - TZ=${TZ}
     labels:
       # TRAEFIK CONFIGURATION
       # ==========================================
@@ -190,12 +190,12 @@ services:
       - '8686:8686'
     volumes:
       - ./lidarr/config:/config
-      - /mnt/media/music:/music
-      - /mnt/downloads:/downloads
+      - ${MEDIA_DIR}/music:/music
+      - ${DOWNLOADS_DIR}:/downloads
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PUID}
+      - TZ=${TZ}
     labels:
       # TRAEFIK CONFIGURATION
       # ==========================================
@@ -229,12 +229,12 @@ services:
       - '5299:5299'
     volumes:
       - ./lazylibrarian/config:/config
-      - /mnt/media/books:/books
-      - /mnt/downloads:/downloads
+      - ${MEDIA_DIR}/books:/books
+      - ${DOWNLOADS_DIR}:/downloads
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PUID}
+      - TZ=${TZ}
       - DOCKER_MODS=linuxserver/mods:lazylibrarian-ffmpeg
     labels:
       # TRAEFIK CONFIGURATION
@@ -269,12 +269,12 @@ services:
       - '8090:8090'
     volumes:
       - ./mylar3/config:/config
-      - /mnt/media/comics:/comics
-      - /mnt/downloads:/downloads
+      - ${MEDIA_DIR}/comics:/comics
+      - ${DOWNLOADS_DIR}:/downloads
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PUID}
+      - TZ=${TZ}
     labels:
       # TRAEFIK CONFIGURATION
       # ==========================================
@@ -310,7 +310,7 @@ services:
       - ./jellyseerr/config:/app/config
     environment:
       - LOG_LEVEL=info
-      - TZ=America/New_York
+      - TZ=${TZ}
     healthcheck:
       test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:5055/']
       interval: 30s
@@ -348,7 +348,7 @@ services:
       - homelab-network
     environment:
       - LOG_LEVEL=info
-      - TZ=America/New_York
+      - TZ=${TZ}
     labels:
       - homelab.category=media
       - homelab.description=Cloudflare bypass for indexers

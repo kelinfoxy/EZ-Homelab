@@ -33,7 +33,7 @@ services:
       - OPENVPN_USER=${SURFSHARK_USERNAME}
       - OPENVPN_PASSWORD=${SURFSHARK_PASSWORD}
       - SERVER_COUNTRIES=${VPN_SERVER_COUNTRIES}
-      - TZ=America/New_York
+      - TZ=${TZ}
     # TRAEFIK CONFIGURATION
     labels:
       # Service metadata
@@ -43,7 +43,7 @@ services:
       - 'traefik.enable=true'
       - 'traefik.docker.network=traefik-network'
       # Router configuration
-      - 'traefik.http.routers.qbittorrent.rule=Host(`qbit.${DOMAIN}`)'
+      - 'traefik.http.routers.qbittorrent.rule=Host(`qbittorrent.${DOMAIN}`)'
       - 'traefik.http.routers.qbittorrent.entrypoints=websecure'
       - 'traefik.http.routers.qbittorrent.tls=true'
       - 'traefik.http.routers.qbittorrent.middlewares=authelia@docker'
@@ -71,11 +71,11 @@ services:
     network_mode: 'service:gluetun'  # Routes through VPN in same compose file
     volumes:
       - ./qbittorrent/config:/config
-      - /mnt/downloads:/downloads
+      - ${DOWNLOADS_DIR}:/downloads
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
       - WEBUI_PORT=8080
     depends_on:
       - gluetun
@@ -88,5 +88,5 @@ networks:
 
 x-dockge:
   urls:
-    - https://qbit.${DOMAIN}
+    - https://qbittorrent.${DOMAIN}
     - https://192.168.4.4:8081

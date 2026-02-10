@@ -12,9 +12,9 @@ services:
     container_name: duckdns
     restart: unless-stopped
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
       - SUBDOMAINS=${DUCKDNS_SUBDOMAINS}
       - TOKEN=${DUCKDNS_TOKEN}
     volumes:
@@ -60,7 +60,7 @@ services:
     container_name: authelia
     restart: unless-stopped
     environment:
-      - TZ=America/New_York
+      - TZ=${TZ}
     ports:
       - '9091:9091'
     volumes:
@@ -112,7 +112,7 @@ services:
       - ./pihole/etc-pihole:/etc/pihole
       - ./pihole/etc-dnsmasq.d:/etc/dnsmasq.d
     environment:
-      - TZ=America/New_York
+      - TZ=${TZ}
       - WEBPASSWORD=${PIHOLE_PASSWORD}
       - FTLCONF_LOCAL_IPV4=192.168.4.4
     dns:

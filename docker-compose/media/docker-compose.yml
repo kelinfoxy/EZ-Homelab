@@ -32,11 +32,11 @@ services:
     volumes:
       - ./jellyfin/config:/config
       - ./jellyfin/cache:/cache
-      - /mnt/media:/media:ro  # Large media files on separate drive
+      - ${MEDIA_DIR}:/media:ro  # Large media files on separate drive
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PUID}
+      - TZ=${TZ}
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:8096/']
       interval: 30s
@@ -88,11 +88,11 @@ services:
       - '8083:8083'
     volumes:
       - ./calibre-web/config:/config
-      - /mnt/media/books:/books
+      - ${MEDIA_DIR}/books:/books
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PUID}
+      - TZ=${TZ}
       - DOCKER_MODS=linuxserver/mods:universal-calibre
     # TRAEFIK CONFIGURATION
     labels:

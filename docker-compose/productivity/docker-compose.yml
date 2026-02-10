@@ -28,7 +28,7 @@ services:
       - '8089:80'
     volumes:
       - ./nextcloud/html:/var/www/html
-      - /mnt/nextcloud-data:/var/www/html/data  # Large data on separate drive
+      - ${NEXTCLOUD_DIR}:/var/www/html/data
     environment:
       - MYSQL_HOST=nextcloud-db
       - MYSQL_DATABASE=nextcloud
@@ -75,7 +75,7 @@ services:
     networks:
       - homelab-network
     volumes:
-      - nextcloud-db-data:/var/lib/mysql
+      - ./nextcloud/db:/var/lib/mysql
     environment:
       - MYSQL_ROOT_PASSWORD=${NEXTCLOUD_DB_ROOT_PASSWORD}
       - MYSQL_DATABASE=nextcloud
@@ -99,9 +99,9 @@ services:
     volumes:
       - ./mealie/data:/app/data
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
       - BASE_URL=https://mealie.${DOMAIN}
       - DB_ENGINE=sqlite
     labels:
@@ -176,7 +176,7 @@ services:
     networks:
       - homelab-network
     volumes:
-      - wordpress-db-data:/var/lib/mysql
+      - ./wordpress/db:/var/lib/mysql
     environment:
       - MYSQL_ROOT_PASSWORD=${WORDPRESS_DB_ROOT_PASSWORD}
       - MYSQL_DATABASE=wordpress
@@ -210,8 +210,8 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - USER_UID=1000
-      - USER_GID=1000
+      - USER_UID=${PUID}
+      - USER_GID=${PGID}
       - GITEA__database__DB_TYPE=postgres
       - GITEA__database__HOST=gitea-db:5432
       - GITEA__database__NAME=gitea
@@ -252,7 +252,7 @@ services:
     networks:
       - homelab-network
     volumes:
-      - gitea-db-data:/var/lib/postgresql/data
+      - ./gitea/db:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=gitea
       - POSTGRES_PASSWORD=${GITEA_DB_PASSWORD}
@@ -308,11 +308,6 @@ services:
       - 'sablier.enable=true'
       - 'sablier.group=jasper-jupyter'
       - 'sablier.start-on-demand=true'
-
-volumes:
-  nextcloud-db-data:
-  wordpress-db-data:
-  gitea-db-data:
 
 networks:
   homelab-network:

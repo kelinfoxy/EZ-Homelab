@@ -19,13 +19,13 @@ services:
     volumes:
       - ./backrest/data:/data
       - ./backrest/config:/config
-      - /opt/stacks:/opt/stacks:ro # Backup source
+      - ${STACKS_DIR}:${STACKS_DIR}:ro # Backup source
       - /mnt:/mnt:ro # Backup additional drives
-      - backrest-cache:/cache
+      - ./backrest/cache:/cache
     environment:
       - BACKREST_DATA=/data
       - BACKREST_CONFIG=/config/config.json
-      - TZ=America/New_York
+      - TZ=${TZ}
     healthcheck:
       test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:9898/']
       interval: 30s
@@ -64,13 +64,13 @@ services:
       - '8200:8200'
     volumes:
       - ./duplicati/config:/config
-      - /opt/stacks:/source/stacks:ro
+      - ${STACKS_DIR}:${STACKS_DIR}:ro
       - /mnt:/source/mnt:ro
       - /mnt/backups:/backups
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:8200/']
       interval: 30s
@@ -151,7 +151,7 @@ services:
       - 'homelab.category=utilities'
       - 'homelab.description=Form.io database'
 
-  # Bitwarden (Vaultwarden) - Password manager
+  # Vaultwarden - Password manager
   # Note: SSO disabled for browser extension and mobile app compatibility
   
   vaultwarden:
@@ -205,25 +205,8 @@ services:
       - 'sablier.group=jasper-vaultwarden'
       - 'sablier.start-on-demand=true'
 
-  # Authelia Redis - Session storage for Authelia
-  # No web UI - backend service
-#  authelia-redis:
-#    image: redis:7-alpine
-#    container_name: authelia-redis
-#    restart: unless-stopped
-#    networks:
-#      - homelab-network
-#    volumes:
-#      - authelia-redis-data:/data
-#    command: redis-server --save 60 1 --loglevel warning
-#    labels:
-#      - homelab.category=utilities
-#      - homelab.description=Session storage for Authelia
-
 volumes:
-  backrest-cache: null
   formio-mongo-data: null
-  authelia-redis-data: null
 
 networks:
   homelab-network:

@@ -25,7 +25,7 @@ services:
       - ./homeassistant/config:/config
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - TZ=America/New_York
+      - TZ=${TZ}
     privileged: true
     labels:
       - 'homelab.category=iot'
@@ -56,7 +56,7 @@ services:
       - ./esphome/config:/config
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - TZ=America/New_York
+      - TZ=${TZ}
       - ESPHOME_DASHBOARD_USE_PING=true
     privileged: true  # For USB device access
     labels:
@@ -87,9 +87,9 @@ services:
     ports:
       - '8084:80'
     volumes:
-      - /opt/stacks/tasmoadmin/data:/data
+      - ./tasmoadmin/data:/data
     environment:
-      - TZ=America/New_York
+      - TZ=${TZ}
     labels:
       # TRAEFIK CONFIGURATION
       # ==========================================
@@ -118,10 +118,10 @@ services:
     ports:
       - '8765:8765'  
     volumes:
-      - ./$(basename $file .yml)/config:/etc/motioneye
-      - /mnt/surveillance:/var/lib/motioneye  # Large video files on separate drive
+      - ./motioneye/config:/etc/motioneye
+      - ./motioneye/video:/var/lib/motioneye 
     environment:
-      - TZ=America/New_York
+      - TZ=${TZ}
     labels:
       # TRAEFIK CONFIGURATION
       # ==========================================
@@ -159,9 +159,9 @@ services:
     ports:
       - '1880:1880'
     volumes:
-      - /opt/stacks/nodered/data:/data
+      - ./nodered/data:/data
     environment:
-      - TZ=America/New_York
+      - TZ=${TZ}
     labels:
       # TRAEFIK CONFIGURATION
       # ==========================================
@@ -217,7 +217,7 @@ services:
   #   # Common paths: /dev/ttyACM0, /dev/ttyUSB0, /dev/serial/by-id/...
   #   # Run 'ls -l /dev/serial/by-id/' to find your adapter
   #   environment:
-  #     - TZ=America/New_York
+  #     - TZ=${TZ}
   #   labels:
   #     - 'homelab.category=iot'
   #     - 'homelab.description=Zigbee to MQTT bridge'

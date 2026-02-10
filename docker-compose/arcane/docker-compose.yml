@@ -6,13 +6,13 @@ services:
       - '3552:3552'
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - arcane-data:/app/data
-      - /opt/stacks:/opt/stacks
+      - ./arcane/data:/app/data
+      - ${PROJECTS_DIR}:${PROJECTS_DIR}
     environment:
       - APP_URL=http://${SERVER_IP}:3552
-      - PROJECTS_DIRECTORY=/opt/stacks
-      - PUID=1000
-      - PGID=1000
+      - PROJECTS_DIRECTORY=${PROJECTS_DIR}
+      - PUID=${PUID}
+      - PGID=${PGID}
       - ENCRYPTION_KEY=${ARCANE_ENCRYPTION_KEY}
       - JWT_SECRET=${ARCANE_JWT_SECRET}
     restart: unless-stopped
@@ -31,7 +31,7 @@ services:
 #      - "3553:3553"
 #    volumes:
 #      - /var/run/docker.sock:/var/run/docker.sock
-#      - arcane-data:/app/data
+#      - ./arcane/data:/app/data
 #    networks:
 #      - traefik-network
 

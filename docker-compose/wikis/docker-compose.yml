@@ -19,9 +19,9 @@ services:
     volumes:
       - ./dokuwiki/config:/config
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
     labels:
       # TRAEFIK CONFIGURATION
       # Service metadata
@@ -56,8 +56,8 @@ services:
     volumes:
       - ./bookstack/config:/config
     environment:
-      - PUID=1000
-      - PGID=1000
+      - PUID=${PUID}
+      - PGID=${PGID}
       - APP_URL=https://bookstack.${DOMAIN}
       - DB_HOST=bookstack-db
       - DB_PORT=3306
@@ -100,7 +100,7 @@ services:
     networks:
       - homelab-network
     volumes:
-      - bookstack-db-data:/var/lib/mysql
+      - ./bookstack/db:/var/lib/mysql
     environment:
       - MYSQL_ROOT_PASSWORD=${BOOKSTACK_DB_ROOT_PASSWORD}
       - MYSQL_DATABASE=bookstack
@@ -163,7 +163,7 @@ services:
     networks:
       - homelab-network
     volumes:
-      - mediawiki-db-data:/var/lib/mysql
+      - ./mediawiki/db:/var/lib/mysql
     environment:
       - MYSQL_ROOT_PASSWORD=${MEDIAWIKI_DB_ROOT_PASSWORD}
       - MYSQL_DATABASE=mediawiki
@@ -172,10 +172,6 @@ services:
     labels:
       - 'homelab.category=productivity'
       - 'homelab.description=MediaWiki database'
-
-volumes:
-  bookstack-db-data:
-  mediawiki-db-data:
 
 networks:
   homelab-network:

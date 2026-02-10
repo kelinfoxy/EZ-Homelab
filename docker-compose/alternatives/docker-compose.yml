@@ -19,7 +19,7 @@ services:
       - '9000:9000'
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - portainer-data:/data
+      - ./portainer/data:/data
     security_opt:
       - no-new-privileges:true
     labels:
@@ -52,8 +52,8 @@ services:
     ports:
       - '9000:9000'
     volumes:
-      - /opt/stacks/authentik/media:/media
-      - /opt/stacks/authentik/custom-templates:/templates
+      - ./authentik/media:/media
+      - ./authentik/custom-templates:/templates
     environment:
       - AUTHENTIK_REDIS__HOST=authentik-redis
       - AUTHENTIK_POSTGRESQL__HOST=authentik-db
@@ -89,9 +89,9 @@ services:
     networks:
       - homelab-network
     volumes:
-      - /opt/stacks/authentik/media:/media
-      - /opt/stacks/authentik/certs:/certs
-      - /opt/stacks/authentik/custom-templates:/templates
+      - ./authentik/media:/media
+      - ./authentik/certs:/certs
+      - ./authentik/custom-templates:/templates
     environment:
       - AUTHENTIK_REDIS__HOST=authentik-redis
       - AUTHENTIK_POSTGRESQL__HOST=authentik-db
@@ -119,7 +119,7 @@ services:
     networks:
       - homelab-network
     volumes:
-      - authentik-db-data:/var/lib/postgresql/data
+      - ./authentik/db:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=${AUTHENTIK_DB_USER}
       - POSTGRES_PASSWORD=${AUTHENTIK_DB_PASSWORD}
@@ -145,7 +145,7 @@ services:
     networks:
       - homelab-network
     volumes:
-      - authentik-redis-data:/data
+      - ./authentik/redis:/data
     command: --save 60 1 --loglevel warning
     labels:
       # TRAEFIK CONFIGURATION
@@ -173,7 +173,7 @@ services:
       - '32400:32400'
     volumes:
       - ./plex/config:/config
-      - /mnt/media:/media:ro  # Large media files on separate drive
+      - ${MEDIA_DIR}:/media:ro  # Large media files on separate drive
       - plex-transcode:/transcode
     environment:
       - PUID=1000
@@ -211,18 +211,6 @@ services:
       - 'traefik.http.routers.plex.entrypoints=websecure'
       - 'traefik.http.routers.plex.tls.certresolver=letsencrypt'
       - 'traefik.http.services.plex.loadbalancer.server.port=32400'
-      - 'x-dockge.url=https://plex.${DOMAIN}'
-      - 'x-dockge.url=https://plex.${DOMAIN}'
-
-volumes:
-  portainer-data:
-    driver: local
-  authentik-db-data:
-    driver: local
-  authentik-redis-data:
-    driver: local
-  plex-transcode:
-    driver: local
 
 networks:
   homelab-network:
