@@ -147,11 +147,7 @@ localize_yml_file() {
         return
     fi
 
-    # Backup only if target file already exists (not for repo sources)
-    if [[ "$file_path" != "$REPO_DIR"* ]] && [ -f "$file_path" ]; then
-        cp "$file_path" "$file_path.backup.$(date +%Y%m%d_%H%M%S)"
-        debug_log "Backed up $file_path"
-    fi
+    # Backup logic removed - handled before file copy in deploy functions
 
     # Use envsubst to replace all ${VAR} with environment values, handling nested variables
     if command -v envsubst >/dev/null 2>&1; then
@@ -969,6 +965,11 @@ deploy_dockge() {
     log_info "  - Dockge (Docker Compose Manager)"
     echo ""
 
+    # Backup existing files if they exist
+    if [ -f /opt/dockge/docker-compose.yml ]; then
+        sudo cp /opt/dockge/docker-compose.yml /opt/dockge/docker-compose.yml.backup.$(date +%Y%m%d_%H%M%S)
+    fi
+
     # Copy Dockge stack files
     sudo cp "$REPO_DIR/docker-compose/dockge/docker-compose.yml" /opt/dockge/docker-compose.yml
     sudo cp "$REPO_DIR/.env" /opt/dockge/.env
@@ -1002,6 +1003,12 @@ deploy_core() {
 
     # Copy core stack files
     debug_log "Copying core stack files"
+    
+    # Backup existing files if they exist
+    if [ -f /opt/stacks/core/docker-compose.yml ]; then
+        sudo cp /opt/stacks/core/docker-compose.yml /opt/stacks/core/docker-compose.yml.backup.$(date +%Y%m%d_%H%M%S)
+    fi
+    
     sudo cp "$REPO_DIR/docker-compose/core/docker-compose.yml" /opt/stacks/core/docker-compose.yml
     sudo cp "$REPO_DIR/.env" /opt/stacks/core/.env
     sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/core/docker-compose.yml
@@ -1146,6 +1153,11 @@ deploy_infrastructure() {
     log_info "  - Docker Proxy (Security)"
     echo ""
 
+    # Backup existing files if they exist
+    if [ -f /opt/stacks/infrastructure/docker-compose.yml ]; then
+        cp /opt/stacks/infrastructure/docker-compose.yml /opt/stacks/infrastructure/docker-compose.yml.backup.$(date +%Y%m%d_%H%M%S)
+    fi
+
     # Copy infrastructure stack
     cp "$REPO_DIR/docker-compose/infrastructure/docker-compose.yml" /opt/stacks/infrastructure/docker-compose.yml
     cp "$REPO_DIR/.env" /opt/stacks/infrastructure/.env
@@ -1203,6 +1215,11 @@ deploy_dashboards() {
 
     # Create dashboards directory
     sudo mkdir -p /opt/stacks/dashboards
+
+    # Backup existing files if they exist
+    if [ -f /opt/stacks/dashboards/docker-compose.yml ]; then
+        cp /opt/stacks/dashboards/docker-compose.yml /opt/stacks/dashboards/docker-compose.yml.backup.$(date +%Y%m%d_%H%M%S)
+    fi
 
     # Copy dashboards compose file
     cp "$REPO_DIR/docker-compose/dashboards/docker-compose.yml" /opt/stacks/dashboards/docker-compose.yml
@@ -1270,6 +1287,11 @@ deploy_arcane() {
 
     # Create arcane directory
     sudo mkdir -p /opt/arcane
+
+    # Backup existing files if they exist
+    if [ -f /opt/arcane/docker-compose.yml ]; then
+        sudo cp /opt/arcane/docker-compose.yml /opt/arcane/docker-compose.yml.backup.$(date +%Y%m%d_%H%M%S)
+    fi
 
     # Copy arcane compose file
     sudo cp "$REPO_DIR/docker-compose/arcane/docker-compose.yml" /opt/arcane/docker-compose.yml
