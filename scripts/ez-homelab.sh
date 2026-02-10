@@ -822,10 +822,10 @@ save_env_file() {
         fi
 
         # Generate Arcane secrets
-        if [ -z "$ARCANE_ENCRYPTION_KEY" ]; then
+        if [ -z "$ARCANE_ENCRYPTION_KEY" ] || [ "$ARCANE_ENCRYPTION_KEY" = "generate-with-openssl-rand-hex-64" ]; then
             ARCANE_ENCRYPTION_KEY=$(openssl rand -hex 64)
         fi
-        if [ -z "$ARCANE_JWT_SECRET" ]; then
+        if [ -z "$ARCANE_JWT_SECRET" ] || [ "$ARCANE_JWT_SECRET" = "generate-with-openssl-rand-hex-64" ]; then
             ARCANE_JWT_SECRET=$(openssl rand -hex 64)
         fi
 
@@ -839,6 +839,7 @@ save_env_file() {
         sudo -u "$ACTUAL_USER" sed -i "s%ARCANE_ENCRYPTION_KEY=.*%ARCANE_ENCRYPTION_KEY=$ARCANE_ENCRYPTION_KEY%" "$REPO_DIR/.env"
         sudo -u "$ACTUAL_USER" sed -i "s%# ARCANE_JWT_SECRET=.*%ARCANE_JWT_SECRET=$ARCANE_JWT_SECRET%" "$REPO_DIR/.env"
         sudo -u "$ACTUAL_USER" sed -i "s%ARCANE_JWT_SECRET=.*%ARCANE_JWT_SECRET=$ARCANE_JWT_SECRET%" "$REPO_DIR/.env"
+        
         sudo -u "$ACTUAL_USER" sed -i "s%# AUTHELIA_ADMIN_USER=.*%AUTHELIA_ADMIN_USER=$ADMIN_USER%" "$REPO_DIR/.env"
         sudo -u "$ACTUAL_USER" sed -i "s%AUTHELIA_ADMIN_USER=.*%AUTHELIA_ADMIN_USER=$ADMIN_USER%" "$REPO_DIR/.env"
         sudo -u "$ACTUAL_USER" sed -i "s%# AUTHELIA_ADMIN_EMAIL=.*%AUTHELIA_ADMIN_EMAIL=$ADMIN_EMAIL%" "$REPO_DIR/.env"
