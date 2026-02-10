@@ -811,13 +811,13 @@ save_env_file() {
             fi
         fi
 
-        if [ -z "$AUTHELIA_JWT_SECRET" ]; then
+        if [ -z "$AUTHELIA_JWT_SECRET" ] || [ "$AUTHELIA_JWT_SECRET" = "generate-with-openssl-rand-hex-64" ]; then
             AUTHELIA_JWT_SECRET=$(openssl rand -hex 64)
         fi
-        if [ -z "$AUTHELIA_SESSION_SECRET" ]; then
+        if [ -z "$AUTHELIA_SESSION_SECRET" ] || [ "$AUTHELIA_SESSION_SECRET" = "generate-with-openssl-rand-hex-64" ]; then
             AUTHELIA_SESSION_SECRET=$(openssl rand -hex 64)
         fi
-        if [ -z "$AUTHELIA_STORAGE_ENCRYPTION_KEY" ]; then
+        if [ -z "$AUTHELIA_STORAGE_ENCRYPTION_KEY" ] || [ "$AUTHELIA_STORAGE_ENCRYPTION_KEY" = "generate-with-openssl-rand-hex-64" ]; then
             AUTHELIA_STORAGE_ENCRYPTION_KEY=$(openssl rand -hex 64)
         fi
 
