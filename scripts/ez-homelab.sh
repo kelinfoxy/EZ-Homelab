@@ -821,10 +821,22 @@ save_env_file() {
             AUTHELIA_STORAGE_ENCRYPTION_KEY=$(openssl rand -hex 64)
         fi
 
+        # Generate Arcane secrets
+        if [ -z "$ARCANE_ENCRYPTION_KEY" ]; then
+            ARCANE_ENCRYPTION_KEY=$(openssl rand -hex 64)
+        fi
+        if [ -z "$ARCANE_JWT_SECRET" ]; then
+            ARCANE_JWT_SECRET=$(openssl rand -hex 64)
+        fi
+
         # Save Authelia settings to .env
         sudo -u "$ACTUAL_USER" sed -i "s%AUTHELIA_JWT_SECRET=.*%AUTHELIA_JWT_SECRET=$AUTHELIA_JWT_SECRET%" "$REPO_DIR/.env"
         sudo -u "$ACTUAL_USER" sed -i "s%AUTHELIA_SESSION_SECRET=.*%AUTHELIA_SESSION_SECRET=$AUTHELIA_SESSION_SECRET%" "$REPO_DIR/.env"
         sudo -u "$ACTUAL_USER" sed -i "s%AUTHELIA_STORAGE_ENCRYPTION_KEY=.*%AUTHELIA_STORAGE_ENCRYPTION_KEY=$AUTHELIA_STORAGE_ENCRYPTION_KEY%" "$REPO_DIR/.env"
+        
+        # Save Arcane settings to .env
+        sudo -u "$ACTUAL_USER" sed -i "s%ARCANE_ENCRYPTION_KEY=.*%ARCANE_ENCRYPTION_KEY=$ARCANE_ENCRYPTION_KEY%" "$REPO_DIR/.env"
+        sudo -u "$ACTUAL_USER" sed -i "s%ARCANE_JWT_SECRET=.*%ARCANE_JWT_SECRET=$ARCANE_JWT_SECRET%" "$REPO_DIR/.env"
         sudo -u "$ACTUAL_USER" sed -i "s%# AUTHELIA_ADMIN_USER=.*%AUTHELIA_ADMIN_USER=$ADMIN_USER%" "$REPO_DIR/.env"
         sudo -u "$ACTUAL_USER" sed -i "s%AUTHELIA_ADMIN_USER=.*%AUTHELIA_ADMIN_USER=$ADMIN_USER%" "$REPO_DIR/.env"
         sudo -u "$ACTUAL_USER" sed -i "s%# AUTHELIA_ADMIN_EMAIL=.*%AUTHELIA_ADMIN_EMAIL=$ADMIN_EMAIL%" "$REPO_DIR/.env"
@@ -1248,6 +1260,46 @@ deploy_dashboards() {
     echo ""
 }
 
+deploy_arcane() {
+    log_info "Deploying Arcane stack..."
+    log_info "  - Arcane (Docker Management UI)"
+    echo ""
+
+    # Create arcane directory
+    sudo mkdir -p /opt/stacks/arcane
+
+    # Copy arcane compose file
+    cp "$REPO_DIR/docker-compose/arcane/docker-compose.yml" /opt/stacks/arcane/docker-compose.yml
+    cp "$REPO_DIR/.env" /opt/stacks/arcane/.env
+    sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/arcane/docker-compose.yml
+    sudo chown "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/arcane/.env
+
+    # Remove variables that arcane stack doesn't need
+    sed -i '/^AUTHELIA_/d' /opt/stacks/arcane/.env
+    sed -i '/^QBITTORRENT_/d' /opt/stacks/arcane/.env
+    sed -i '/^GRAFANA_/d' /opt/stacks/arcane/.env
+    sed -i '/^CODE_SERVER_/d' /opt/stacks/arcane/.env
+    sed -i '/^JUPYTER_/d' /opt/stacks/arcane/.env
+    sed -i '/^POSTGRES_/d' /opt/stacks/arcane/.env
+    sed -i '/^NEXTCLOUD_/d' /opt/stacks/arcane/.env
+    sed -i '/^GITEA_/d' /opt/stacks/arcane/.env
+    sed -i '/^WORDPRESS_/d' /opt/stacks/arcane/.env
+    sed -i '/^BOOKSTACK_/d' /opt/stacks/arcane/.env
+    sed -i '/^MEDIAWIKI_/d' /opt/stacks/arcane/.env
+    sed -i '/^BITWARDEN_/d' /opt/stacks/arcane/.env
+    sed -i '/^FORMIO_/d' /opt/stacks/arcane/.env
+    sed -i '/^HOMEPAGE_VAR_/d' /opt/stacks/arcane/.env
+
+    # Replace placeholders in arcane compose file
+    localize_yml_file "/opt/stacks/arcane/docker-compose.yml"
+
+    # Deploy arcane stack
+    cd /opt/stacks/arcane
+    run_cmd docker compose up -d || true
+    log_success "Arcane stack deployed"
+    echo ""
+}
+
 # Deployment function
 perform_deployment() {
     debug_log "perform_deployment() called with DEPLOY_CORE=$DEPLOY_CORE, DEPLOY_INFRASTRUCTURE=$DEPLOY_INFRASTRUCTURE, DEPLOY_DASHBOARDS=$DEPLOY_DASHBOARDS, SETUP_STACKS=$SETUP_STACKS"
@@ -1335,6 +1387,11 @@ perform_deployment() {
             step_num=5
         fi
         deploy_dashboards
+    fi
+
+    # Deploy arcane stack (deployed for both core and additional servers)
+    if [ "$DEPLOY_CORE" = true ] || [ "$DEPLOY_INFRASTRUCTURE" = true ]; then
+        deploy_arcane
     fi
 
     # Setup stacks for Dockge

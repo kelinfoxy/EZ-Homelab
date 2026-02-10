@@ -9,12 +9,12 @@ services:
       - arcane-data:/app/data
       - /opt/stacks:/opt/stacks
     environment:
-      - APP_URL=http://192.168.4.12:3552
+      - APP_URL=http://${SERVER_IP}:3552
       - PROJECTS_DIRECTORY=/opt/stacks
       - PUID=1000
       - PGID=1000
-      - ENCRYPTION_KEY=5Db7OZ8TtiRNnXi09oh4WN27igS8YohGo45bnBycN7U=
-      - JWT_SECRET=xwe+pZrRvv18OprdQS+8O5R3fhNekn4pOmikSTJzQIg=
+      - ENCRYPTION_KEY=${ARCANE_ENCRYPTION_KEY}
+      - JWT_SECRET=${ARCANE_JWT_SECRET}
     restart: unless-stopped
     networks:
       - traefik-network
@@ -25,8 +25,8 @@ services:
 #    restart: unless-stopped
 #    environment:
 #      - AGENT_MODE=true
-#      - AGENT_TOKEN=
-#      - MANAGER_API_URL=http://192.168.4.4:3552
+#      - AGENT_TOKEN=${ARCANE_AGENT_TOKEN}
+#      - MANAGER_API_URL=http://${SERVER_IP}:3552
 #    ports:
 #      - "3553:3553"
 #    volumes:
