@@ -1,0 +1,43 @@
+services:
+  arcane:
+    image: ghcr.io/getarcaneapp/arcane:latest
+    container_name: arcane
+    ports:
+      - '3552:3552'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - arcane-data:/app/data
+      - /opt/stacks:/opt/stacks
+    environment:
+      - APP_URL=http://192.168.4.12:3552
+      - PROJECTS_DIRECTORY=/opt/stacks
+      - PUID=1000
+      - PGID=1000
+      - ENCRYPTION_KEY=5Db7OZ8TtiRNnXi09oh4WN27igS8YohGo45bnBycN7U=
+      - JWT_SECRET=xwe+pZrRvv18OprdQS+8O5R3fhNekn4pOmikSTJzQIg=
+    restart: unless-stopped
+    networks:
+      - traefik-network
+
+#  arcane-agent:
+#    image: ghcr.io/getarcaneapp/arcane-headless:latest
+#    container_name: arcane-agent
+#    restart: unless-stopped
+#    environment:
+#      - AGENT_MODE=true
+#      - AGENT_TOKEN=
+#      - MANAGER_API_URL=http://192.168.4.4:3552
+#    ports:
+#      - "3553:3553"
+#    volumes:
+#      - /var/run/docker.sock:/var/run/docker.sock
+#      - arcane-data:/app/data
+#    networks:
+#      - traefik-network
+
+volumes:
+  arcane-data:
+
+networks:
+  traefik-network:
+    external: true

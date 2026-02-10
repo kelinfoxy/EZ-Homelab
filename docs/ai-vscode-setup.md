@@ -31,7 +31,7 @@ This guide shows you how to use VS Code with GitHub Copilot on your local PC to 
 With VS Code connected to your server, you can now use GitHub Copilot to guide you through the entire setup process:
 
 ### Initial Server Setup
-- **Clone repository**: Ask Copilot "Help me clone the AI-Homelab repository"
+- **Clone repository**: Ask Copilot "Help me clone the EZ-Homelab repository"
 - **Configure environment**: "Guide me through setting up the .env file"
 - **Run setup scripts**: "Walk me through running the ez-homelab.sh script"
 - **Deploy services**: "Help me run the deployment script"
@@ -43,14 +43,14 @@ The AI will help you:
 - Set up user accounts and permissions
 - Troubleshoot any issues that arise
 
-## Step 4: Open the AI-Homelab Repository
+## Step 4: Open the EZ-Homelab Repository
 
 1. Once connected to your server, open the terminal in VS Code (Ctrl+`)
 2. Navigate to your repository:
    ```bash
-   cd ~/AI-Homelab
+   cd ~/EZ-Homelab
    ```
-3. Open the folder in VS Code: `File > Open Folder` and select `/home/your-user/AI-Homelab`
+3. Open the folder in VS Code: `File > Open Folder` and select `/home/your-user/EZ-Homelab`
 
 ## Step 5: Enable GitHub Copilot
 

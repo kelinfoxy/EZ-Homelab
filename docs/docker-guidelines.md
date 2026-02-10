@@ -67,32 +67,43 @@ All stacks live in `/opt/stacks/stack-name/`:
 
 ```
 /opt/stacks/
-├── traefik/
-│   ├── docker-compose.yml
-│   ├── traefik.yml           # Static config
-│   ├── dynamic/              # Dynamic routes
-│   │   ├── routes.yml
-│   │   └── external.yml      # External host proxying
-│   ├── acme.json            # SSL certificates (chmod 600)
-│   └── .env
-├── authelia/
-│   ├── docker-compose.yml
-│   ├── configuration.yml     # Authelia settings
-│   ├── users_database.yml    # User accounts
-│   └── .env
-├── media/
-│   ├── docker-compose.yml
-│   └── .env
-└── ...
+    ├── traefik/
+    │   ├── docker-compose.yml
+    │   ├── traefik.yml           # Static config
+    │   ├── dynamic/              # Dynamic routes
+    │   │   ├── routes.yml
+    │   │   └── external.yml      # External host proxying
+    │   ├── acme.json            # SSL certificates (chmod 600)
+    │   └── .env
+    ├── authelia/
+    │   ├── config/
+    │   |   ├── configuration.yml   # Authelia main config
+    │   |   └── notification.txt
+    |   └── secrets/
+    |       └── users_database.yml  # User credentials
+    ├── media/
+    │   ├── docker-compose.yml
+    │   └── .env
+    └── ...
 ```
 
 ### Why Dockge?
 
-- **Visual Management**: Web UI at `https://dockge.${DOMAIN}`
-- **Direct File Editing**: Edit compose files in-place
-- **Stack Organization**: Each service stack is independent
+- **Visual Management**: Simple Web UI at `https://dockge.${DOMAIN}`
+- **Beginner Friendly**: No advancted options, simple control & edit functionality
+- **Stack Organization**: Keep dependant services together, or just 1 service per stack
 - **AI Compatible**: Files can be managed by AI
-- **Git Integration**: Easy to version control
+
+### **x-dockge Section:**
+At the bottom of the compose file, add a top-level `x-dockge` section for service discovery in Dockge:
+
+```yaml
+x-dockge:
+  urls:
+    - https://myservice.${DOMAIN}
+    - http://${SERVER_IP}:8080  # Direct local access
+```
+
 
 ### Storage Strategy
 
@@ -113,15 +124,8 @@ volumes:
 
 AI will suggest `/mnt/` when data may exceed 50GB or grow continuously.
 
-## Traefik and Authelia Integration
 
-### Routing Decision Tree
-
-**Is Traefik running on the SAME server as your service?**
-- **YES**: Use Docker labels in the service's compose file (see below)
-- **NO**: Comment out labels; add route to Traefik's external YAML file on the core server
-
-### Every Local (on the same server) Service Needs Traefik Labels
+## Traefik Labels for services on Core Server only
 
 **Default Configuration**: All services should use authelia SSO, traefik routing, and sablier lazy loading by default.
 
@@ -179,42 +183,8 @@ services:
 - `sablier.group=${SERVER_HOSTNAME}-myservice` - Groups containers for coordinated startup
 - `sablier.start-on-demand=true` - Starts containers only when accessed
 
-**x-dockge Section:**
-At the bottom of the compose file, add a top-level `x-dockge` section for service discovery in Dockge:
-
-```yaml
-x-dockge:
-  urls:
-    - https://myservice.${DOMAIN}
-    - http://localhost:8080  # Direct local access
-```
-
-### If Traefik is on a Remote Server, configure routes & services on the Remote Server
-
-When Traefik runs on a separate server from your application services, you cannot use Docker labels for configuration. Instead, create YAML files in the Traefik server's `dynamic/` directory to define routes and services.
-
-#### When to Use Remote Traefik Configuration
-
-Use this approach when:
-- Traefik runs on a dedicated reverse proxy server
-- Application services run on separate application servers
-- You want centralized routing configuration
-- Docker labels cannot be used (different servers)
-
-#### File Organization
-
-Create one YAML file per application server in `/opt/stacks/traefik/dynamic/`:
-
-```
-/opt/stacks/traefik/dynamic/
-├── server1.example.com.yml    # Services on server1
-├── server2.example.com.yml    # Services on server2
-├── shared-services.yml        # Common services
-└── sablier.yml               # Sablier middlewares
-```
-
-#### YAML File Structure
-
+## **Services on all Remote Servers**
+- Create external-host-servername.yml on the Core Server in Traefik's dynamic folder  
 Each server-specific YAML file should contain:
 
 ```yaml
@@ -257,6 +227,17 @@ http:
         servers:
           - url: "http://server1.example.com:7878"  # Internal IP/port of service
         passhostheader: true
+```
+
+#### File Organization
+
+Create one YAML file per application server in `/opt/stacks/traefik/dynamic/`:
+
+```
+/opt/stacks/traefik/dynamic/
+                   ├── external-host-server1.yml    # Services on server1
+                   ├── external-host-server2.yml    # Services on server2
+                   └── sablier.yml                  # Sablier middlewares
 ```
 
 #### Complete Example for a Media Server
@@ -361,7 +342,7 @@ When moving from Docker labels to YAML configuration:
 This approach provides centralized, version-controllable routing configuration while maintaining the same security and performance benefits as Docker label-based configuration.
 
 
-### When to Use Authelia SSO
+## When to Use Authelia SSO
 
 **Protect with Authelia** (Default for all services):
 - Admin interfaces (Sonarr, Radarr, Prowlarr, etc.)
@@ -388,7 +369,7 @@ access_control:
       policy: bypass
 ```
 
-### Routing Through VPN (Gluetun)
+## Routing Through VPN (Gluetun)
 
 For services that need VPN (downloads):
 
@@ -420,27 +401,6 @@ Use Docker Compose for:
 - Multi-container applications
 - Services with complex configurations
 - Anything you want to keep long-term
-
-**Example:**
-```yaml
-# docker-compose/plex.yml
-services:
-  plex:
-    image: plexinc/pms-docker:1.40.0.7998-f68041501
-    container_name: plex
-    restart: unless-stopped
-    networks:
-      - media-network
-    ports:
-      - "32400:32400"
-    volumes:
-      - ./config/plex:/config
-      - /media:/media:ro
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/New_York
-```
 
 ### Docker Run: For Temporary Operations Only
 
@@ -585,30 +545,34 @@ networks:
     external: true
 ```
 
+**Required: Add to Sablier YAML file (e.g., `/opt/stacks/traefik/dynamic/sablier.yml`):**
+```yaml
+http:
+  middlewares:
+    sablier-server1-servicename:
+      plugin:
+        sablier:
+          sablierUrl: http://sablier-service:10000
+          group: server1-servicename
+          sessionDuration: 5m
+          ignoreUserAgent: curl
+          dynamic:
+            displayName: Service Name
+            theme: ghost
+            show-details-by-default: true
+```
+
 ### Multi-Server Configuration
 
-If Traefik is on a DIFFERENT server (e.g., service on remote server, Traefik on core):
-  * Comment out the traefik labels since they won't be used, don't delete them.
+On Remote Servers:
+  * Remove traefik labels
   * Keep Sablier labels (each server has its own Sablier for local containers)
-  * Add route to Traefik's external YAML file on the core server
-  * Authelia SSO is handled by core server (no need for Authelia on remote servers)
+  * Add route to external-host yml file in Traefik's dynamic folder on the core server
+  * Authelia SSO is handled by the external-host yml file  
 
-**Example: Comment out Traefik labels in docker-compose.yml:**
+**Example: Remove Traefik labels in docker-compose.yml:**
 ```yaml
     labels:
-      # TRAEFIK CONFIGURATION
-      # ==========================================
-      # Service metadata
-      - "com.centurylinklabs.watchtower.enable=true"
-      - "homelab.category=category-name"
-      - "homelab.description=Brief service description"
-      # Traefik labels - COMMENTED OUT for remote server
-      # - "traefik.enable=true"
-      # - "traefik.http.routers.service-name.rule=Host(`service-name.${DOMAIN}`)"
-      # - "traefik.http.routers.service-name.entrypoints=websecure"
-      # - "traefik.http.routers.service-name.tls.certresolver=letsencrypt"
-      # - "traefik.http.routers.service-name.middlewares=authelia@docker"
-      # - "traefik.http.services.service-name.loadbalancer.server.port=8080"
       # Sablier configuration 
       - "sablier.enable=true"
       - "sablier.group=${SERVER_HOSTNAME}-service-name"
@@ -638,7 +602,7 @@ http:
         passhostheader: true
 ```
 
-**Required: Add to Sablier YAML file (e.g., `/opt/stacks/traefik/dynamic/sablier.yml`):**
+**Required: Add to Sablier YAML file (e.g., `/opt/stacks/sablier/config/sablier.yml`):**
 ```yaml
     sablier-server1-servicename:
       plugin:
