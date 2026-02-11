@@ -1,7 +1,5 @@
 #!/bin/bash
-# EZ-Homelab Unified Setup & Deployment Script
-
-# Removed set -e to allow graceful error handling
+# EZ-Homelab Setup & Deployment Script
 
 # Debug logging configuration
 DEBUG=${DEBUG:-false}
@@ -2208,7 +2206,7 @@ deploy_traefik_stack() {
 http:
   routers:
     traefik-dashboard:
-      rule: "Host(\`traefik.${SERVER_HOSTNAME}.kelinreij.duckdns.org\`)"
+      rule: "Host(\`traefik.${SERVER_HOSTNAME}.${DOMAIN}\`)"
       entryPoints:
         - web
       service: api@internal
@@ -2603,13 +2601,17 @@ main() {
     echo "║                  Deployment Complete!                       ║"
     echo "║  SSL Certificates may take a few minutes to be issued.      ║"
     echo "║                                                             ║"
-    echo "║  https://dockge.${DOMAIN}                                   ║"
-    echo "║  http://${SERVER_IP}:5001                                   ║"
-    echo "║                                                             ║"
-    echo "║  https://homepage.${DOMAIN}                                 ║"
-    echo "║  http://${SERVER_IP}:3003                                    ║"
+    echo "║    Dockge  https://dockge.${DOMAIN}"
+    echo "║            http://${SERVER_IP}:5001"
+    echo "║"
+    echo "║    Arcane  https://arcane.${SERVER_HOSTNAME}.${DOMAIN}"
+    echo "║            http://${SERVER_IP}:3552"
+    echo "║"
+    echo "║  Homepage  https://homepage.${DOMAIN}"
+    echo "║            http://${SERVER_IP}:3003                          ║"
     echo "║                                                             ║"
     echo "╚═════════════════════════════════════════════════════════════╝"
+    echo ""
 
     # Show consolidated warnings if any
     if [ -n "$GLOBAL_MISSING_VARS" ] || [ -n "$TLS_ISSUES_SUMMARY" ]; then
@@ -2631,19 +2633,17 @@ main() {
             echo "║                                                             ║"
         fi
     fi
-    echo "╚═════════════════════════════════════════════════════════════╝"
 
-    echo "╔══════════════════════════════════════════╗"
-    echo "║              📚 RESOURCES                 ║"
-    echo "╚══════════════════════════════════════════╝"
-    echo ""
-    echo "  📖 Documentation: $REPO_DIR/docs/"
-    echo "  🔧 Quick Reference: $REPO_DIR/docs/quick-reference.md"
-    echo "  🐙 Repository: https://github.com/your-repo/ez-homelab"
-    echo "  📋 Wiki: https://github.com/your-repo/ez-homelab/wiki"
+    echo "╔═════════════════════════════════════════════════════════════╗"
+    echo "║                          RESOURCES                          ║"
+    echo "║                                                             ║"
+    echo "║   Documentation: ~/EZ-Homelab/docs                          ║"
+    echo "║   Repository: https://github.com/kelinfoxy/EZ-Homelab       ║"
+    echo "║   Wiki: https://github.com/kelinfoxy/EZ-Homelab/wiki        ║"
+    echo "║                                                             ║"
+    echo "╚═════════════════════════════════════════════════════════════╝"
     echo ""
     debug_log "Script completed successfully"
-    echo ""
 }
 
 # Run main function

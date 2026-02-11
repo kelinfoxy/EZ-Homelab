@@ -35,9 +35,6 @@ services:
 #    networks:
 #      - traefik-network
 
-volumes:
-  arcane-data:
-
 networks:
   traefik-network:
     external: true
