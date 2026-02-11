@@ -1,0 +1,73 @@
+{
+  "messages": {
+    "ackReactionScope": "group-mentions"
+  },
+  "agents": {
+    "defaults": {
+      "maxConcurrent": 4,
+      "subagents": {
+        "maxConcurrent": 8
+      },
+      "compaction": {
+        "mode": "safeguard"
+      },
+      "workspace": "/home/node/clawd",
+      "model": {
+        "primary": "github-copilot/grok-code-fast-1"
+      },
+      "models": {
+        "github-copilot/grok-code-fast-1": {}
+      }
+    }
+  },
+  "gateway": {
+    "mode": "remote",
+    "auth": {
+      "mode": "token",
+      "token": "30e37bc23fc82f46140b36853b3295057c68c0808cb1c3f8"
+    },
+    "port": 18789,
+    "bind": "lan",
+    "trustedProxies": ["0.0.0.0/0"],
+    "tailscale": {
+      "mode": "off",
+      "resetOnExit": false
+    }
+  },
+  "auth": {
+    "profiles": {
+      "github-copilot:github": {
+        "provider": "github-copilot",
+        "mode": "token"
+      }
+    }
+  },
+  "plugins": {
+    "entries": {
+      "telegram": {
+        "enabled": true
+      }
+    }
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "botToken": "8220365958:AAGpig52pDKixnN1sdCAt85iN6ONkyw-4P0"
+    }
+  },
+  "skills": {
+    "install": {
+      "nodeManager": "npm"
+    }
+  },
+  "wizard": {
+    "lastRunAt": "2026-01-27T21:32:27.856Z",
+    "lastRunVersion": "2026.1.26",
+    "lastRunCommand": "onboard",
+    "lastRunMode": "local"
+  },
+  "meta": {
+    "lastTouchedVersion": "2026.1.26",
+    "lastTouchedAt": "2026-01-27T21:32:27.861Z"
+  }
+}

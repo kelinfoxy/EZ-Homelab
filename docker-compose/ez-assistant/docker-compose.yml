@@ -1,0 +1,66 @@
+services:
+  moltbot-gateway:
+    image: ${CLAWDBOT_IMAGE:-moltbot:local}
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      CLAWDBOT_GATEWAY_TOKEN: ${CLAWDBOT_GATEWAY_TOKEN}
+      CLAUDE_AI_SESSION_KEY: ${CLAUDE_AI_SESSION_KEY}
+      CLAUDE_WEB_SESSION_KEY: ${CLAUDE_WEB_SESSION_KEY}
+      CLAUDE_WEB_COOKIE: ${CLAUDE_WEB_COOKIE}
+    volumes:
+      - ${CLAWDBOT_CONFIG_DIR}:/home/node/.clawdbot
+      - ${CLAWDBOT_WORKSPACE_DIR}:/home/node/clawd
+    ports:
+      - ${CLAWDBOT_GATEWAY_PORT:-18789}:18789
+      - ${CLAWDBOT_BRIDGE_PORT:-18790}:18790
+    init: true
+    restart: unless-stopped
+    labels:
+      # TRAEFIK CONFIGURATION
+      # ==========================================
+      # Service metadata
+      - homelab.category=infrastructure
+      - homelab.description=AI homelab management assistant web UI
+      - com.centurylinklabs.watchtower.enable=true
+      # Traefik labels - COMMENTED OUT for remote server
+      # - "traefik.enable=true"
+      # - "traefik.http.routers.ez-assistant.rule=Host(`assistant.${DOMAIN}`)"
+      # - "traefik.http.routers.ez-assistant.entrypoints=websecure"
+      # - "traefik.http.routers.ez-assistant.tls.certresolver=letsencrypt"
+      # - "traefik.http.routers.ez-assistant.middlewares=authelia@docker"
+      # - "traefik.http.services.ez-assistant.loadbalancer.server.port=18789"
+      # Sablier lazy loading
+      - sablier.enable=true
+      - sablier.group=${SERVER_HOSTNAME}-assistant
+      - sablier.start-on-demand=true
+    command:
+      - node
+      - dist/index.js
+      - gateway
+      - --bind
+      - ${CLAWDBOT_GATEWAY_BIND:-lan}
+      - --port
+      - ${CLAWDBOT_GATEWAY_PORT:-18789}
+  moltbot-cli:
+    image: ${CLAWDBOT_IMAGE:-moltbot:local}
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      BROWSER: echo
+      CLAUDE_AI_SESSION_KEY: ${CLAUDE_AI_SESSION_KEY}
+      CLAUDE_WEB_SESSION_KEY: ${CLAUDE_WEB_SESSION_KEY}
+      CLAUDE_WEB_COOKIE: ${CLAUDE_WEB_COOKIE}
+    volumes:
+      - ${CLAWDBOT_CONFIG_DIR}:/home/node/.clawdbot
+      - ${CLAWDBOT_WORKSPACE_DIR}:/home/node/clawd
+    stdin_open: true
+    tty: true
+    init: true
+    entrypoint:
+      - node
+      - dist/index.js
+networks: {}
+x-dockge:
+  urls:
+    - https://assistant.kelinreij.duckdns.org

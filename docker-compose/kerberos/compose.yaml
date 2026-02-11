@@ -1,0 +1,16 @@
+version: "3.3"
+services:
+  agent:
+    container_name: kerberos-agent
+    image: kerberos/agent:latest
+    ports:
+      - 8076:80
+    restart: always
+networks:
+  homelab-network:
+    external: true
+  traefik-network:
+    external: true
+x-dockge:
+  urls:
+    - http://192.168.4.11:8076
