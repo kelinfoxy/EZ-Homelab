@@ -716,7 +716,7 @@ prompt_for_variable() {
         # Build prompt text with current value if it exists
         if [ -n "$current_value" ]; then
             if [ "$var" = "DEFAULT_PASSWORD" ]; then
-                prompt_text="🔒 ${var} ([HIDDEN]): "
+                prompt_text="║    🔒 ${var} ([HIDDEN]): "
             else
                 prompt_text="${var} (${current_value}): "
             fi
@@ -727,28 +727,28 @@ prompt_for_variable() {
         # Add icon prefix
         case "$var" in
             "SERVER_IP")
-                prompt_text="🌐 ${prompt_text}"
+                prompt_text="║    🌐 ${prompt_text}"
                 ;;
             "DOMAIN")
-                prompt_text="🌍 ${prompt_text}"
+                prompt_text="║    🌍 ${prompt_text}"
                 ;;
             "DUCKDNS_SUBDOMAINS")
-                prompt_text="🦆 ${prompt_text}"
+                prompt_text="║    🦆 ${prompt_text}"
                 ;;
             "DUCKDNS_TOKEN")
-                prompt_text="🔑 ${prompt_text}"
+                prompt_text="║    🔑 ${prompt_text}"
                 ;;
             "DEFAULT_USER")
-                prompt_text="👤 ${prompt_text}"
+                prompt_text="║    👤 ${prompt_text}"
                 ;;
             "DEFAULT_PASSWORD")
                 # Lock icon already added above for passwords
                 ;;
             "DEFAULT_EMAIL")
-                prompt_text="📧 ${prompt_text}"
+                prompt_text="║    📧 ${prompt_text}"
                 ;;
             "SERVER_HOSTNAME")
-                prompt_text="🏠 ${prompt_text}"
+                prompt_text="║    🏠 ${prompt_text}"
                 ;;
         esac
         
@@ -770,7 +770,7 @@ prompt_for_variable() {
             if [ -n "$current_value" ]; then
                 # Use existing value - overwrite prompt with status
                 if [ "$var" != "DEFAULT_PASSWORD" ]; then
-                    echo -e "\033[1A\033[K✅ ${var}: ${current_value}"
+                    echo -e "\033[1A\033[K║    ✅ ${var}: ${current_value}"
                 fi
                 return 0
             else
@@ -783,9 +783,9 @@ prompt_for_variable() {
             eval "$var=\"$user_input\""
             # Overwrite prompt with status
             if [ "$var" != "DEFAULT_PASSWORD" ]; then
-                echo -e "\033[1A\033[K✅ ${var}: ${user_input}"
+                echo -e "\033[1A\033[K║    ✅ ${var}: ${user_input}"
             else
-                echo -e "\033[1A\033[K✅ ${var}: [HIDDEN]"
+                echo -e "\033[1A\033[K║    ✅ ${var}: [HIDDEN]"
             fi
             return 0
         else
@@ -808,7 +808,7 @@ validate_and_prompt_variables() {
         
         # Check validity without showing initial summary
         for var in "${REQUIRED_VARS[@]}"; do
-            local display_value=$(echo "${!var:-}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+            local display_value=$(echo "║    ${!var:-}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
             if [ -z "$display_value" ] || ! validate_variable "$var" "${!var}"; then
                 all_valid=false
             fi
@@ -816,26 +816,27 @@ validate_and_prompt_variables() {
         
         if [ "$all_valid" = true ]; then
             if [ "$first_display" = true ]; then
-                echo "Current configuration:"
+                # echo "║  Current configuration:"
                 for var in "${REQUIRED_VARS[@]}"; do
                     local display_value=$(echo "${!var:-}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
                     if [ "$var" = "DEFAULT_PASSWORD" ]; then
-                        echo "  ✅ ${var}: [HIDDEN]"
+                        echo "║    ✅ ${var}: [HIDDEN]"
                     else
-                        echo "  ✅ ${var}: ${display_value}"
+                        echo "║    ✅ ${var}: ${display_value}"
                     fi
                 done
-                echo ""
+                echo "║"
                 first_display=false
             fi
-            echo ""
-            echo "Choose an option:"
-            echo "  1) ✅ Deploy now"
-            echo "  2) 🔄 Make Changes"
-            echo "  q) ❌ Quit setup"
-            echo ""
-            read -p "Enter your choice (1, 2, or q): " user_choice
-            
+            echo "║"
+            echo "║    Choose an option:"
+            echo "║      1) ✅ Deploy now"
+            echo "║      2) 🔄 Make Changes"
+            echo "║      q) ❌ Quit setup"
+            echo "║"
+            echo -n "╚═════════════════════════════════════════════    "
+            read -p "Choose : " user_choice
+
             case "$user_choice" in
                 1|"p"|"proceed")
                     log_info "Proceeding with current configuration..."
@@ -843,9 +844,9 @@ validate_and_prompt_variables() {
                     ;;
                 2|"r"|"review"|"change")
                     user_wants_to_review=true
-                    echo ""
-                    echo "Reviewing all variables - press Enter to keep current value or enter new value:"
-                    echo ""
+                    echo "║"
+                    echo "║  Press Enter to keep current value:"
+                    echo "║"
                     ;;
                 [Qq]|[Qq]uit)
                     log_info "Setup cancelled by user"
@@ -859,23 +860,7 @@ validate_and_prompt_variables() {
             esac
         else
             echo ""
-            echo "Missing variables: ${missing_vars[*]}"
-            echo "Some variables need configuration. Press Enter to continue or 'q' to quit."
-            read -p "Press Enter to configure missing variables, or 'q' to quit: " user_choice
-            
-            case "$user_choice" in
-                [Qq]|[Qq]uit)
-                    log_info "Setup cancelled by user"
-                    exit 0
-                    ;;
-                ""|"c"|"continue")
-                    # Continue with prompting
-                    ;;
-                *)
-                    log_warning "Invalid choice. Press Enter to continue or 'q' to quit."
-                    continue
-                    ;;
-            esac
+            echo "║    Missing variables: ${missing_vars[*]}"
         fi
         
         # Prompt for variables (either missing ones or all if reviewing)
@@ -1097,9 +1082,8 @@ install_nvidia() {
 
 # Deploy Dockge function
 deploy_dockge() {
-    echo "Deploying Dockge..."
+    echo -n "║    Deploying Dockge...  "
     log_info "  - Dockge (Docker Compose Manager)"
-    echo ""
 
     # Backup existing files if they exist
     if [ -f /opt/dockge/docker-compose.yml ]; then
@@ -1119,18 +1103,22 @@ deploy_dockge() {
 
     # Deploy Dockge stack
     cd /opt/dockge
-    run_cmd --quiet docker compose up -d
-    echo "Success"
+    if run_cmd --quiet docker compose up -d; then
+        echo "Success"
+        echo "║"
+    else
+        echo "Failed"
+        echo "║"
+    fi
 }
 
 # Deploy core stack function
 deploy_core() {
     debug_log "deploy_core called"
-    echo "Deploying Core Stack..."
+    echo -n "║    Deploying Core Stack...  "
     log_info "  - DuckDNS (Dynamic DNS)"
     log_info "  - Traefik (Reverse Proxy with SSL)"
     log_info "  - Authelia (Single Sign-On)"
-    echo ""
 
     # Copy core stack files
     debug_log "Copying core stack files"
@@ -1251,23 +1239,27 @@ PYFIX
     # Deploy core stack
     debug_log "Deploying core stack with docker compose"
     cd /opt/stacks/core
-    run_cmd --quiet docker compose up -d
-    echo "Success"
+    if run_cmd --quiet docker compose up -d; then
+        echo "Success"
+        echo "║"
+    else
+        echo "Failed"
+        echo "║"
+    fi
     
     # Deploy Sablier stack for lazy loading
-    echo "Deploying Sablier..."
+    echo -n "║    Deploying Sablier...  "
     deploy_sablier_stack
 }
 
 # Deploy infrastructure stack function
 deploy_infrastructure() {
-    echo "Deploying Infrastructure Stack..."
+    echo -n "║    Deploying Infrastructure Stack...  "
     log_info "  - Pi-hole (DNS Ad Blocker)"
     log_info "  - Watchtower (Container Updates)"
     log_info "  - Dozzle (Log Viewer)"
     log_info "  - Glances (System Monitor)"
     log_info "  - Docker Proxy (Security)"
-    echo ""
 
     # Backup existing files if they exist
     if [ -f /opt/stacks/infrastructure/docker-compose.yml ]; then
@@ -1303,16 +1295,20 @@ deploy_infrastructure() {
 
     # Deploy infrastructure stack
     cd /opt/stacks/infrastructure
-    run_cmd --quiet docker compose up -d
-    echo "Success"
+    if run_cmd --quiet docker compose up -d; then
+        echo "Success"
+        echo "║"
+    else
+        echo "Failed"
+        echo "║"
+    fi
 }
 
 # Deploy dashboards stack function
 deploy_dashboards() {
-    echo "Deploying Dashboard Stack..."
+    echo -n "║    Deploying Dashboard Stack...  "
     log_info "  - Homepage (Application Dashboard)"
     log_info "  - Homarr (Modern Dashboard)"
-    echo ""
 
     # Create dashboards directory
     sudo mkdir -p /opt/stacks/dashboards
@@ -1364,14 +1360,18 @@ deploy_dashboards() {
 
     # Deploy dashboards stack
     cd /opt/stacks/dashboards
-    run_cmd --quiet docker compose up -d
-    echo "Success"
+    if run_cmd --quiet docker compose up -d; then
+        echo "Success"
+        echo "║"
+    else
+        echo "Failed"
+        echo "║"
+    fi
 }
 
 deploy_arcane() {
-    echo "Deploying Arcane..."
+    echo -n "║    Deploying Arcane...  "
     log_info "  - Arcane (Docker Management UI)"
-    echo ""
 
     # Create arcane directory
     sudo mkdir -p /opt/arcane
@@ -1394,8 +1394,12 @@ deploy_arcane() {
 
     # Deploy arcane stack
     cd /opt/arcane
-    run_cmd --quiet docker compose up -d
-    echo "Success"
+    if run_cmd --quiet docker compose up -d; then
+        echo "Success"
+        echo "║"
+    else
+        echo "║"
+    fi
 }
 
 # Deployment function
@@ -1463,14 +1467,19 @@ perform_deployment() {
     fi
 
     # Step 3: Create Docker networks (if they don't exist)
-    echo "Creating Docker networks..."
-    docker network create homelab-network 2>/dev/null || true
-    docker network create traefik-network 2>/dev/null || true
-    docker network create media-network 2>/dev/null || true
+    echo "║"
+    echo "║    Creating Docker networks..."
+
+    docker network create homelab-network >/dev/null 2>&1 && echo "║        homelab-network created" || echo "║        homelab-network exists"
+    docker network create traefik-network >/dev/null 2>&1 && echo "║        traefik-network created" || echo "║        traefik-network exists"
+    docker network create media-network >/dev/null 2>&1 && echo "║        media-network created" || echo "║        media-network exists"
+    echo "║"
 
     # Step 4: Deploy Dockge (always deployed)
     deploy_dockge
 
+    deploy_arcane
+    
     # Deploy core stack
     if [ "$DEPLOY_CORE" = true ]; then
         deploy_core
@@ -1492,11 +1501,6 @@ perform_deployment() {
             step_num=5
         fi
         deploy_dashboards
-    fi
-
-    # Deploy arcane stack (deployed for both core and additional servers)
-    if [ "$DEPLOY_CORE" = true ] || [ "$DEPLOY_INFRASTRUCTURE" = true ]; then
-        deploy_arcane
     fi
 
     # Setup stacks for Dockge
@@ -1595,6 +1599,7 @@ EOF
 }
 setup_stacks_for_dockge() {
     log_info "Setting up all stacks for Dockge..."
+    echo -n "║    Copy & configure all stacks...  "
 
     # List of stacks to setup
     STACKS=("vpn" "media" "media-management" "transcoders" "monitoring" "productivity" "wikis" "utilities" "alternatives" "homeassistant")
@@ -1653,6 +1658,7 @@ setup_stacks_for_dockge() {
                 done
 
                 log_success "Prepared $stack stack for Dockge"
+
             else
                 log_warning "$stack stack docker-compose.yml not found, skipping..."
             fi
@@ -1662,7 +1668,8 @@ setup_stacks_for_dockge() {
     done
 
     log_success "All stacks prepared for Dockge deployment"
-    echo ""
+    echo "Success"
+    echo "║"
 }
 
 # Main menu
@@ -1677,8 +1684,8 @@ show_main_menu() {
     echo "║                4)  Install NVIDIA Drivers                   ║"
     echo "║                                                             ║"
     echo "║                q)  Quit                                     ║"
-    echo "╚═════════════════════════════════════════════════════════════╝"
-    echo ""
+    echo "║"
+    
 }
 
 # =============================================
@@ -1846,7 +1853,8 @@ deploy_remote_server() {
             echo "  2) Skip SSH setup (manual configuration required)"
             echo "  3) Return to main menu"
             echo ""
-            read -p "Choose an option (1-3): " ssh_retry_choice
+            echo -n "╚═════════════════════════════════════════════    "
+            read -p "Choose : " ssh_retry_choice
             
             case $ssh_retry_choice in
                 1)
@@ -2063,8 +2071,13 @@ deploy_sablier_stack() {
     localize_yml_file "$sablier_dir/docker-compose.yml"
     
     # Deploy
-    run_cmd --quiet docker compose up -d
-    echo "Success"
+    if run_cmd --quiet docker compose up -d; then
+        echo "Success"
+        echo "║"
+    else
+        echo "Failed"
+        echo "║"
+    fi
 }
 
 # Remove Traefik configuration from additional server services
@@ -2411,7 +2424,7 @@ run_cmd() {
     fi
     
     if [ "$DRY_RUN" = true ] || [ "$TEST_MODE" = true ]; then
-        echo "[DRY-RUN/TEST] $@"
+        echo -n "[DRY-RUN/TEST]  "
         return 0
     else
         if [ "$quiet" = true ]; then
@@ -2469,7 +2482,8 @@ main() {
     while true; do
         # Show main menu
         show_main_menu
-        read -p "Choose an option (1-4 or q): " MAIN_CHOICE
+        echo -n "╚═════════════════════════════════════════════    "
+        read -p "Choose : " MAIN_CHOICE
 
         case $MAIN_CHOICE in
             1)
@@ -2556,7 +2570,15 @@ main() {
         esac
     done
 
-    echo ""
+    echo "║"
+        # echo "╔═════════════════════════════════════════════════════════════╗"
+    if [ "$DEPLOY_CORE" = true ]; then
+        echo "║                   CORE SERVER DEPLOYMENT"
+    fi
+    if [ "$DEPLOY_REMOTE_SERVER" = true ]; then
+        echo "║                 ADDITIONAL SERVER DEPLOYMENT                ║"
+    fi
+        echo "║"
 
     # Prepare deployment environment (handles special cases like prerequisites installation)
     prepare_deployment
@@ -2593,11 +2615,12 @@ main() {
     perform_deployment
 
     # Show completion message
-    echo ""
-    echo "╔═════════════════════════════════════════════════════════════╗"
-    echo "║                  Deployment Complete!                       ║"
-    echo "║  SSL Certificates may take a few minutes to be issued.      ║"
-    echo "║                                                             ║"
+    echo "║═════════════════════════════════════════════════════════════"
+    echo "║"
+    echo "║                  Deployment Complete!"
+    echo "║"
+    echo "║  SSL Certificates may take a few minutes to be issued."
+    echo "║"
     echo "║    Dockge  https://dockge.${DOMAIN}"
     echo "║            http://${SERVER_IP}:5001"
     echo "║"
@@ -2605,14 +2628,12 @@ main() {
     echo "║            http://${SERVER_IP}:3552"
     echo "║"
     echo "║  Homepage  https://homepage.${DOMAIN}"
-    echo "║            http://${SERVER_IP}:3003                          ║"
-    echo "║                                                             ║"
-    echo "╚═════════════════════════════════════════════════════════════╝"
-    echo ""
+    echo "║            http://${SERVER_IP}:3003"
+    echo "║"
 
     # Show consolidated warnings if any
     if [ -n "$GLOBAL_MISSING_VARS" ] || [ -n "$TLS_ISSUES_SUMMARY" ]; then
-        echo "╔═════════════════════════════════════════════════════════════╗"
+        echo "║═════════════════════════════════════════════════════════════╗"
         echo "║                     ⚠️  WARNING  ⚠️                        ║"
         echo "║       The following variables were not defined              ║"
         echo "║  If something isn't working as expected check these first   ║"
@@ -2631,14 +2652,17 @@ main() {
         fi
     fi
 
-    echo "╔═════════════════════════════════════════════════════════════╗"
-    echo "║                          RESOURCES                          ║"
-    echo "║                                                             ║"
-    echo "║   Documentation: ~/EZ-Homelab/docs                          ║"
-    echo "║   Repository: https://github.com/kelinfoxy/EZ-Homelab       ║"
-    echo "║   Wiki: https://github.com/kelinfoxy/EZ-Homelab/wiki        ║"
-    echo "║                                                             ║"
-    echo "╚═════════════════════════════════════════════════════════════╝"
+    echo "║═════════════════════════════════════════════════════════════"
+    echo "║                          RESOURCES"
+    echo "║"
+    echo "║   https://github.com/kelinfoxy/EZ-Homelab/blob/main/docs/Arcane-Configuration-Guide.md"
+    echo "║"
+    echo "║   Documentation: ~/EZ-Homelab/docs"
+    echo "║"
+    echo "║   Repository: https://github.com/kelinfoxy/EZ-Homelab"
+    echo "║   Wiki: https://github.com/kelinfoxy/EZ-Homelab/wiki"
+    echo "║ "
+    echo "╚═════════════════════════════════════════════════════════════"
     echo ""
     debug_log "Script completed successfully"
 }
