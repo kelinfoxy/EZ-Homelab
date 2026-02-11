@@ -180,9 +180,12 @@ process_stack_env() {
             # Get actual value from environment
             local actual_value="${!key}"
             
-            # If we have a value, use it; otherwise keep the example
+            # If we have a value, expand any nested variable references
             if [ -n "$actual_value" ]; then
-                echo "$key=$actual_value" >> "$temp_file"
+                # Use eval to expand nested ${VAR} references
+                local expanded_value
+                expanded_value=$(eval echo "\"$actual_value\"")
+                echo "$key=$expanded_value" >> "$temp_file"
             else
                 echo "$line" >> "$temp_file"
             fi
