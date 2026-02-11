@@ -1097,7 +1097,7 @@ install_nvidia() {
 
 # Deploy Dockge function
 deploy_dockge() {
-    log_info "Deploying Dockge stack manager..."
+    echo "Deploying Dockge..."
     log_info "  - Dockge (Docker Compose Manager)"
     echo ""
 
@@ -1120,14 +1120,14 @@ deploy_dockge() {
     # Deploy Dockge stack
     cd /opt/dockge
     run_cmd --quiet docker compose up -d
-    log_success "Dockge deployed"
+    echo "Success"
     echo ""
 }
 
 # Deploy core stack function
 deploy_core() {
     debug_log "deploy_core called"
-    log_info "Deploying core stack..."
+    echo "Deploying Core Stack..."
     log_info "  - DuckDNS (Dynamic DNS)"
     log_info "  - Traefik (Reverse Proxy with SSL)"
     log_info "  - Authelia (Single Sign-On)"
@@ -1253,18 +1253,18 @@ PYFIX
     debug_log "Deploying core stack with docker compose"
     cd /opt/stacks/core
     run_cmd --quiet docker compose up -d
-    log_success "Core infrastructure deployed"
+    echo "Success"
     echo ""
     
     # Deploy Sablier stack for lazy loading
-    log_info "Deploying Sablier stack for lazy loading..."
+    echo "Deploying Sablier..."
     deploy_sablier_stack
     echo ""
 }
 
 # Deploy infrastructure stack function
 deploy_infrastructure() {
-    log_info "Deploying infrastructure stack..."
+    echo "Deploying Infrastructure Stack..."
     log_info "  - Pi-hole (DNS Ad Blocker)"
     log_info "  - Watchtower (Container Updates)"
     log_info "  - Dozzle (Log Viewer)"
@@ -1307,13 +1307,13 @@ deploy_infrastructure() {
     # Deploy infrastructure stack
     cd /opt/stacks/infrastructure
     run_cmd --quiet docker compose up -d
-    log_success "Infrastructure stack deployed"
+    echo "Success"
     echo ""
 }
 
 # Deploy dashboards stack function
 deploy_dashboards() {
-    log_info "Deploying dashboard stack..."
+    echo "Deploying Dashboard Stack..."
     log_info "  - Homepage (Application Dashboard)"
     log_info "  - Homarr (Modern Dashboard)"
     echo ""
@@ -1369,12 +1369,12 @@ deploy_dashboards() {
     # Deploy dashboards stack
     cd /opt/stacks/dashboards
     run_cmd --quiet docker compose up -d
-    log_success "Dashboard stack deployed"
+    echo "Success"
     echo ""
 }
 
 deploy_arcane() {
-    log_info "Deploying Arcane stack..."
+    echo "Deploying Arcane..."
     log_info "  - Arcane (Docker Management UI)"
     echo ""
 
@@ -1400,7 +1400,7 @@ deploy_arcane() {
     # Deploy arcane stack
     cd /opt/arcane
     run_cmd --quiet docker compose up -d
-    log_success "Arcane stack deployed"
+    echo "Success"
     echo ""
 }
 
@@ -1469,10 +1469,10 @@ perform_deployment() {
     fi
 
     # Step 3: Create Docker networks (if they don't exist)
-    log_info "Step $([ "$DEPLOY_CORE" = false ] && echo "3" || echo "2"): Creating Docker networks..."
-    docker network create homelab-network 2>/dev/null && log_success "Created homelab-network" || log_info "homelab-network already exists"
-    docker network create traefik-network 2>/dev/null && log_success "Created traefik-network" || log_info "traefik-network already exists"
-    docker network create media-network 2>/dev/null && log_success "Created media-network" || log_info "media-network already exists"
+    echo "Creating Docker networks..."
+    docker network create homelab-network 2>/dev/null && echo "Created homelab-network" || echo "homelab-network already exists"
+    docker network create traefik-network 2>/dev/null && echo "Created traefik-network" || echo "traefik-network already exists"
+    docker network create media-network 2>/dev/null && echo "Created media-network" || echo "media-network already exists"
     echo ""
 
     # Step 4: Deploy Dockge (always deployed)
@@ -1886,9 +1886,9 @@ deploy_remote_server() {
     done
     
     # Step 2: Create required Docker networks
-    log_info "Step 2: Creating required Docker networks..."
-    docker network create homelab-network 2>/dev/null && log_success "Created homelab-network" || log_info "homelab-network already exists"
-    docker network create traefik-network 2>/dev/null && log_success "Created traefik-network" || log_info "traefik-network already exists"
+    echo "Creating required Docker networks..."
+    docker network create homelab-network 2>/dev/null && echo "Created homelab-network" || echo "homelab-network already exists"
+    docker network create traefik-network 2>/dev/null && echo "Created traefik-network" || echo "traefik-network already exists"
     echo ""
     
     # Step 3: Install envsubst if not present
@@ -2071,10 +2071,8 @@ deploy_sablier_stack() {
     localize_yml_file "$sablier_dir/docker-compose.yml"
     
     # Deploy
-    log_info "Starting Sablier container..."
-    cd "$sablier_dir"
     run_cmd --quiet docker compose up -d
-    log_success "Sablier stack deployed at $sablier_dir"
+    echo "Success"
 }
 
 # Remove Traefik configuration from additional server services
