@@ -1119,7 +1119,7 @@ deploy_dockge() {
 
     # Deploy Dockge stack
     cd /opt/dockge
-    run_cmd docker compose up -d || true
+    run_cmd --quiet docker compose up -d
     log_success "Dockge deployed"
     echo ""
 }
@@ -1252,7 +1252,7 @@ PYFIX
     # Deploy core stack
     debug_log "Deploying core stack with docker compose"
     cd /opt/stacks/core
-    run_cmd docker compose up -d || true
+    run_cmd --quiet docker compose up -d
     log_success "Core infrastructure deployed"
     echo ""
     
@@ -1306,7 +1306,7 @@ deploy_infrastructure() {
 
     # Deploy infrastructure stack
     cd /opt/stacks/infrastructure
-    run_cmd docker compose up -d || true
+    run_cmd --quiet docker compose up -d
     log_success "Infrastructure stack deployed"
     echo ""
 }
@@ -1368,7 +1368,7 @@ deploy_dashboards() {
 
     # Deploy dashboards stack
     cd /opt/stacks/dashboards
-    run_cmd docker compose up -d || true
+    run_cmd --quiet docker compose up -d
     log_success "Dashboard stack deployed"
     echo ""
 }
@@ -1399,7 +1399,7 @@ deploy_arcane() {
 
     # Deploy arcane stack
     cd /opt/arcane
-    run_cmd docker compose up -d || true
+    run_cmd --quiet docker compose up -d
     log_success "Arcane stack deployed"
     echo ""
 }
@@ -2073,11 +2073,7 @@ deploy_sablier_stack() {
     # Deploy
     log_info "Starting Sablier container..."
     cd "$sablier_dir"
-    if ! docker compose up -d; then
-        log_error "Failed to start Sablier stack"
-        return 1
-    fi
-    
+    run_cmd --quiet docker compose up -d
     log_success "Sablier stack deployed at $sablier_dir"
 }
 
@@ -2224,11 +2220,7 @@ EOF
     # Deploy
     log_info "Starting Traefik container..."
     cd "$traefik_dir"
-    if ! docker compose up -d; then
-        log_error "Failed to start Traefik stack"
-        log_error "Check logs: docker compose -f $traefik_dir/docker-compose.yml logs"
-        return 1
-    fi
+    run_cmd --quiet docker compose up -d
     
     # Verify container started
     if docker ps | grep -q "traefik"; then
@@ -2422,15 +2414,30 @@ prepare_deployment() {
 
 # Run command function (handles dry-run and test modes)
 run_cmd() {
+    local quiet=false
+    if [ "$1" = "--quiet" ]; then
+        quiet=true
+        shift
+    fi
+    
     if [ "$DRY_RUN" = true ] || [ "$TEST_MODE" = true ]; then
         echo "[DRY-RUN/TEST] $@"
         return 0
     else
-        if "$@"; then
-            return 0
+        if [ "$quiet" = true ]; then
+            if "$@" > /dev/null 2>&1; then
+                return 0
+            else
+                log_error "Command failed: $@"
+                return 1
+            fi
         else
-            log_error "Command failed: $@"
-            return 1
+            if "$@"; then
+                return 0
+            else
+                log_error "Command failed: $@"
+                return 1
+            fi
         fi
     fi
 }
