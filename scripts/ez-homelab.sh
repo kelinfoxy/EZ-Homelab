@@ -1121,7 +1121,6 @@ deploy_dockge() {
     cd /opt/dockge
     run_cmd --quiet docker compose up -d
     echo "Success"
-    echo ""
 }
 
 # Deploy core stack function
@@ -1254,12 +1253,10 @@ PYFIX
     cd /opt/stacks/core
     run_cmd --quiet docker compose up -d
     echo "Success"
-    echo ""
     
     # Deploy Sablier stack for lazy loading
     echo "Deploying Sablier..."
     deploy_sablier_stack
-    echo ""
 }
 
 # Deploy infrastructure stack function
@@ -1308,7 +1305,6 @@ deploy_infrastructure() {
     cd /opt/stacks/infrastructure
     run_cmd --quiet docker compose up -d
     echo "Success"
-    echo ""
 }
 
 # Deploy dashboards stack function
@@ -1370,7 +1366,6 @@ deploy_dashboards() {
     cd /opt/stacks/dashboards
     run_cmd --quiet docker compose up -d
     echo "Success"
-    echo ""
 }
 
 deploy_arcane() {
@@ -1401,7 +1396,6 @@ deploy_arcane() {
     cd /opt/arcane
     run_cmd --quiet docker compose up -d
     echo "Success"
-    echo ""
 }
 
 # Deployment function
@@ -1470,10 +1464,9 @@ perform_deployment() {
 
     # Step 3: Create Docker networks (if they don't exist)
     echo "Creating Docker networks..."
-    docker network create homelab-network 2>/dev/null && echo "Created homelab-network" || echo "homelab-network already exists"
-    docker network create traefik-network 2>/dev/null && echo "Created traefik-network" || echo "traefik-network already exists"
-    docker network create media-network 2>/dev/null && echo "Created media-network" || echo "media-network already exists"
-    echo ""
+    docker network create homelab-network 2>/dev/null || true
+    docker network create traefik-network 2>/dev/null || true
+    docker network create media-network 2>/dev/null || true
 
     # Step 4: Deploy Dockge (always deployed)
     deploy_dockge
@@ -1887,9 +1880,8 @@ deploy_remote_server() {
     
     # Step 2: Create required Docker networks
     echo "Creating required Docker networks..."
-    docker network create homelab-network 2>/dev/null && echo "Created homelab-network" || echo "homelab-network already exists"
-    docker network create traefik-network 2>/dev/null && echo "Created traefik-network" || echo "traefik-network already exists"
-    echo ""
+    docker network create homelab-network 2>/dev/null || true
+    docker network create traefik-network 2>/dev/null || true
     
     # Step 3: Install envsubst if not present
     if ! command -v envsubst &> /dev/null; then
