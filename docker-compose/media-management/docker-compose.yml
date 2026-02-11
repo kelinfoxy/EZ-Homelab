@@ -18,7 +18,7 @@ services:
     volumes:
       - ./sonarr/config:/config
       - ${MEDIA_DIR}:/media
-      - ${DOWNLOADS_DIR}:/downloads # Large downloads on separate drive
+      - ${DOWNLOAD_DIR}:/downloads # Large downloads on separate drive
     environment:
       - PUID=${PUID}
       - PGID=${PUID}
@@ -63,7 +63,7 @@ services:
     volumes:
       - ./radarr/config:/config
       - ${MEDIA_DIR}:/media
-      - ${DOWNLOADS_DIR}:/downloads # Large downloads on separate drive
+      - ${DOWNLOAD_DIR}:/downloads # Large downloads on separate drive
     environment:
       - PUID=${PUID}
       - PGID=${PUID}
@@ -152,7 +152,7 @@ services:
     volumes:
       - ./readarr/config:/config
       - ${MEDIA_DIR}/books:/books
-      - ${DOWNLOADS_DIR}:/downloads
+      - ${DOWNLOAD_DIR}:/downloads
     environment:
       - PUID=${PUID}
       - PGID=${PUID}
@@ -191,7 +191,7 @@ services:
     volumes:
       - ./lidarr/config:/config
       - ${MEDIA_DIR}/music:/music
-      - ${DOWNLOADS_DIR}:/downloads
+      - ${DOWNLOAD_DIR}:/downloads
     environment:
       - PUID=${PUID}
       - PGID=${PUID}
@@ -230,7 +230,7 @@ services:
     volumes:
       - ./lazylibrarian/config:/config
       - ${MEDIA_DIR}/books:/books
-      - ${DOWNLOADS_DIR}:/downloads
+      - ${DOWNLOAD_DIR}:/downloads
     environment:
       - PUID=${PUID}
       - PGID=${PUID}
@@ -270,7 +270,7 @@ services:
     volumes:
       - ./mylar3/config:/config
       - ${MEDIA_DIR}/comics:/comics
-      - ${DOWNLOADS_DIR}:/downloads
+      - ${DOWNLOAD_DIR}:/downloads
     environment:
       - PUID=${PUID}
       - PGID=${PUID}

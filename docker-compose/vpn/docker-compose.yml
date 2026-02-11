@@ -71,7 +71,7 @@ services:
     network_mode: 'service:gluetun'  # Routes through VPN in same compose file
     volumes:
       - ./qbittorrent/config:/config
-      - ${DOWNLOADS_DIR}:/downloads
+      - ${DOWNLOAD_DIR}:/downloads
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
