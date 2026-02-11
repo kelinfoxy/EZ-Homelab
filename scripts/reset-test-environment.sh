@@ -136,6 +136,13 @@ else
     log_info "/opt/dockge directory not found"
 fi
 
+if [ -d "/opt/arcane" ]; then
+    rm -rf /opt/arcane
+    log_success "Removed /opt/arcane directory"
+else
+    log_info "/opt/arcane directory not found"
+fi
+
 echo ""
 
 # Step 6: Clean up temporary files and final cleanup
