@@ -1,0 +1,16 @@
+# Wildcard Certificate Configuration
+# This creates a router to trigger wildcard certificate generation
+
+http:
+  routers:
+    wildcard-cert-request:
+      rule: "Host(`kelinreij.duckdns.org`) || Host(`www.kelinreij.duckdns.org`)"
+      entryPoints:
+        - websecure
+      service: noop@internal
+      tls:
+        certResolver: letsencrypt
+        domains:
+          - main: "kelinreij.duckdns.org"
+            sans:
+              - "*.kelinreij.duckdns.org"
