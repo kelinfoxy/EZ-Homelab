@@ -6,7 +6,7 @@ services:
       - '3552:3552'
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./arcane/data:/app/data
+      - ./data:/app/data
       - ${PROJECTS_DIR}:${PROJECTS_DIR}
     environment:
       - APP_URL=http://${SERVER_IP}:3552
@@ -31,7 +31,7 @@ services:
 #      - "3553:3553"
 #    volumes:
 #      - /var/run/docker.sock:/var/run/docker.sock
-#      - ./arcane/data:/app/data
+#      - ./data:/app/data
 #    networks:
 #      - traefik-network
 
