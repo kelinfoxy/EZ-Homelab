@@ -1,9 +1,13 @@
 #!/bin/bash
 # EZ-Homelab Setup & Deployment Script
 
+#═══════════════════════════════════════════════════════════
+# SECTION 1: CONFIGURATION & CONSTANTS
+#═══════════════════════════════════════════════════════════
+
 # Debug logging configuration
 DEBUG=${DEBUG:-false}
-VERBOSE=${VERBOSE:-false}  # New verbosity toggle
+VERBOSE=${VERBOSE:-false}
 DEBUG_LOG_FILE="/tmp/ez-homelab-debug.log"
 
 # Colors for output
@@ -12,6 +16,10 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
+
+#═══════════════════════════════════════════════════════════
+# SECTION 2: LOGGING & UTILITY FUNCTIONS
+#═══════════════════════════════════════════════════════════
 
 # Debug logging function
 debug_log() {
@@ -53,6 +61,94 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
     debug_log "[ERROR] $1"
 }
+
+# Common helper: Backup existing file
+common_backup() {
+    local file="$1"
+    if [ -f "$file" ]; then
+        sudo cp "$file" "${file}.backup.$(date +%Y%m%d_%H%M%S)"
+    fi
+}
+
+# Common helper: Create directories with proper ownership
+common_create_directories() {
+    local -a dirs=("$@")
+    for dir in "${dirs[@]}"; do
+        sudo mkdir -p "$dir" || { log_error "Failed to create $dir"; return 1; }
+    done
+    sudo chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks /opt/dockge /opt/arcane 2>/dev/null || true
+}
+
+# Common helper: Create Docker networks
+common_create_networks() {
+    docker network create homelab-network 2>/dev/null || true
+    docker network create traefik-network 2>/dev/null || true
+    docker network create media-network 2>/dev/null || true
+}
+
+# Run command function (handles dry-run and test modes)
+run_cmd() {
+    local quiet=false
+    if [ "$1" = "--quiet" ]; then
+        quiet=true
+        shift
+    fi
+
+    local cmd="$*"
+    
+    if [ "$DRY_RUN" = true ]; then
+        echo "[DRY-RUN] Would execute: $cmd"
+        return 0
+    fi
+    
+    if [ "$TEST_MODE" = true ]; then
+        echo "[TEST] Simulating: $cmd"
+        return 0
+    fi
+    
+    if [ "$quiet" = true ]; then
+        eval "$cmd" >/dev/null 2>&1
+        return $?
+    else
+        eval "$cmd"
+        return $?
+    fi
+}
+
+# Check if Docker is installed
+check_docker_installed() {
+    if command -v docker &> /dev/null && docker --version &> /dev/null; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Check system resources
+check_system_resources() {
+    local available_mem=$(free -m | awk '/^Mem:/{print $7}')
+    local available_disk=$(df -BG / | awk 'NR==2 {print $4}' | sed 's/G//')
+    
+    if [ "$available_mem" -lt 512 ]; then
+        log_warning "Low memory detected: ${available_mem}MB available"
+    fi
+    
+    if [ "$available_disk" -lt 10 ]; then
+        log_warning "Low disk space: ${available_disk}GB available"
+    fi
+}
+
+# Cleanup orphaned processes
+cleanup_orphaned_processes() {
+    debug_log "Checking for orphaned processes"
+    # Kill any stuck Docker Compose processes
+    pkill -9 -f "docker-compose" 2>/dev/null || true
+    pkill -9 -f "docker compose" 2>/dev/null || true
+}
+
+#═══════════════════════════════════════════════════════════
+# SECTION 3: ENVIRONMENT & CONFIGURATION MANAGEMENT
+#═══════════════════════════════════════════════════════════
 
 # Safely load environment variables from .env file
 load_env_file_safely() {
@@ -118,10 +214,6 @@ load_env_file_safely() {
 
     debug_log "Env file loaded successfully"
 }
-load_env_file() {
-    load_env_file_safely "$REPO_DIR/.env"
-}
-
 # Generate .env.global file without comments and blank lines
 generate_env_global() {
     local source_env="$1"
@@ -195,6 +287,10 @@ process_stack_env() {
     mv "$temp_file" "$stack_dir/.env"
     debug_log "Populated .env values for $stack_dir"
 }
+
+#═══════════════════════════════════════════════════════════
+# SECTION 4: FILE PROCESSING & LOCALIZATION
+#═══════════════════════════════════════════════════════════
 
 # Localize only labels and x-dockge sections in docker-compose files
 localize_yml_file() {
@@ -370,6 +466,10 @@ localize_deployment() {
     fi
 }
 
+#═══════════════════════════════════════════════════════════
+# SECTION 5: INFRASTRUCTURE SETUP (TLS, CA, Docker)
+#═══════════════════════════════════════════════════════════
+
 # Function to generate shared CA for multi-server TLS
 generate_shared_ca() {
     local ca_dir="/opt/stacks/core/shared-ca"
@@ -380,16 +480,23 @@ generate_shared_ca() {
     log_success "Shared CA generated"
 }
 
+#═══════════════════════════════════════════════════════════
+# SECTION 6: SSH CONFIGURATION FOR REMOTE SERVERS
+#═══════════════════════════════════════════════════════════
+
 # Setup SSH key authentication to core server
-setup_ssh_key_to_core() {
-    local key_name="id_rsa_${SERVER_HOSTNAME}_to_core"
-    local key_path="/home/$ACTUAL_USER/.ssh/$key_name"
-    
-    log_info "Setting up SSH key authentication to core server..."
+# Check existing SSH key or cleanup
+ssh_cleanup_and_check_existing() {
+    local key_path="$1"
     
     # Ensure .ssh directory exists
     mkdir -p "/home/$ACTUAL_USER/.ssh"
     chmod 700 "/home/$ACTUAL_USER/.ssh"
+    
+    # Clean up any conflicting known_hosts entries for core server
+    log_info "Cleaning up known_hosts entries..."
+    ssh-keygen -R "${CORE_SERVER_IP}" >/dev/null 2>&1 || true
+    ssh-keygen -R "${CORE_SERVER_HOSTNAME}" >/dev/null 2>&1 || true
     
     # Check if key already exists
     if [ -f "$key_path" ]; then
@@ -401,7 +508,6 @@ setup_ssh_key_to_core() {
             -o ServerAliveInterval=1 -o ServerAliveCountMax=1 -o LogLevel=ERROR \
             '${CORE_SERVER_USER}@${CORE_SERVER_IP}' 'echo test' 2>&1 | grep -v 'locale\|LC_ALL\|setlocale' | grep -q 'test'"; then
             log_success "Existing SSH key works, skipping key setup"
-            export SSH_KEY_PATH="$key_path"
             return 0
         else
             log_warning "Existing key doesn't work or connection failed, will regenerate and install"
@@ -409,7 +515,13 @@ setup_ssh_key_to_core() {
         fi
     fi
     
-    # Generate new SSH key
+    return 1
+}
+
+# Generate new SSH key pair
+ssh_generate_key() {
+    local key_path="$1"
+    
     log_info "Generating SSH key: $key_path"
     ssh-keygen -t rsa -b 4096 -f "$key_path" -N "" \
         -C "${SERVER_HOSTNAME}-to-core-${CORE_SERVER_HOSTNAME}" 2>&1 | grep -v "^Generating\|^Your identification\|^Your public key"
@@ -420,16 +532,22 @@ setup_ssh_key_to_core() {
     fi
     
     log_success "SSH key generated"
+    return 0
+}
+
+# Install SSH key on core server using password authentication
+ssh_install_key_with_password() {
+    local key_path="$1"
     
-    # Install key on core server using password
     log_info "Installing SSH key on core server ${CORE_SERVER_IP}..."
     
+    # Ensure sshpass is installed
     if ! command -v sshpass &> /dev/null; then
         log_info "sshpass is not installed. Installing now..."
         sudo apt-get update -qq && sudo apt-get install -y sshpass >/dev/null 2>&1
     fi
     
-    # Debug: Check if password is set
+    # Validate password is set
     if [ -z "$CORE_SERVER_PASSWORD" ]; then
         log_error "CORE_SERVER_PASSWORD is empty!"
         log_error "Check your .env file - ensure CORE_SERVER_PASSWORD is set correctly"
@@ -476,23 +594,34 @@ setup_ssh_key_to_core() {
         return 1
     fi
     
+    return 0
+}
+
+# Verify SSH key works and add config entry
+ssh_verify_and_add_config() {
+    local key_path="$1"
+    
     # Verify key works
     log_info "Verifying SSH key authentication..."
-    if LC_ALL=C ssh -i "$key_path" -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=no -o LogLevel=ERROR \
+    if ! LC_ALL=C ssh -i "$key_path" -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=no -o LogLevel=ERROR \
         "${CORE_SERVER_USER}@${CORE_SERVER_IP}" "echo 'SSH key authentication successful'" 2>&1 | grep -v "locale\|LC_ALL\|setlocale" | grep -q "successful"; then
-        log_success "SSH key authentication verified"
-        
-        # Add SSH config entry for automatic key usage
-        log_info "Adding SSH config entry for core server..."
-        local ssh_config="/home/$ACTUAL_USER/.ssh/config"
-        
-        # Create config file if it doesn't exist
-        touch "$ssh_config"
-        chmod 600 "$ssh_config"
-        
-        # Check if entry already exists
-        if ! grep -q "Host ${CORE_SERVER_HOSTNAME}" "$ssh_config" 2>/dev/null; then
-            cat >> "$ssh_config" <<SSHCONFIG
+        log_error "SSH key verification failed"
+        return 1
+    fi
+    
+    log_success "SSH key authentication verified"
+    
+    # Add SSH config entry for automatic key usage
+    log_info "Adding SSH config entry for core server..."
+    local ssh_config="/home/$ACTUAL_USER/.ssh/config"
+    
+    # Create config file if it doesn't exist
+    touch "$ssh_config"
+    chmod 600 "$ssh_config"
+    
+    # Check if entry already exists
+    if ! grep -q "Host ${CORE_SERVER_HOSTNAME}" "$ssh_config" 2>/dev/null; then
+        cat >> "$ssh_config" <<SSHCONFIG
 
 # Auto-generated by EZ-Homelab for remote server ${SERVER_HOSTNAME}
 Host ${CORE_SERVER_HOSTNAME}
@@ -503,18 +632,45 @@ Host ${CORE_SERVER_HOSTNAME}
     UserKnownHostsFile /dev/null
     LogLevel ERROR
 SSHCONFIG
-            log_success "SSH config entry added for ${CORE_SERVER_HOSTNAME}"
-        else
-            log_info "SSH config entry already exists"
-        fi
-        
-        # Export key path for use by other functions
+        log_success "SSH config entry added for ${CORE_SERVER_HOSTNAME}"
+    else
+        log_info "SSH config entry already exists"
+    fi
+    
+    return 0
+}
+
+# Main SSH key setup orchestration
+setup_ssh_key_to_core() {
+    local key_name="id_rsa_${SERVER_HOSTNAME}_to_core"
+    local key_path="/home/$ACTUAL_USER/.ssh/$key_name"
+    
+    log_info "Setting up SSH key authentication to core server..."
+    
+    # Check if existing key works
+    if ssh_cleanup_and_check_existing "$key_path"; then
         export SSH_KEY_PATH="$key_path"
         return 0
-    else
-        log_error "SSH key verification failed"
+    fi
+    
+    # Generate new key
+    if ! ssh_generate_key "$key_path"; then
         return 1
     fi
+    
+    # Install key on core server
+    if ! ssh_install_key_with_password "$key_path"; then
+        return 1
+    fi
+    
+    # Verify and configure
+    if ! ssh_verify_and_add_config "$key_path"; then
+        return 1
+    fi
+    
+    # Export key path for use by other functions
+    export SSH_KEY_PATH="$key_path"
+    return 0
 }
 
 # Function to setup multi-server TLS for remote servers
@@ -634,6 +790,10 @@ SSH_KEY_PATH=""
 # Required variables for configuration
 REQUIRED_VARS=("SERVER_IP" "SERVER_HOSTNAME" "DUCKDNS_SUBDOMAINS" "DUCKDNS_TOKEN" "DOMAIN" "DEFAULT_USER" "DEFAULT_PASSWORD" "DEFAULT_EMAIL")
 
+#═══════════════════════════════════════════════════════════
+# SECTION 7: VARIABLE VALIDATION & PROMPTING
+#═══════════════════════════════════════════════════════════
+
 # Load existing .env file if it exists
 load_env_file() {
     if [ -f "$REPO_DIR/.env" ]; then
@@ -750,6 +910,18 @@ prompt_for_variable() {
             "SERVER_HOSTNAME")
                 prompt_text="║    🏠 ${prompt_text}"
                 ;;
+            "CORE_SERVER_IP")
+                prompt_text="║    🌐 ${prompt_text}"
+                ;; 
+            "CORE_SERVER_HOSTNAME")
+                prompt_text="║    🏠 ${prompt_text}"
+                ;; 
+            "CORE_SERVER_USER")
+                prompt_text="║    👤 ${prompt_text}"
+                ;; 
+            "CORE_SERVER_PASSWORD")
+                prompt_text="║    🔑 ${prompt_text}"
+                ;; 
         esac
         
         # Get user input
@@ -829,10 +1001,7 @@ validate_and_prompt_variables() {
                 first_display=false
             fi
             echo "║"
-            echo "║    Choose an option:"
-            echo "║      1) ✅ Deploy now"
-            echo "║      2) 🔄 Make Changes"
-            echo "║      q) ❌ Quit setup"
+            echo "║        1) Deploy    2) Modify    q) Quit"
             echo "║"
             echo -n "╚═════════════════════════════════════════════    "
             read -p "Choose : " user_choice
@@ -854,12 +1023,12 @@ validate_and_prompt_variables() {
                     ;;
                 *)
                     log_warning "Invalid choice. Please enter 1, 2, or q."
-                    echo ""
+                    # echo ""
                     continue
                     ;;
             esac
         else
-            echo ""
+            # echo ""
             echo "║    Missing variables: ${missing_vars[*]}"
         fi
         
@@ -1042,6 +1211,10 @@ validate_secrets() {
     debug_log "Secret validation passed"
 }
 
+#═══════════════════════════════════════════════════════════
+# SECTION 8: INDIVIDUAL STACK DEPLOYMENT FUNCTIONS
+#═══════════════════════════════════════════════════════════
+
 # Install NVIDIA drivers function
 install_nvidia() {
     log_info "Installing NVIDIA drivers and Docker support..."
@@ -1080,15 +1253,17 @@ install_nvidia() {
     log_success "NVIDIA drivers and Docker support installed. A reboot may be required."
 }
 
+#═══════════════════════════════════════════════════════════
+# SECTION 8: STACK DEPLOYMENT FUNCTIONS
+#═══════════════════════════════════════════════════════════
+
 # Deploy Dockge function
 deploy_dockge() {
     echo -n "║    Deploying Dockge...  "
     log_info "  - Dockge (Docker Compose Manager)"
 
     # Backup existing files if they exist
-    if [ -f /opt/dockge/docker-compose.yml ]; then
-        sudo cp /opt/dockge/docker-compose.yml /opt/dockge/docker-compose.yml.backup.$(date +%Y%m%d_%H%M%S)
-    fi
+    common_backup "/opt/dockge/docker-compose.yml"
 
     # Copy Dockge stack files
     sudo cp "$REPO_DIR/docker-compose/dockge/docker-compose.yml" /opt/dockge/docker-compose.yml
@@ -1105,10 +1280,6 @@ deploy_dockge() {
     cd /opt/dockge
     if run_cmd --quiet docker compose up -d; then
         echo "Success"
-        echo "║"
-    else
-        echo "Failed"
-        echo "║"
     fi
 }
 
@@ -1163,9 +1334,7 @@ PYFIX
 
     # Copy and configure Traefik config
     debug_log "Setting up Traefik configuration"
-    if [ -d "/opt/stacks/core/traefik" ]; then
-        mv /opt/stacks/core/traefik /opt/stacks/core/traefik.backup.$(date +%y_%m_%d_%H_%M)
-    fi
+    common_backup "/opt/stacks/core/traefik"
     cp -r "$REPO_DIR/docker-compose/core/traefik" /opt/stacks/core/
     sudo chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/core/traefik
 
@@ -1208,9 +1377,7 @@ PYFIX
 
     # Copy and configure Authelia config
     debug_log "Setting up Authelia configuration"
-    if [ -d "/opt/stacks/core/authelia" ]; then
-        mv /opt/stacks/core/authelia /opt/stacks/core/authelia.backup.$(date +%y_%m_%d_%H_%M)
-    fi
+    common_backup "/opt/stacks/core/authelia"
     cp -r "$REPO_DIR/docker-compose/core/authelia" /opt/stacks/core/
     sudo chown -R "$ACTUAL_USER:$ACTUAL_USER" /opt/stacks/core/authelia
 
@@ -1241,10 +1408,6 @@ PYFIX
     cd /opt/stacks/core
     if run_cmd --quiet docker compose up -d; then
         echo "Success"
-        echo "║"
-    else
-        echo "Failed"
-        echo "║"
     fi
     
     # Deploy Sablier stack for lazy loading
@@ -1297,10 +1460,6 @@ deploy_infrastructure() {
     cd /opt/stacks/infrastructure
     if run_cmd --quiet docker compose up -d; then
         echo "Success"
-        echo "║"
-    else
-        echo "Failed"
-        echo "║"
     fi
 }
 
@@ -1314,9 +1473,7 @@ deploy_dashboards() {
     sudo mkdir -p /opt/stacks/dashboards
 
     # Backup existing files if they exist
-    if [ -f /opt/stacks/dashboards/docker-compose.yml ]; then
-        cp /opt/stacks/dashboards/docker-compose.yml /opt/stacks/dashboards/docker-compose.yml.backup.$(date +%Y%m%d_%H%M%S)
-    fi
+    common_backup "/opt/stacks/dashboards/docker-compose.yml"
 
     # Copy dashboards compose file
     cp "$REPO_DIR/docker-compose/dashboards/docker-compose.yml" /opt/stacks/dashboards/docker-compose.yml
@@ -1362,10 +1519,6 @@ deploy_dashboards() {
     cd /opt/stacks/dashboards
     if run_cmd --quiet docker compose up -d; then
         echo "Success"
-        echo "║"
-    else
-        echo "Failed"
-        echo "║"
     fi
 }
 
@@ -1373,13 +1526,8 @@ deploy_arcane() {
     echo -n "║    Deploying Arcane...  "
     log_info "  - Arcane (Docker Management UI)"
 
-    # Create arcane directory
-    sudo mkdir -p /opt/arcane
-
     # Backup existing files if they exist
-    if [ -f /opt/arcane/docker-compose.yml ]; then
-        sudo cp /opt/arcane/docker-compose.yml /opt/arcane/docker-compose.yml.backup.$(date +%Y%m%d_%H%M%S)
-    fi
+    common_backup "/opt/arcane/docker-compose.yml"
 
     # Copy arcane compose file
     sudo cp "$REPO_DIR/docker-compose/arcane/docker-compose.yml" /opt/arcane/docker-compose.yml
@@ -1396,11 +1544,12 @@ deploy_arcane() {
     cd /opt/arcane
     if run_cmd --quiet docker compose up -d; then
         echo "Success"
-        echo "║"
-    else
-        echo "║"
     fi
 }
+
+#═══════════════════════════════════════════════════════════
+# SECTION 9: CORE DEPLOYMENT ORCHESTRATION
+#═══════════════════════════════════════════════════════════
 
 # Deployment function
 perform_deployment() {
@@ -1797,13 +1946,13 @@ set_required_vars_for_deployment() {
     esac
 }
 
+#═══════════════════════════════════════════════════════════
+# SECTION 10: REMOTE SERVER DEPLOYMENT
+#═══════════════════════════════════════════════════════════
+
 # Deploy remote server
 deploy_remote_server() {
-    # Enable verbose mode for remote deployment
-    VERBOSE=true
-    
     log_info "Deploying Remote Server Configuration"
-    echo ""
     
     # Set ACTUAL_USER if not already set (needed for SSH key paths)
     if [ -z "$ACTUAL_USER" ]; then
@@ -1843,34 +1992,37 @@ deploy_remote_server() {
     while true; do
         if setup_ssh_key_to_core; then
             log_success "SSH key authentication setup complete"
-            echo ""
+            # echo ""
             break
         else
-            log_error "Failed to setup SSH key authentication"
-            echo ""
-            echo "Options:"
-            echo "  1) Retry SSH setup"
-            echo "  2) Skip SSH setup (manual configuration required)"
-            echo "  3) Return to main menu"
-            echo ""
+            echo "║"
+            echo "║    ✗ SSH key authentication setup failed"
+            echo "║"
+            echo "║     1) Retry    2) Skip    3) Main Menu"
             echo -n "╚═════════════════════════════════════════════    "
             read -p "Choose : " ssh_retry_choice
             
             case $ssh_retry_choice in
                 1)
-                    echo ""
+                    # echo ""
                     log_info "Retrying SSH setup..."
                     continue
                     ;;
                 2)
-                    echo ""
-                    log_warning "Skipping SSH setup. You will need to manually configure SSH keys."
-                    log_info "Manual steps:"
-                    echo "  1. Generate SSH key: ssh-keygen -t ed25519 -f ~/.ssh/ez-homelab-${SERVER_HOSTNAME}"
-                    echo "  2. Copy to core: ssh-copy-id -i ~/.ssh/ez-homelab-${SERVER_HOSTNAME}.pub ${CORE_SERVER_USER}@${CORE_SERVER_IP}"
-                    echo "  3. Test: ssh -i ~/.ssh/ez-homelab-${SERVER_HOSTNAME} ${CORE_SERVER_USER}@${CORE_SERVER_IP}"
-                    echo ""
-                    read -p "Press Enter to continue deployment (or Ctrl+C to exit)..."
+                    echo "║"
+                    echo "║    Skipping SSH setup - Manual configuration required:"
+                    echo "║"
+                    echo "║      1. Generate SSH key:"
+                    echo "║         ssh-keygen -t ed25519 -f ~/.ssh/ez-homelab-${SERVER_HOSTNAME}"
+                    echo "║"
+                    echo "║      2. Copy to core server:"
+                    echo "║         ssh-copy-id -i ~/.ssh/ez-homelab-${SERVER_HOSTNAME}.pub ${CORE_SERVER_USER}@${CORE_SERVER_IP}"
+                    echo "║"
+                    echo "║      3. Test connection:"
+                    echo "║         ssh -i ~/.ssh/ez-homelab-${SERVER_HOSTNAME} ${CORE_SERVER_USER}@${CORE_SERVER_IP}"
+                    echo "║"
+                    echo -n "╚═════════════════════════════════════════════    "
+                    read -p "Press Enter to continue... "
                     # Set a minimal SSH_KEY_PATH for functions that need it
                     export SSH_KEY_PATH="/home/$ACTUAL_USER/.ssh/ez-homelab-${SERVER_HOSTNAME}"
                     break
@@ -1886,64 +2038,61 @@ deploy_remote_server() {
         fi
     done
     
-    # Step 2: Create required Docker networks
-    echo "Creating required Docker networks..."
-    docker network create homelab-network 2>/dev/null || true
-    docker network create traefik-network 2>/dev/null || true
+    # Step 2: Create required directories
+    echo "║"
+    echo "║    Creating required directories..."
+    common_create_directories "/opt/stacks" "/opt/dockge" "/opt/arcane" >/dev/null 2>&1
+    echo "║        /opt/stacks created"
+    echo "║        /opt/dockge created"
+    echo "║        /opt/arcane created"
     
-    # Step 3: Install envsubst if not present
+    # Step 3: Create required Docker networks
+    echo "║"
+    echo "║    Creating Docker networks..."
+    common_create_networks "homelab-network" "traefik-network" >/dev/null 2>&1
+    echo "║        homelab-network created"
+    echo "║        traefik-network created"
+    
+    # Step 4: Install envsubst if not present
     if ! command -v envsubst &> /dev/null; then
-        log_info "Installing envsubst (gettext-base)..."
+        echo "║"
+        echo -n "║    Installing envsubst...  "
         sudo apt-get update -qq && sudo apt-get install -y gettext-base >/dev/null 2>&1
-        log_success "envsubst installed"
+        echo "Success"
     fi
     
-    # Step 4: Copy all stacks to remote server
-    log_info "Step 4: Copying all stacks to remote server..."
-    copy_all_stacks_for_remote
-    echo ""
+    # Step 5: Copy all stacks to remote server
+    echo "║"
+    echo -n "║    Copying stacks to remote server...  "
+    copy_all_stacks_for_remote >/dev/null 2>&1
+    echo "Success"
     
-    # Step 5: Configure services for additional server (remove Traefik labels)
-    log_info "Step 5: Configuring services for additional server..."
-    configure_remote_server_routing
-    echo ""
+    # Step 6: Configure services for additional server (remove Traefik labels)
+    echo "║"
+    echo -n "║    Configuring services...  "
+    configure_remote_server_routing >/dev/null 2>&1
+    echo "Success"
     
-    # Step 6: Deploy Dockge
-    log_info "Step 6: Deploying Dockge..."
+    # Step 7: Deploy Dockge
+    echo "║"
     deploy_dockge
-    echo ""
     
-    # Step 7: Deploy Sablier stack for local lazy loading
-    log_info "Step 7: Deploying Sablier stack..."
+    # Step 8: Deploy Arcane
+    deploy_arcane
+    
+    # Step 9: Deploy Sablier stack for local lazy loading
+    echo -n "║    Deploying Sablier...  "
     deploy_sablier_stack
-    echo ""
     
-    # Step 8: Deploy Infrastructure stack
-    log_info "Step 8: Deploying Infrastructure stack..."
+    # Step 10: Deploy Infrastructure stack
     deploy_infrastructure
-    echo ""
     
-    # Step 9: Register this remote server with core Traefik
-    log_info "Step 9: Registering with core Traefik..."
+    # Step 11: Register this remote server with core Traefik
+    echo "║"
+    echo -n "║    Registering with core Traefik...  "
     register_remote_server_with_core
-    echo ""
     
     log_success "Remote server deployment complete!"
-    echo ""
-    echo "This server is now configured to:"
-    echo "  - Run Dockge for local stack management"
-    echo "  - Run Sablier for local container lazy loading"
-    echo "  - Run infrastructure services with exposed ports"
-    echo "  - Be accessible via core Traefik routes"
-    echo ""
-    echo "Services deployed on this server are accessible at:"
-    echo "  - Via core Traefik: https://servicename.${SERVER_HOSTNAME}.${DOMAIN}"
-    echo "  - Via direct IP: http://${SERVER_IP}:PORT"
-    echo ""
-    echo "Additional stacks available in /opt/stacks/ (not started):"
-    echo "  - dashboards, media, media-management, monitoring, productivity"
-    echo "  - transcoders, utilities, vpn, wikis, homeassistant, alternatives"
-    echo ""
 }
 
 # Register remote server with core Traefik
@@ -2021,19 +2170,19 @@ EOF
     
     local ssh_exit_code=$?
     
-    # Show output for debugging
-    echo "$ssh_output" | grep -v "locale\|LC_ALL\|setlocale"
-    
     if [ $ssh_exit_code -eq 0 ] && echo "$ssh_output" | grep -q "SUCCESS: Registration complete"; then
-        log_success "Successfully registered with core server"
-        log_info "Files created on core server:"
-        echo "  - /opt/stacks/core/traefik/dynamic/${SERVER_HOSTNAME}-server-routes.yml"
-        echo "  - /opt/stacks/core/traefik/dynamic/sablier-middleware-${SERVER_HOSTNAME}.yml"
+        echo "Success"
+        echo "║"
+        echo "║    Routes created on core server:"
+        echo "║      - ${SERVER_HOSTNAME}-server-routes.yml"
+        echo "║      - sablier-middleware-${SERVER_HOSTNAME}.yml"
+        echo "║"
         return 0
     else
-        log_error "Failed to register with core server via SSH"
-        log_error "SSH output:"
-        echo "$ssh_output"
+        echo "Failed"
+        echo "║"
+        echo "║    ✗ Registration failed - SSH output:"
+        echo "$ssh_output" | sed 's/^/║      /'
         return 1
     fi
 }
@@ -2046,9 +2195,8 @@ deploy_sablier_stack() {
     
     # Create sablier stack directory with sudo
     if [ ! -d "$sablier_dir" ]; then
-        sudo mkdir -p "$sablier_dir" || { log_error "Failed to create $sablier_dir"; return 1; }
-        sudo chown -R "$ACTUAL_USER:$ACTUAL_USER" "$sablier_dir"
-        log_success "Created $sablier_dir"
+        sudo mkdir -p "$sablier_dir" >/dev/null 2>&1 || { log_error "Failed to create $sablier_dir"; return 1; }
+        sudo chown -R "$ACTUAL_USER:$ACTUAL_USER" "$sablier_dir" >/dev/null 2>&1
     fi
     
     # Check if source files exist
@@ -2057,26 +2205,21 @@ deploy_sablier_stack() {
         return 1
     fi
     
-    # Copy stack files
-    log_info "Copying Sablier stack files from $REPO_DIR/docker-compose/sablier/..."
-    cp "$REPO_DIR/docker-compose/sablier/docker-compose.yml" "$sablier_dir/" || { log_error "Failed to copy docker-compose.yml"; return 1; }
-    sudo chown "$ACTUAL_USER:$ACTUAL_USER" "$sablier_dir/docker-compose.yml"
-    log_success "Stack files copied"
+    # Copy stack files silently
+    cp "$REPO_DIR/docker-compose/sablier/docker-compose.yml" "$sablier_dir/" 2>/dev/null || { log_error "Failed to copy docker-compose.yml"; return 1; }
+    sudo chown "$ACTUAL_USER:$ACTUAL_USER" "$sablier_dir/docker-compose.yml" 2>/dev/null
     
     # Process .env file from .env.example
-    process_stack_env "$sablier_dir" "$REPO_DIR/docker-compose/sablier"
-    sudo chown "$ACTUAL_USER:$ACTUAL_USER" "$sablier_dir/.env"
+    process_stack_env "$sablier_dir" "$REPO_DIR/docker-compose/sablier" >/dev/null 2>&1
+    sudo chown "$ACTUAL_USER:$ACTUAL_USER" "$sablier_dir/.env" 2>/dev/null
     
     # Localize the docker-compose file (labels and x-dockge only)
-    localize_yml_file "$sablier_dir/docker-compose.yml"
+    localize_yml_file "$sablier_dir/docker-compose.yml" >/dev/null 2>&1
     
     # Deploy
+    cd "$sablier_dir"
     if run_cmd --quiet docker compose up -d; then
         echo "Success"
-        echo "║"
-    else
-        echo "Failed"
-        echo "║"
     fi
 }
 
@@ -2233,8 +2376,157 @@ EOF
     fi
 }
 
+#═══════════════════════════════════════════════════════════
+# SECTION 11: UI, MENU & HELP FUNCTIONS
+#═══════════════════════════════════════════════════════════
+
+# Handle menu selection and set deployment flags
+handle_menu_selection() {
+    # Menu selection loop
+    while true; do
+        # Show main menu
+        show_main_menu
+        echo -n "╚═════════════════════════════════════════════    "
+        read -p "Choose : " MAIN_CHOICE
+
+        case $MAIN_CHOICE in
+            1)
+                log_info "Selected: Install Prerequisites"
+                FORCE_SYSTEM_SETUP=true
+                DEPLOY_CORE=false
+                DEPLOY_INFRASTRUCTURE=false
+                DEPLOY_DASHBOARDS=false
+                SETUP_STACKS=false
+                break
+                ;;
+            2)
+                log_info "Selected: Deploy Core Server"
+                # Check Docker first
+                if ! check_docker_installed; then
+                    echo "║"
+                    echo "║    ✗ Docker is not installed"
+                    echo "║      Please run Option 1 (Install Prerequisites) first"
+                    echo "║"
+                    echo -n "╚═════════════════════════════════════════════    "
+                    read -p "Press Enter to return to menu..."
+                    continue
+                fi
+                
+                DEPLOY_CORE=true
+                DEPLOY_INFRASTRUCTURE=true
+                DEPLOY_DASHBOARDS=true
+                SETUP_STACKS=true
+                DEPLOY_REMOTE_SERVER=false
+                
+                # Set required variables for core deployment
+                set_required_vars_for_deployment "core"
+                
+                break
+                ;;
+            3)
+                log_info "Selected: Deploy Additional Server"
+                # Check Docker first
+                if ! check_docker_installed; then
+                    echo "║"
+                    echo "║    ✗ Docker is not installed"
+                    echo "║      Please run Option 1 (Install Prerequisites) first"
+                    echo "║"
+                    echo -n "╚═════════════════════════════════════════════    "
+                    read -p "Press Enter to return to menu..."
+                    continue
+                fi
+                
+                DEPLOY_CORE=false
+                DEPLOY_INFRASTRUCTURE=false
+                DEPLOY_DASHBOARDS=false
+                SETUP_STACKS=false
+                DEPLOY_REMOTE_SERVER=true
+                
+                # Set required variables for remote deployment
+                set_required_vars_for_deployment "remote"
+                
+                break
+                ;;
+            4)
+                log_info "Selected: Install NVIDIA Drivers"
+                INSTALL_NVIDIA=true
+                DEPLOY_CORE=false
+                DEPLOY_INFRASTRUCTURE=false
+                DEPLOY_DASHBOARDS=false
+                SETUP_STACKS=false
+                break
+                ;;
+            [Qq]|[Qq]uit)
+                log_info "Exiting..."
+                exit 0
+                ;;
+            *)
+                log_warning "Invalid choice '$MAIN_CHOICE'. Please select 1-4 or q to quit."
+                sleep 2
+                continue
+                ;;
+        esac
+    done
+}
+
+# Show deployment completion message with warnings
+show_deployment_completion() {
+    # Show completion message
+    echo "║═════════════════════════════════════════════════════════════"
+    echo "║"
+    echo "║                  Deployment Complete!"
+    echo "║"
+    echo "║  SSL Certificates may take a few minutes to be issued."
+    echo "║"
+    echo "║    Dockge  https://dockge.${DOMAIN}"
+    echo "║            http://${SERVER_IP}:5001"
+    echo "║"
+    echo "║    Arcane  https://arcane.${SERVER_HOSTNAME}.${DOMAIN}"
+    echo "║            http://${SERVER_IP}:3552"
+    echo "║"
+    echo "║  Homepage  https://homepage.${DOMAIN}"
+    echo "║            http://${SERVER_IP}:3003"
+    echo "║"
+
+    # Show consolidated warnings if any
+    if [ -n "$GLOBAL_MISSING_VARS" ] || [ -n "$TLS_ISSUES_SUMMARY" ]; then
+        echo "║═════════════════════════════════════════════════════════════╗"
+        echo "║                     ⚠️  WARNING  ⚠️                        ║"
+        echo "║       The following variables were not defined              ║"
+        echo "║  If something isn't working as expected check these first   ║"
+        echo "║                                                             ║"
+        
+        if [ -n "$GLOBAL_MISSING_VARS" ]; then
+            log_warning "Missing Environment Variables:"
+            echo "$GLOBAL_MISSING_VARS"
+            echo "║                                                             ║"
+        fi
+                
+        if [ -n "$TLS_ISSUES_SUMMARY" ]; then
+            log_warning "TLS Configuration Issues:"
+            echo "$TLS_ISSUES_SUMMARY"
+            echo "║                                                             ║"
+        fi
+    fi
+
+    echo "║═════════════════════════════════════════════════════════════"
+    echo "║                          RESOURCES"
+    echo "║"
+    echo "║   https://github.com/kelinfoxy/EZ-Homelab/blob/main/docs/Arcane-Configuration-Guide.md"
+    echo "║"
+    echo "║   Documentation: ~/EZ-Homelab/docs"
+    echo "║"
+    echo "║   Repository: https://github.com/kelinfoxy/EZ-Homelab"
+    echo "║   Wiki: https://github.com/kelinfoxy/EZ-Homelab/wiki"
+    echo "║ "
+    echo "╚═════════════════════════════════════════════════════════════"
+    echo ""
+    debug_log "Script completed successfully"
+}
+
 # Show help function
 show_help() {
+    echo ""
     echo "EZ-Homelab Setup & Deployment Script"
     echo ""
     echo "Usage: $0 [OPTIONS]"
@@ -2248,6 +2540,8 @@ show_help() {
     echo "      --verbose           Enable verbose console logging"
     echo ""
     echo "If no options are provided, the interactive menu will be shown."
+    echo ""
+    echo "See https://github.com/kelinfoxy/EZ-Homelab for documentation"
     echo ""
 }
 
@@ -2346,6 +2640,10 @@ parse_args() {
     done
 }
 
+#═══════════════════════════════════════════════════════════
+# SECTION 12: MAIN EXECUTION & SETUP
+#═══════════════════════════════════════════════════════════
+
 # Prepare deployment environment
 prepare_deployment() {
     # Handle special menu options
@@ -2385,7 +2683,7 @@ prepare_deployment() {
         if [ "$DOCKER_INSTALLED" = false ] || [ "$USER_IN_DOCKER_GROUP" = false ]; then
             log_info "Docker not fully installed or user not in docker group. Performing system setup..."
             ./scripts/install-prerequisites.sh
-            echo ""
+            #echo ""
             log_info "System setup complete. Please log out and back in, then run this script again."
             exit 0
         else
@@ -2449,11 +2747,13 @@ run_cmd() {
 main() {
     debug_log "main() called with arguments: $@"
     log_info "EZ-Homelab Unified Setup & Deployment Script"
-    clear
-    echo ""
 
     # Parse command line arguments
     parse_args "$@"
+
+    echo ""
+    echo "Loading... Please wait"
+    echo ""
 
     if [ "$DRY_RUN" = true ]; then
         log_info "Dry-run mode enabled. Commands will be displayed but not executed."
@@ -2478,194 +2778,41 @@ main() {
         debug_log "No existing .env file found"
     fi
 
-    # Menu selection loop
-    while true; do
-        # Show main menu
-        show_main_menu
-        echo -n "╚═════════════════════════════════════════════    "
-        read -p "Choose : " MAIN_CHOICE
-
-        case $MAIN_CHOICE in
-            1)
-                log_info "Selected: Install Prerequisites"
-                FORCE_SYSTEM_SETUP=true
-                DEPLOY_CORE=false
-                DEPLOY_INFRASTRUCTURE=false
-                DEPLOY_DASHBOARDS=false
-                SETUP_STACKS=false
-                break
-                ;;
-            2)
-                log_info "Selected: Deploy Core Server"
-                
-                # Check Docker first
-                if ! check_docker_installed; then
-                    echo ""
-                    log_error "Docker must be installed before deploying core server"
-                    log_info "Please run Option 1 (Install Prerequisites) first"
-                    echo ""
-                    read -p "Press Enter to return to main menu..."
-                    continue
-                fi
-                
-                DEPLOY_CORE=true
-                DEPLOY_INFRASTRUCTURE=true
-                DEPLOY_DASHBOARDS=true
-                SETUP_STACKS=true
-                DEPLOY_REMOTE_SERVER=false
-                
-                # Set required variables for core deployment
-                set_required_vars_for_deployment "core"
-                
-                break
-                ;;
-            3)
-                log_info "Selected: Deploy Additional Server"
-                echo ""
-                
-                # Check Docker first
-                if ! check_docker_installed; then
-                    echo ""
-                    log_error "Docker must be installed before deploying remote server"
-                    log_info "Please run Option 1 (Install Prerequisites) first"
-                    echo ""
-                    read -p "Press Enter to return to main menu..."
-                    continue
-                fi
-                
-                echo "⚠️  IMPORTANT: Deploying an additional server requires an existing core server to be already deployed."
-                echo "The core server provides essential services like Traefik, Authelia, and shared TLS certificates."
-                echo ""
-                
-                DEPLOY_CORE=false
-                DEPLOY_INFRASTRUCTURE=false
-                DEPLOY_DASHBOARDS=false
-                SETUP_STACKS=false
-                DEPLOY_REMOTE_SERVER=true
-                
-                # Set required variables for remote deployment
-                set_required_vars_for_deployment "remote"
-                
-                break
-                ;;
-            4)
-                log_info "Selected: Install NVIDIA Drivers"
-                INSTALL_NVIDIA=true
-                DEPLOY_CORE=false
-                DEPLOY_INFRASTRUCTURE=false
-                DEPLOY_DASHBOARDS=false
-                SETUP_STACKS=false
-                break
-                ;;
-            [Qq]|[Qq]uit)
-                log_info "Exiting..."
-                exit 0
-                ;;
-            *)
-                log_warning "Invalid choice '$MAIN_CHOICE'. Please select 1-4 or q to quit."
-                echo ""
-                sleep 2
-                continue
-                ;;
-        esac
-    done
+    clear
+    echo ""
+    # Handle menu selection
+    handle_menu_selection
 
     echo "║"
-        # echo "╔═════════════════════════════════════════════════════════════╗"
     if [ "$DEPLOY_CORE" = true ]; then
         echo "║                   CORE SERVER DEPLOYMENT"
     fi
     if [ "$DEPLOY_REMOTE_SERVER" = true ]; then
-        echo "║                 ADDITIONAL SERVER DEPLOYMENT                ║"
+        echo "║                 ADDITIONAL SERVER DEPLOYMENT"
     fi
-        echo "║"
+    echo "║"
 
     # Prepare deployment environment (handles special cases like prerequisites installation)
     prepare_deployment
 
-    # Handle remote server deployment separately
-    if [ "$DEPLOY_REMOTE_SERVER" = true ]; then
-        # Prompt for configuration values
-        validate_and_prompt_variables
-        
-        # Save configuration
-        save_env_file
-        
-        # Reload .env file to get all variables including expanded ones
-        load_env_file
-        
-        # Deploy remote server
-        deploy_remote_server
-        
-        echo ""
-        log_success "Remote server deployment complete!"
-        exit 0
-    fi
-
-    # Prompt for configuration values
+    # Prompt for configuration values and save
     validate_and_prompt_variables
-
-    # Save configuration
     save_env_file
 
-    # Validate secrets for core deployment
-    validate_secrets
-
-    # Perform deployment
-    perform_deployment
-
-    # Show completion message
-    echo "║═════════════════════════════════════════════════════════════"
-    echo "║"
-    echo "║                  Deployment Complete!"
-    echo "║"
-    echo "║  SSL Certificates may take a few minutes to be issued."
-    echo "║"
-    echo "║    Dockge  https://dockge.${DOMAIN}"
-    echo "║            http://${SERVER_IP}:5001"
-    echo "║"
-    echo "║    Arcane  https://arcane.${SERVER_HOSTNAME}.${DOMAIN}"
-    echo "║            http://${SERVER_IP}:3552"
-    echo "║"
-    echo "║  Homepage  https://homepage.${DOMAIN}"
-    echo "║            http://${SERVER_IP}:3003"
-    echo "║"
-
-    # Show consolidated warnings if any
-    if [ -n "$GLOBAL_MISSING_VARS" ] || [ -n "$TLS_ISSUES_SUMMARY" ]; then
-        echo "║═════════════════════════════════════════════════════════════╗"
-        echo "║                     ⚠️  WARNING  ⚠️                        ║"
-        echo "║       The following variables were not defined              ║"
-        echo "║  If something isn't working as expected check these first   ║"
-        echo "║                                                             ║"
-        
-        if [ -n "$GLOBAL_MISSING_VARS" ]; then
-            log_warning "Missing Environment Variables:"
-            echo "$GLOBAL_MISSING_VARS"
-            echo "║                                                             ║"
-        fi
-                
-        if [ -n "$TLS_ISSUES_SUMMARY" ]; then
-            log_warning "TLS Configuration Issues:"
-            echo "$TLS_ISSUES_SUMMARY"
-            echo "║                                                             ║"
-        fi
+    # Deploy based on server type
+    if [ "$DEPLOY_REMOTE_SERVER" = true ]; then
+        deploy_remote_server
+        log_success "Remote server deployment complete!"
+        show_deployment_completion
+    else
+        validate_secrets
+        perform_deployment
+        show_deployment_completion
     fi
-
-    echo "║═════════════════════════════════════════════════════════════"
-    echo "║                          RESOURCES"
-    echo "║"
-    echo "║   https://github.com/kelinfoxy/EZ-Homelab/blob/main/docs/Arcane-Configuration-Guide.md"
-    echo "║"
-    echo "║   Documentation: ~/EZ-Homelab/docs"
-    echo "║"
-    echo "║   Repository: https://github.com/kelinfoxy/EZ-Homelab"
-    echo "║   Wiki: https://github.com/kelinfoxy/EZ-Homelab/wiki"
-    echo "║ "
-    echo "╚═════════════════════════════════════════════════════════════"
-    echo ""
-    debug_log "Script completed successfully"
 }
 
-# Run main function
+#═══════════════════════════════════════════════════════════
+# SCRIPT EXECUTION
+#═══════════════════════════════════════════════════════════
+
 main "$@"
